@@ -4,6 +4,16 @@
 
 It is **not** a slide generator. The deliverable is a single structured Markdown file describing the deck: thesis, agenda, sections, slides, sources, and speaker notes. Downstream tooling consumes that file to render slides.
 
+## An opinionated methodology
+
+Talksmith isn't a generic "ask an LLM to make a deck" tool — it encodes three opinions and pushes back when you deviate:
+
+- **Markdown is the substrate.** Every artifact — compiled sources, the outline (`master.md`), the progress log (`memory.md`), feedback rounds — is a plain `.md` file. Diffable, versionable, editable in any tool, portable across renderers. Slides are a *projection* of the Markdown, not the source of truth.
+- **Explore first, structure second.** Talksmith works from sources you've actually engaged with (papers, chat exports, notes); it won't invent content out of thin air.
+- **Thesis-first, audit-tracked.** Every slide is challenged against a one-sentence thesis; cut material and review feedback stay in the file as an audit trail, never silently deleted.
+
+If those don't fit how you work, this is the wrong tool.
+
 ## How it works
 
 Three roles, one file as source of truth:

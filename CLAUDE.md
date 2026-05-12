@@ -98,13 +98,13 @@ If the user picks "Resume existing presentation", list the folders under `talks/
 
 ## Step 0.5 — Load presenter profile *(optional)*
 
-[`profile.md`](profile.md) at the repo root captures global attributes that apply across **all** presentations in this repo: who the presenter is, how their presentations are consumed, default audience, recurring class/session structure, tone and style, and constraints.
+[`profile.md`](profile.md) at the repo root captures global attributes that apply across **all** presentations in this repo. The current sections are: **How my presentations are consumed** and **Audience defaults**.
 
 This file is **session-wide persistent context** (see General rules): you must read it at session start and pass its content into every subagent dispatch for the rest of the session.
 
 - **If `profile.md` has any filled section**, load it as global context. Use its defaults later — for the audience field in Step 5 frontmatter, the agenda skeleton, the slide tone — instead of asking the presenter again from scratch. Acknowledge briefly which defaults you picked up. **No further presenter action needed — skip to Step 1.**
-- **If `profile.md` is empty (only headings and HTML comments)**, ask the presenter via `AskUserQuestion` whether they want to fill it in now (recommended once, takes a few minutes) or skip and continue. If they choose to fill it, walk section by section using `AskUserQuestion` with 2–4 candidate framings per section, then write the result back to `profile.md`.
-- **If `profile.md` does not exist**, treat it as empty.
+- **If `profile.md` is empty (only headings and HTML comments)**, ask the presenter via `AskUserQuestion` whether they want to fill it in now (recommended once, takes ~1 minute) or skip and continue. If they choose to fill it, walk through **only the sections actually present in `profile.md`** — do **not** invent or re-introduce removed sections (e.g. "Who I am", "Tone and style", "Class / session structure", "Constraints"). For each section that exists, you **must** use the `AskUserQuestion` tool with 2–4 concrete candidate options derived from context — **never** ask via free-text prompts and **never** invite the presenter to "type freely". The whole point is to force structured choices: if you cannot generate plausible candidates for a section, you still ask via `AskUserQuestion` with your best 2–4 guesses and let the presenter pick "Other" if none fit. Write the result back to `profile.md`.
+- **If `profile.md` does not exist**, treat it as empty — but do **not** silently proceed. Before moving on to Step 1, use `AskUserQuestion` to ask the presenter whether they want to create and fill `profile.md` now (recommended once, takes ~1 minute) or skip and continue without global defaults. If they choose to fill it, create the file from the same template structure and walk through it via `AskUserQuestion` per the empty-file rule above.
 
 This step only runs once per session for new presentations. Skip it on resume unless the presenter asks to revisit the profile.
 
