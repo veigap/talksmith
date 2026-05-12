@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": [
+      "Drafting",
+      "Editing",
+      "Compiling",
+      "Outlining",
+      "Refining",
+      "Citing",
+      "Researching",
+      "Structuring",
+      "Threading",
+      "Rephrasing",
+      "Annotating",
+      "Reviewing",
+      "Cross-referencing",
+      "Surfacing",
+      "Curating",
+      "Polishing",
+      "Sharpening",
+      "Sketching",
+      "Stitching",
+      "Pondering",
+      "Workshopping",
+      "Cutting"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"AUTO-START: This is a Talksmith session. Per CLAUDE.md, immediately begin Step 0 (Introduce yourself) without waiting for the user to type anything. Load profile.md first, then introduce yourself, display the ASCII workflow chart, and use AskUserQuestion to ask whether this is a new presentation or resuming an existing one.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
