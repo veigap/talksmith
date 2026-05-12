@@ -14,6 +14,56 @@ Three roles, one file as source of truth:
 
 The Editor role is handled directly by the orchestrator. Librarian and Scribe run as dedicated subagents at [.claude/agents/](.claude/agents/).
 
+## Getting started
+
+Talksmith runs inside a Claude Code session — the agent definition lives in [CLAUDE.md](CLAUDE.md) and is loaded automatically when Claude Code opens the repo. Pick one of the two ways to start it:
+
+### Option 1 — Claude Code CLI (local terminal)
+
+1. Install the CLI if you don't already have it:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+2. Clone this repo and `cd` into it:
+   ```bash
+   git clone <this-repo-url> talksmith
+   cd talksmith
+   ```
+3. Launch Claude Code from the repo root:
+   ```bash
+   claude
+   ```
+
+The Presenter Agent introduces itself on the first turn. Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/knowledge/articles/` and `knowledge/llm-chats/`.
+
+### Option 2 — Claude Code on the web (Cowork)
+
+1. Push this repo to GitHub (or any Git host Claude Code on the web supports).
+2. Open [claude.com/code](https://claude.com/code) and connect the repo as a workspace.
+3. Start a new session against the repo — the agent boots from `CLAUDE.md` the same way as in the CLI.
+
+In the web/Cowork flow, upload source files (PDFs, chat ZIPs, images) via the session's file attachment UI; the agent will place them under the active talk's `knowledge/articles/` or `knowledge/llm-chats/` folder before Step 3 (Compile).
+
+### Option 3 — Claude Code Cowork on Desktop
+
+1. Install the Claude Code desktop app (Mac or Windows) from [claude.com/download](https://claude.com/download) and sign in.
+2. Connect the repo to Cowork in one of two ways:
+   - **Local folder** — point Cowork at your cloned `talksmith/` directory on disk (same as Option 1, but driven from the desktop UI instead of the terminal).
+   - **GitHub-backed workspace** — connect the GitHub repo, same as Option 2; the desktop app uses the cloud workspace.
+3. Open a new session on the workspace — the agent boots from `CLAUDE.md` automatically.
+
+The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `knowledge/articles/` and `knowledge/llm-chats/` work natively, and you can keep `master.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop.
+
+### What happens next
+
+In either mode, the Presenter Agent will:
+
+1. Introduce itself and show the workflow chart.
+2. Load [`profile.md`](profile.md) if filled, or offer to fill it (Step 0.5).
+3. Ask via `AskUserQuestion` whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
+
+Everything else flows from there. For the full operating spec, see [CLAUDE.md](CLAUDE.md).
+
 ## Workflow
 
 ```
@@ -95,8 +145,10 @@ Review repeats as many times as needed until the presenter declares the document
 - **`profile.md` is session-wide context.** Once filled, it's loaded automatically and passed into every subagent dispatch.
 - **`memory.md` is append-only.** Updated after every completed step; used to resume an in-progress talk.
 
-## Getting started
+## Author
 
-Open the repo with a Claude Code session. The Presenter Agent will introduce itself, show the workflow, and ask via `AskUserQuestion` whether you're starting a new talk or resuming an existing one. Everything else flows from there.
+Paulo Gustavo Veiga — [@veigap](https://github.com/veigap)
 
-For the full operating spec, see [CLAUDE.md](CLAUDE.md).
+## License
+
+[Unlicense](LICENSE) — released into the public domain.
