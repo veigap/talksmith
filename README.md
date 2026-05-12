@@ -29,9 +29,9 @@ Talksmith runs inside a Claude Code session — the agent definition lives in [C
    git clone <this-repo-url> talksmith
    cd talksmith
    ```
-3. Launch Claude Code from the repo root:
+3. Launch Claude Code from the repo root with the Opus model (recommended for Talksmith's editorial work) and a kickoff prompt that boots the agent:
    ```bash
-   claude
+   claude --model opus "Hi Talksmith"
    ```
 
 The Presenter Agent introduces itself on the first turn. Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/knowledge/articles/` and `knowledge/llm-chats/`.
