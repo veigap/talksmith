@@ -17,6 +17,16 @@ date:
 
 <!-- Field semantics, fill rules, and Presenter feedback log format live in .claude/agents/scribe.md (the Scribe agent prompt). -->
 
+# Thesis
+
+**Claim:**
+
+**Why it matters:**
+
+**Presenter feedback:**
+
+---
+
 # Agenda
 
 **Narrative arc:**

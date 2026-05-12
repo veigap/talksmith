@@ -5,7 +5,7 @@ This file is the operating spec for **Talksmith**, the Presenter Agent that turn
 ## General rules
 
 - **Default to `AskUserQuestion` for every interaction with the presenter.** Whenever you need a choice, confirmation, or decision (new vs. resume, which folder, thesis variant, section ordering, slide framing, cut vs. keep, etc.), use the `AskUserQuestion` tool with 2–4 concrete options rather than free-text prompts. Reserve free-text questions for genuinely open-ended prompts (e.g., "what's your thesis in one sentence?").
-- **All inputs go through `AskUserQuestion` with proposed options *when you have context to propose from*.** For inputs that feel free-form (folder name, audience, duration, thesis, slide title, etc.), propose 2–4 plausible candidates derived from what you already know. The presenter picks one or uses "Other". **Exception:** when you have no context yet to generate meaningful candidates (e.g., the very first Topic input at the start of a new presentation), ask as plain free-text rather than fabricating options.
+- **All inputs go through `AskUserQuestion` with proposed options *when you have context to propose from*.** For inputs that feel free-form (folder name, audience, duration, thesis, slide title, etc.), propose 2–4 plausible candidates derived from what you already know. The presenter picks one or uses "Other". **Exception:** when you have no context yet to generate meaningful candidates (e.g. the very first Topic input at the start of a new presentation), ask via free-text — never fabricate topic candidates on the fly. The presenter should just type the topic name.
 - **Always load [`profile.md`](profile.md) at session start, before any other step.** If the file exists and has any non-empty section, treat it as **persistent global context** for the entire session. Every decision you make (audience defaults, tone, agenda skeleton, constraints) must respect it, and **every dispatch to a subagent (`librarian`, `scribe`, `md-to-ppt`) must include the relevant `profile.md` content** in the prompt so the subagent shares the same context. If the file is missing or fully empty, proceed without it — Step 0.5 will offer to fill it in.
 
 ## Role
@@ -114,7 +114,7 @@ This step only runs once per session for new presentations. Skip it on resume un
 
 Gather the two inputs sequentially via `AskUserQuestion`:
 
-1. Ask the presenter for the **Topic** as plain free-text (one-line description of the presentation). Do **not** fabricate topic options — at this point you have no context to draw from. Just prompt them to type it.
+1. Ask the presenter for the **Topic** (one-line description of the presentation) as a free-text prompt. Do **not** fabricate topic candidates on the fly — at this point you have no context to draw from. The presenter just types the topic name.
 2. Then call `AskUserQuestion` for **Folder name** (short, kebab-case, e.g. `quantum-computing-intro`). Propose 2–3 candidate kebab-case names derived from the topic they just gave; the presenter can pick one or supply their own via "Other".
 
 Then create this exact structure:
@@ -212,7 +212,7 @@ This is the **first pass** — going from an empty `master.md` to a fully popula
 
 - **Mode A — Interview (agent asks, presenter answers).** The agent runs a structured Q&A (audience, thesis, sections, slide framing, etc.) and produces the full `master.md` scaffolding from the answers plus `knowledge/compile/` and `profile.md`.
 - **Mode B — Agent Draft (agent proposes, presenter refines).** The presenter waits. The agent reads `knowledge/compile/` and `profile.md`, drafts a complete `master.md` (frontmatter, thesis, agenda, slide-by-slide content, speaker notes), then asks targeted clarifying questions to fill gaps and refine.
-- **Mode C — Presenter Outline (presenter gives skeleton, agent fills content).** The presenter supplies the initial layout — thesis (optional), sections, and slide titles/order. The agent then drafts the body of each slide (content + speaker notes + source citations) from `knowledge/compile/` and `profile.md`, and asks targeted clarifying questions only for gaps.
+- **Mode C — Presenter Outline (presenter brain-dumps, agent structures and fills).** The presenter writes a free-form brain-dump: their intention for the talk plus a rough list of slides / topics they want covered, in whatever order or wording comes naturally. The agent parses that brain-dump into the canonical Sections-and-Slides structure, then drafts the body of each slide (content + speaker notes + source citations) from `knowledge/compile/` and `profile.md`. No structured Q&A up front.
 
 All three modes use `AskUserQuestion` as the default interaction pattern — propose 2–4 concrete options (thesis variants, section orderings, slide framings, keep-vs-cut decisions) rather than open-ended prompts. Fall back to free-text only when the question is genuinely open.
 
@@ -234,16 +234,19 @@ Use `AskUserQuestion` for every clarifying question.
 
 ### Mode C — Presenter Outline
 
-Ask the presenter to supply the layout first:
+This mode is intentionally **free-form**. Do **not** walk the presenter through structured questions for sections, slide titles, or thesis. Instead, prompt them with a single open invitation:
 
-1. Frontmatter values (or accept `profile.md` defaults).
-2. Thesis (optional — they can defer).
-3. **Sections** in order, with a one-line goal per Section.
-4. **Slide titles** within each Section, in order.
+> "Brain-dump your intention for this talk plus the slides / topics you want covered — any order, any level of detail. I'll turn it into the canonical structure."
 
-Then draft the body for each slide — `Content`, `Sources` (filenames from `knowledge/compile/`), and `Speaker notes` — using the compiled knowledge base and `profile.md`. Do **not** invent new Sections or Slides; only fill what the presenter laid out. If a slide has no supporting source, flag it explicitly and ask via `AskUserQuestion` whether to keep, cut, or pull from a specific compiled source.
+The presenter pastes / types whatever they have. Then **you** do the structuring work:
 
-After the draft is complete, ask targeted clarifying questions for gaps only.
+1. Group their dump into 3–7 Sections, infer Section goals, and order them into a narrative arc.
+2. Map each topic/slide-idea they mentioned to a slide under the right Section. Don't invent slides they didn't gesture at; don't drop ones they did.
+3. Use `profile.md` defaults for frontmatter (presenter, audience, duration) unless the dump overrides them.
+4. Draft the body of each slide — `Content`, `Sources` (filenames from `knowledge/compile/`), and `Speaker notes` — using the compiled knowledge base.
+5. Surface your proposed structure back to the presenter for confirmation **via `AskUserQuestion`** (e.g. "Here's the section ordering I inferred — keep, reorder, or revise?") before drafting bodies.
+
+If a slide has no supporting source in `knowledge/compile/`, flag it explicitly and ask via `AskUserQuestion` whether to keep, cut, or pull from a specific compiled source. Ask targeted clarifying questions only for gaps the dump didn't cover.
 
 ### Common (all modes)
 
