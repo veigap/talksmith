@@ -6,13 +6,21 @@ It is **not** a slide generator. The deliverable is a single structured Markdown
 
 ## An opinionated methodology
 
-Talksmith isn't a generic "ask an LLM to make a deck" tool — it encodes three opinions and pushes back when you deviate:
+Talksmith isn't a generic "ask an LLM to make a deck" tool. It encodes a four-phase methodology, and pushes back when you deviate:
 
-- **Markdown is the substrate.** Every artifact — compiled sources, the outline (`master.md`), the progress log (`memory.md`), feedback rounds — is a plain `.md` file. Diffable, versionable, editable in any tool, portable across renderers. Slides are a *projection* of the Markdown, not the source of truth.
-- **Explore first, structure second.** Talksmith works from sources you've actually engaged with (papers, chat exports, notes); it won't invent content out of thin air.
-- **Thesis-first, audit-tracked.** Every slide is challenged against a one-sentence thesis; cut material and review feedback stay in the file as an audit trail, never silently deleted.
+```
+  Explore  -->  Compile  -->  Draft  -->  Refine
+  (sources)    (knowledge)   (outline)    (loop)
+```
 
-If those don't fit how you work, this is the wrong tool.
+- **Explore — LLMs are the brainstorming partner, not the deck generator.** Use Claude (or any LLM) to learn the topic, stress-test ideas, generate charts, and chase tangents. Read papers, capture notes. Actually engage with the material before structuring anything.
+- **Compile — preserve, don't summarize.** Drop papers and notes into `knowledge/articles/`, export worthwhile chat sessions to ZIP under `knowledge/llm-chats/`. The Librarian restructures every source into uniform Markdown — contradictions, abandoned threads, and course-corrections preserved — so the next phase works from your actual thinking, not a blank prompt.
+- **Draft — thesis-first, sourced.** Every slide is challenged against a one-sentence thesis and cited back to a compiled source. Talksmith won't invent content out of thin air.
+- **Refine — audit-tracked loop.** Feedback bullets land in `master.md` in your editor of choice; cut material and closed feedback stay in the file as an audit trail, never silently deleted.
+
+One substrate underneath all of it: **Markdown.** Compiled sources, the outline (`master.md`), the progress log (`memory.md`), feedback rounds — every artifact is a plain `.md` file. Diffable, versionable, editable in any tool, portable across renderers. Slides are a *projection* of the Markdown, not the source of truth.
+
+If that doesn't fit how you work, this is the wrong tool.
 
 ## How it works
 
@@ -136,11 +144,14 @@ Review repeats as many times as needed until the presenter declares the document
 │   └── <talk-folder>/                 # one folder per talk
 │       ├── master.md                  # the outline (deliverable)
 │       ├── memory.md                  # progress log / restore point
-│       └── knowledge/
-│           ├── articles/              # PDFs, HTML, papers
-│           ├── llm-chats/             # ZIP exports of LLM chat sessions
-│           └── compile/               # Librarian's structured Markdown output
+│       ├── knowledge/
+│       │   ├── articles/              # PDFs, HTML, papers
+│       │   ├── llm-chats/             # ZIP exports of LLM chat sessions
+│       │   └── compile/               # Librarian's structured Markdown output
+│       └── output/                    # rendered .pptx (Step 7, optional)
 └── .claude/
+    ├── settings.json                  # shared Claude Code settings
+    ├── settings.local.json            # local overrides (gitignored)
     ├── templates/
     │   └── master-template.md         # canonical structure of master.md
     ├── agents/
@@ -148,8 +159,7 @@ Review repeats as many times as needed until the presenter declares the document
     │   └── scribe.md                  # Scribe subagent prompt
     └── skills/
         └── md-to-ppt/
-            ├── SKILL.md               # Render-to-pptx orchestrator (Step 7)
-            └── render_pandoc.py       # Pandoc fallback script
+            └── SKILL.md               # Render-to-pptx orchestrator (Step 7)
 ```
 
 ## Key conventions
