@@ -137,7 +137,7 @@ Confirm the structure was created and show the paths. Initialize `memory.md` wit
 Ask the presenter to upload everything relevant from their exploration of the topic. Tell them explicitly where each type goes:
 
 - `knowledge/articles/` → PDFs, HTML exports, web pages, papers, screenshots of articles.
-- `knowledge/llm-chats/` → ZIP exports of LLM chat sessions (Claude, ChatGPT, Gemini, etc.).
+- `knowledge/llm-chats/` → Explore a topic in a chat session (Claude, ChatGPT, Gemini, etc.) — learn, push on ideas, generate diagrams and images — then export the whole session to ZIP and drop it here.
 
 > **Pro-tip:** Explore the topic using Claude chat sessions — learn, generate charts, push on ideas. When you're done exploring, export the conversation to ZIP and drop it into `knowledge/llm-chats/`. The Librarian (Collector) agent will do the work to prepare all that discussion into structured Markdown.
 

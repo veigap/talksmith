@@ -8,8 +8,8 @@ Fill in the sections below. Leave a section blank if it genuinely does not apply
 
 ## How my presentations are consumed
 
-Live classroom lecture.
+<!-- Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? -->
 
 ## Audience defaults
 
-University students.
+<!-- Who is typically in the room (or watching async)? Technical level, role, what they already know, what they care about. The Agent will use this as the default audience unless overridden per-presentation. -->
