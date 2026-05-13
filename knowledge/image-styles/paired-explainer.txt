@@ -1,0 +1,12 @@
+<Mechanism title>                   <Output title>
+<subhead — how it works>            <subhead — what comes out>
++------------------------+          +------------------------+
+|                        |          |                        |
+|   <mechanism diagram   |          |   <output trace /      |
+|    with labeled parts  |[purple]  |    artifact with same  |[coral]
+|    A, B, C, …>         |          |    labels A, B, C, …>  |
+|                        |          |                        |
++------------------------+          +------------------------+
+
+Note: the cross-labels (A, B, C…) appear in BOTH panels at corresponding
+positions, so the audience can trace cause → effect.

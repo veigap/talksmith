@@ -1,0 +1,18 @@
++----------+      +-------------------+      +----------+
+| <input>  | -->  | <process>         | -->  | <output> |
+| <subhead>|[gray]| <subhead>         |[purp]| <subhead>|[teal]
+|  <viz>   |      |   <viz>           |      |  <viz>   |
++----------+      +-------------------+      +----------+
+
+              <formal expression or summary line>
+        <plain-language caption explaining the chain>
+
+
+Variant — "model as black-box" (small gray middle):
+
++------------------+      +--------+        +------------------+
+| <input>          |      |        |        | <output>         |
+| <subhead>        | --→  | <model>| --→    | <subhead>        |
+|   <viz>          |[blue]|[gray]  |        |   <viz>          |[purple]
+|                  |      |        |        |                  |
++------------------+      +--------+        +------------------+

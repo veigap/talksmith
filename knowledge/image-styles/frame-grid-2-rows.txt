@@ -1,0 +1,11 @@
+<Row 1 title — reference / correct case>
+<subhead — condition / regime>
+
+  (frame₀) →→  (frame₁) →→  (frame₂) →→  (frame₃) →→  (frame₄)
+    t₀          t₁          t₂          t₃          t₄
+
+<Row 2 title — contrast / failure case>
+<subhead — condition / regime>
+
+  (frame₀) →→  (frame₁) →→  (frame₂) →→  (frame₃) →→  (frame₄)
+    t₀          t₁          t₂          t₃          t₄

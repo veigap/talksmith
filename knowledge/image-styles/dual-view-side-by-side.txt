@@ -1,0 +1,11 @@
+<Left-view title>                    <Right-view title>
+<subhead>                            <subhead>
++----------------------+            +----------------------+
+|                      |            |                      |
+|   <view A content>   |            |   <view B content>   |
+|                      |[color-A]   |                      |[color-B]
+|                      |            |                      |
+|  <axis label →>      |            |  <axis label →>      |
++----------------------+            +----------------------+
+
+         <centered caption asserting the equivalence>

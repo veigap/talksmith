@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 680 320" role="img">
+<style>
+text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.t { font-size: 14px; fill: #1c1c1c; }
+.ts { font-size: 12px; fill: #5f5e5a; }
+.th { font-size: 14px; font-weight: 500; fill: #1c1c1c; }
+.c-gray > rect { fill: #F1EFE8; stroke: #888780; stroke-width: 0.5; }
+.c-purple > rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; }
+.c-teal > rect { fill: #E1F5EE; stroke: #1D9E75; stroke-width: 0.5; }
+</style>
+<title>Sistema LTI: entrada x(t), respuesta al impulso h(t) y salida y(t)</title><desc>Diagrama del modelo entrada-sistema-salida con la respuesta al impulso h(t) dentro del bloque. La operación que conecta entrada y salida es la convolución.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<g class="c-gray"><rect x="40" y="100" width="160" height="100" rx="8"/></g>
+<text class="th" x="120" y="135" text-anchor="middle" fill="#2C2C2A">x(t)</text>
+<text class="ts" x="120" y="155" text-anchor="middle" fill="#5F5E5A">entrada</text>
+<polyline fill="none" stroke="#444441" stroke-width="1.2" points="60,185 75,185 80,178 85,185 95,185 100,168 105,185 115,185 120,182 125,185 135,185 140,172 145,185 155,185 160,180 165,185 180,185"/>
+
+<line x1="200" y1="150" x2="258" y2="150" stroke="#5f5e5a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<g class="c-purple"><rect x="260" y="80" width="160" height="140" rx="8"/></g>
+<text class="th" x="340" y="108" text-anchor="middle" fill="#3C3489">sistema LTI</text>
+<text class="ts" x="340" y="124" text-anchor="middle" fill="#534AB7">respuesta al impulso h(t)</text>
+<line x1="285" y1="190" x2="395" y2="190" stroke="#7F77DD" stroke-width="0.5"/>
+<path fill="none" stroke="#3C3489" stroke-width="1.8" d="M285 190 L300 190 L305 150 Q315 142 325 156 Q335 175 345 188 Q360 192 380 191 L395 190"/>
+
+<line x1="420" y1="150" x2="478" y2="150" stroke="#5f5e5a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<g class="c-teal"><rect x="480" y="100" width="160" height="100" rx="8"/></g>
+<text class="th" x="560" y="135" text-anchor="middle" fill="#085041">y(t)</text>
+<text class="ts" x="560" y="155" text-anchor="middle" fill="#0F6E56">salida</text>
+<polyline fill="none" stroke="#0F6E56" stroke-width="1.2" points="500,185 510,185 515,180 520,170 525,175 530,182 540,185 545,180 552,168 560,178 568,182 575,184 585,180 595,172 605,178 615,182 620,185"/>
+
+<text class="ts" x="340" y="252" text-anchor="middle" fill="#5f5e5a">y(t) = x(t) ∗ h(t)</text>
+<text class="ts" x="340" y="272" text-anchor="middle" fill="#888780">la salida es la convolución de la entrada con la respuesta al impulso</text>
+</svg>
