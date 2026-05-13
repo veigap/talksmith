@@ -134,7 +134,7 @@ Review repeats as many times as needed until the presenter declares the document
 ├── README.md                          # this file
 ├── CLAUDE.md                          # full agent instructions (Talksmith spec)
 ├── knowledge/
-│   ├── profile.md                     # global presenter profile (persistent context)
+│   ├── profile.md                     # presenter's filled-in profile (created from template in Step 0.5; gitignored if personal)
 │   ├── principles.md                  # what makes a good presentation (loaded at session start)
 │   ├── learnings.md                   # durable rules promoted from feedback patterns
 │   ├── feedback-backlog.md            # cross-Talk feedback log
@@ -153,7 +153,8 @@ Review repeats as many times as needed until the presenter declares the document
     ├── settings.json                  # shared Claude Code settings
     ├── settings.local.json            # local overrides (gitignored)
     ├── templates/
-    │   └── master-template.md         # canonical structure of master.md
+    │   ├── master-template.md         # canonical structure of master.md
+    │   └── profile-template.md        # empty profile (seeds knowledge/profile.md in Step 0.5)
     ├── agents/
     │   ├── librarian.md               # Librarian subagent prompt
     │   └── scribe.md                  # Scribe subagent prompt
