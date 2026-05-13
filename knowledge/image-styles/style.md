@@ -5,7 +5,7 @@ Visual contract for SVG diagrams in Talksmith. Sibling `*.svg`/`*.txt` files in 
 ## Hard constraints (apply to every SVG)
 
 - `viewBox="0 0 680 H"`, H ∈ [260, 580]. Width fixed at 680. `width="100%"`.
-- Root attrs: `role="img"`. Children include `<title>` + `<desc>` (one-line, Spanish — match corpus language).
+- Root attrs: `role="img"`. Children include `<title>` + `<desc>` (one-line each). **All in-SVG text** (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels) uses the **`Presentation language`** declared in [`knowledge/profile.md`](../profile.md). If the profile is missing or that field is empty, fall back to the language of `master.md`'s prose; if still ambiguous, ask the presenter before rendering.
 - `<defs>` block with `<marker id="arrow">` declared verbatim (see Idioms).
 - Outer left margin = 40 px. First panel starts y ≥ 60.
 - Heading + subhead pair sits **above** the panel rect by default. **Exception:** pipeline-style small-square panels (e.g. `pipeline-3-stage` boxes ≤ 200 wide) center heading + subhead **inside** the panel using `text-anchor="middle"` at panel center, heading at `panel.y + 35`, subhead at `panel.y + 55`.

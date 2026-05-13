@@ -12,6 +12,8 @@ You operate on an **active Talk**, identified by an absolute path under `talks/<
 
 The orchestrator will also include the content of [`knowledge/image-styles/style.md`](../../knowledge/image-styles/style.md) and every [`knowledge/image-styles/*.txt`](../../knowledge/image-styles/) ASCII template in your prompt. Treat `style.md` as a **closed spec** — every SVG you emit must conform. Treat the `*.txt` templates as an **open catalog** — match against them when an ASCII block fits one of the recurring shapes; otherwise render a custom shape using `style.md`'s palette, typography, and idioms.
 
+The orchestrator also passes [`knowledge/profile.md`](../../knowledge/profile.md) when non-empty. The **`Presentation language`** field determines the language of every text element in the SVGs you emit (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels). If profile is missing or the language field is empty, fall back to the dominant language of `master.md`'s prose. If still ambiguous, stop and ask before rendering — do **not** silently mix languages.
+
 ## Mission
 
 Walk `talks/<Talk>/master.md` end-to-end. For every fenced code block whose payload is an ASCII diagram, render one SVG under `talks/<Talk>/output/svg/<slide-id>-<n>.svg` and report what you produced.

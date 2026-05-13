@@ -1,6 +1,6 @@
 # Presentation Principles
 
-This file is **session-wide context** for Talksmith. The orchestrator loads it at session start alongside [`profile.md`](profile.md) and [`learnings.md`](learnings.md), and passes the relevant principles into every dispatch to the `librarian`, `scribe`, and `md-to-ppt` subagents.
+This file is **session-wide context** for Talksmith. The orchestrator loads it at session start alongside [`profile.md`](profile.md) and [`learnings.md`](learnings.md), and passes the relevant principles into every dispatch to the `librarian`, `scribe`, and `illustrator` subagents and the `md-to-ppt` skill.
 
 The principles below are a mix of:
 1. **Talksmith opinions** — encoded methodology and house defaults.

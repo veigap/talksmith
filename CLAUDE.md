@@ -19,21 +19,22 @@ When dispatching `librarian`, `scribe`, or `illustrator`, always include the abs
 
 ## Session start — mandatory loads
 
-Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`, `md-to-ppt`). If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
+Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`, `illustrator`) and skill invocation (`md-to-ppt`). If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
 
 | File | What it is | Behavior |
 |---|---|---|
 | [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | If filled, treat as global defaults for audience/tone/agenda. If absent/empty, Step 0.5 offers to fill it. |
 | [`knowledge/principles.md`](knowledge/principles.md) | House rules for what makes a good presentation (Mayer, Tufte, Reynolds, Duarte). | Defaults, not rules. Override per slide when the presenter has a reason; record reason in `Presenter feedback`. |
 | [`knowledge/learnings.md`](knowledge/learnings.md) | Durable rules promoted from feedback patterns (3+ recurrences). | Soft defaults. Apply when an entry's "Where it applies" surface comes up. |
-| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) | Visual contract for SVG diagrams + parameterized ASCII templates per recurring shape. | Style spec is mandatory for all SVG output. ASCII catalog is **open** — draft custom shapes when no template fits. Pass relevant template + style into every `md-to-ppt` dispatch. |
+| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) | Visual contract for SVG diagrams + parameterized ASCII templates per recurring shape. | Style spec is mandatory for all SVG output. ASCII catalog is **open** — draft custom shapes when no template fits. Pass `style.md` plus the relevant `*.txt` template(s) into every `illustrator` dispatch. |
 
 ## Interaction defaults
 
 - **Use `AskUserQuestion` for every choice, confirmation, or decision** (new/resume, folder name, thesis variant, section ordering, slide framing, keep/cut). Propose 2–4 concrete options derived from current context. Reserve free-text only for genuinely open prompts (e.g. "what's your thesis in one sentence?").
-- **Exception:** if you have no context to propose from (e.g. the very first Topic input at session start), ask free-text. Never fabricate candidates.
+- **Exception 1 — no context:** if you have no context to propose from (e.g. the very first Topic input at session start), ask free-text. Never fabricate candidates.
+- **Exception 2 — Step 5 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 6 Review. See Step 5 *Question budget* for the precise rules.
 - **Drive the conversation.** Ask the next useful question rather than waiting.
-- **Update `memory.md` after every step (1–6)** via the `scribe` subagent. Capture: current step, what was decided, key inputs, files changed, pending open questions. On resume, read `memory.md` first.
+- **Update `memory.md` after every step (1 through 7)** via the `scribe` subagent — including the 6.5 (Polish) and 6.7 (Learnings) sub-steps. Capture: current step, what was decided, key inputs, files changed, pending open questions. On resume, read `memory.md` first.
 
 ## Workflow
 
@@ -91,7 +92,7 @@ Immediately after, `AskUserQuestion`: **new presentation** or **resume existing*
 Template: [`.claude/templates/profile-template.md`](.claude/templates/profile-template.md) (canonical empty form, never edited directly).
 Customized: `knowledge/profile.md` (created only after the presenter fills it).
 
-Active sections (do not invent removed ones like "Who I am", "Tone and style", "Class structure", "Constraints"): **How my presentations are consumed**, **Audience defaults**.
+Active sections (do not invent removed ones like "Who I am", "Tone and style", "Class structure", "Constraints"): **How my presentations are consumed**, **Audience defaults**, **Presentation language**.
 
 | State of `knowledge/profile.md` | Action |
 |---|---|
@@ -193,13 +194,31 @@ Structure: deck = **Sections** containing **Slides**. Each Slide has `Content`, 
 
 ## Step 5 — Draft
 
-`AskUserQuestion` for mode. All three modes use `AskUserQuestion` for every subsequent decision (thesis variants, section orderings, slide framings, keep/cut). Free-text only when genuinely open.
+`AskUserQuestion` for mode. Free-text only when genuinely open. Question-density varies by mode (see *Question budget* below).
 
 | Mode | Trigger | Sequence |
 |---|---|---|
 | **A — Interview** | Agent asks, presenter answers. | 1. Audience & frontmatter (use profile defaults). 2. Thesis (push back if vague). 3. Sections + per-section "Goal". 4. Per-slide content/sources/speaker notes. 5. Conclusions. |
-| **B — Agent Draft** | Agent drafts; presenter refines. | 1. Draft entire `master.md` from `knowledge/compile/` + `knowledge/profile.md`. 2. Present to presenter. 3. Ask **only targeted clarifying questions** for unresolvable gaps. Do not re-ask things already answered by profile/sources. |
-| **C — Presenter Outline** | Presenter brain-dumps; agent structures. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Group into 3–7 Sections, infer goals, order into a narrative arc. 3. `AskUserQuestion` to confirm structure before drafting bodies. 4. Map their topics to slides (don't invent, don't drop). 5. Draft Content/Sources/Speaker notes from compile. 6. For any slide with no supporting source: `AskUserQuestion` keep/cut/pull-from-source. |
+| **B — Agent Draft** | Agent drafts; presenter refines. | 1. Draft entire `master.md` from `knowledge/compile/` + `knowledge/profile.md`. 2. Present to presenter. 3. Ask **only critical clarifying questions** for unresolvable gaps. Do not re-ask things already answered by profile/sources. |
+| **C — Presenter Outline** | Presenter brain-dumps; agent structures **with minimal interruption**. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Group into 3–7 Sections, infer goals, order into a narrative arc — **do not confirm structure**; the presenter will edit if it's wrong. 3. Map their topics to slides (don't invent, don't drop). 4. Draft Content/Sources/Speaker notes from compile. 5. Ship the full draft to the presenter. Everything else is **deferred to async feedback** in Step 6 (Review). |
+
+**Question budget per mode:**
+
+- **A** (Interview) — unlimited; the agent drives the Q&A.
+- **B** (Agent Draft) — critical only. *Critical = the draft cannot proceed coherently without this answer.* Everything else: draft a best-guess and let the presenter correct it via Step-6 feedback bullets.
+- **C** (Presenter Outline) — **critical only, ideally zero.** Same definition as B. The brain-dump *is* the input; the agent's job is to structure and fill, not to re-interrogate the presenter. Defer ordering preferences, slide-title wording, keep/cut decisions, framing nuances, etc. to Step 6 Review where the presenter edits `master.md` directly.
+
+**What counts as "critical":**
+- Required field can't be inferred (e.g. duration is missing and the profile has no default).
+- Two interpretations of the brain-dump lead to **structurally incompatible** drafts (not just different wording).
+- A slide is anchored on a compiled source that flatly contradicts another, and the resolution changes the slide's thesis.
+
+**What does NOT count as critical** (defer to async feedback):
+- Section ordering preferences.
+- Slide-title wording.
+- Whether to keep a slide that has no supporting source — draft it with a `TODO source` placeholder and let the presenter cut or fill in Step 6.
+- Tone, emoji density, level of formality.
+- Choice between two plausible visual idioms for the same concept.
 
 **Common to all modes:**
 
@@ -287,8 +306,8 @@ Update `memory.md` with `Current step: 6.7 — Learnings complete` and the chose
 Dispatch [`md-to-ppt`](.claude/skills/md-to-ppt/SKILL.md).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill must be in the registry). If missing, stop and tell the presenter to run this step inside Cowork. **No CLI fallback** — pandoc/Marp/python-pptx experiments produced lower-fidelity output.
-- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6's closing-the-loop). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
-- **Reuses the SVGs at `talks/<Talk>/output/svg/`** rendered in Step 6's closing-the-loop — does not regenerate them. The cleaned `master.md` already references them via `![alt](output/svg/…)`; the renderer follows the references and passes each SVG path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
+- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6.5 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
+- **Reuses the SVGs at `talks/<Talk>/output/svg/`** rendered by the `illustrator` subagent in Step 6.5 (Polish) — does not regenerate them. The cleaned `master.md` already references them via `![alt](output/svg/…)`; the renderer follows the references and passes each SVG path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
 - Output: `talks/<Talk>/output/master.pptx`. Reference template defaults to [`knowledge/template.pptx`](knowledge/template.pptx); only override if the presenter wants a different look.
 
 ---
