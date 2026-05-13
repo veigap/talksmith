@@ -23,15 +23,15 @@ date:
 
 **Sections (in delivery order):**
 
-- Section 1: <Section Name>
-- Section 2: <Section Name>
-- Section x: <Section Name>
+- 1. <Section Name>
+- 2. <Section Name>
+- x. <Section Name>
 
 **Presenter feedback:**
 
 ---
 
-# Section 1: <Section Name>
+# 1. <Section Name>
 
 **Goal of this section:**
 
@@ -40,76 +40,98 @@ date:
   Resolution: reordered slides — Slide 1 now opens with a thought experiment, technique named in Slide 3.
 - [open] 2026-05-13 — "Add a 'common misconceptions' bullet at the end of this section."
 
-## Slide 1: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
-  - [closed] 2026-05-12 — "Drop the term 'distribution' on first mention — too jargon-heavy."
-    Resolution: replaced with "the shape of the data" on first mention; reintroduce term on Slide 2.
-  - [open] 2026-05-14 — "Trim to ~90 seconds; we lose people if this slide goes past two minutes."
+---
 
-## Slide 2: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+## 1. <Slide Title>
 
-## Slide 3: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
+- [closed] 2026-05-12 — "Drop the term 'distribution' on first mention — too jargon-heavy."
+  Resolution: replaced with "the shape of the data" on first mention; reintroduce term on Slide 2.
+- [open] 2026-05-14 — "Trim to ~90 seconds; we lose people if this slide goes past two minutes."
 
 ---
 
-# Section 2: <Section Name>
+## 2. <Slide Title>
+
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
+
+---
+
+# 2. <Section Name>
 
 **Goal of this section:**
 
 **Presenter feedback:**
 
-## Slide 1: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+---
+
+## 1. <Slide Title>
+
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
 
 ---
 
-# Section x: <Section Name>
+# x. <Section Name>
 
 **Goal of this section:**
 
 **Presenter feedback:**
 
-## Slide 1: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+---
 
-## Slide 2: <Slide Title>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+## 1. <Slide Title>
+
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
 
 ---
 
 # Conclusions
 
-## Slide 1: Key takeaways
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+## 1. Key takeaways
 
-## Slide 2: <Call to action / next steps / Q&A>
-- **Content:**
-- **Sources:**
-- **Speaker notes:**
-- **Presenter feedback:**
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
+
+---
+
+## 2. <Call to action / next steps / Q&A>
+
+### Content
+
+### Sources
+
+### Speaker notes
+
+### Presenter feedback
 
 ---
 

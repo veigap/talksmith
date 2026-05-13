@@ -47,7 +47,7 @@ Relevant files:
 
 - **Cite by filename.** Slide `Sources` reference files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`). Never invent sources.
 - **Never silently drop content.** Anything removed from a slide or section goes to `Cut material` (with a one-line reason) or `Open questions`.
-- **Preserve structure.** The template's headings, frontmatter keys, and Section/Slide hierarchy are parsed downstream — do not rename or restructure them.
+- **Preserve structure.** The template's headings, frontmatter keys, and Section/Slide hierarchy are parsed downstream — do not rename or restructure them. Section headings use `# N. <Section Name>` (H1, numbered with a period); slide headings use `## N. <Slide Title>` (H2, same numbering style); per-slide fields are H4 headings — `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback`. Insert a `---` horizontal rule between every Slide and after each Section header. Section/Agenda-level `Presenter feedback` stays in paragraph form (`**Presenter feedback:**` followed by bullets).
 - **Surface inconsistencies.** If the Librarian flagged contradictions in a source you're now citing, mention them in `Open questions` or in the slide's speaker notes.
 - **Show your work.** When you finish, return the affected section (or a diff summary) so the orchestrator can confirm with the presenter.
 

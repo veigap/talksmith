@@ -308,7 +308,7 @@ When the presenter declares the document final, **first** run a pattern scan ove
 If the presenter chooses to render the deck, dispatch to the [`md-to-ppt`](.claude/skills/md-to-ppt/SKILL.md) skill. The skill is **Cowork-only**: it delegates `.pptx` authoring to Anthropic's official `pptx` skill, which is available in **Claude Cowork** (desktop app and web) but not in the plain Claude Code CLI.
 
 - **Prerequisite:** the session must be running inside Claude Cowork so the native `pptx` skill is in the skill registry. If it's missing, stop and tell the presenter to run this step inside Cowork — do **not** offer a CLI fallback (earlier experiments with pandoc, Marp CLI, and hand-rolled python-pptx all produced lower-fidelity output; see the skill's "Why Cowork-only" section).
-- Pre-processes `master.md` (strips `Thesis`, `Open questions`, `Cut material`, and every `Presenter feedback` field; maps `# Section N: …` to divider slides and `## Slide N: …` to content slides; speaker notes go to the notes pane).
+- Pre-processes `master.md` (strips `Thesis`, `Open questions`, `Cut material`, and every `Presenter feedback` field; maps every numbered H1 — `# N. <name>` current, legacy `# N — <name>` or `# Section N: <name>` — to a divider slide, and every H2 inside a section — `## N. <title>` current, legacy `## N — <title>` or `## Slide N: <title>` — to a content slide; speaker notes go to the notes pane).
 - Converts ASCII charts inside fenced code blocks to SVG under `output/assets/` and passes them to the native skill for embedding.
 - Outputs `talks/<Talk>/output/master.pptx`. Reference template defaults to [`knowledge/template.pptx`](knowledge/template.pptx); only ask for an alternative if the presenter signals they want a different look-and-feel.
 

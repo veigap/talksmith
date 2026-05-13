@@ -118,7 +118,7 @@ When filling `master.md` from empty, the presenter picks how to work:
 The first Draft is rarely final. In Review, the presenter opens `master.md` in their editor of choice (VS Code, Obsidian, plain text — anything), drops plain-text feedback bullets inside `Presenter feedback` fields:
 
 ```
-**Presenter feedback:**
+### Presenter feedback
 - "this slide is too dense; trim to 90 seconds"
 - "swap with the slide above"
 ```

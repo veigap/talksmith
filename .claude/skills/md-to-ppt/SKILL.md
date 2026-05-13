@@ -41,9 +41,9 @@ talks/<Talk>/
 2. Resolve the reference template path (default `knowledge/template.pptx`) and confirm it exists.
 3. **Confirm the native `pptx` skill is available** in the current session's skill registry. If it isn't → stop and tell the presenter to run this step inside Claude Cowork.
 4. **Pre-process `master.md`** into an intermediate file at `output/master.intermediate.md`:
-   - Strip working-notes content that should never appear in the deck: `# Open questions`, `# Cut material`, `# Thesis`, and every `Presenter feedback` field at any level (both bullet form `- **Presenter feedback:**` with nested bullets, and paragraph form `**Presenter feedback:**` followed by bullets).
-   - Map structure: every `# Section N: <name>` → a dedicated divider slide; every `## Slide N: <title>` → a content slide.
-   - Speaker notes (every `- **Speaker notes:** …` bullet on a Slide) go into the slide's notes pane, not the slide body.
+   - Strip working-notes content that should never appear in the deck: `# Open questions`, `# Cut material`, `# Thesis`, and every `Presenter feedback` field at any level. Recognize all three syntaxes used historically: H4 heading form (`### Presenter feedback` followed by bullets — current template), paragraph form (`**Presenter feedback:**` followed by bullets — used at Section/Agenda level), and legacy bullet form (`- **Presenter feedback:**` with nested bullets — older Talks).
+   - Map structure: every numbered H1 (`# N. <name>` in the current template, or legacy `# N — <name>` / `# Section N: <name>`) → a dedicated divider slide. Named H1s (`# Agenda`, `# Conclusions`, `# Open questions`, `# Cut material`) are **not** sections — `Agenda` and `Conclusions` are passed through; `Open questions` and `Cut material` are stripped. Every H2 (`## …`) inside a section or `Conclusions` → a content slide. Slide-heading forms: current `## N. <title>` (e.g. `## 1. Why distributions matter`), legacy `## N — <title>` and `## Slide N: <title>`. Strip the leading `N.` / `N —` / `Slide N:` prefix when extracting the title. Slide fields are H4 headings: `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` (older Talks may still use `- **Field:** …` bullets — accept both).
+   - Speaker notes (everything under a Slide's `### Speaker notes` H4, or the legacy `- **Speaker notes:** …` bullet) go into the slide's notes pane, not the slide body.
    - Leave the rest of the content untouched. `master.md` stays the source of truth.
 5. **Detect ASCII charts** in fenced code blocks. For each chart (fenced block whose payload contains box-drawing chars `─│┌┐└┘├┤┬┴┼`, arrow glyphs `→ ← ↑ ↓ ⇒`, or ≥3 lines of spatially arranged ASCII `+-|<>v^/\`):
    - Render to an SVG under `output/assets/<slide-id>-<n>.svg`.
@@ -57,7 +57,7 @@ talks/<Talk>/
 ## Rules
 
 - **The base template is mandatory, not advisory.** Every render must inherit theme, fonts, colors, and master slide layouts from [`knowledge/template.pptx`](../../../knowledge/template.pptx) (or the explicit override the presenter passed). Decks authored from scratch with the native skill's default theme are a render failure even if the file is otherwise correct.
-- **One divider slide per Section.** Each `# Section N: …` in `master.md` produces a dedicated divider slide. Never collapse Sections.
+- **One divider slide per Section.** Each numbered H1 in `master.md` (`# N. <name>` current, legacy `# N — <name>` / `# Section N: <name>`) produces a dedicated divider slide. Never collapse Sections.
 - **Never modify `master.md` during render.** All transformation happens in memory or in an intermediate file under `output/`. `master.md` stays the source of truth.
 - **Speaker notes go into the notes pane**, never on the slide body.
 - **Strip working-notes sections.** `Open questions`, `Cut material`, `Thesis`, and all `Presenter feedback` bullets must not appear in the rendered deck.
