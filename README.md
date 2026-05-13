@@ -100,7 +100,7 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
        v
      master.md ready
        v
-  [6] Render      -- md-to-ppt skill: master.md + template -> .pptx (optional)
+  [6] Render      -- md-to-pptx skill: master.md + template -> .pptx (optional)
 ```
 
 Steps 0 (Introduce) and 4 (Template copy) happen automatically and are not shown above. The full step-by-step instructions live in [CLAUDE.md](CLAUDE.md).
@@ -159,7 +159,7 @@ Review repeats as many times as needed until the presenter declares the document
     │   ├── librarian.md               # Librarian subagent prompt
     │   └── scribe.md                  # Scribe subagent prompt
     └── skills/
-        └── md-to-ppt/
+        └── md-to-pptx/
             └── SKILL.md               # Render-to-pptx orchestrator (Step 7)
 ```
 

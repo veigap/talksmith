@@ -1,6 +1,6 @@
 # Presentation Principles
 
-This file is **session-wide context** for Talksmith. The orchestrator loads it at session start alongside [`profile.md`](profile.md) and [`learnings.md`](learnings.md), and passes the relevant principles into every dispatch to the `librarian`, `scribe`, and `illustrator` subagents and the `md-to-ppt` skill.
+This file is **session-wide context** for Talksmith. The orchestrator loads it at session start alongside [`profile.md`](profile.md) and [`learnings.md`](learnings.md), and passes the relevant principles into every dispatch to the `librarian`, `scribe`, and `illustrator` subagents and the `talksmith:md-to-pptx` / `talksmith:ascii-to-svg` skills.
 
 The principles below are a mix of:
 1. **Talksmith opinions** — encoded methodology and house defaults.
@@ -29,7 +29,7 @@ Treat every principle as a **default**, not a rule. The presenter can override a
 
 - **Cite by filename.** Every slide's `Sources` references files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`). No floating assertions; no "as I recall…"
 - **Never silently drop content.** Anything removed goes to `Cut material` (with a one-line reason) or `Open questions`. The audit trail matters more than tidiness.
-- **Image-first when a concept has shape.** If an idea has structure — a flow, a hierarchy, a comparison, a before/after, an architecture, a state machine — capture it as a visual, not as bullets. The **first draft of any such visual is an ASCII diagram inside `master.md`** (tight, labeled, load-bearing — not decoration). Treat the ASCII as the *outline* of the image: faithful enough to review during drafting, and later promoted — reused from `knowledge/compile/` if one fits, or rendered by `md-to-ppt` for fenced ASCII blocks. Don't wait for a polished image to introduce a visual; draft it in ASCII first.
+- **Image-first when a concept has shape.** If an idea has structure — a flow, a hierarchy, a comparison, a before/after, an architecture, a state machine — capture it as a visual, not as bullets. The **first draft of any such visual is an ASCII diagram inside `master.md`** (tight, labeled, load-bearing — not decoration). Treat the ASCII as the *outline* of the image: faithful enough to review during drafting, and later promoted — reused from `knowledge/compile/` if one fits, or rendered by `md-to-pptx` for fenced ASCII blocks. Don't wait for a polished image to introduce a visual; draft it in ASCII first.
 - **Aim for a balanced visual mix — not a rule, a default.** None of the below is mandatory; use judgement per slide. The goal is to avoid wall-of-bullets decks and reach for the lightest format that actually sharpens the point:
   - *Emoji as anchors when they help* — ✅/❌ for trade-offs, ⚠️ for caveats, 🎯 for goals, 📊 for data, 🧠 for insight, 🔁 for loops/iteration. Skip them when they'd feel forced or noisy.
   - *Tables when there are 2+ dimensions* — comparisons, trade-offs, before/after, structured data. A bulleted list is usually fine for simple enumerations.

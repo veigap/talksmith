@@ -19,14 +19,14 @@ When dispatching `librarian`, `scribe`, or `illustrator`, always include the abs
 
 ## Session start — mandatory loads
 
-Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`, `illustrator`) and skill invocation (`md-to-ppt`). If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
+Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`, `illustrator`) and skill invocation (`talksmith:md-to-pptx`, `talksmith:ascii-to-svg`). If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
 
 | File | What it is | Behavior |
 |---|---|---|
 | [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | If filled, treat as global defaults for audience/tone/agenda. If absent/empty, Step 0.5 offers to fill it. |
 | [`knowledge/principles.md`](knowledge/principles.md) | House rules for what makes a good presentation (Mayer, Tufte, Reynolds, Duarte). | Defaults, not rules. Override per slide when the presenter has a reason; record reason in `Presenter feedback`. |
 | [`knowledge/learnings.md`](knowledge/learnings.md) | Durable rules promoted from feedback patterns (3+ recurrences). | Soft defaults. Apply when an entry's "Where it applies" surface comes up. |
-| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) | Visual contract for SVG diagrams + parameterized ASCII templates per recurring shape. | Style spec is mandatory for all SVG output. ASCII catalog is **open** — draft custom shapes when no template fits. Pass `style.md` plus the relevant `*.txt` template(s) into every `illustrator` dispatch. |
+| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) | Visual contract for SVG diagrams + parameterized ASCII templates per recurring shape. | Style spec is mandatory for all SVG output. ASCII catalog is **open** — draft custom shapes when no template fits. The `illustrator` agent receives them in its dispatch and forwards the relevant pieces into every `talksmith:ascii-to-svg` skill invocation it makes. |
 
 ## Interaction defaults
 
@@ -50,7 +50,7 @@ Load every file below in order, before Step 0. Treat each as **persistent sessio
 | 6 | Review | Apply presenter's `Presenter feedback` bullets; stamp `[open]` → `[closed]` with `Resolution:`. Loops N times. | Edits `master.md` in external editor; adds plain `- "feedback"` bullets. |
 | 6.5 | Polish | **Mandatory.** Render every ASCII → SVG (dispatch [`illustrator`](.claude/agents/illustrator.md)); clean `master.md` (dispatch `scribe`: inline images, strip all feedback fields). | Passive. |
 | 6.7 | Learnings | **Mandatory.** Pattern-scan [`feedback-backlog.md`](knowledge/feedback-backlog.md); for any pattern recurring ≥3× across all Talks, ask presenter to promote to [`learnings.md`](knowledge/learnings.md). Then branch on terminal action (promote-to-library / PPTX / stop). | Approves promoted learnings; picks terminal option. |
-| 7 *(opt)* | Render PPTX | Dispatch [`md-to-ppt`](.claude/skills/md-to-ppt/SKILL.md). Cowork only. | Confirms render. |
+| 7 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md), which delegates `.pptx` authoring to `skill://antropic-skills:/pptx`. Cowork only. | Confirms render. |
 
 Do not skip ahead. Wait for explicit confirmation between steps.
 
@@ -80,7 +80,7 @@ Concise: state you are Talksmith, name the three roles, display the workflow cha
        v
   [7] Learnings   -- promote ≥3x recurring feedback to learnings.md
        v
-  [8] Render PPTX -- md-to-ppt (optional, Cowork)
+  [8] Render PPTX -- md-to-pptx (optional, Cowork)
 ```
 
 Immediately after, `AskUserQuestion`: **new presentation** or **resume existing**. If resume, list folders under `talks/`, let presenter pick via `AskUserQuestion`, then **read `talks/<Talk>/memory.md`** and continue from the recorded step.
@@ -120,7 +120,7 @@ talks/<folder-name>/
 │   ├── llm-chats/                # chat session ZIPs
 │   └── compile/                 # populated in Step 3
 ├── images/                      # populated in Step 6.5 (illustrator + scribe). All master.md image refs resolve here.
-└── output/                      # populated in Step 7 (md-to-ppt). Holds master.pptx.
+└── output/                      # populated in Step 7 (md-to-pptx). Holds master.pptx.
 ```
 
 Initialize `memory.md` with topic, folder, ISO date, `Current step: 1 — Scaffold complete`. Show created paths.
@@ -264,7 +264,7 @@ When the presenter declares the document final ("ready" / "done" / "looks good" 
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
-1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent: scans `master.md` for fenced ASCII charts and writes one SVG per chart **directly into `talks/<Talk>/images/<slide-id>-<n>.svg`** (canonical image folder — same level as `master.md`), following [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) (closed style spec) and the relevant [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template when one matches the shape (open catalog). CLI-safe — no Cowork dependency. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent. The agent walks `master.md`, extracts per-slide context for every fenced ASCII block, and invokes the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg` following [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) (closed style spec) and the relevant [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template when one matches the shape (open catalog). CLI-safe — no Cowork dependency. The agent aggregates and reports rendered/unchanged/failed counts.
 
 2. **Clean `master.md`.** Dispatch the `scribe` subagent. Three transformations:
    - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
@@ -306,7 +306,7 @@ Update `memory.md` with `Current step: 6.7 — Learnings complete` and the chose
 
 ## Step 7 — Render PPTX *(optional, Cowork only)*
 
-Dispatch [`md-to-ppt`](.claude/skills/md-to-ppt/SKILL.md).
+Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md). The skill delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx); pre-processing of `master.md` → intermediate Markdown is handled by the skill's CLI-safe [`convert.py`](.claude/skills/md-to-pptx/convert.py).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill must be in the registry). If missing, stop and tell the presenter to run this step inside Cowork. **No CLI fallback** — pandoc/Marp/python-pptx experiments produced lower-fidelity output.
 - Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6.5 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
