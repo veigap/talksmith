@@ -69,7 +69,7 @@ The desktop app is the most ergonomic option day-to-day: drag-and-drop source up
 In either mode, the Presenter Agent will:
 
 1. Introduce itself and show the workflow chart.
-2. Load [`profile.md`](profile.md) if filled, or offer to fill it (Step 0.5).
+2. Load [`knowledge/profile.md`](knowledge/profile.md) if filled, or offer to fill it (Step 0.5).
 3. Ask via `AskUserQuestion` whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
 
 Everything else flows from there. For the full operating spec, see [CLAUDE.md](CLAUDE.md).
@@ -123,27 +123,33 @@ Review repeats as many times as needed until the presenter declares the document
 
 ```
 .
-├── README.md                      # this file
-├── CLAUDE.md                      # full agent instructions (Talksmith spec)
-├── profile.md                     # global presenter profile (persistent context)
-├── workflow-diagram.md            # Mermaid diagrams of the flow
-├── templates/
-│   ├── master-template.md         # canonical structure of master.md
-│   └── template.pptx              # default PowerPoint template (Step 6 Render)
+├── README.md                          # this file
+├── CLAUDE.md                          # full agent instructions (Talksmith spec)
+├── knowledge/
+│   ├── profile.md                     # global presenter profile (persistent context)
+│   ├── principles.md                  # what makes a good presentation (loaded at session start)
+│   ├── learnings.md                   # durable rules promoted from feedback patterns
+│   ├── feedback-backlog.md            # cross-Talk feedback log
+│   ├── feedback-processed.md          # archived feedback promoted to learnings
+│   └── template.pptx                  # PowerPoint reference template (Step 7 Render)
 ├── talks/
-│   └── <talk-folder>/             # one folder per talk
-│       ├── master.md              # the outline (deliverable)
-│       ├── memory.md              # progress log / restore point
+│   └── <talk-folder>/                 # one folder per talk
+│       ├── master.md                  # the outline (deliverable)
+│       ├── memory.md                  # progress log / restore point
 │       └── knowledge/
-│           ├── articles/          # PDFs, HTML, papers
-│           ├── llm-chats/         # ZIP exports of LLM chat sessions
-│           └── compile/           # Librarian's structured Markdown output
+│           ├── articles/              # PDFs, HTML, papers
+│           ├── llm-chats/             # ZIP exports of LLM chat sessions
+│           └── compile/               # Librarian's structured Markdown output
 └── .claude/
+    ├── templates/
+    │   └── master-template.md         # canonical structure of master.md
     ├── agents/
-    │   ├── librarian.md           # Librarian subagent prompt
-    │   └── scribe.md              # Scribe subagent prompt
+    │   ├── librarian.md               # Librarian subagent prompt
+    │   └── scribe.md                  # Scribe subagent prompt
     └── skills/
-        └── md-to-ppt/SKILL.md     # Optional renderer (Step 6)
+        └── md-to-ppt/
+            ├── SKILL.md               # Render-to-pptx orchestrator (Step 7)
+            └── render_pandoc.py       # Pandoc fallback script
 ```
 
 ## Key conventions
@@ -152,7 +158,7 @@ Review repeats as many times as needed until the presenter declares the document
 - **Cite sources by filename.** Slide `Sources` reference files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`).
 - **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `master.md`.
 - **`AskUserQuestion` is the default interaction.** The agent proposes 2–4 concrete options for every decision rather than leaving the presenter to free-text. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
-- **`profile.md` is session-wide context.** Once filled, it's loaded automatically and passed into every subagent dispatch.
+- **`knowledge/profile.md` is session-wide context.** Once filled, it's loaded automatically and passed into every subagent dispatch.
 - **`memory.md` is append-only.** Updated after every completed step; used to resume an in-progress talk.
 
 ## Author
