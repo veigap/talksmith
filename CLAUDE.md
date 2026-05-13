@@ -115,10 +115,12 @@ Create exactly:
 talks/<folder-name>/
 ├── master.md                    # created empty in Step 4
 ├── memory.md                    # progress log
-└── knowledge/
-    ├── articles/                # PDFs, HTML, papers
-    ├── llm-chats/               # chat session ZIPs
-    └── compile/                 # populated in Step 3
+├── knowledge/
+│   ├── articles/                # PDFs, HTML, papers
+│   ├── llm-chats/                # chat session ZIPs
+│   └── compile/                 # populated in Step 3
+├── images/                      # populated in Step 6.5 (illustrator + scribe). All master.md image refs resolve here.
+└── output/                      # populated in Step 7 (md-to-ppt). Holds master.pptx.
 ```
 
 Initialize `memory.md` with topic, folder, ISO date, `Current step: 1 — Scaffold complete`. Show created paths.
@@ -262,21 +264,22 @@ When the presenter declares the document final ("ready" / "done" / "looks good" 
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
-1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent: scans `master.md` for fenced ASCII charts and writes one SVG per chart under `talks/<Talk>/output/svg/<slide-id>-<n>.svg`, following [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) (closed style spec) and the relevant [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template when one matches the shape (open catalog). CLI-safe — no Cowork dependency. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent: scans `master.md` for fenced ASCII charts and writes one SVG per chart **directly into `talks/<Talk>/images/<slide-id>-<n>.svg`** (canonical image folder — same level as `master.md`), following [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) (closed style spec) and the relevant [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template when one matches the shape (open catalog). CLI-safe — no Cowork dependency. Report rendered/unchanged/failed counts.
 
-2. **Clean `master.md`.** Dispatch the `scribe` subagent. Two transformations:
-   - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](output/svg/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
+2. **Clean `master.md`.** Dispatch the `scribe` subagent. Three transformations:
+   - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
      ```markdown
-     ![Input → output pipeline](output/svg/s1-2.svg)
+     ![Input → output pipeline](images/s1-2.svg)
      <!-- ascii-source:
      +-----+      +-----+
      | in  | -->  | out |
      +-----+      +-----+
      -->
      ```
+   - **Consolidate every other image reference into `images/`.** Walk every `![alt](path)` in `master.md`. If `path` is anything other than `images/<file>` (e.g. an asset from `knowledge/compile/assets/...`, an external/absolute path, a path under `output/`, a sibling Talk folder), **copy** the source file into `talks/<Talk>/images/<basename>` (do not move — the original stays) and rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename. Skip remote URLs (http/https) — leave those untouched. The cleaned `master.md` should reference **only** `images/...` paths, making the Talk folder self-contained and movable.
    - **Remove every `Presenter feedback` field** at every level (Thesis, Agenda, Section, Slide), in all three syntactic forms (`### Presenter feedback` H4, `**Presenter feedback:**` paragraph, legacy `- **Presenter feedback:**` bullet). The audit trail is **not** lost — every closed bullet was already mirrored to [`feedback-backlog.md`](knowledge/feedback-backlog.md) during Review, and prior `master.md` states live in git history.
 
-   Goal: opening cleaned `master.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams, speaker notes. No working-meta fields visible.
+   Goal: opening cleaned `master.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams (all served from a sibling `images/` folder), speaker notes. No working-meta fields visible.
 
 Update `memory.md` with `Current step: 6.5 — Polish complete`. Proceed to Step 6.7 automatically.
 
@@ -307,7 +310,7 @@ Dispatch [`md-to-ppt`](.claude/skills/md-to-ppt/SKILL.md).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill must be in the registry). If missing, stop and tell the presenter to run this step inside Cowork. **No CLI fallback** — pandoc/Marp/python-pptx experiments produced lower-fidelity output.
 - Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6.5 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
-- **Reuses the SVGs at `talks/<Talk>/output/svg/`** rendered by the `illustrator` subagent in Step 6.5 (Polish) — does not regenerate them. The cleaned `master.md` already references them via `![alt](output/svg/…)`; the renderer follows the references and passes each SVG path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
+- **Reuses the images at `talks/<Talk>/images/`** rendered by `illustrator` and consolidated by `scribe` in Step 6.5 (Polish) — does not regenerate or move them. The cleaned `master.md` references them via `![alt](images/…)`; the renderer follows the references and passes each image path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
 - Output: `talks/<Talk>/output/master.pptx`. Reference template defaults to [`knowledge/template.pptx`](knowledge/template.pptx); only override if the presenter wants a different look.
 
 ---

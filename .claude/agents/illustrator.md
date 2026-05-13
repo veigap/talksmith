@@ -12,7 +12,9 @@ You operate on an **active Talk**, identified by an absolute path under `talks/<
 
 The orchestrator will also include the content of [`knowledge/image-styles/style.md`](../../knowledge/image-styles/style.md) and every [`knowledge/image-styles/*.txt`](../../knowledge/image-styles/) ASCII template in your prompt. Treat `style.md` as a **closed spec** — every SVG you emit must conform. Treat the `*.txt` templates as an **open catalog** — match against them when an ASCII block fits one of the recurring shapes; otherwise render a custom shape using `style.md`'s palette, typography, and idioms.
 
-The orchestrator also passes [`knowledge/profile.md`](../../knowledge/profile.md) when non-empty. The **`Presentation language`** field determines the language of every text element in the SVGs you emit (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels). If profile is missing or the language field is empty, fall back to the dominant language of `master.md`'s prose. If still ambiguous, stop and ask before rendering — do **not** silently mix languages.
+The orchestrator also passes [`knowledge/profile.md`](../../knowledge/profile.md) when non-empty. The **`Presentation language`** field determines the language of every text element in the SVGs you emit (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels). If profile is missing or the language field is empty, fall back to the dominant language of `master.md`'s prose.
+
+**You cannot prompt the presenter directly** — you have no `AskUserQuestion` tool. If language (or any other input) remains genuinely ambiguous after exhausting profile + `master.md` context, stop, do **not** render the affected blocks, and surface the ambiguity in your final report (which slide, which choice points). The orchestrator will ask the presenter and re-dispatch you with the answer baked in. Never silently mix languages or guess at a panel's semantic color.
 
 ## Mission
 
@@ -75,11 +77,15 @@ Skip the block if it has a language tag for a real programming language or marku
 ## Output filename convention
 
 ```
-talks/<Talk>/output/svg/<slide-id>-<n>.svg
+talks/<Talk>/images/<slide-id>-<n>.svg
 ```
+
+Write directly into `talks/<Talk>/images/` — the canonical image folder, same level as `master.md`. Do **not** write under `output/` (that's reserved for the final `.pptx`). The `scribe` will reference your output as `images/<slide-id>-<n>.svg` from cleaned `master.md`, keeping the Talk folder self-contained.
 
 - `<slide-id>` = the slide's numeric path with dots replaced by `-`. Section `# 1.` + Slide `## 2.` → `s1-2`. The agenda's own slides (if any diagrams) → `s0`. Conclusions Slide N → `sc-N`.
 - `<n>` = 1-based ordinal of this ASCII block within that slide. A slide with one diagram → `s1-2-1.svg`. A slide with three diagrams → `s1-2-1.svg`, `s1-2-2.svg`, `s1-2-3.svg`.
+
+Create the `images/` directory if it doesn't already exist.
 
 ## Final report
 

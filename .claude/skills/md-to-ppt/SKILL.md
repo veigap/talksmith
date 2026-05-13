@@ -1,6 +1,6 @@
 ---
 name: md-to-ppt
-description: Convert a Talk's cleaned `master.md` into a PowerPoint (.pptx) deck via Anthropic's native `pptx` skill. **Cowork-only** — requires the native `pptx` skill in the session registry. Optional Step 7 of the Presenter Agent workflow, invoked after Step 6.5 (Polish) has rendered SVGs and cleaned `master.md`. Consumes the SVGs already on disk under `output/svg/`; does not render anything itself.
+description: Convert a Talk's cleaned `master.md` into a PowerPoint (.pptx) deck via Anthropic's native `pptx` skill. **Cowork-only** — requires the native `pptx` skill in the session registry. Optional Step 7 of the Presenter Agent workflow, invoked after Step 6.5 (Polish) has rendered SVGs and cleaned `master.md`. Consumes the SVGs already on disk under `images/`; does not render anything itself.
 ---
 
 # md-to-ppt — Render `master.md` to PowerPoint
@@ -19,8 +19,8 @@ After Step 6.5 (Polish) completes and the presenter picks **Render to PowerPoint
 |---|---|---|
 | Native `pptx` skill in session registry | Skill list includes `pptx` | Stop. Tell presenter to run this step inside Cowork. |
 | Active `Talk` path | Passed in by orchestrator | Stop and ask. |
-| Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](output/svg/...)` refs | Stop. Polish hasn't run — return to Step 6.5. |
-| Pre-rendered SVGs | `talks/<Talk>/output/svg/*.svg` exist for every image ref in `master.md` | Stop. Dispatch `illustrator` to fill the gap. |
+| Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](images/...)` refs | Stop. Polish hasn't run — return to Step 6.5. |
+| Pre-rendered SVGs | `talks/<Talk>/images/*.svg` exist for every image ref in `master.md` | Stop. Dispatch `illustrator` to fill the gap. |
 | Reference template | [`knowledge/template.pptx`](../../../knowledge/template.pptx) exists (or the presenter-supplied override path) | Stop and ask. |
 
 ## Inputs
@@ -48,7 +48,7 @@ talks/<Talk>/output/
    - Strip remaining working-notes sections: `# Thesis`, `# Open questions`, `# Cut material`. (`Presenter feedback` is already gone — cleaned by Polish.)
    - Map structure: every numbered H1 (`# N. <name>` current, legacy `# N — <name>` / `# Section N: <name>`) → a dedicated divider slide. Named H1s `# Agenda` and `# Conclusions` are passed through. `# Open questions` and `# Cut material` are stripped. Every H2 inside a section or `Conclusions` → a content slide. Slide-heading forms: current `## N. <title>`, legacy `## N — <title>` and `## Slide N: <title>` — strip the leading prefix when extracting the title.
    - Slide fields are H4 headings: `### Content`, `### Sources`, `### Speaker notes`. Speaker-note content goes into the slide's notes pane, not the body. Legacy `- **Field:** …` bullet form also accepted.
-   - **Resolve image references.** Every `![alt](output/svg/<file>.svg)` in `master.md` is a slide image. Pass the file path to the native skill — do not re-render. Ignore any `<!-- ascii-source: ... -->` HTML comments.
+   - **Resolve image references.** Every `![alt](images/<file>.svg)` in `master.md` is a slide image. Pass the file path to the native skill — do not re-render. Ignore any `<!-- ascii-source: ... -->` HTML comments.
 3. **Render** by invoking the native `pptx` skill with three inputs: the intermediate file, the SVG asset paths, and the reference template. The native skill must inherit the template's theme, fonts, colors, and master slide layouts — it must **not** author the deck from scratch using its own default theme. Use the inherit-wholesale mode if the skill offers a choice between modes.
 4. Verify `talks/<Talk>/output/master.pptx` exists and is non-empty.
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
