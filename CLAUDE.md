@@ -19,15 +19,27 @@ When dispatching `librarian`, `scribe`, or `illustrator`, always include the abs
 
 ## Session start — mandatory loads
 
-Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`) and skill invocation (`talksmith:md-to-pptx`) that needs it. If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
+Only one file is loaded eagerly at session start. Everything else is **read just-in-time by whoever uses it** — orchestrator or subagent, at the step where it's needed. The rule is: a context loads only what it consults.
 
 | File | What it is | Behavior |
 |---|---|---|
-| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | If filled, treat as global defaults for audience/tone/agenda. If absent/empty, Step 0.5 offers to fill it. |
-| [`knowledge/principles.md`](knowledge/principles.md) | House rules for what makes a good presentation (Mayer, Tufte, Reynolds, Duarte). | Defaults, not rules. Override per slide when the presenter has a reason; record reason in `Presenter feedback`. |
-| [`knowledge/learnings.md`](knowledge/learnings.md) | Durable rules promoted from feedback patterns (3+ recurrences). | Soft defaults. Apply when an entry's "Where it applies" surface comes up. |
+| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | Loaded at session start (15-line file, used everywhere). If filled, treat as global defaults for audience/tone/agenda and pass into every subagent dispatch. If absent/empty, Step 0.5 offers to fill it. |
 
-**Lazy-loaded (do NOT preload into orchestrator context):** [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template. These are the visual contract for SVG output and are only needed at Step 6.5 (Polish). The [`illustrator`](.claude/agents/illustrator.md) subagent reads them from disk itself when dispatched — the orchestrator only passes the Talk path. The ASCII template catalog is **open**: draft custom shapes when no template fits.
+**Lazy-loaded — orchestrator reads on demand:**
+
+| File | Read when | Used for |
+|---|---|---|
+| [`knowledge/principles.md`](knowledge/principles.md) | Entering Step 5 **Mode A** (Interview) | Editor role: push back on vague slides, walls of bullets, prose-duplicates-narration, etc. Not loaded in Modes B/C (scribe loads it itself) or in any other step. |
+| [`knowledge/learnings.md`](knowledge/learnings.md) | Entering Step 6.7 (Learnings) | Pattern promotion: append new entries. Not loaded in Step 5 (scribe loads it itself in B/C). |
+
+**Lazy-loaded — subagents read on dispatch:**
+
+| File | Reader | Read when |
+|---|---|---|
+| [`knowledge/principles.md`](knowledge/principles.md) + [`knowledge/learnings.md`](knowledge/learnings.md) | `scribe` | Dispatched in Step 5 Modes B (Agent Draft) or C (Presenter Outline). |
+| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + matched [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template | `illustrator` (and the `ascii-to-svg` skill) | Dispatched in Step 6.5 (Polish). Style spec is closed; the `*.txt` catalog is open — draft custom shapes when no template fits. |
+
+The orchestrator passes the active Talk path on every dispatch. It does **not** forward the contents of these files — each subagent reads from disk. This keeps orchestrator context lean across long sessions and avoids three-way duplication of the same text.
 
 ## Interaction defaults
 
@@ -237,7 +249,7 @@ Structure: deck = **Sections** containing **Slides**. Each Slide has `Content`, 
 - **Show diffs/affected sections** after each round so the presenter can confirm.
 - **Move dropped content to `Cut material`** instead of deleting.
 - **Record the chosen mode in `memory.md`** so resume continues in the same mode.
-- **Apply [`principles.md`](knowledge/principles.md)** — one idea per slide, no wall-of-bullets, image-first when concept has shape (use [`knowledge/image-styles/`](knowledge/image-styles/) templates), balanced visual mix.
+- **Apply [`principles.md`](knowledge/principles.md)** — one idea per slide, no wall-of-bullets, image-first when concept has shape (use [`knowledge/image-styles/`](knowledge/image-styles/) templates), balanced visual mix. **Lazy-loaded.** In **Mode A**, the orchestrator reads `principles.md` from disk on entry to apply the Editor role during the interview. In **Modes B and C**, the orchestrator does *not* read it — it dispatches the `scribe` subagent with just the Talk path; the scribe reads `principles.md` and [`learnings.md`](knowledge/learnings.md) from disk itself when authoring slides.
 - **Hand the floor back** after each substantive change. Remind presenter they can (a) edit `master.md` directly with `- "..."` feedback bullets, or (b) reply in chat. **Do not advance to Step 6 until they explicitly say "ready" / "done" / "move to review" / "looks good".**
 
 ---
@@ -296,6 +308,8 @@ Update `memory.md` with `Current step: 6.5 — Polish complete`. Proceed to Step
 ## Step 6.7 — Learnings *(mandatory)*
 
 Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recurring feedback patterns into durable session-load defaults so future Talks inherit them.
+
+**Lazy-load.** Read [`knowledge/learnings.md`](knowledge/learnings.md) from disk on entry to this step (it is *not* in session context). You'll need it to (a) append promoted entries and (b) avoid duplicates when proposing promotions.
 
 1. **Scan [`feedback-backlog.md`](knowledge/feedback-backlog.md)** — group entries (this Talk + prior Talks) by tag and resolution shape.
 2. **For any pattern recurring ≥3 times across all Talks**, `AskUserQuestion` (multi-select if several qualify): "Recurred N times — promote to learning?" Options: *Promote* / *Skip* / *Promote with edits*.
