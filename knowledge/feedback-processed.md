@@ -2,7 +2,7 @@
 
 Archive of feedback entries that have been promoted into [`learnings.md`](learnings.md). Moving them here keeps [`feedback-backlog.md`](feedback-backlog.md) lean and focused on patterns that haven't yet crossed the 3-occurrence promotion threshold.
 
-> **Read-only audit trail.** Do not edit by hand. The orchestrator moves entries here from `feedback-backlog.md` at the moment a pattern is promoted to a learning. The original verbatim wording, location, and tags are preserved so the evidence chain in `learnings.md` remains traceable.
+> **Read-only audit trail.** Do not edit by hand. The Editor moves entries here from `feedback-backlog.md` — dispatched by the orchestrator in Step 7 (Learnings) at the moment a pattern is promoted to a learning. The original verbatim wording, location, and tags are preserved so the evidence chain in `learnings.md` remains traceable.
 
 ## Format
 
@@ -20,5 +20,3 @@ Same per-entry shape as `feedback-backlog.md`, with one added field linking to t
 ```
 
 ## Entries
-
-<!-- Orchestrator appends entries below this line when promotions happen. -->

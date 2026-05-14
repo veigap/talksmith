@@ -323,7 +323,7 @@ Update `memory.md` with `**Current step:** 6 — Polish complete`. Proceed to St
 
 Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recurring feedback patterns into durable session-load defaults so future Talks inherit them.
 
-**Lazy-load.** Read [`knowledge/learnings.md`](knowledge/learnings.md) from disk on entry to this step (it is *not* in session context). You'll need it to (a) append promoted entries and (b) avoid duplicates when proposing promotions.
+**Lazy-load.** Read [`knowledge/learnings.md`](knowledge/learnings.md) from disk on entry to this step (it is *not* in session context). You read it to (a) avoid proposing promotions that duplicate existing entries and (b) know which entry id was assigned to a freshly promoted pattern so you can forward it to the Move dispatch. **You do not write to `learnings.md` directly** — the editor is the sole writer; you dispatch it (see step 3 below).
 
 1. **Scan [`feedback-backlog.md`](knowledge/feedback-backlog.md)** — group entries (this Talk + prior Talks) by tag and resolution shape.
 2. **For any pattern recurring ≥3 times across all Talks**, `AskUserQuestion` (multi-select if several qualify): "Recurred N times — promote to learning?" Options: *Promote* / *Skip* / *Promote with edits*.
@@ -345,7 +345,7 @@ Update `memory.md` with `**Current step:** 7 — Learnings complete` and the cho
 Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md). The skill delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx); pre-processing of `master.md` → intermediate Markdown is handled by the skill's CLI-safe [`convert.py`](.claude/skills/md-to-pptx/convert.py).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill must be in the registry). If missing, stop and tell the presenter to run this step inside Cowork. **No CLI fallback** — pandoc/Marp/python-pptx experiments produced lower-fidelity output.
-- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
+- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# Section N:` / `## Slide N:` / `# N —` / `## N —` accepted). Speaker notes go to the notes pane.
 - **Reuses the images at `talks/<Talk>/images/`** rendered by `illustrator` and consolidated by `editor` in Step 6 (Polish) — does not regenerate or move them. The cleaned `master.md` references them via `![alt](images/…)`; the renderer follows the references and passes each image path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
 - Output: `talks/<Talk>/output/master.pptx`. Reference template defaults to [`knowledge/template.pptx`](knowledge/template.pptx); only override if the presenter wants a different look.
 

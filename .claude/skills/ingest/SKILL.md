@@ -62,7 +62,7 @@ The folder is **never overwritten by default** — if it already exists and is n
 ## Re-running and edits
 
 - If the presenter wants to refresh a previously ingested page: confirm explicitly, then pass `--force`.
-- If the extracted `page.md` is poor (the page used heavy JS rendering or a custom DOM), suggest the presenter copy-paste the readable text into `original.html` is preserved — they can extract by hand and write a corrected `page.md` alongside. The librarian will compile whichever Markdown is present.
+- If the extracted `page.md` is poor (the page used heavy JS rendering or a custom DOM), suggest the presenter extract by hand from `original.html` (which is preserved verbatim regardless of `page.md` quality) and overwrite `page.md` with the corrected Markdown. The librarian will compile whichever Markdown is present at Step 3.
 
 ## Boundaries
 
