@@ -3,7 +3,7 @@
 +---------------+      +--------------------+      +---------------+
 |               |      |                    |      |               |
 |  <visual /    |      |  mono: <textual    |      |  <spatial /   |
-|   structural  |[teal]|   code / sequence  |[purp]|   3D / dot    |[coral]
+|   structural  |[teal]|   code / sequence  |[purple]|   3D / dot    |[coral]
 |   diagram>    |      |   encoding>        |      |   layout>     |
 |               |      |                    |      |               |
 +---------------+      +--------------------+      +---------------+

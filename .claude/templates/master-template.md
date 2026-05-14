@@ -35,7 +35,7 @@ date:
 
 - 1. <Section Name>
 - 2. <Section Name>
-- x. <Section Name>
+- 3. <Section Name>
 
 **Presenter feedback:**
 
@@ -93,7 +93,7 @@ date:
 
 ---
 
-# x. <Section Name>
+# 3. <Section Name>
 
 **Goal of this section:**
 

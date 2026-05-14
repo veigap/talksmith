@@ -27,7 +27,7 @@ The agent must pass the following in the skill invocation prompt:
 | `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1.svg` |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
 | `slide_content_prose` | yes | the `### Content` body — used for subtitles, in-panel callouts, axis labels |
-| `speaker_notes` | yes | the `### Notes` body — used for `<desc>` and pedagogical-intent cues |
+| `speaker_notes` | yes | the `### Speaker notes` body — used for `<desc>` and pedagogical-intent cues |
 | `section_title` | recommended | from the H1 the slide lives under |
 | `section_goal` | recommended | from the section's `**Goal of this section:**` line |
 | `talk_thesis` | recommended | top of `master.md` |

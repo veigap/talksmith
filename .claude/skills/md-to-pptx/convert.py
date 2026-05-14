@@ -45,14 +45,14 @@ _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
 # next H1 or EOF).
 _STRIP_H1 = {"Thesis", "Open questions", "Cut material"}
 
-# Fields at H4 that must be stripped wholesale (heading + body until the
-# next H1/H2/H3/H4 or EOF). Order matters only for clarity.
+# Fields at H3 that must be stripped wholesale (heading + body until the
+# next H1/H2/H3 or EOF). Order matters only for clarity.
 _STRIP_H3 = {"Sources", "Presenter feedback"}
 
-# H4 field that should have its label dropped but body kept.
+# H3 field that should have its label dropped but body kept.
 _UNWRAP_H3 = {"Content"}
 
-# H4 field that should have its label renamed (label → "Notes") but body kept.
+# H3 field that should have its label renamed (label → "Notes") but body kept.
 _RENAME_H3 = {"Speaker notes": "Notes"}
 
 # H1 / H2 numbered prefix patterns to strip:
@@ -196,7 +196,7 @@ def convert(master_md: str) -> str:
     text = _strip_html_comments(text)
     text = _strip_h1_sections(text, _STRIP_H1)
     text = _process_h3_fields(text)
-    # After H4 processing, re-walk and normalize remaining H1 / H2 prefixes
+    # After H3 processing, re-walk and normalize remaining H1 / H2 prefixes
     # for any heading we didn't touch.
     text = "\n".join(_normalize_heading(line) for line in text.splitlines())
     text = _collapse_blank_lines(text)

@@ -89,7 +89,7 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
   TALKSMITH WORKFLOW
   ==================
 
-  [1] Scaffold    <-- presenter: topic + folder name
+  [1] Frame       <-- presenter: topic + folder name
        v
   [2] Collect     <-- presenter: upload PDFs/papers, chat ZIPs, URLs
        v
@@ -143,7 +143,8 @@ Review repeats as many times as needed until the presenter declares the document
 │   ├── learnings.md                   # durable rules promoted from feedback patterns
 │   ├── feedback-backlog.md            # cross-Talk feedback log
 │   ├── feedback-processed.md          # archived feedback promoted to learnings
-│   └── template.pptx                  # PowerPoint reference template (Step 7 Render)
+│   ├── image-styles/                  # SVG style spec + recurring shape templates (illustrator/ascii-to-svg)
+│   └── template.pptx                  # PowerPoint reference template (Step 8 Render)
 ├── talks/
 │   └── <talk-folder>/                 # one folder per talk
 │       ├── master.md                  # the outline (deliverable)
@@ -151,8 +152,10 @@ Review repeats as many times as needed until the presenter declares the document
 │       ├── knowledge/
 │       │   ├── articles/              # PDFs, HTML, papers
 │       │   ├── llm-chats/             # ZIP exports of LLM chat sessions
+│       │   ├── web/                   # captured pages (one folder per URL, written by talksmith:ingest)
 │       │   └── compile/               # Librarian's structured Markdown output
-│       └── output/                    # rendered .pptx (Step 7, optional)
+│       ├── images/                    # SVGs rendered in Step 6 (Polish) + consolidated images
+│       └── output/                    # rendered .pptx (Step 8, optional)
 └── .claude/
     ├── settings.json                  # shared Claude Code settings
     ├── settings.local.json            # local overrides (gitignored)
@@ -163,10 +166,11 @@ Review repeats as many times as needed until the presenter declares the document
     │   ├── librarian.md               # Librarian subagent prompt
     │   ├── composer.md                # Composer subagent prompt (design critic)
     │   ├── editor.md                  # Editor subagent prompt (master.md/memory.md maintainer)
-    │   └── illustrator.md             # Illustrator subagent prompt (ASCII → SVG)
+    │   └── illustrator.md             # Illustrator subagent prompt (ASCII → SVG coordinator)
     └── skills/
-        └── md-to-pptx/
-            └── SKILL.md               # Render-to-pptx orchestrator (Step 7)
+        ├── ingest/                    # talksmith:ingest — capture a web page into knowledge/web/
+        ├── ascii-to-svg/              # talksmith:ascii-to-svg — render one ASCII block to one SVG
+        └── md-to-pptx/                # talksmith:md-to-pptx — render master.md to .pptx (Step 8)
 ```
 
 ## Key conventions

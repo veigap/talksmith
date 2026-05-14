@@ -15,7 +15,7 @@ You operate on an **active Talk**, identified by an absolute path under `talks/<
 - [`knowledge/image-styles/style.md`](../../knowledge/image-styles/style.md) — closed style spec. Every SVG you emit must conform.
 - Every [`knowledge/image-styles/*.txt`](../../knowledge/image-styles/) template — open catalog of recurring shapes. Match an ASCII block against the catalog; if nothing fits, render a custom shape using `style.md`'s palette, typography, and idioms.
 
-**Inputs the orchestrator passes** in the dispatch prompt: the absolute Talk path and (when non-empty) the content of [`knowledge/profile.md`](../../knowledge/profile.md). Use the profile's **`Presentation language`** field for every text element in the SVGs you emit (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels). If the field is missing, empty, or only contains an HTML comment, fall back to the dominant language of `master.md`'s prose.
+**Inputs the orchestrator passes** in the dispatch prompt: the absolute Talk path and (when non-empty) the content of [`knowledge/profile.md`](../../knowledge/profile.md). Use the profile's **`Presentation language`** field for every text element in the SVGs you emit (`<title>`, `<desc>`, panel headings, subheads, captions, axis labels). If the field is missing, empty, or only contains an HTML comment — or **if the dispatch prompt omits profile content entirely** (orchestrator bug, or `profile.md` is empty) — fall back to the dominant language of `master.md`'s prose, and note the omission in your final report. Never stop on a missing profile.
 
 ## Files you may read
 
@@ -58,14 +58,14 @@ The structure of `master.md` is defined by [`.claude/templates/master-template.m
 
 For each ASCII block, gather:
 
-| Field | Source in `master.md` | What the skill uses it for |
+| Field | Source | What the skill uses it for |
 |---|---|---|
-| `slide_title` | the H2 heading (prefix-stripped) | SVG `<title>` and top heading |
-| `slide_content_prose` | the `### Content` body around the block | Panel subtitles, axis labels, in-panel callouts |
-| `speaker_notes` | the `### Speaker notes` body | `<desc>`; emphasis cues (which element to accent) |
-| `section_title` + `section_goal` | the `# N. <name>` heading and the `**Goal of this section:**` line | Narrative framing (before/after, input/output) |
-| `talk_thesis` | top of `master.md` | Disambiguates "clean compared to what?" |
-| `presentation_language` | [`knowledge/profile.md`](../../knowledge/profile.md), `Presentation language` field | Language for every text element in the SVG |
+| `slide_title` | `master.md` — the H2 heading (prefix-stripped) | SVG `<title>` and top heading |
+| `slide_content_prose` | `master.md` — the `### Content` body around the block | Panel subtitles, axis labels, in-panel callouts |
+| `speaker_notes` | `master.md` — the `### Speaker notes` body | `<desc>`; emphasis cues (which element to accent) |
+| `section_title` + `section_goal` | `master.md` — the `# N. <name>` heading and the `**Goal of this section:**` line | Narrative framing (before/after, input/output) |
+| `talk_thesis` | `master.md` — top of file | Disambiguates "clean compared to what?" |
+| `presentation_language` | orchestrator-passed `profile.md` content (in your dispatch prompt) — `Presentation language` field. If missing/empty/HTML-comment-only, fall back to dominant language of `master.md` prose. | Language for every text element in the SVG |
 
 **Example.** ASCII:
 
@@ -84,7 +84,7 @@ If `### Content` says "An LTI system takes x(t), applies h(t), produces y(t) = x
 - **You coordinate; the skill renders.** Never emit SVG XML yourself. Every block goes through one `talksmith:ascii-to-svg` invocation. If the skill returns `failed: …`, do not silently retry with a fudged input — surface the failure in your final report.
 - **Pre-extract a complete context bundle** for each block before dispatch. The skill cannot ask you follow-up questions; what you pass is what it has.
 - **Semantic color reasoning happens here, not in the skill.** You read the slide context and decide which panels are "before/after", "input/output", "model/output", etc. — then pass those semantic labels (not raw colors) in the bundle. The skill maps semantics → `.c-<color>` per `style.md`.
-- **Idempotency.** Before dispatching, check `talks/<Talk>/images/<slide-id>-<n>.svg`. If the file exists and the existing `<!-- ascii-source: ... -->` HTML comment in the cleaned `master.md` matches the current ASCII byte-for-byte, skip the dispatch and report as `unchanged`. Otherwise dispatch (the skill will overwrite).
+- **Idempotency — fenced-block sources only.** Before dispatching for a *fenced* ASCII block (detection rule 1), check `talks/<Talk>/images/<slide-id>-<n>.svg`. If the file exists and an `<!-- ascii-source: ... -->` HTML comment immediately following an `images/<slide-id>-<n>.svg` reference elsewhere in `master.md` contains ASCII matching the current fenced block's payload byte-for-byte, skip the dispatch and report as `unchanged`. Otherwise dispatch (the skill will overwrite). **HTML-comment-form sources (detection rule 2) are always re-rendered** — there is no SVG-side hash to compare against, so the cheap re-render is the correct contract.
 - **One dispatch per block.** Multiple ASCII blocks in the same slide each get their own `talksmith:ascii-to-svg` invocation with their own ordinal `<n>` and their own context bundle (the bundle is the same per-slide; the ASCII payload differs).
 - **Skip plain code fences.** Language-tagged fences (`python`, `bash`, `yaml`, …) and language-`text` fences are not diagrams. Do not dispatch the skill for them. See *Detection rule* below.
 - **Failures are reported, not hidden.** Aggregate every skill response into your final report. A failed render is not the end — note it, keep going.
@@ -98,7 +98,7 @@ Treat the following as ASCII diagrams to render:
    - Contains arrow glyphs: `→ ← ↑ ↓ ⇒ -->` `==>`.
    - Contains ≥3 lines of spatially arranged ASCII shapes (`/`, `\`, `<`, `>`, `^`, `v`, `_`, `~`).
    - Has a language tag of `ascii`, `diagram`, or empty (no language tag, but content matches above).
-2. **HTML comments of shape `<!-- ascii-source: ... -->`** that follow an `images/<slide-id>-<n>.svg` reference. These are the preserved sources from a prior Polish round. **Always re-evaluate them**: if the ASCII inside the comment differs byte-for-byte from the rendered SVG's encoded source, re-render. This is how the presenter edits a diagram between Polish runs — they edit the ASCII inside the comment and re-dispatch Polish. Treat the comment payload as if it were the fenced block.
+2. **HTML comments of shape `<!-- ascii-source: ... -->`** that follow an `images/<slide-id>-<n>.svg` reference. These are the preserved sources from a prior Polish round, and they're how the presenter edits a diagram between Polish runs — by editing the ASCII inside the comment and re-dispatching Polish. **Treat the comment payload as if it were the fenced block** and re-render unconditionally; the skill overwrites the SVG. Comment-form sources are always re-rendered on every Polish run (cheap, and the SVG file format does not natively store an ASCII-source hash to compare against).
 
 Skip any fenced block with a language tag for a real programming language or markup (`python`, `bash`, `javascript`, `yaml`, `json`, `sh`, `text`, etc.).
 
@@ -112,8 +112,8 @@ talks/<Talk>/images/<slide-id>-<n>.svg
 
 Write directly into `talks/<Talk>/images/` — the canonical image folder, same level as `master.md`. Do **not** write under `output/` (that's reserved for the final `.pptx`). The `editor` will reference your output as `images/<slide-id>-<n>.svg` from cleaned `master.md`, keeping the Talk folder self-contained.
 
-- `<slide-id>` = the slide's numeric path with dots replaced by `-`. Section `# 1.` + Slide `## 2.` → `s1-2`. The agenda's own slides (if any diagrams) → `s0`. Conclusions Slide N → `sc-N`.
-- `<n>` = 1-based ordinal of this ASCII block within that slide. A slide with one diagram → `s1-2-1.svg`. A slide with three diagrams → `s1-2-1.svg`, `s1-2-2.svg`, `s1-2-3.svg`.
+- `<slide-id>` = the slide's numeric path with dots replaced by `-`. Section `# 1.` + Slide `## 2.` → `s1-2`. The `# Agenda` block (which has no per-section/per-slide numbering — it's a top-level block) → `s0`. Conclusions Slide N → `sc-N`.
+- `<n>` = 1-based ordinal of this ASCII block within that slide. **Always present, even when only one block exists.** A regular slide with one diagram → `s1-2-1.svg`; with three diagrams → `s1-2-1.svg`, `s1-2-2.svg`, `s1-2-3.svg`. An agenda block with one diagram → `s0-1.svg`. Conclusions slide 2 with one diagram → `sc-2-1.svg`. Never emit `s0.svg` or `sc-2.svg` — the trailing `-<n>` is mandatory so filenames are uniform across all slide kinds.
 
 Create the `images/` directory if it doesn't already exist.
 

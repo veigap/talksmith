@@ -20,7 +20,8 @@ After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint**
 | [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx) in session registry | Skill list includes the `pptx` entry | Stop. Tell presenter to run this step inside Cowork. |
 | Active `Talk` path | Passed in by orchestrator | Stop and ask. |
 | Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](images/...)` refs | Stop. Polish hasn't run — return to Step 6. |
-| Pre-rendered SVGs | `talks/<Talk>/images/*.svg` exist for every image ref in `master.md` | Stop. Dispatch `illustrator` to fill the gap. |
+| Pre-rendered local images | `talks/<Talk>/images/<file>` exists on disk for every **local** image ref in `master.md` (i.e. every `![...](images/...)` reference). Remote URLs (`http://`, `https://`) are checked separately — see below. | Stop. Dispatch `illustrator` to render missing SVGs, or stop and ask the presenter to drop a missing non-SVG asset into `images/`. |
+| Remote image refs handled | `master.md` contains no `![...](http(s)://...)` references — they survived Step 6 Polish unchanged, but `skill://antropic-skills:/pptx`'s behavior on remote URLs is implementation-defined and not guaranteed. | Stop and ask the presenter to either (a) download the asset into `images/` and rewrite the ref to `images/<file>`, or (b) explicitly accept the risk that the slide may ship without that image. Never silently ship a deck where a remote image was dropped. |
 | Reference template | [`knowledge/template.pptx`](../../../knowledge/template.pptx) exists (or the presenter-supplied override path) | Stop and ask. |
 
 ## Inputs
@@ -89,6 +90,7 @@ talks/<Talk>/
 - An image ref points at a missing SVG → stop; dispatch `illustrator` to render it.
 - A Section has zero Slides.
 - Native skill exits non-zero → surface its error message verbatim in the final report.
+- **H1-as-content-slide regression.** The H1-→-divider semantic is fully outsourced to `skill://antropic-skills:/pptx` — `convert.py` only strips the numeric prefix and passes H1 through. After render, spot-check: every numbered section in `master.md` must produce exactly one **divider** slide (large title, no body). If the native skill rendered an H1 as a normal content slide with the section name in the body, the contract was violated — surface as a render failure, do not silently ship.
 
 ## Why Cowork-only
 

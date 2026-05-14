@@ -1,6 +1,6 @@
 +----------+      +-------------------+      +----------+
 | <input>  | -->  | <process>         | -->  | <output> |
-| <subhead>|[gray]| <subhead>         |[purp]| <subhead>|[teal]
+| <subhead>|[gray]| <subhead>         |[purple]| <subhead>|[teal]
 |  <viz>   |      |   <viz>           |      |  <viz>   |
 +----------+      +-------------------+      +----------+
 
