@@ -15,7 +15,7 @@ duration:
 date:
 ---
 
-<!-- Field semantics, fill rules, and Presenter feedback log format live in .claude/agents/scribe.md (the Scribe agent prompt). -->
+<!-- Field semantics, fill rules, and Presenter feedback log format live in .claude/agents/editor.md (the Editor agent prompt). -->
 
 # Thesis
 

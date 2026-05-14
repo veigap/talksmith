@@ -24,13 +24,14 @@ If that doesn't fit how you work, this is the wrong tool.
 
 ## How it works
 
-Three roles, one file as source of truth:
+Four roles, one file as source of truth:
 
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `knowledge/compile/`. Preserves; does not compress.
-- **Editor** — challenges the presenter on thesis clarity, audience fit, narrative arc, and evidence. Pushes back when something is vague or unsupported.
-- **Scribe** — keeps `master.md` and `memory.md` current as the single source of truth. Every decision lands in the file; nothing important lives only in chat.
+- **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, and design principles; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone.
+- **Editor** — the muscle. Keeps `master.md` and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from compiled sources, applies feedback, and cleans the file for delivery.
+- **Illustrator** — converts every ASCII diagram in `master.md` into a styled SVG during the Polish step.
 
-The Editor role is handled directly by the orchestrator. Librarian and Scribe run as dedicated subagents at [.claude/agents/](.claude/agents/).
+All four run as dedicated subagents at [.claude/agents/](.claude/agents/).
 
 ## Getting started
 
@@ -88,22 +89,25 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
   TALKSMITH WORKFLOW
   ==================
 
-  [1] Scaffold   <-- presenter: topic + folder name
+  [1] Scaffold    <-- presenter: topic + folder name
        v
-  [2] Collect    <-- presenter: upload PDFs/papers, chat ZIPs
+  [2] Collect     <-- presenter: upload PDFs/papers, chat ZIPs, URLs
        v
-  [3] Compile     -- Librarian: sources -> knowledge/compile/*.md  (auto)
+  [3] Compile      -- librarian: sources -> knowledge/compile/*.md
        v
-  [4] Draft      <-- presenter (one of three modes)
+  [4] Draft       <-- one of three modes (A Interview / B Agent Draft / C Outline)
+                     editor writes; composer critiques at every milestone
        v
-  [5] Review     <-- presenter edits master.md in their editor; loops N times
+  [5] Review      <-- presenter edits master.md; loops N times
        v
-     master.md ready
+  [6] Polish       -- illustrator: ASCII -> SVG; editor: clean master.md
        v
-  [6] Render      -- md-to-pptx skill: master.md + template -> .pptx (optional)
+  [7] Learnings    -- promote >=3x recurring feedback to learnings.md
+       v
+  [8] Render PPTX  -- md-to-pptx (optional, Cowork only)
 ```
 
-Steps 0 (Introduce) and 4 (Template copy) happen automatically and are not shown above. The full step-by-step instructions live in [CLAUDE.md](CLAUDE.md).
+Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [CLAUDE.md](CLAUDE.md).
 
 ### Draft has three modes
 
@@ -123,7 +127,7 @@ The first Draft is rarely final. In Review, the presenter opens `master.md` in t
 - "swap with the slide above"
 ```
 
-The Scribe then stamps each bullet with status + date (`[open] 2026-05-12 — "..."`), applies the change, and flips the bullet to `[closed]` with a `Resolution:` line. Closed entries are never deleted — they're the audit trail for why each slide looks the way it does.
+The Editor then stamps each bullet with status + date (`[open] 2026-05-12 — "..."`), applies the change, and flips the bullet to `[closed]` with a `Resolution:` line. Closed entries are never deleted — they're the audit trail for why each slide looks the way it does.
 
 Review repeats as many times as needed until the presenter declares the document final.
 
@@ -157,7 +161,9 @@ Review repeats as many times as needed until the presenter declares the document
     │   └── profile-template.md        # empty profile (seeds knowledge/profile.md in Step 0.5)
     ├── agents/
     │   ├── librarian.md               # Librarian subagent prompt
-    │   └── scribe.md                  # Scribe subagent prompt
+    │   ├── composer.md                # Composer subagent prompt (design critic)
+    │   ├── editor.md                  # Editor subagent prompt (master.md/memory.md maintainer)
+    │   └── illustrator.md             # Illustrator subagent prompt (ASCII → SVG)
     └── skills/
         └── md-to-pptx/
             └── SKILL.md               # Render-to-pptx orchestrator (Step 7)

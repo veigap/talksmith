@@ -1,8 +1,8 @@
 # Feedback backlog
 
-Cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review). The Scribe appends to this file whenever a feedback bullet is closed in a Talk's `master.md`. The orchestrator scans this file at presentation completion to detect repeated patterns and promote them to [`learnings.md`](learnings.md).
+Cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review). The Editor appends to this file whenever a feedback bullet is closed in a Talk's `master.md`. The orchestrator scans this file at presentation completion to detect repeated patterns and promote them to [`learnings.md`](learnings.md).
 
-> **Do not edit by hand during a Review round.** Add feedback to the Talk's `master.md` `Presenter feedback` fields; the Scribe mirrors closed bullets here.
+> **Do not edit by hand during a Review round.** Add feedback to the Talk's `master.md` `Presenter feedback` fields; the Editor mirrors closed bullets here.
 
 ## Format
 
@@ -36,7 +36,7 @@ At presentation completion (when the presenter declares `master.md` final, befor
 
 ## Entries
 
-<!-- Scribe appends entries below this line. -->
+<!-- Editor appends entries below this line. -->
 
 - talk: gan-networks
   date: 2026-05-12

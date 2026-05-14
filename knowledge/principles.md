@@ -1,6 +1,6 @@
 # Presentation Principles
 
-This file holds Talksmith's design defaults — Mayer / Tufte / Reynolds / Duarte house rules — applied when drafting slides or pushing back on vague content. It is **lazy-loaded**: read it from disk only at the step that needs it. The orchestrator reads it on entry to Step 4 Mode A (Interview) to drive editorial pushback; the `scribe` reads it on dispatch in Step 4 Modes B (Agent Draft) and C (Presenter Outline) when authoring slides. No other step or agent loads it.
+This file holds Talksmith's design defaults — Mayer / Tufte / Reynolds / Duarte house rules. It is **lazy-loaded**: only the `composer` subagent reads it, on dispatch at drafting milestones in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). The composer uses these rules to produce a punch-list of critiques that the orchestrator surfaces to the presenter or feeds back into a re-dispatch of the `editor`. No other agent and no orchestrator step loads this file.
 
 The principles below are a mix of:
 1. **Talksmith opinions** — encoded methodology and house defaults.
@@ -58,7 +58,7 @@ Treat every principle as a **default**, not a rule. The presenter can override a
 
 - **Explore first, structure second.** The agent works from sources the presenter has actually engaged with (papers, chat exports, notes). It will not invent content out of thin air.
 - **Lossless before lossy.** Sources are restructured, not summarized. Contradictions and abandoned threads from the presenter's exploration are surfaced, not silently resolved.
-- **Roles are explicit.** Librarian preserves, Editor challenges, Scribe records. None of them are "yes-man assistants."
+- **Roles are explicit.** Librarian preserves, Composer challenges, Editor records. None of them are "yes-man assistants."
 - **Resume, don't restart.** `memory.md` captures progress after every step so the presenter can put a talk down for weeks and pick it up exactly where they left off.
 - **Drive, don't wait.** During Step 4 (Draft), the agent asks the next useful question rather than letting the presenter stall.
 

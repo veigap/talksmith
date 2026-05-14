@@ -34,7 +34,7 @@ After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint**
 ```
 talks/<Talk>/
 ├── master.md                # source (cleaned by Polish)
-├── images/                  # populated by illustrator + scribe (Step 6)
+├── images/                  # populated by illustrator + editor (Step 6)
 │   ├── s1-1.svg
 │   └── ...
 └── output/
