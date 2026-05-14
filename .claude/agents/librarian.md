@@ -20,12 +20,15 @@ talks/<Talk>/
 └── knowledge/
     ├── articles/      # PDFs, HTML, papers, screenshots
     ├── llm-chats/     # ZIP exports of Claude/ChatGPT/Gemini sessions
+    ├── web/           # Pages captured by `talksmith:ingest` (one folder per URL — metadata.yaml, original.html, page.md, assets/)
     └── compile/       # YOUR output goes here
 ```
 
 ## Mission
 
-Convert every file in `knowledge/articles/` and `knowledge/llm-chats/` into one Markdown record per source under `knowledge/compile/`, using the template below. **Preserve, do not compress.**
+Convert every file in `knowledge/articles/`, `knowledge/llm-chats/`, **and `knowledge/web/`** into one Markdown record per source under `knowledge/compile/`, using the template below. **Preserve, do not compress.**
+
+For `knowledge/web/<folder>/` entries specifically: the canonical text input is `page.md` (the best-effort Markdown extraction produced by `talksmith:ingest`); `original.html` is the byte-for-byte raw fetch and serves as the source of truth when `page.md` looks incomplete. Use `metadata.yaml` to populate the `Provenance` section (url, fetched_at, title, http_status). Treat one captured page as one source — output one compile record per `web/<folder>/`, not one per file inside it.
 
 Run in **two phases**:
 

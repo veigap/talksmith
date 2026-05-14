@@ -32,10 +32,10 @@ The agent must pass the following in the skill invocation prompt:
 | `section_goal` | recommended | from the section's `**Goal of this section:**` line |
 | `talk_thesis` | recommended | top of `master.md` |
 | `presentation_language` | recommended | from `knowledge/profile.md` — determines language of all text in the SVG |
-| `style_md` | assumed loaded | full text of [`knowledge/image-styles/style.md`](../../../knowledge/image-styles/style.md), the closed style spec |
-| `templates_index` | assumed loaded | the 11 `*.txt` templates in [`knowledge/image-styles/`](../../../knowledge/image-styles/) — the open shape catalog |
+| `style_md_path` | yes | absolute path to [`knowledge/image-styles/style.md`](../../../knowledge/image-styles/style.md), the closed style spec. The skill reads it. |
+| `matched_template_path` | recommended | absolute path to the single [`knowledge/image-styles/*.txt`](../../../knowledge/image-styles/) template the illustrator picked for this block (or `null` if no template fits — render custom shape using `style.md` only). The skill reads it. |
 
-`style_md` and the templates are session-load context (per [CLAUDE.md](../../../CLAUDE.md) Session start). The agent's prompt to this skill should reference them rather than repeat them.
+The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the matched file. This keeps each skill invocation small. `style.md` and the templates are **not** session-load context — the illustrator reads them lazily on dispatch (see [CLAUDE.md](../../../CLAUDE.md) Session start, "Lazy-loaded").
 
 **Do not read the canonical `knowledge/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
 
@@ -43,7 +43,7 @@ The agent must pass the following in the skill invocation prompt:
 
 1. **Detect diagram vs code.** If `ascii_block` is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
-2. **Match the shape to a template.** Walk the 11 entries in `knowledge/image-styles/*.txt` and pick the closest structural match by counting boxes, arrow direction, row/column layout, presence of waveforms/cells/labels. If no template fits within reason, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply.
+2. **Use the matched template.** The illustrator already picked the closest structural match and passes its path as `matched_template_path` (or `null` if no template fits). Read that one file (and `style_md_path`). Do **not** walk the full `image-styles/` catalog — the illustrator owns that decision. If `matched_template_path` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply.
 
 3. **Pick semantic colors** from the slide context, **not** from box order. Use the *Semantic color → panel class* table in `style.md`:
    - `slide_content_prose` words like "before / dirty / noisy / raw" → `.c-coral` or `.c-gray`

@@ -19,14 +19,15 @@ When dispatching `librarian`, `scribe`, or `illustrator`, always include the abs
 
 ## Session start — mandatory loads
 
-Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`, `illustrator`) and skill invocation (`talksmith:md-to-pptx`, `talksmith:ascii-to-svg`). If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
+Load every file below in order, before Step 0. Treat each as **persistent session context** and pass the relevant content into every subagent dispatch (`librarian`, `scribe`) and skill invocation (`talksmith:md-to-pptx`) that needs it. If a file is missing or empty, proceed without it — only `profile.md` triggers a special flow (Step 0.5).
 
 | File | What it is | Behavior |
 |---|---|---|
 | [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | If filled, treat as global defaults for audience/tone/agenda. If absent/empty, Step 0.5 offers to fill it. |
 | [`knowledge/principles.md`](knowledge/principles.md) | House rules for what makes a good presentation (Mayer, Tufte, Reynolds, Duarte). | Defaults, not rules. Override per slide when the presenter has a reason; record reason in `Presenter feedback`. |
 | [`knowledge/learnings.md`](knowledge/learnings.md) | Durable rules promoted from feedback patterns (3+ recurrences). | Soft defaults. Apply when an entry's "Where it applies" surface comes up. |
-| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) | Visual contract for SVG diagrams + parameterized ASCII templates per recurring shape. | Style spec is mandatory for all SVG output. ASCII catalog is **open** — draft custom shapes when no template fits. The `illustrator` agent receives them in its dispatch and forwards the relevant pieces into every `talksmith:ascii-to-svg` skill invocation it makes. |
+
+**Lazy-loaded (do NOT preload into orchestrator context):** [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + every [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template. These are the visual contract for SVG output and are only needed at Step 6.5 (Polish). The [`illustrator`](.claude/agents/illustrator.md) subagent reads them from disk itself when dispatched — the orchestrator only passes the Talk path. The ASCII template catalog is **open**: draft custom shapes when no template fits.
 
 ## Interaction defaults
 
@@ -116,9 +117,10 @@ talks/<folder-name>/
 ├── master.md                    # created empty in Step 4
 ├── memory.md                    # progress log
 ├── knowledge/
-│   ├── articles/                # PDFs, HTML, papers
-│   ├── llm-chats/                # chat session ZIPs
-│   └── compile/                 # populated in Step 3
+│   ├── articles/                # PDFs, HTML, papers, screenshots — presenter drops files here
+│   ├── llm-chats/                # chat session ZIPs — presenter drops files here
+│   ├── web/                     # one folder per URL captured by `talksmith:ingest` (metadata.yaml, original.html, page.md, assets/)
+│   └── compile/                 # populated in Step 3 by `librarian`
 ├── images/                      # populated in Step 6.5 (illustrator + scribe). All master.md image refs resolve here.
 └── output/                      # populated in Step 7 (md-to-pptx). Holds master.pptx.
 ```
@@ -129,10 +131,13 @@ Initialize `memory.md` with topic, folder, ISO date, `Current step: 1 — Scaffo
 
 ## Step 2 — Collect
 
-Tell the presenter where each source type goes, then **wait** for explicit confirmation:
+Tell the presenter the **three ways** to bring source material in, then **wait** for explicit confirmation that they're done:
 
-- `knowledge/articles/` → PDFs, HTML, web pages, papers, article screenshots.
-- `knowledge/llm-chats/` → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
+- **Drop files into `knowledge/articles/`** → PDFs, HTML exports, papers, article screenshots. Drag-and-drop or `cp`.
+- **Drop chat ZIPs into `knowledge/llm-chats/`** → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
+- **Hand me a URL to capture** → tell me a URL and I'll run the [`talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. Useful for pages that are hard to save manually, JS-rendered articles where copy-paste is messy, or when you just want a snapshot pinned in the Talk folder. Pass me as many URLs as you want — one skill invocation per URL.
+
+When the presenter offers a URL, invoke `talksmith:ingest` immediately with that URL and the active Talk path. Use the default folder-name unless the presenter specifies one. Report what got saved (folder, page title, asset count) and ask if they have more URLs or are ready for the file-drops to be processed.
 
 Do not proceed to Step 3 on your own.
 
@@ -140,7 +145,7 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Compile
 
-For every file in `knowledge/articles/` and `knowledge/llm-chats/`, emit one Markdown record at `knowledge/compile/<original-filename>.md`. Dispatch to `librarian`. The librarian runs in **two phases**:
+For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record at `knowledge/compile/<original-filename>.md`. Dispatch to `librarian`. The librarian runs in **two phases**:
 
 1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts). Defer every image (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs). Phase 1 returns an `images_pending` list.
 2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when you explicitly pass `process_images: true` in the dispatch prompt.
@@ -267,7 +272,7 @@ When the presenter declares the document final ("ready" / "done" / "looks good" 
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
-1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent. The agent walks `master.md`, extracts per-slide context for every fenced ASCII block, and invokes the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg` following [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) (closed style spec) and the relevant [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template when one matches the shape (open catalog). CLI-safe — no Cowork dependency. The agent aggregates and reports rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent with the Talk path. The agent loads [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) and the matching [`knowledge/image-styles/*.txt`](knowledge/image-styles/) templates from disk itself (lazy-load — they are not in orchestrator context). It walks `master.md`, extracts per-slide context for every fenced ASCII block, and invokes the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg` following the style spec (closed) and the matched template (open catalog). CLI-safe — no Cowork dependency. The agent aggregates and reports rendered/unchanged/failed counts.
 
 2. **Clean `master.md`.** Dispatch the `scribe` subagent. Three transformations:
    - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
