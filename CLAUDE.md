@@ -140,11 +140,14 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Compile
 
-For every file in `knowledge/articles/` and `knowledge/llm-chats/`, emit one Markdown record at `knowledge/compile/<original-filename>.md`. Dispatch to `librarian`.
+For every file in `knowledge/articles/` and `knowledge/llm-chats/`, emit one Markdown record at `knowledge/compile/<original-filename>.md`. Dispatch to `librarian`. The librarian runs in **two phases**:
+
+1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts). Defer every image (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs). Phase 1 returns an `images_pending` list.
+2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when you explicitly pass `process_images: true` in the dispatch prompt.
+
+**Between phases**, if `images_pending` is non-empty, **`AskUserQuestion`** with a warning that image processing can take time: *"The librarian found N images (X figures from articles, Y from chat exports). Image processing requires per-image transcription and description and can be slow (~10–30s each). Process now, defer to later, or skip?"* Options: *Process now* (re-dispatch with `process_images: true`) / *Skip — text only* (Phase 2 never runs for this Talk) / *Defer to later* (mark in `memory.md`, prompt presenter again at the start of the next session). Never silently process images.
 
 **Rule: lossless restructuring.** Do not compress, do not summarize aggressively. For chat exports specifically: surface contradictions, abandoned threads, points where direction changed — don't condense.
-
-Embedded images (SVG/PNG/JPG): write a descriptive metadata entry; never skip silently.
 
 Per-file template:
 

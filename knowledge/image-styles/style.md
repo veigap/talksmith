@@ -253,7 +253,7 @@ Color selection is **semantic, never positional** — consult the *Semantic colo
 
 ## Catalog of recurring shapes
 
-Each row points to two sibling files in this directory: the canonical rendered `.svg` and the parameterized ASCII template `.txt` (with `<placeholder>` slots). Catalog is **open**: when no row fits, draft a custom ASCII shape — the style spec above still applies.
+Each row points to the parameterized ASCII template `.txt` (with `<placeholder>` slots) — that is the **input the renderer reads**. The `[svg]` link in each row points to a canonical rendered example **for human reference only**; renderers (the `talksmith:ascii-to-svg` skill, the `illustrator` agent) must **not** read those `.svg` files. The rendering contract is `style.md` (this file) + the matched `.txt` template + slide context. Catalog is **open**: when no row fits, draft a custom ASCII shape — the style spec above still applies.
 
 | Category | Trigger | Variants |
 |---|---|---|

@@ -37,6 +37,8 @@ The agent must pass the following in the skill invocation prompt:
 
 `style_md` and the templates are session-load context (per [CLAUDE.md](../../../CLAUDE.md) Session start). The agent's prompt to this skill should reference them rather than repeat them.
 
+**Do not read the canonical `knowledge/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
+
 ## Process
 
 1. **Detect diagram vs code.** If `ascii_block` is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
