@@ -1,11 +1,11 @@
 ---
 name: talksmith:ascii-to-svg
-description: Render **one** ASCII diagram block into **one** styled SVG file following `knowledge/image-styles/style.md`. Invoked by the `illustrator` agent during Step 6.5 (Polish) — once per fenced ASCII block in `master.md`. The skill is the per-block renderer; the illustrator agent is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
+description: Render **one** ASCII diagram block into **one** styled SVG file following `knowledge/image-styles/style.md`. Invoked by the `illustrator` agent during Step 6 (Polish) — once per fenced ASCII block in `master.md`. The skill is the per-block renderer; the illustrator agent is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
 ---
 
 # talksmith:ascii-to-svg — Render one ASCII block to one SVG
 
-This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`illustrator`](../../agents/illustrator.md) agent during Step 6.5 (Polish). Its scope is intentionally narrow:
+This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`illustrator`](../../agents/illustrator.md) agent during Step 6 (Polish). Its scope is intentionally narrow:
 
 | | Caller (`illustrator` agent) does | This skill does |
 |---|---|---|
@@ -39,7 +39,7 @@ The skill resolves both style files itself, hardcoded relative to repo root:
 - `knowledge/image-styles/style.md` — always read.
 - `knowledge/image-styles/<template_name>.txt` — read iff `template_name` is non-null.
 
-This is deliberate: the locations are stable, the contract stays small, and there's no risk of the caller passing a broken path. The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name. `style.md` and the templates are **not** session-load context — the illustrator reads them lazily on dispatch (see [CLAUDE.md](../../../CLAUDE.md) Session start, "Lazy-loaded").
+This is deliberate: the locations are stable, the contract stays small, and there's no risk of the caller passing a broken path. The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name.
 
 **Do not read the canonical `knowledge/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
 

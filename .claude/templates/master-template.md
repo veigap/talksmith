@@ -17,6 +17,16 @@ date:
 
 <!-- Field semantics, fill rules, and Presenter feedback log format live in .claude/agents/scribe.md (the Scribe agent prompt). -->
 
+# Thesis
+
+**Claim:**
+
+**Why it matters:**
+
+**Presenter feedback:**
+
+---
+
 # Agenda
 
 **Narrative arc:**
@@ -36,9 +46,6 @@ date:
 **Goal of this section:**
 
 **Presenter feedback:**
-- [closed] 2026-05-12 — "Section should anchor in a concrete problem before naming the technique."
-  Resolution: reordered slides — Slide 1 now opens with a thought experiment, technique named in Slide 3.
-- [open] 2026-05-13 — "Add a 'common misconceptions' bullet at the end of this section."
 
 ---
 
@@ -51,9 +58,6 @@ date:
 ### Speaker notes
 
 ### Presenter feedback
-- [closed] 2026-05-12 — "Drop the term 'distribution' on first mention — too jargon-heavy."
-  Resolution: replaced with "the shape of the data" on first mention; reintroduce term on Slide 2.
-- [open] 2026-05-14 — "Trim to ~90 seconds; we lose people if this slide goes past two minutes."
 
 ---
 

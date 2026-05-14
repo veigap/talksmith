@@ -1,17 +1,17 @@
 ---
 name: talksmith:md-to-pptx
-description: Convert a Talk's cleaned `master.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 7 of the Presenter Agent workflow, invoked after Step 6.5 (Polish) has rendered SVGs and cleaned `master.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself.
+description: Convert a Talk's cleaned `master.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and cleaned `master.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself.
 ---
 
 # md-to-pptx — Render `master.md` to PowerPoint
 
 **This skill is a thin orchestrator. All `.pptx` authoring must be delegated to Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).** Do not author the deck with any other tool — no `python-pptx`, no `pandoc`, no Marp, no hand-written XML. Pre-process `master.md`, then invoke `skill://antropic-skills:/pptx` with the intermediate file, the image paths, and the reference template. If that skill is not in the current session's registry (i.e. the session is not running inside Claude Cowork), stop and tell the presenter to run this step inside Cowork. No CLI fallback — see *Why Cowork-only* at the bottom.
 
-**Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the [`illustrator`](../../agents/illustrator.md) subagent's job, dispatched in Step 6.5 (Polish) before this skill ever runs. `master.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
+**Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the [`illustrator`](../../agents/illustrator.md) subagent's job, dispatched in Step 6 (Polish) before this skill ever runs. `master.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
 
 ## When to use
 
-After Step 6.5 (Polish) completes and the presenter picks **Render to PowerPoint** from the terminal branch. Optional — many presenters stop at the outline.
+After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint** from the terminal branch. Optional — many presenters stop at the outline.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ After Step 6.5 (Polish) completes and the presenter picks **Render to PowerPoint
 |---|---|---|
 | [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx) in session registry | Skill list includes the `pptx` entry | Stop. Tell presenter to run this step inside Cowork. |
 | Active `Talk` path | Passed in by orchestrator | Stop and ask. |
-| Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](images/...)` refs | Stop. Polish hasn't run — return to Step 6.5. |
+| Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](images/...)` refs | Stop. Polish hasn't run — return to Step 6. |
 | Pre-rendered SVGs | `talks/<Talk>/images/*.svg` exist for every image ref in `master.md` | Stop. Dispatch `illustrator` to fill the gap. |
 | Reference template | [`knowledge/template.pptx`](../../../knowledge/template.pptx) exists (or the presenter-supplied override path) | Stop and ask. |
 
@@ -34,7 +34,7 @@ After Step 6.5 (Polish) completes and the presenter picks **Render to PowerPoint
 ```
 talks/<Talk>/
 ├── master.md                # source (cleaned by Polish)
-├── images/                  # populated by illustrator + scribe (Step 6.5)
+├── images/                  # populated by illustrator + scribe (Step 6)
 │   ├── s1-1.svg
 │   └── ...
 └── output/
@@ -85,7 +85,7 @@ talks/<Talk>/
 - Native `pptx` skill not available → stop, instruct presenter to run inside Cowork.
 - Reference template missing or unreadable → stop and ask.
 - Reference template was loaded but not honored (rendered deck's theme/fonts/layouts don't match) → surface loudly; offer to rerun. Do not silently ship a deck with the wrong look.
-- `master.md` not yet cleaned (still contains `Presenter feedback` fields or unrendered ASCII fenced blocks) → stop; return to Step 6.5.
+- `master.md` not yet cleaned (still contains `Presenter feedback` fields or unrendered ASCII fenced blocks) → stop; return to Step 6.
 - An image ref points at a missing SVG → stop; dispatch `illustrator` to render it.
 - A Section has zero Slides.
 - Native skill exits non-zero → surface its error message verbatim in the final report.

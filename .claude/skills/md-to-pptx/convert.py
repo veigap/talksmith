@@ -2,7 +2,7 @@
 `skill://antropic-skills:/pptx` consumes.
 
 Input contract:
-    A Talk's cleaned `master.md` (post Step 6.5 Polish). Image refs already
+    A Talk's cleaned `master.md` (post Step 6 Polish). Image refs already
     point at `images/<file>`; `Presenter feedback` already stripped; ASCII
     source preserved only in `<!-- ascii-source: ... -->` HTML comments.
 

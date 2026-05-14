@@ -1,6 +1,6 @@
 # Presentation Principles
 
-This file is **session-wide context** for Talksmith. The orchestrator loads it at session start alongside [`profile.md`](profile.md) and [`learnings.md`](learnings.md), and passes the relevant principles into every dispatch to the `librarian`, `scribe`, and `illustrator` subagents and the `talksmith:md-to-pptx` / `talksmith:ascii-to-svg` skills.
+This file holds Talksmith's design defaults — Mayer / Tufte / Reynolds / Duarte house rules — applied when drafting slides or pushing back on vague content. It is **lazy-loaded**: read it from disk only at the step that needs it. The orchestrator reads it on entry to Step 4 Mode A (Interview) to drive editorial pushback; the `scribe` reads it on dispatch in Step 4 Modes B (Agent Draft) and C (Presenter Outline) when authoring slides. No other step or agent loads it.
 
 The principles below are a mix of:
 1. **Talksmith opinions** — encoded methodology and house defaults.
@@ -29,12 +29,12 @@ Treat every principle as a **default**, not a rule. The presenter can override a
 
 - **Cite by filename.** Every slide's `Sources` references files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`). No floating assertions; no "as I recall…"
 - **Never silently drop content.** Anything removed goes to `Cut material` (with a one-line reason) or `Open questions`. The audit trail matters more than tidiness.
-- **Image-first when a concept has shape.** If an idea has structure — a flow, a hierarchy, a comparison, a before/after, an architecture, a state machine — capture it as a visual, not as bullets. The **first draft of any such visual is an ASCII diagram inside `master.md`** (tight, labeled, load-bearing — not decoration). Treat the ASCII as the *outline* of the image: faithful enough to review during drafting, and later promoted — reused from `knowledge/compile/` if one fits, or rendered by `md-to-pptx` for fenced ASCII blocks. Don't wait for a polished image to introduce a visual; draft it in ASCII first.
+- **Image-first when a concept has shape.** If an idea has structure — a flow, a hierarchy, a comparison, a before/after, an architecture, a state machine — capture it as a visual, not as bullets. The **first draft of any such visual is an ASCII diagram inside `master.md`** (tight, labeled, load-bearing — not decoration). Treat the ASCII as the *outline* of the image: faithful enough to review during drafting, and later promoted to a styled SVG by the `illustrator` during Step 6 (Polish) — or reused from `knowledge/compile/` if a compiled figure fits. Don't wait for a polished image to introduce a visual; draft it in ASCII first.
 - **Aim for a balanced visual mix — not a rule, a default.** None of the below is mandatory; use judgement per slide. The goal is to avoid wall-of-bullets decks and reach for the lightest format that actually sharpens the point:
   - *Emoji as anchors when they help* — ✅/❌ for trade-offs, ⚠️ for caveats, 🎯 for goals, 📊 for data, 🧠 for insight, 🔁 for loops/iteration. Skip them when they'd feel forced or noisy.
   - *Tables when there are 2+ dimensions* — comparisons, trade-offs, before/after, structured data. A bulleted list is usually fine for simple enumerations.
   - *Reuse images from the compiled knowledge base when relevant* — scan the `Images / diagrams` sections of `knowledge/compile/*.md` before proposing a new visual. If a compiled figure fits, embed it (`![<alt>](<path>)`) and cite its source. If it doesn't fit, don't force it.
-  - *ASCII diagrams as the drafting form for any new visual* — flowcharts, sequence/state, bar charts, simple architecture, before/after. Keep them tight (~≤ 60 cols), labeled, and load-bearing. They are the working form during Draft and Review; render them to images in Step 7 or replace with a compiled figure when one becomes available.
+  - *ASCII diagrams as the drafting form for any new visual* — flowcharts, sequence/state, bar charts, simple architecture, before/after. Keep them tight (~≤ 60 cols), labeled, and load-bearing. They are the working form during Draft and Review; the `illustrator` renders them to SVG in Step 6 (Polish), or they're replaced with a compiled figure when one becomes available.
 - **Avoid walls of bullets.** Three short bullets beats six long ones. Six long bullets means the slide is doing too much; split it.
 - **Words should not duplicate the spoken narration.** If the speaker is going to read the slide aloud, the slide is the wrong format — turn it into a visual or speaker note. (Mayer's *redundancy principle* — see citations.)
 - **Speaker notes are the talk; the slide is the punctuation.** Write the slide to be glanced at; write the notes to be delivered.
@@ -60,7 +60,7 @@ Treat every principle as a **default**, not a rule. The presenter can override a
 - **Lossless before lossy.** Sources are restructured, not summarized. Contradictions and abandoned threads from the presenter's exploration are surfaced, not silently resolved.
 - **Roles are explicit.** Librarian preserves, Editor challenges, Scribe records. None of them are "yes-man assistants."
 - **Resume, don't restart.** `memory.md` captures progress after every step so the presenter can put a talk down for weeks and pick it up exactly where they left off.
-- **Drive, don't wait.** During Step 5 (Draft), the agent asks the next useful question rather than letting the presenter stall.
+- **Drive, don't wait.** During Step 4 (Draft), the agent asks the next useful question rather than letting the presenter stall.
 
 ---
 

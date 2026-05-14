@@ -29,15 +29,15 @@ Only one file is loaded eagerly at session start. Everything else is **read just
 
 | File | Read when | Used for |
 |---|---|---|
-| [`knowledge/principles.md`](knowledge/principles.md) | Entering Step 5 **Mode A** (Interview) | Editor role: push back on vague slides, walls of bullets, prose-duplicates-narration, etc. Not loaded in Modes B/C (scribe loads it itself) or in any other step. |
-| [`knowledge/learnings.md`](knowledge/learnings.md) | Entering Step 6.7 (Learnings) | Pattern promotion: append new entries. Not loaded in Step 5 (scribe loads it itself in B/C). |
+| [`knowledge/principles.md`](knowledge/principles.md) | Entering Step 4 **Mode A** (Interview) | Editor role: push back on vague slides, walls of bullets, prose-duplicates-narration, etc. Not loaded in Modes B/C (scribe loads it itself) or in any other step. |
+| [`knowledge/learnings.md`](knowledge/learnings.md) | Entering Step 7 (Learnings) | Pattern promotion: append new entries. Not loaded in Step 4 (scribe loads it itself in B/C). |
 
 **Lazy-loaded — subagents read on dispatch:**
 
 | File | Reader | Read when |
 |---|---|---|
-| [`knowledge/principles.md`](knowledge/principles.md) + [`knowledge/learnings.md`](knowledge/learnings.md) | `scribe` | Dispatched in Step 5 Modes B (Agent Draft) or C (Presenter Outline). |
-| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + matched [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template | `illustrator` (and the `ascii-to-svg` skill) | Dispatched in Step 6.5 (Polish). Style spec is closed; the `*.txt` catalog is open — draft custom shapes when no template fits. |
+| [`knowledge/principles.md`](knowledge/principles.md) + [`knowledge/learnings.md`](knowledge/learnings.md) | `scribe` | Dispatched in Step 4 Modes B (Agent Draft) or C (Presenter Outline). |
+| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + matched [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template | `illustrator` (and the `ascii-to-svg` skill) | Dispatched in Step 6 (Polish). Style spec is closed; the `*.txt` catalog is open — draft custom shapes when no template fits. |
 
 The orchestrator passes the active Talk path on every dispatch. It does **not** forward the contents of these files — each subagent reads from disk. This keeps orchestrator context lean across long sessions and avoids three-way duplication of the same text.
 
@@ -45,9 +45,9 @@ The orchestrator passes the active Talk path on every dispatch. It does **not** 
 
 - **Use `AskUserQuestion` for every choice, confirmation, or decision** (new/resume, folder name, thesis variant, section ordering, slide framing, keep/cut). Propose 2–4 concrete options derived from current context. Reserve free-text only for genuinely open prompts (e.g. "what's your thesis in one sentence?").
 - **Exception 1 — no context:** if you have no context to propose from (e.g. the very first Topic input at session start), ask free-text. Never fabricate candidates.
-- **Exception 2 — Step 5 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 6 Review. See Step 5 *Question budget* for the precise rules.
+- **Exception 2 — Step 4 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 5 Review. See Step 4 *Question budget* for the precise rules.
 - **Drive the conversation.** Ask the next useful question rather than waiting.
-- **Update `memory.md` after every step (1 through 7)** via the `scribe` subagent — including the 6.5 (Polish) and 6.7 (Learnings) sub-steps. Capture: current step, what was decided, key inputs, files changed, pending open questions. On resume, read `memory.md` first.
+- **Update `memory.md` after every step (1 through 8)** via the `scribe` subagent. Capture: current step, what was decided, key inputs, files changed, pending open questions. On resume, read `memory.md` first.
 
 ## Workflow
 
@@ -58,12 +58,11 @@ The orchestrator passes the active Talk path on every dispatch. It does **not** 
 | 1 | Scaffold | Create folder tree under `talks/<folder>/`. | Provides topic + folder name. |
 | 2 | Collect | Tell presenter where to drop sources; wait. | Uploads to `knowledge/articles/` and `knowledge/llm-chats/`. |
 | 3 | Compile | Convert every source to uniform Markdown under `knowledge/compile/`. | Confirms uploads complete. |
-| 4 | Template | Copy canonical `master-template.md` (strip comments) to `talks/<folder>/master.md`. | Passive. |
-| 5 | Draft | Fill empty `master.md` end-to-end in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers, decides, redirects. |
-| 6 | Review | Apply presenter's `Presenter feedback` bullets; stamp `[open]` → `[closed]` with `Resolution:`. Loops N times. | Edits `master.md` in external editor; adds plain `- "feedback"` bullets. |
-| 6.5 | Polish | **Mandatory.** Render every ASCII → SVG (dispatch [`illustrator`](.claude/agents/illustrator.md)); clean `master.md` (dispatch `scribe`: inline images, strip all feedback fields). | Passive. |
-| 6.7 | Learnings | **Mandatory.** Pattern-scan [`feedback-backlog.md`](knowledge/feedback-backlog.md); for any pattern recurring ≥3× across all Talks, ask presenter to promote to [`learnings.md`](knowledge/learnings.md). Then branch on terminal action (promote-to-library / PPTX / stop). | Approves promoted learnings; picks terminal option. |
-| 7 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md), which delegates `.pptx` authoring to `skill://antropic-skills:/pptx`. Cowork only. | Confirms render. |
+| 4 | Draft | Fill `master.md` end-to-end in one of three modes (Interview / Agent Draft / Presenter Outline). The `scribe` bootstraps the file from `master-template.md` on its first write if missing. | Answers, decides, redirects. |
+| 5 | Review | Apply presenter's `Presenter feedback` bullets; stamp `[open]` → `[closed]` with `Resolution:`. Loops N times. | Edits `master.md` in external editor; adds plain `- "feedback"` bullets. |
+| 6 | Polish | **Mandatory.** Render every ASCII → SVG (dispatch [`illustrator`](.claude/agents/illustrator.md)); clean `master.md` (dispatch `scribe`: inline images, strip all feedback fields). | Passive. |
+| 7 | Learnings | **Mandatory.** Pattern-scan [`feedback-backlog.md`](knowledge/feedback-backlog.md); for any pattern recurring ≥3× across all Talks, ask presenter to promote to [`learnings.md`](knowledge/learnings.md). Then branch on terminal action (promote-to-library / PPTX / stop). | Approves promoted learnings; picks terminal option. |
+| 8 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md), which delegates `.pptx` authoring to `skill://antropic-skills:/pptx`. Cowork only. | Confirms render. |
 
 Do not skip ahead. Wait for explicit confirmation between steps.
 
@@ -77,19 +76,18 @@ Concise: state you are Talksmith, name the three roles, display the workflow cha
   TALKSMITH WORKFLOW
   ==================
 
-  [1] Scaffold   <-- topic + folder name
+  [1] Scaffold    <-- topic + folder name
        v
-  [2] Collect    <-- upload PDFs/papers, chat ZIPs
+  [2] Collect     <-- upload PDFs/papers, chat ZIPs, URLs
        v
-  [3] Compile     -- Librarian: sources -> knowledge/compile/*.md  (auto)
+  [3] Compile     -- librarian: sources -> knowledge/compile/*.md
        v
-  [4] Draft      <-- one of three modes
+  [4] Draft       <-- one of three modes (A Interview / B Agent Draft / C Outline)
+                     scribe bootstraps master.md from template on first write
        v
-  [5] Review     <-- presenter edits master.md; loops N times
+  [5] Review      <-- presenter edits master.md; loops N times
        v
-     master.md ready
-       v
-  [6] Polish      -- illustrator: ASCII -> SVG; scribe: clean master.md (auto)
+  [6] Polish      -- illustrator: ASCII -> SVG; scribe: clean master.md
        v
   [7] Learnings   -- promote ≥3x recurring feedback to learnings.md
        v
@@ -126,15 +124,15 @@ Create exactly:
 
 ```
 talks/<folder-name>/
-├── master.md                    # created empty in Step 4
+├── master.md                    # created by `scribe` on first write in Step 4 (Draft)
 ├── memory.md                    # progress log
 ├── knowledge/
 │   ├── articles/                # PDFs, HTML, papers, screenshots — presenter drops files here
 │   ├── llm-chats/                # chat session ZIPs — presenter drops files here
 │   ├── web/                     # one folder per URL captured by `talksmith:ingest` (metadata.yaml, original.html, page.md, assets/)
 │   └── compile/                 # populated in Step 3 by `librarian`
-├── images/                      # populated in Step 6.5 (illustrator + scribe). All master.md image refs resolve here.
-└── output/                      # populated in Step 7 (md-to-pptx). Holds master.pptx.
+├── images/                      # populated in Step 6 (illustrator + scribe). All master.md image refs resolve here.
+└── output/                      # populated in Step 8 (md-to-pptx). Holds master.pptx.
 ```
 
 Initialize `memory.md` with topic, folder, ISO date, `Current step: 1 — Scaffold complete`. Show created paths.
@@ -206,29 +204,29 @@ Report file count when done; flag anything unparseable.
 
 ---
 
-## Step 4 — Template
+## Step 4 — Draft
 
-Copy [`.claude/templates/master-template.md`](.claude/templates/master-template.md) to `talks/<folder>/master.md`. **Strip all comments during the copy**: YAML `# field semantics` lines and HTML `<!-- ... -->` blocks. Result = structural shape only (frontmatter keys with empty values, headings, field labels).
+### Pre-mode — viability check and common inputs
 
-Structure: deck = **Sections** containing **Slides**. Each Slide has `Content`, `Sources`, `Speaker notes`. Top: frontmatter + one-sentence `Thesis` + `Agenda`. Bottom: `Open questions` + `Cut material`. Do not invent a different structure — downstream tooling parses this exact shape.
+Before asking the presenter to pick a mode, run these checks and resolve these inputs **once**. They apply to every mode and avoid re-asking later.
 
----
+1. **Compile/ viability for B and C.** Check `talks/<Talk>/knowledge/compile/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
+2. **Presentation language.** Read from `profile.md` → `Presentation language`. If the field is **missing, empty, or only contains an HTML comment**, `AskUserQuestion` once with the 2–3 most plausible options (Spanish, English, Portuguese, etc.) — the answer governs every word the scribe writes into `master.md`.
+3. **Frontmatter defaults — duration, date, audience.** If `profile.md` provides defaults, use them silently. If a field is **missing, empty, or only contains an HTML comment**, ask now (before mode selection): `AskUserQuestion` with 2–4 candidates per field. Don't defer to mid-mode — these are needed by all three modes upfront.
 
-## Step 5 — Draft
-
-`AskUserQuestion` for mode. Free-text only when genuinely open. Question-density varies by mode (see *Question budget* below).
+Once 1–3 are resolved, `AskUserQuestion` for the mode (free-text only when genuinely open). Question-density varies by mode (see *Question budget* below).
 
 | Mode | Trigger | Sequence |
 |---|---|---|
-| **A — Interview** | Agent asks, presenter answers. | 1. Audience & frontmatter (use profile defaults). 2. Thesis (push back if vague). 3. Sections + per-section "Goal". 4. Per-slide content/sources/speaker notes. 5. Conclusions. |
-| **B — Agent Draft** | Agent drafts; presenter refines. | 1. Draft entire `master.md` from `knowledge/compile/` + `knowledge/profile.md`. 2. Present to presenter. 3. Ask **only critical clarifying questions** for unresolvable gaps. Do not re-ask things already answered by profile/sources. |
-| **C — Presenter Outline** | Presenter brain-dumps; agent structures **with minimal interruption**. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Group into 3–7 Sections, infer goals, order into a narrative arc — **do not confirm structure**; the presenter will edit if it's wrong. 3. Map their topics to slides (don't invent, don't drop). 4. Draft Content/Sources/Speaker notes from compile. 5. Ship the full draft to the presenter. Everything else is **deferred to async feedback** in Step 6 (Review). |
+| **A — Interview** | Agent asks, presenter answers. | (Frontmatter and audience already resolved in pre-mode.) 1. Thesis — free-text; push back if vague. 2. Sections + per-section "Goal" via `AskUserQuestion` with candidates derived from the thesis. 3. Per-slide content / sources / speaker notes. 4. Conclusions. |
+| **B — Agent Draft** | Agent drafts; presenter refines. | (Frontmatter and audience already resolved in pre-mode.) 1. Draft entire `master.md` from `knowledge/compile/` + `knowledge/profile.md`. 2. Present to presenter. 3. Ask **only critical clarifying questions** for unresolvable gaps. Do not re-ask things already answered by profile/sources/pre-mode. |
+| **C — Presenter Outline** | Presenter brain-dumps; agent structures **with minimal interruption**. | (Frontmatter and audience already resolved in pre-mode.) 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Group into 3–7 Sections, infer goals, order into a narrative arc — **do not confirm structure**; the presenter will edit if it's wrong. 3. Map their topics to slides (don't invent, don't drop). 4. Draft Content / Sources / Speaker notes from compile. 5. Ship the full draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
 
 **Question budget per mode:**
 
 - **A** (Interview) — unlimited; the agent drives the Q&A.
 - **B** (Agent Draft) — critical only. *Critical = the draft cannot proceed coherently without this answer.* Everything else: draft a best-guess and let the presenter correct it via Step-6 feedback bullets.
-- **C** (Presenter Outline) — **critical only, ideally zero.** Same definition as B. The brain-dump *is* the input; the agent's job is to structure and fill, not to re-interrogate the presenter. Defer ordering preferences, slide-title wording, keep/cut decisions, framing nuances, etc. to Step 6 Review where the presenter edits `master.md` directly.
+- **C** (Presenter Outline) — **critical only, ideally zero.** Same definition as B. The brain-dump *is* the input; the agent's job is to structure and fill, not to re-interrogate the presenter. Defer ordering preferences, slide-title wording, keep/cut decisions, framing nuances, etc. to Step 5 Review where the presenter edits `master.md` directly.
 
 **What counts as "critical":**
 - Required field can't be inferred (e.g. duration is missing and the profile has no default).
@@ -238,7 +236,7 @@ Structure: deck = **Sections** containing **Slides**. Each Slide has `Content`, 
 **What does NOT count as critical** (defer to async feedback):
 - Section ordering preferences.
 - Slide-title wording.
-- Whether to keep a slide that has no supporting source — draft it with a `TODO source` placeholder and let the presenter cut or fill in Step 6.
+- Whether to keep a slide that has no supporting source — draft it with a `TODO source` placeholder and let the presenter cut or fill in Step 5.
 - Tone, emoji density, level of formality.
 - Choice between two plausible visual idioms for the same concept.
 
@@ -250,11 +248,11 @@ Structure: deck = **Sections** containing **Slides**. Each Slide has `Content`, 
 - **Move dropped content to `Cut material`** instead of deleting.
 - **Record the chosen mode in `memory.md`** so resume continues in the same mode.
 - **Apply [`principles.md`](knowledge/principles.md)** — one idea per slide, no wall-of-bullets, image-first when concept has shape (use [`knowledge/image-styles/`](knowledge/image-styles/) templates), balanced visual mix. **Lazy-loaded.** In **Mode A**, the orchestrator reads `principles.md` from disk on entry to apply the Editor role during the interview. In **Modes B and C**, the orchestrator does *not* read it — it dispatches the `scribe` subagent with just the Talk path; the scribe reads `principles.md` and [`learnings.md`](knowledge/learnings.md) from disk itself when authoring slides.
-- **Hand the floor back** after each substantive change. Remind presenter they can (a) edit `master.md` directly with `- "..."` feedback bullets, or (b) reply in chat. **Do not advance to Step 6 until they explicitly say "ready" / "done" / "move to review" / "looks good".**
+- **Hand the floor back** after each substantive change. Remind presenter they can (a) edit `master.md` directly with `- "..."` feedback bullets, or (b) reply in chat. **Do not advance to Step 5 until they explicitly say "ready" / "done" / "move to review" / "looks good".**
 
 ---
 
-## Step 6 — Review (iterative loop)
+## Step 5 — Review (iterative loop)
 
 Loop until presenter declares the document final. Each round:
 
@@ -276,11 +274,11 @@ Loop until presenter declares the document final. Each round:
 - For ambiguous feedback, `AskUserQuestion` with 2–4 concrete resolutions before applying.
 - **Mirror every `[closed]` to [`knowledge/feedback-backlog.md`](knowledge/feedback-backlog.md):** talk folder, date, location (Thesis/Agenda/Section/Slide), verbatim feedback, one-line resolution, tags. Reuse existing tags before inventing new ones.
 
-When the presenter declares the document final ("ready" / "done" / "looks good" / "move on"), Step 6 ends. **Steps 6.5 (Polish) and 6.7 (Learnings) run automatically in sequence** — do not wait for further confirmation between them.
+When the presenter declares the document final ("ready" / "done" / "looks good" / "move on"), Step 5 ends. **Steps 6 (Polish) and 7 (Learnings) run automatically in sequence** — do not wait for further confirmation between them.
 
 ---
 
-## Step 6.5 — Polish *(mandatory, runs on Review approval)*
+## Step 6 — Polish *(mandatory, runs on Review approval)*
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
@@ -301,11 +299,11 @@ Triggered the moment the presenter declares `master.md` final. Runs end-to-end w
 
    Goal: opening cleaned `master.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams (all served from a sibling `images/` folder), speaker notes. No working-meta fields visible.
 
-Update `memory.md` with `Current step: 6.5 — Polish complete`. Proceed to Step 6.7 automatically.
+Update `memory.md` with `Current step: 6 — Polish complete`. Proceed to Step 7 automatically.
 
 ---
 
-## Step 6.7 — Learnings *(mandatory)*
+## Step 7 — Learnings *(mandatory)*
 
 Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recurring feedback patterns into durable session-load defaults so future Talks inherit them.
 
@@ -319,20 +317,20 @@ Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recu
 Then **branch — terminal action**. `AskUserQuestion` (multi-select):
 
 - **Promote to shared knowledge** — copy compiled sources + cleaned `master.md` + rendered `output/svg/` into top-level `knowledge-library/<folder>/`. Dispatch to `librarian`. Record in `memory.md`.
-- **Render to PowerPoint** — proceed to Step 7.
+- **Render to PowerPoint** — proceed to Step 8.
 - **Stop here** — cleaned outline + SVGs are the deliverable.
 
-Update `memory.md` with `Current step: 6.7 — Learnings complete` and the chosen terminal action.
+Update `memory.md` with `Current step: 7 — Learnings complete` and the chosen terminal action.
 
 ---
 
-## Step 7 — Render PPTX *(optional, Cowork only)*
+## Step 8 — Render PPTX *(optional, Cowork only)*
 
 Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md). The skill delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx); pre-processing of `master.md` → intermediate Markdown is handled by the skill's CLI-safe [`convert.py`](.claude/skills/md-to-pptx/convert.py).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill must be in the registry). If missing, stop and tell the presenter to run this step inside Cowork. **No CLI fallback** — pandoc/Marp/python-pptx experiments produced lower-fidelity output.
-- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6.5 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
-- **Reuses the images at `talks/<Talk>/images/`** rendered by `illustrator` and consolidated by `scribe` in Step 6.5 (Polish) — does not regenerate or move them. The cleaned `master.md` references them via `![alt](images/…)`; the renderer follows the references and passes each image path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
+- Pre-processing strips `Thesis`, `Open questions`, `Cut material`. `Presenter feedback` is already gone (cleaned in Step 6 Polish). Numbered H1s → divider slides; H2s inside sections → content slides (current `# N.` / `## N.`; legacy `# N —` / `# Section N:` / `## Slide N:` accepted). Speaker notes go to the notes pane.
+- **Reuses the images at `talks/<Talk>/images/`** rendered by `illustrator` and consolidated by `scribe` in Step 6 (Polish) — does not regenerate or move them. The cleaned `master.md` references them via `![alt](images/…)`; the renderer follows the references and passes each image path to the native skill for embedding. ASCII source preserved in HTML comments is ignored.
 - Output: `talks/<Talk>/output/master.pptx`. Reference template defaults to [`knowledge/template.pptx`](knowledge/template.pptx); only override if the presenter wants a different look.
 
 ---

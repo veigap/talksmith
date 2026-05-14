@@ -1,6 +1,6 @@
 # Feedback backlog
 
-Cross-presentation log of every `Presenter feedback` bullet captured during Step 6 (Review). The Scribe appends to this file whenever a feedback bullet is closed in a Talk's `master.md`. The orchestrator scans this file at presentation completion to detect repeated patterns and promote them to [`learnings.md`](learnings.md).
+Cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review). The Scribe appends to this file whenever a feedback bullet is closed in a Talk's `master.md`. The orchestrator scans this file at presentation completion to detect repeated patterns and promote them to [`learnings.md`](learnings.md).
 
 > **Do not edit by hand during a Review round.** Add feedback to the Talk's `master.md` `Presenter feedback` fields; the Scribe mirrors closed bullets here.
 
@@ -27,7 +27,7 @@ Tags are how patterns surface. Reuse existing tags from prior entries before inv
 
 ## Pattern detection
 
-At presentation completion (when the presenter declares `master.md` final, before Step 7), the orchestrator:
+At presentation completion (when the presenter declares `master.md` final, before Step 8), the orchestrator:
 
 1. Scans the entries added during this Talk and combines them with prior backlog history.
 2. Groups by tag and by recurring resolution shape.
