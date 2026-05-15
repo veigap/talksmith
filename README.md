@@ -159,9 +159,13 @@ Review repeats as many times as needed until the presenter declares the document
 └── .claude/
     ├── settings.json                  # shared Claude Code settings
     ├── settings.local.json            # local overrides (gitignored)
-    ├── templates/
-    │   ├── master-template.md         # canonical structure of master.md
-    │   └── profile-template.md        # empty profile (seeds knowledge/profile.md in Step 0.5)
+    ├── schemas/                       # file-format specs (each holds spec + canonical empty form)
+    │   ├── master.md                  # talks/<Talk>/master.md schema (seeds the deliverable in Step 4)
+    │   ├── profile.md                 # knowledge/profile.md schema (seeds the profile in Step 0.5)
+    │   ├── principles.md              # knowledge/principles.md schema (composer's design defaults)
+    │   ├── learnings.md               # knowledge/learnings.md schema (promoted rules)
+    │   ├── feedback-backlog.md        # knowledge/feedback-backlog.md schema (cross-Talk feedback log)
+    │   └── feedback-processed.md      # knowledge/feedback-processed.md schema (promoted-feedback archive)
     ├── agents/
     │   ├── librarian.md               # Librarian subagent prompt
     │   ├── composer.md                # Composer subagent prompt (design critic)
