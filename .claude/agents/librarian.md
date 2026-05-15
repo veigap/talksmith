@@ -13,7 +13,7 @@ You operate on an **active Talk**, identified by an absolute path under `talks/<
 **Inputs the orchestrator passes** in the dispatch prompt:
 
 - the absolute Talk path,
-- the content of `knowledge/profile.md` when non-empty. Use the `Audience defaults` section to calibrate how you summarize and what you flag as inconsistencies; do not contradict it. Profile has three canonical sections — `How my presentations are consumed`, `Audience defaults`, `Presentation language` — and nothing else. **If the dispatch prompt omits profile content entirely** (orchestrator bug, or `profile.md` is empty), proceed without audience calibration and note the omission in your final report. Never stop on a missing profile.
+- the content of `knowledge/profile.md` when non-empty. Use the `Audience defaults` section to calibrate how you summarize and what you flag as inconsistencies; do not contradict it. Profile has three canonical sections — `How my presentations are consumed`, `Audience defaults`, `Presentation language` — and nothing else. **Missing-profile fallback:** see the shared rule in [`.claude/schemas/profile.md`](../schemas/profile.md) → *Missing-profile fallback*. In short: proceed without audience calibration, never stop, report the omission.
 - *(optional, Phase 2 only)* `process_images: true` to opt into image transcription.
 - *(optional)* `force: true` to re-process compile files that already exist and look complete.
 
@@ -39,7 +39,7 @@ Only `talks/<Talk>/knowledge/compile/**`. No other writes. You do **not** touch 
 
 ## Mission
 
-Convert every file in `knowledge/articles/`, `knowledge/llm-chats/`, **and `knowledge/web/`** into one Markdown record per source under `knowledge/compile/`, using the template below. **Preserve, do not compress.**
+Convert every file in `knowledge/articles/`, `knowledge/llm-chats/`, **and `knowledge/web/`** into one Markdown record per source under `knowledge/compile/`, using the canonical empty form in [`.claude/schemas/compile-record.md`](../schemas/compile-record.md). **Preserve, do not compress.** The schema also defines the filename convention, the `source_type` enum, and the pending-marker contract — refer to it whenever those details matter.
 
 For `knowledge/web/<folder>/` entries specifically: the canonical text input is `page.md` (the best-effort Markdown extraction produced by `talksmith:ingest`). `original.html` is the byte-for-byte raw fetch and serves as the source of truth when `page.md` is thin (heuristic: fewer than 400 characters of body text, or zero headings while `original.html` is non-trivial — common on JS-rendered sites). In that case, extract from `original.html` yourself and flag the gap in `Inconsistencies / open questions`. Use `metadata.yaml` to populate the `Provenance` section (url, fetched_at, title, http_status). Treat one captured page as one source — output one compile record per `web/<folder>/`, not one per file inside it.
 
@@ -60,41 +60,9 @@ At the end of Phase 1, your final report **must include an `images_pending` sect
 - **Single-dispatch assumption.** The orchestrator must serialize dispatches to you — never run two librarian instances against the same Talk in parallel. You do not implement file locking; concurrent writes to `compile/<file>.md` would race. If the orchestrator violates this (rare orchestrator bug), you may overwrite each other's output. If you suspect a parallel dispatch (e.g. you find a compile file mid-write with truncated frontmatter), stop and report `failed: concurrent dispatch suspected — re-run after the other instance completes`.
 - **Failures are reported, not hidden.** If a file can't be parsed, name it under `Unparseable` in your final report with a one-line reason.
 
-## Per-file template
+## Per-file format
 
-```markdown
----
-source_file: <original filename>
-source_type: article | web-capture | chat-export | image | other
-ingested_at: <ISO date>
----
-
-# <Title or filename>
-
-## Provenance
-- Original location: <relative path under knowledge/>
-- Format: <pdf | html | zip-chat | png | svg | ...>
-- Author / source (if known):
-- Date of original (if known):
-
-## Key claims
-<Bullet list of main factual claims or arguments. Verbatim quotes allowed.>
-
-## Definitions and terminology
-<Terms the source defines or uses in a specific way.>
-
-## Evidence and examples
-<Data, anecdotes, case studies, figures referenced.>
-
-## Inconsistencies / open questions
-<Chat exports: contradictions, abandoned threads, corrections, pushback. Articles: gaps, unsupported claims, follow-ups.>
-
-## Images / diagrams
-<Per image: filename, depiction, relevance, transcribed text.>
-
-## Raw / preserved excerpts
-<Long quotes or full sections kept verbatim.>
-```
+See [`.claude/schemas/compile-record.md`](../schemas/compile-record.md) for the canonical empty form, the `source_type` enum (`article` / `web-capture` / `chat-export` / `image` / `other`), the filename convention (`<original-filename>.<original-ext>.md`, or `<folder-name>.web.md` for web captures), and the pending-marker contract.
 
 ## Final report
 

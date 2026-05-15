@@ -43,6 +43,21 @@ The orchestrator writes the file when it persists newly-collected fields — e.g
 
 The profile is a *global preferences* file, not an *identity* record. The `presenter` frontmatter field in each Talk's `master.md` captures the per-Talk presenter identity (collected in Step 4 Pre-mode on the first session of a new Talk).
 
+## Missing-profile fallback (shared rule)
+
+This rule is referenced by all four subagents (`librarian`, `composer`, `editor`, `illustrator`). It exists once, here, to keep the four agent prompts from drifting.
+
+**When the dispatch prompt omits profile content entirely** (orchestrator bug, or `knowledge/profile.md` is genuinely empty), every subagent:
+
+1. Proceeds without stopping — a missing profile is never a fatal error.
+2. Derives audience from `master.md` frontmatter (`audience:` field). If absent, falls back to "general / unspecified" and surfaces the gap.
+3. Derives `Presentation language` from the dominant language of `master.md` prose. If `master.md` itself is empty (early Mode A pre-bootstrap), falls back to English and surfaces the gap.
+4. **Notes the omission in its final report** so the orchestrator can fix the dispatch contract or prompt the presenter to fill the profile.
+
+**When a specific profile section is missing, empty, or contains only an HTML-comment placeholder**, the same fallback applies for that section alone. Subagents do not refuse to run; they degrade gracefully and report.
+
+The orchestrator is responsible for **forwarding profile content** in every dispatch prompt. Subagents never read `knowledge/profile.md` from disk.
+
 ## Canonical empty form
 
 Bootstrap `knowledge/profile.md` from this form on first creation. The one-line schema pointer at the top stays; the section headings and HTML-comment placeholders below stay until the presenter fills them in.

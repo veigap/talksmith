@@ -27,7 +27,7 @@ If that doesn't fit how you work, this is the wrong tool.
 Four roles, one file as source of truth:
 
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `knowledge/compile/`. Preserves; does not compress.
-- **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, and design principles; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone.
+- **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and learned rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone.
 - **Editor** — the muscle. Keeps `master.md` and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from compiled sources, applies feedback, and cleans the file for delivery.
 - **Illustrator** — converts every ASCII diagram in `master.md` into a styled SVG during the Polish step.
 
@@ -100,7 +100,8 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
        v
   [5] Review      <-- presenter edits master.md; loops N times
        v
-  [6] Polish       -- illustrator: ASCII -> SVG; editor: clean master.md
+  [6] Polish       -- illustrator: ASCII -> SVG; editor: consolidate images,
+                     rescue open feedback, clean master.md
        v
   [7] Learnings    -- promote >=3x recurring feedback to learnings.md
        v
@@ -161,11 +162,13 @@ Review repeats as many times as needed until the presenter declares the document
     ├── settings.local.json            # local overrides (gitignored)
     ├── schemas/                       # file-format specs (each holds spec + canonical empty form)
     │   ├── master.md                  # talks/<Talk>/master.md schema (seeds the deliverable in Step 4)
+    │   ├── memory.md                  # talks/<Talk>/memory.md schema (per-Talk progress log / resume point)
     │   ├── profile.md                 # knowledge/profile.md schema (seeds the profile in Step 0.5)
     │   ├── principles.md              # knowledge/principles.md schema (composer's design defaults)
     │   ├── learnings.md               # knowledge/learnings.md schema (promoted rules)
     │   ├── feedback-backlog.md        # knowledge/feedback-backlog.md schema (cross-Talk feedback log)
-    │   └── feedback-processed.md      # knowledge/feedback-processed.md schema (promoted-feedback archive)
+    │   ├── feedback-processed.md      # knowledge/feedback-processed.md schema (promoted-feedback archive)
+    │   └── compile-record.md          # knowledge/compile/<file>.md schema (librarian's per-source records)
     ├── agents/
     │   ├── librarian.md               # Librarian subagent prompt
     │   ├── composer.md                # Composer subagent prompt (design critic)

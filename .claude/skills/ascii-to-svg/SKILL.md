@@ -26,20 +26,21 @@ The agent must pass the following in the skill invocation prompt:
 | `ascii_block` | yes | the fenced block's payload, verbatim |
 | `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1.svg` |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
-| `slide_content_prose` | yes | the `### Content` body — used for subtitles, in-panel callouts, axis labels |
-| `speaker_notes` | yes | the `### Speaker notes` body — used for `<desc>` and pedagogical-intent cues |
+| `slide_content_prose` | recommended | the `### Content` body — used for subtitles, in-panel callouts, axis labels. Pass an empty string when the slide field is empty (early-draft slides during Mode A); the skill will fall back to a minimal labelling and note `deviations: sparse-context` in its report. |
+| `speaker_notes` | recommended | the `### Speaker notes` body — used for `<desc>` and pedagogical-intent cues. Pass an empty string when the field is empty; the skill omits the `<desc>` emphasis cues and uses a default `<desc>` derived from `slide_title`. |
 | `section_title` | recommended | from the H1 the slide lives under |
 | `section_goal` | recommended | from the section's `**Goal of this section:**` line |
 | `talk_thesis` | recommended | top of `master.md` |
 | `presentation_language` | recommended | from `knowledge/profile.md` — determines language of all text in the SVG |
 | `template_name` | recommended | bare name (no extension, no path) of the [`knowledge/image-styles/*.txt`](../../../knowledge/image-styles/) template the illustrator picked for this block — e.g. `pipeline-3-stage`. Pass `null` if no template fits (skill renders a custom shape against `style.md` only). |
+| `repo_root` | yes | absolute path to the Talksmith repo root (the folder containing `CLAUDE.md`, `knowledge/`, `talks/`). The skill resolves `style.md` and template files relative to this — **not** relative to the current working directory. The illustrator agent passes it from its own dispatch context. |
 
-The skill resolves both style files itself, hardcoded relative to repo root:
+The skill resolves both style files relative to `repo_root`:
 
-- `knowledge/image-styles/style.md` — always read.
-- `knowledge/image-styles/<template_name>.txt` — read iff `template_name` is non-null.
+- `<repo_root>/knowledge/image-styles/style.md` — always read.
+- `<repo_root>/knowledge/image-styles/<template_name>.txt` — read iff `template_name` is non-null.
 
-This is deliberate: the locations are stable, the contract stays small, and there's no risk of the caller passing a broken path. The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name.
+This avoids any reliance on the session's current working directory (which is undefined when the skill is invoked from a subdir, a Cowork workspace, or any other harness). The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name.
 
 **Do not read the canonical `knowledge/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
 
@@ -47,7 +48,7 @@ This is deliberate: the locations are stable, the contract stays small, and ther
 
 1. **Detect diagram vs code.** If `ascii_block` is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
-2. **Load style files.** Read `knowledge/image-styles/style.md` (always). If `template_name` is non-null, also read `knowledge/image-styles/<template_name>.txt`. Both paths are hardcoded relative to repo root. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply.
+2. **Load style files.** Read `<repo_root>/knowledge/image-styles/style.md` (always). If `template_name` is non-null, also read `<repo_root>/knowledge/image-styles/<template_name>.txt`. Resolve both via the `repo_root` input — never via the current working directory. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`.
 
 3. **Pick semantic colors** from the slide context, **not** from box order. Use the *Semantic color → panel class* table in `style.md`:
    - `slide_content_prose` words like "before / dirty / noisy / raw" → `.c-coral` or `.c-gray`
@@ -85,12 +86,15 @@ This is deliberate: the locations are stable, the contract stays small, and ther
 
 This skill has no `AskUserQuestion`. If `style_md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
 
+**Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty (early-draft Mode A slides where the diagram exists before the prose), render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral semantic colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — the illustrator coordinator and presenter both expect the ASCII to render even early; an empty SVG is worse than a sparsely-labelled one.
+
 ## What this skill is NOT
 
 - **Not** a coordinator. It renders one block. The illustrator agent walks `master.md` and invokes this skill per block.
 - **Not** allowed to write outside `output_path`. No edits to `master.md`, no creating sibling files.
 - **Not** a `.pptx` renderer. That's [`talksmith:md-to-pptx`](../md-to-pptx/SKILL.md).
 - **Not** allowed to read network resources. Pure local file work.
+- **Not** willing to guess paths. If `repo_root` is missing from the invocation, the skill fails fast (`failed: repo_root input missing`) rather than defaulting to the current working directory — CWD is undefined when the skill runs from a subdir, a Cowork workspace, or any other harness.
 
 ## Why a skill, not just the agent
 

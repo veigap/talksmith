@@ -22,7 +22,7 @@ The orchestrator does **not** write `master.md` directly — every change goes t
 1. **Step 1 (Frame).** Folder tree created; `master.md` not yet created.
 2. **Step 4 (Draft) — first editor dispatch.** Editor bootstraps `master.md` from the *Canonical empty form* (below): copy the form, strip every HTML comment and every YAML frontmatter comment line, keep all headings / frontmatter keys (with empty values) / field labels. Then fill.
 3. **Steps 4–5 — iterate.** Editor fills and applies presenter feedback rounds.
-4. **Step 6 (Polish).** Illustrator renders ASCII → SVG; editor inlines image refs (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, strips every `Presenter feedback` field.
+4. **Step 6 (Polish).** Illustrator renders ASCII → SVG; editor inlines image refs (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, rescues any remaining `[open]` feedback bullets into `# Open questions`, then strips every `Presenter feedback` field.
 5. **Step 7 (Learnings).** `master.md` is finalized; the orchestrator scans the cross-Talk feedback backlog.
 6. **Step 8 (Render PPTX, optional).** `convert.py` produces `output/master.intermediate.md`; native `pptx` skill renders to `output/master.pptx`. `master.md` itself is not modified.
 
@@ -36,7 +36,7 @@ The orchestrator does **not** write `master.md` directly — every change goes t
 | Section | `# <N>. <Section Name>` (H1, numbered with period) | `**Goal of this section:**`, `**Presenter feedback:**` |
 | Slide | `## <N>. <Slide Title>` (H2, same numbering, scoped within its Section) | `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` |
 | Conclusions | `# Conclusions` | Contains slides (`## N. <Slide Title>`) like any other Section |
-| Open questions | `# Open questions` | Free-form list |
+| Open questions | `# Open questions` | Free-form list. **May also contain rescued `[open]` Presenter feedback rows** mirrored by the editor at the start of Step 6 (Polish), in the form `- <location> — "<verbatim feedback>"` where `<location>` is the slide/section locator (e.g. `Slide 2.1`, `Agenda`, `Thesis`). |
 | Cut material | `# Cut material` | Free-form list (do not delete content; relocate here instead) |
 
 **Separator rule:** insert a `---` horizontal rule between every Slide and after each Section header. Section/Agenda-level `Presenter feedback` stays in paragraph form (`**Presenter feedback:**` followed by bullets); per-Slide `Presenter feedback` uses the H3 form (`### Presenter feedback`).
@@ -77,7 +77,11 @@ The illustrator derives SVG filenames from the same numbering: `s<section>-<slid
 
 ## Presenter feedback log
 
-`Presenter feedback` fields at Thesis, Agenda, every Section, and every Slide are append-only logs during Steps 4–5, then stripped wholesale during Step 6 (Polish). The audit trail survives because every `[closed]` bullet is mirrored into [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md) by the editor during Review, and git history preserves prior `master.md` states.
+`Presenter feedback` fields at Thesis, Agenda, every Section, and every Slide are append-only logs during Steps 4–5, then stripped wholesale during Step 6 (Polish). The audit trail survives because:
+
+1. every `[closed]` bullet is mirrored into [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md) by the editor during Review,
+2. any `[open]` bullets still un-applied at the moment of Polish are rescued by the editor into `# Open questions` (location + verbatim quote) **before** the strip, and
+3. git history preserves prior `master.md` states.
 
 Workflow (per the editor's Step 5 contract):
 

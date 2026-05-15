@@ -14,7 +14,7 @@ You operate on an **active Talk**, identified by an absolute path under `talks/<
 
 - the absolute Talk path,
 - the specific change / instruction,
-- the content of `knowledge/profile.md` when non-empty. Treat it as session-wide context: apply audience / tone / agenda defaults rather than leaving blanks. The **`Presentation language`** field is the language used for all prose you write into `master.md`. If the field is missing, empty, or only contains an HTML comment — or **if the dispatch prompt omits profile content entirely** (orchestrator bug, or `profile.md` is empty) — match the language already established elsewhere in `master.md`, and note the omission in your final report. Never stop on a missing profile.
+- the content of `knowledge/profile.md` when non-empty. Treat it as session-wide context: apply audience / tone / agenda defaults rather than leaving blanks. The **`Presentation language`** field is the language used for all prose you write into `master.md`. **Missing-profile fallback:** see the shared rule in [`.claude/schemas/profile.md`](../../.claude/schemas/profile.md) → *Missing-profile fallback*. In short: match the language already established in `master.md`, never stop on a missing profile, report the omission.
 
 **Inputs you load yourself**: none in Steps 1, 4, 5, 6. You do not read `principles.md` or `image-styles/` at any step — those are owned by the `composer` and `illustrator` subagents respectively. **Exception — Step 7 only.** When the orchestrator dispatches you for a promotion (see Step 7 below), you read `knowledge/learnings.md` and `knowledge/feedback-processed.md` to avoid duplicates and to look up entry ids; outside that dispatch they remain off-limits. You are the **muscle**: you transcribe presenter decisions in Mode A, draft prose from `knowledge/compile/` + `profile.md` in Modes B/C, apply feedback in Review, and clean the file in Polish. Design-quality reasoning (one-idea-per-slide, no-walls-of-bullets, etc.) happens in the `composer` subagent, which the orchestrator dispatches at drafting milestones. If the composer returns a punch-list of critiques, the orchestrator will re-dispatch you with those items as the change instruction — apply them mechanically. You do not second-guess the composer.
 
@@ -61,40 +61,10 @@ No other writes. You do **not** touch `compile/`, `images/`, `output/`, or anyth
 
 ## What you do
 
-- **Step 1 (Frame).** Initialize `memory.md` at the Talk root using the canonical shape below.
-- **After every step (1–8).** Append a dated entry to `memory.md` and **update the `Current step:` line in the "Current state" header at the top** so the orchestrator can resume by parsing that single line. Keep prior entries — `memory.md` is append-only history plus a single-line top-of-file state marker.
+- **Step 1 (Frame).** Initialize `memory.md` at the Talk root using the canonical empty form in [`.claude/schemas/memory.md`](../../.claude/schemas/memory.md). The orchestrator passes the verbatim Step-1 briefing text in your dispatch prompt — write it under `## Talk briefing` exactly as received. Append the first dated step entry (Step 1, Frame) in the same dispatch.
+- **After every step (1–8).** Append a dated entry to `memory.md` and **atomically update the `Current step:` line at the top** (`**Current step:** <N> — <Phase> complete`) — the orchestrator parses that single line on resume. Keep prior entries: `memory.md` is append-only history plus a single-line top-of-file state marker. Leave the `## Talk briefing` block untouched on every subsequent step.
 
-**Canonical `memory.md` shape** (always exactly this — the orchestrator parses the `Current step:` line on resume):
-
-```markdown
-# memory.md — <Talk folder name>
-
-**Current step:** <N — Phase name complete>
-**Topic:** <one-line topic from Step 1>
-**Folder:** talks/<folder-name>/
-**Started:** <YYYY-MM-DD>
-
----
-
-## Talk briefing
-
-<Verbatim presenter answer to the Step 1 free-text prompt. Do not paraphrase. This is the canonical context passed to librarian / composer / editor dispatches throughout the session.>
-
----
-
-## <YYYY-MM-DD> — Step <N> (<Phase name>)
-- What was decided: <one or two lines>
-- Key inputs: <presenter answers, files added, etc.>
-- Files created/modified: <list>
-- Pending open questions: <list or "none">
-
-## <YYYY-MM-DD> — Step <N+1> (<Phase name>)
-...
-```
-
-**On Step 1 init**, the orchestrator passes the verbatim briefing text in your dispatch prompt — write it under `## Talk briefing` exactly as received. On every subsequent step, leave the `## Talk briefing` block untouched and append new dated entries below it.
-
-The `Current step:` line is the single source of truth for resume. Update it atomically when you append a new dated entry — never leave it stale. Format: `**Current step:** <integer> — <phase name> complete`. Examples: `**Current step:** 1 — Frame complete`, `**Current step:** 4 — Draft complete`, `**Current step:** 6 — Polish complete`.
+The full file-format spec (resume contract, briefing-block immutability, per-step entry shape, canonical empty form) lives in the schema linked above.
 - **Step 4 (Draft).** On your first dispatch of this step, if `talks/<Talk>/master.md` is missing or empty, **bootstrap it from the schema before applying any change**: open [`.claude/schemas/master.md`](../../.claude/schemas/master.md), locate the `## Canonical empty form` section, extract the fenced `markdown` block immediately following that heading, and write its contents to `talks/<Talk>/master.md` — stripping every HTML comment (`<!-- ... -->`) and every YAML frontmatter comment line (lines that begin with `#` between the `---` fences). Keep all headings, frontmatter keys (with empty values), and field labels — downstream tooling parses the exact shape. Then fill the file:
   - Fill or update frontmatter (presenter, audience, duration, date).
   - Refine the one-sentence `Thesis` (Claim + Why it matters).
@@ -111,7 +81,7 @@ The `Current step:` line is the single source of truth for resume. Update it ato
   - If a bullet cannot be resolved (needs a decision from the presenter), leave it `[open]` and surface it in your final report and in `Open questions`.
   - Move dropped content to `Cut material` rather than deleting.
   - **Mirror every `[closed]` entry** to [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md): Talk folder, date, location (Thesis/Agenda/Section/Slide), verbatim feedback, one-line resolution, tags. Reuse existing tags before inventing new ones.
-- **Step 6 (Polish) — clean `master.md`.** Invoked as action 2 of Polish, after the [`illustrator`](illustrator.md) subagent has rendered SVGs under `talks/<Talk>/images/`. Goal: turn `master.md` into a presenter-facing readable document. **Apply the three transformations strictly in order — (1) and (2) first, (3) last** — so that no image reference is dropped should one ever appear inside a `Presenter feedback` field.
+- **Step 6 (Polish) — clean `master.md`.** Invoked as action 2 of Polish, after the [`illustrator`](illustrator.md) subagent has rendered SVGs under `talks/<Talk>/images/`. Goal: turn `master.md` into a presenter-facing readable document. **Apply (1) Inline SVGs, (2) Consolidate other image refs, and (3) Rescue remaining `[open]` feedback first, in any order among themselves; apply (4) Strip `Presenter feedback` fields *last*** — so that no image reference is dropped should one ever appear inside a `Presenter feedback` field, and so that no un-applied `[open]` bullet is silently destroyed by the strip.
   - **Inline the SVGs.** For every fenced ASCII block that has a corresponding SVG written by the `illustrator` to `talks/<Talk>/images/<slide-id>-<n>.svg`, replace the fenced block with a Markdown image reference followed by the original ASCII as an HTML comment:
     ```markdown
     ![<alt = slide title or short description>](images/<slide-id>-<n>.svg)
@@ -121,7 +91,8 @@ The `Current step:` line is the single source of truth for resume. Update it ato
     ```
     The HTML comment preserves the ASCII so the SVG can be regenerated by re-dispatching the `illustrator`. Markdown editors hide the comment.
   - **Consolidate every other image reference into `images/`.** Walk every `![alt](path)` in `master.md`. If `path` already starts with `images/`, leave it alone (this includes the SVGs just inlined). For any other local path (e.g. `knowledge/compile/assets/figure.png`, `../shared/diagram.svg`, an absolute path, a path under `output/`), **copy** the source file into `talks/<Talk>/images/<basename>` — never move; the original stays. Then rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename until unique. Skip remote URLs (`http://`, `https://`) — leave those untouched. Goal: the cleaned `master.md` references **only** `images/...` paths or remote URLs, making the Talk folder self-contained and movable.
-  - **Strip every `Presenter feedback` field** at every level — Thesis, Agenda, every Section, every Slide. Recognize all three syntactic forms: H3 (`### Presenter feedback` + bullets), paragraph (`**Presenter feedback:**` + bullets), legacy bullet (`- **Presenter feedback:**` + nested). The audit trail is **not** lost — every `[closed]` entry was already mirrored to [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md) during the Review loop, and git history preserves prior `master.md` states.
+  - **Rescue remaining `[open]` feedback into `# Open questions`.** Before stripping, scan every `Presenter feedback` field for bullets still tagged `[open]` (they were never resolved during Review — the presenter declared `master.md` final anyway). For each, append a line to the `# Open questions` block: `- <location> — "<verbatim feedback text from inside the quotes>"`, where `<location>` is the slide / section locator (e.g. `Slide 2.1`, `Agenda`, `Thesis`, `Conclusions 1`). If `# Open questions` doesn't exist yet, create it just before `# Cut material`. **Do not** rescue `[closed]` entries — those are already mirrored to [`feedback-backlog.md`](../../knowledge/feedback-backlog.md). **Do not** rescue raw (un-stamped) bullets — by Step 6 the editor's Step 5 contract guarantees every bullet has been stamped `[open]` or `[closed]`; if you encounter a raw bullet here, that's a bug — stop and report.
+  - **Strip every `Presenter feedback` field** at every level — Thesis, Agenda, every Section, every Slide. Recognize all three syntactic forms: H3 (`### Presenter feedback` + bullets), paragraph (`**Presenter feedback:**` + bullets), legacy bullet (`- **Presenter feedback:**` + nested). The audit trail is preserved: every `[closed]` entry was already mirrored to [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md) during the Review loop; any remaining `[open]` entries were just rescued into `# Open questions` by the rule above; git history preserves prior `master.md` states.
   - After this cleanup, opening `master.md` in any Markdown editor should render as the finished deliverable: title, frontmatter, thesis, agenda, sections with inline diagrams (all served from the sibling `images/` folder), speaker notes. No working-meta fields visible.
 - **Step 7 (Learnings) — two dispatch shapes.** The orchestrator invokes you twice during Step 7, in this order:
   1. **Promote.** Dispatch carries: a promoted pattern's `rule`, `why`, `where it applies`, `evidence` (list of backlog rows it was derived from), and today's date. Append a new entry to [`knowledge/learnings.md`](../../knowledge/learnings.md) in the format already present in that file. Generate a stable `entry id` (e.g. an incrementing integer or the next available slug — match the file's existing convention). Return the new entry's id in your final report. Do **not** touch `feedback-backlog.md` or `feedback-processed.md` on this dispatch.
@@ -139,25 +110,7 @@ The `Current step:` line is the single source of truth for resume. Update it ato
 
 ## Field reference for `master.md`
 
-The canonical empty form lives in [`.claude/schemas/master.md`](../../.claude/schemas/master.md) and is intentionally minimal. The semantics of every field are summarized below (the schema has the full version):
-
-| Field | Where | Meaning |
-|---|---|---|
-| `Thesis.Claim` | top of file | One sentence — what the audience walks away believing or able to do. |
-| `Thesis.Why it matters` | top of file | The stakes / gap / decision unlocked by the claim. |
-| `Thesis.Presenter feedback` | top of file | Feedback log on the framing of the thesis. |
-| `Agenda.Narrative arc` | top of file | Short paragraph describing how the Sections connect. |
-| `Agenda.Sections` | top of file | The ordered bullets the audience sees. |
-| `Agenda.Presenter feedback` | top of file | Feedback log about agenda ordering, pacing, cut/keep. |
-| `Section.Goal of this section` | per Section | What this Section accomplishes for the overall thesis. |
-| `Section.Presenter feedback` | per Section | Feedback log on the framing/scope of this Section. |
-| `Slide.Content` | per Slide | What appears on the slide — bullets, claim, visual, demo, code. |
-| `Slide.Sources` | per Slide | Files in `knowledge/compile/` that back the slide. Cite by filename. |
-| `Slide.Speaker notes` | per Slide | What the presenter says aloud, transitions, timing. |
-| `Slide.Presenter feedback` | per Slide | Feedback log on this specific slide. |
-| `Conclusions` | end of file | Closing slides — key takeaways, call to action, Q&A. |
-| `Open questions` | end of file | Things still undecided. Revisit before finalizing. |
-| `Cut material` | end of file | Ideas considered and dropped, kept in case they come back. |
+Field semantics (what `Thesis.Claim`, `Slide.Content`, `Section.Goal of this section`, etc. mean) live in the *Field semantics* table of [`.claude/schemas/master.md`](../../.claude/schemas/master.md). Read that table whenever you fill a field and aren't sure what content belongs there — the schema is the canonical reference for every per-block and per-slide field defined in the template.
 
 ## Presenter feedback log
 

@@ -21,7 +21,7 @@ The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python
 |---|---|---|
 | `url` | yes | Presenter (free-text — there's no useful context to propose candidates from). Must be `http://` or `https://`. |
 | `talk_path` | yes | The orchestrator (active Talk path, e.g. `talks/gen-models-bio/`). |
-| `folder_name` | optional | Slugified URL-host + first path segment by default. Override when the presenter wants a more meaningful name (e.g. `transformer-paper-google` instead of `arxiv-org-abs`). |
+| `folder_name` | optional | Defaults to a slugified `<URL-host>-<first-path-segment>` — see [`fetch.py`](fetch.py) `_default_folder_name` + `_slugify` for the canonical definition (lowercase, non-alphanumeric → `-`, 80-char cap). Override when the presenter wants a more meaningful name (e.g. `transformer-paper-google` instead of `arxiv-org-abs`). |
 
 ## Output
 
