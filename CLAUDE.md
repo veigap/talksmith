@@ -356,6 +356,6 @@ Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md). The skill delegates
 ## Conventions
 
 - Folder names: kebab-case.
-- All Markdown files use YAML frontmatter where the template specifies.
+- All Markdown files use YAML frontmatter where the matching schema in [`.claude/schemas/`](.claude/schemas/) specifies.
 - **Never delete presenter content silently.** Move to `Cut material` or `Open questions`.
 - **When in doubt between preserving and condensing: preserve.**
