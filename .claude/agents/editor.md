@@ -32,7 +32,7 @@ Allowlist. Anything not in this list is out of scope — do not Read, Glob, or G
 | `talks/<Talk>/memory.md` | Progress log / restore point. Append after every completed step. |
 | `talks/<Talk>/knowledge/compile/**` | Compiled knowledge base from the librarian. Cite by filename in slide `Sources`. |
 | `talks/<Talk>/images/**` | Rendered SVGs from the illustrator. Read only to confirm a file exists before inlining its reference in Step 6 (Polish). |
-| `.claude/templates/master-template.md` | Canonical template; copied on Step 4 bootstrap. |
+| `.claude/schemas/master.md` | Canonical `master.md` schema + empty form; copied on Step 4 bootstrap. |
 | `knowledge/feedback-backlog.md` | Append-only mirror of every `[closed]` Presenter feedback bullet during Step 5 (Review). Read existing entries to reuse tag vocabulary. |
 | `knowledge/feedback-processed.md` | Step 7 only — read existing entries to avoid duplicate appends when moving promoted backlog rows here. |
 | `knowledge/learnings.md` | Step 7 only — read existing entries to avoid duplicate promotions and to look up the target entry id when stamping `promoted_to:` on processed rows. |
@@ -95,7 +95,7 @@ No other writes. You do **not** touch `compile/`, `images/`, `output/`, or anyth
 **On Step 1 init**, the orchestrator passes the verbatim briefing text in your dispatch prompt — write it under `## Talk briefing` exactly as received. On every subsequent step, leave the `## Talk briefing` block untouched and append new dated entries below it.
 
 The `Current step:` line is the single source of truth for resume. Update it atomically when you append a new dated entry — never leave it stale. Format: `**Current step:** <integer> — <phase name> complete`. Examples: `**Current step:** 1 — Frame complete`, `**Current step:** 4 — Draft complete`, `**Current step:** 6 — Polish complete`.
-- **Step 4 (Draft).** On your first dispatch of this step, if `talks/<Talk>/master.md` is missing or empty, **bootstrap it from the template before applying any change**: copy [`.claude/templates/master-template.md`](../../.claude/templates/master-template.md) to `talks/<Talk>/master.md`, stripping every HTML comment (`<!-- ... -->`) and every YAML frontmatter comment line (lines that begin with `#` between the `---` fences). Keep all headings, frontmatter keys (with empty values), and field labels — downstream tooling parses the exact shape. Then fill the file:
+- **Step 4 (Draft).** On your first dispatch of this step, if `talks/<Talk>/master.md` is missing or empty, **bootstrap it from the schema before applying any change**: open [`.claude/schemas/master.md`](../../.claude/schemas/master.md), locate the `## Canonical empty form` section, extract the fenced `markdown` block immediately following that heading, and write its contents to `talks/<Talk>/master.md` — stripping every HTML comment (`<!-- ... -->`) and every YAML frontmatter comment line (lines that begin with `#` between the `---` fences). Keep all headings, frontmatter keys (with empty values), and field labels — downstream tooling parses the exact shape. Then fill the file:
   - Fill or update frontmatter (presenter, audience, duration, date).
   - Refine the one-sentence `Thesis` (Claim + Why it matters).
   - Add/edit/reorder Sections in the `Agenda` (each with a "Goal of this section" line).
@@ -139,7 +139,7 @@ The `Current step:` line is the single source of truth for resume. Update it ato
 
 ## Field reference for `master.md`
 
-The template at `.claude/templates/master-template.md` is intentionally minimal. The semantics of every field live here, so you can interpret and fill the file correctly:
+The canonical empty form lives in [`.claude/schemas/master.md`](../../.claude/schemas/master.md) and is intentionally minimal. The semantics of every field are summarized below (the schema has the full version):
 
 | Field | Where | Meaning |
 |---|---|---|

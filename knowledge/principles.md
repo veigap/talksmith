@@ -1,12 +1,6 @@
 # Presentation Principles
 
-This file holds Talksmith's design defaults — Mayer / Tufte / Reynolds / Duarte house rules. It is **lazy-loaded**: only the `composer` subagent reads it, on dispatch at drafting milestones in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). The composer uses these rules to produce a punch-list of critiques that the orchestrator surfaces to the presenter or feeds back into a re-dispatch of the `editor`. No other agent and no orchestrator step loads this file.
-
-The principles below are a mix of:
-1. **Talksmith opinions** — encoded methodology and house defaults.
-2. **Evidence-based guidance** — drawn from established research and well-known practitioners (cited at the bottom).
-
-Treat every principle as a **default**, not a rule. The presenter can override any of them per slide or per talk. Push back if you see them being broken without a stated reason.
+> Loading semantics, who reads this file, and interpretation rules live in [`.claude/schemas/principles.md`](../.claude/schemas/principles.md). The principles below are the file's data — read by the `composer` subagent at every Step 4 drafting milestone.
 
 ---
 

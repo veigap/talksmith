@@ -23,22 +23,24 @@ Only one file is loaded eagerly at session start. Everything else is **read just
 
 | File | What it is | Behavior |
 |---|---|---|
-| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). | Loaded at session start (small file, used everywhere). If filled, treat as global defaults for audience/tone/agenda and pass into every subagent dispatch. If absent/empty, Step 0.5 offers to fill it. |
+| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). Schema: [`.claude/schemas/profile.md`](.claude/schemas/profile.md). | Loaded at session start (small file, used everywhere). If filled, treat as global defaults for audience/tone/agenda and pass into every subagent dispatch. If absent/empty, Step 0.5 offers to fill it. |
 
 **Lazy-loaded — orchestrator reads on demand:**
 
 | File | Read when | Used for |
 |---|---|---|
-| [`knowledge/learnings.md`](knowledge/learnings.md) | Entering Step 7 (Learnings) | Pattern promotion: scan existing entries to decide what to promote and to avoid duplicates. The **editor** performs the actual append on dispatch — the orchestrator never writes the file directly. |
+| [`knowledge/learnings.md`](knowledge/learnings.md) (schema: [`.claude/schemas/learnings.md`](.claude/schemas/learnings.md)) | Entering Step 7 (Learnings) | Pattern promotion: scan existing entries to decide what to promote and to avoid duplicates. The **editor** performs the actual append on dispatch — the orchestrator never writes the file directly. |
 
 **Lazy-loaded — subagents read on dispatch:**
 
 | File | Reader | Read when |
 |---|---|---|
-| [`knowledge/principles.md`](knowledge/principles.md) + [`knowledge/learnings.md`](knowledge/learnings.md) + [`knowledge/compile/**`](knowledge/) | `composer` | Dispatched at each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
+| [`knowledge/principles.md`](knowledge/principles.md) (schema: [`.claude/schemas/principles.md`](.claude/schemas/principles.md)) + [`knowledge/learnings.md`](knowledge/learnings.md) + [`knowledge/compile/**`](knowledge/) | `composer` | Dispatched at each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
 | [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) + matched [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template | `illustrator` (and the `ascii-to-svg` skill) | Dispatched in Step 6 (Polish). Style spec is closed; the `*.txt` catalog is open — draft custom shapes when no template fits. |
 
 The orchestrator passes the active Talk path on every dispatch. It does **not** forward the contents of these files — each subagent reads from disk. This keeps orchestrator context lean across long sessions and avoids three-way duplication of the same text.
+
+**File-format specs.** Every file format with a non-trivial structure is documented as a schema in [`.claude/schemas/`](.claude/schemas/) — these are the canonical specs (loading semantics, writer contract, entry format) and each contains a *Canonical empty form* section that bootstrapping reads from. Current schemas: `master.md` (per-Talk deliverable), `profile.md` (presenter profile), `principles.md` (design defaults), `learnings.md` (promoted rules), `feedback-backlog.md` (cross-Talk feedback log), `feedback-processed.md` (promoted-feedback archive). Read the matching schema whenever you need to interpret or extend one of these files — the data file holds entries; the schema holds the spec.
 
 ## Interaction defaults
 
@@ -57,7 +59,7 @@ The orchestrator passes the active Talk path on every dispatch. It does **not** 
 | 1 | Frame | Create folder tree under `talks/<folder>/`. | Provides topic + folder name. |
 | 2 | Collect | Offer the four intake channels (drop files, drop chat ZIPs, hand me a URL, **explore live with me right here**); capture live exploration to `knowledge/llm-chats/explore-*.md` on presenter's "ready". Wait. | Uploads to `knowledge/articles/` / `knowledge/llm-chats/`, hands over URLs, and/or explores live in chat. |
 | 3 | Compile | Convert every source to uniform Markdown under `knowledge/compile/`. | Confirms uploads complete. |
-| 4 | Draft | Fill `master.md` end-to-end in one of three modes (Interview / Agent Draft / Presenter Outline). The `editor` bootstraps the file from `master-template.md` on its first write if missing. | Answers, decides, redirects. |
+| 4 | Draft | Fill `master.md` end-to-end in one of three modes (Interview / Agent Draft / Presenter Outline). The `editor` bootstraps the file from the *Canonical empty form* in [`.claude/schemas/master.md`](.claude/schemas/master.md) on its first write if missing. | Answers, decides, redirects. |
 | 5 | Review | Apply presenter's `Presenter feedback` bullets; stamp `[open]` → `[closed]` with `Resolution:`. Loops N times. | Edits `master.md` in external editor; adds plain `- "feedback"` bullets. |
 | 6 | Polish | **Mandatory.** Render every ASCII → SVG (dispatch [`illustrator`](.claude/agents/illustrator.md)); clean `master.md` (dispatch `editor`: inline images, strip all feedback fields). | Passive. |
 | 7 | Learnings | **Mandatory.** Pattern-scan [`feedback-backlog.md`](knowledge/feedback-backlog.md); for any pattern recurring ≥3× across all Talks, ask presenter to promote to [`learnings.md`](knowledge/learnings.md). Then branch on terminal action (promote-to-library / PPTX / stop). | Approves promoted learnings; picks terminal option. |
@@ -98,8 +100,8 @@ Immediately after, `AskUserQuestion`: **new presentation** or **resume existing*
 
 ## Step 0.5 — Profile *(optional)*
 
-Template: [`.claude/templates/profile-template.md`](.claude/templates/profile-template.md) (canonical empty form, never edited directly).
-Customized: `knowledge/profile.md` (created only after the presenter fills it).
+Schema (canonical empty form + full spec): [`.claude/schemas/profile.md`](.claude/schemas/profile.md). The schema's *Canonical empty form* section is what Step 0.5 copies when bootstrapping.
+Customized data file: `knowledge/profile.md` (created only after the presenter fills it).
 
 Active sections (do not invent removed ones like "Who I am", "Tone and style", "Class structure", "Constraints"): **How my presentations are consumed**, **Audience defaults**, **Presentation language**.
 
@@ -108,7 +110,7 @@ Active sections (do not invent removed ones like "Who I am", "Tone and style", "
 | All sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
 | Partially filled (some sections have content, others are blank or HTML-comment-only) | Load filled sections as global defaults. Then `AskUserQuestion`: fill the missing sections now or skip. If fill: walk through only the missing sections via `AskUserQuestion` with 2–4 concrete candidates per section. Write result back. Skipping is allowed — missing fields will be re-prompted just-in-time (e.g. `Presentation language` is re-prompted in Step 4 pre-mode). |
 | Exists but empty (only headings + HTML comments) | `AskUserQuestion`: fill now or skip. If fill: walk through every present section via `AskUserQuestion` with 2–4 concrete candidates. Never free-text. Write result back to `knowledge/profile.md`. |
-| Does not exist | `AskUserQuestion`: create + fill, or skip. If fill: copy template → `knowledge/profile.md`, then proceed as the empty case above. |
+| Does not exist | `AskUserQuestion`: create + fill, or skip. If fill: copy the *Canonical empty form* from [`.claude/schemas/profile.md`](.claude/schemas/profile.md) → `knowledge/profile.md`, then proceed as the empty case above. |
 
 Runs once per session for new presentations. Skip on resume unless presenter asks.
 

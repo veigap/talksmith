@@ -1,25 +1,7 @@
 # Learnings
 
-Durable, cross-presentation rules promoted from the [`feedback-backlog.md`](feedback-backlog.md) when a pattern repeats 3+ times. **Lazy-loaded**: read from disk only at the step that needs it. The orchestrator reads it on entry to Step 7 (Learnings) to scan existing entries (avoid duplicate promotions, look up entry ids), and then dispatches the `editor` subagent to perform the actual append — the orchestrator never writes this file directly. The `composer` subagent reads it on dispatch at every Step 4 drafting milestone to apply each entry as a soft rule when critiquing the draft. No other step or agent loads it.
-
-> **How entries get here.** At presentation completion, the orchestrator scans the feedback backlog for recurring patterns. When a pattern hits 3+ occurrences across Talks, it asks the presenter via `AskUserQuestion` whether to promote, then dispatches the `editor` to append the promoted pattern below.
-
-## Format
-
-```
-### <Short rule title>
-
-**Rule:** <one-sentence directive — what the agent should now do by default>
-
-**Why:** <what the recurring feedback was, in the presenter's own words where possible>
-
-**Where it applies:** <surface — Thesis, Agenda, Slide content, Speaker notes, Sources, etc.>
-
-**Evidence:** <talk-folder>:<date>, <talk-folder>:<date>, <talk-folder>:<date> (links to backlog entries)
-
-**Added:** YYYY-MM-DD
-```
+> Format spec, loading semantics, and promotion rules live in [`.claude/schemas/learnings.md`](../.claude/schemas/learnings.md).
 
 ## Entries
 
-<!-- Promoted learnings live below this line. -->
+<!-- Editor appends promoted learnings below this line when the orchestrator dispatches a Step 7 Promote. -->

@@ -54,7 +54,7 @@ You do **not** modify `master.md`. The `editor` subagent handles inlining the re
 
 The ASCII gives layout; the **labels, semantic colors, and pedagogical emphasis live in the surrounding slide prose**. The skill renders what you tell it to render — so it's your job to pull a complete context bundle from `master.md` *before* dispatching.
 
-The structure of `master.md` is defined by [`.claude/templates/master-template.md`](../templates/master-template.md). Headings you navigate: `# <N>. <Section>` (H1 with numbered prefix), `## <N>. <Slide>` (H2 inside a Section), `### Content` / `### Sources` / `### Speaker notes` (H3 fields inside a Slide).
+The structure of `master.md` is defined by [`.claude/schemas/master.md`](../schemas/master.md). Headings you navigate: `# <N>. <Section>` (H1 with numbered prefix), `## <N>. <Slide>` (H2 inside a Section), `### Content` / `### Sources` / `### Speaker notes` (H3 fields inside a Slide).
 
 For each ASCII block, gather:
 

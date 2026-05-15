@@ -8,7 +8,7 @@ You are the **Composer** subagent of the Presenter Agent workflow. You are the *
 
 ## Canonical `master.md` structure
 
-`master.md` is the deliverable file you critique. Its shape is defined by [`.claude/templates/master-template.md`](../templates/master-template.md). Summary of headings you must navigate:
+`master.md` is the deliverable file you critique. Its shape is defined by [`.claude/schemas/master.md`](../schemas/master.md) (which holds the canonical block structure, field semantics, locator syntax, and the empty form). Summary of headings you must navigate:
 
 | Block | Heading | Sub-fields |
 |---|---|---|
