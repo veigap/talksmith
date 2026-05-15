@@ -152,13 +152,29 @@ Tell the presenter the **four ways** to bring source material in, then **wait** 
 
 - **Drop files into `knowledge/articles/`** → PDFs, HTML exports, papers, article screenshots. Drag-and-drop or `cp`.
 - **Drop chat ZIPs into `knowledge/llm-chats/`** → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
-- **Hand me a URL to capture** → tell me a URL and I'll run the [`talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. The default folder name is a slugified `<URL-host>-<first-path-segment>` (canonical definition in [`fetch.py`](.claude/skills/ingest/fetch.py) — `_default_folder_name` + `_slugify`); override only if the presenter wants a more meaningful name. Useful for pages that are hard to save manually, JS-rendered articles where copy-paste is messy, or when you just want a snapshot pinned in the Talk folder. Pass me as many URLs as you want — one skill invocation per URL.
+- **Hand me a URL to capture** → tell me a URL and I'll run the [`/talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill (invocable as the slash command `/talksmith:ingest <url>`) to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. The default folder name is a slugified `<URL-host>-<first-path-segment>` (canonical definition in [`fetch.py`](.claude/skills/ingest/fetch.py) — `_default_folder_name` + `_slugify`); override only if the presenter wants a more meaningful name. Useful for pages that are hard to save manually, JS-rendered articles where copy-paste is messy, or when you just want a snapshot pinned in the Talk folder. Pass me as many URLs as you want — one skill invocation per URL.
 - **Explore a topic live with me, right here** → say "let's explore X" (or similar) and we'll have a free-form back-and-forth in this chat: I push on ideas, generate explanations, sketch ASCII diagrams, surface counter-examples, whatever moves your thinking. When you're ready, say "ready" / "done exploring" / "drop it" and I'll capture the entire exploration verbatim — every presenter turn, every agent turn, every diagram and image generated during the exploration — into `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 onward the librarian treats it like any other chat-export transcript.
 
 When the presenter offers a URL, invoke `talksmith:ingest` immediately with that URL and the active Talk path. Use the default folder-name unless the presenter specifies one. **If the skill aborts with "folder exists" (the URL was previously ingested),** stop and `AskUserQuestion` with options *Re-fetch with `--force` (overwrites existing capture)* / *Skip — use existing capture* / *Use a different folder name*. Never pass `--force` without explicit presenter approval. **When `--force` ran and Step 3 had previously compiled this URL's capture**, re-dispatch `librarian` with `force: true` on the affected `web/<folder>/` so the compile record reflects the refreshed content. Report what got saved (folder, page title, asset count) and ask if they have more URLs or are ready for the file-drops to be processed.
 
 **Live exploration capture — rules:**
 - Entering live exploration is presenter-triggered ("let's explore", "help me think through", "let's brainstorm", etc.). Confirm once that exploration mode is active and that everything from this point will be captured.
+- **Visual mode indicator (mandatory while exploring).** Two complementary cues, applied to every agent message emitted between entry and capture:
+  - **Entry banner** — first message after the trigger opens with a fenced block exactly:
+    ```
+    ▶ EXPLORATION MODE
+    topic: <topic>
+    capture trigger: "ready" / "done exploring" / "drop it"
+    ```
+  - **Per-turn prefix** — every subsequent agent message begins with the line `🔭 [exploring: <topic>]` on its own, followed by a blank line, then the actual response. No exceptions while the mode is active (including short clarifying replies).
+  - **Exit banner** — the message that confirms capture opens with a fenced block exactly:
+    ```
+    ■ EXPLORATION CAPTURED
+    file: knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md
+    messages: <N>
+    assets: <K>
+    ```
+    After this banner the per-turn prefix stops; subsequent messages return to normal Talksmith formatting.
 - During exploration, do not advance the Talksmith workflow. Stay in the topic. Push, question, generate examples, draft ASCII diagrams, surface tensions. Treat it as the presenter's pre-source-collection thinking session, not a slide-drafting session.
 - Capture trigger: the presenter says "ready" / "done exploring" / "drop it" / "capture it" / equivalent. When triggered, write **one** Markdown file to `talks/<Talk>/knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md` with frontmatter (`source_type: live-exploration`, `started_at`, `ended_at`, `topic`) followed by the full transcript: every presenter message and every agent message in order, verbatim, as fenced blocks (`### Presenter` / `### Agent`). Include every ASCII diagram inline; if any images were generated, save them alongside the transcript under `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>-assets/` and reference them by relative path. **Do not paraphrase the exploration** — losslessness is the rule, same as for any other source.
 - After writing the file, report the path, message count, and any image asset count, then ask whether the presenter wants to keep exploring (same topic or new), drop more sources via the other three channels, or move on to Step 3.
@@ -169,6 +185,10 @@ Do not proceed to Step 3 on your own.
 ---
 
 ## Step 3 — Compile
+
+**Before dispatching, brief the presenter in chat.** One short paragraph: what the compile step is for (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/compile/` that downstream steps query), what it touches (count the files in `knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` and name the count), and that it can take a while depending on volume — *"good moment for a coffee ☕"*. Then dispatch — do not wait for a reply, the brief is informational.
+
+**Upfront count + ETA — required.** The brief must include the source breakdown and a rough time estimate. Example wording: *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min expected."* Rough ETA heuristic: ~15–30s per text source (PDF, HTML, chat-export transcript), ~5–10s per web capture; round to a 1-minute-wide range. No mid-run progress — the librarian returns once at the end with the full report. (See `librarian` dispatch contract; this is the simplest option and requires no subagent changes.)
 
 For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record under `knowledge/compile/` (filename includes the original extension to avoid collisions — e.g. `paper.pdf.md`, `transcript.zip.md`, `arxiv-2401.web.md`). Dispatch to `librarian`. The librarian runs in **two phases**:
 
@@ -304,7 +324,7 @@ Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recu
 
 Then **branch — terminal action**. Two sequential `AskUserQuestion` decisions (kept separate because they are logically independent — promotion is about preserving for future Talks; the render question is about producing a `.pptx` for this one):
 
-1. **Promotion** — `AskUserQuestion` (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, copy compiled sources + cleaned `master.md` + rendered `images/` into top-level `knowledge-library/<folder>/`. Dispatch to `librarian`. Record in `memory.md`.
+1. **Promotion** — `AskUserQuestion` (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, **copy** (never move) compiled sources + cleaned `master.md` + rendered `images/` into top-level `knowledge-library/<folder>/`. **The original `talks/<folder>/` is left fully intact** — every file (memory.md, knowledge/articles/, knowledge/llm-chats/, knowledge/web/, knowledge/compile/, master.md, images/, output/) stays in place so the presenter can re-open, re-render, or re-deliver the Talk later. Promotion is duplication into the library, not relocation out of `talks/`. Dispatch to `librarian`. Record in `memory.md` (note the library destination path).
 2. **Render** — `AskUserQuestion` (single-select): *Render to PowerPoint (proceed to Step 8)* / *Stop here — cleaned outline + SVGs are the deliverable*.
 
 Update `memory.md` with `**Current step:** 7 — Learnings complete` plus the chosen promotion and render actions.
