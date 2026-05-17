@@ -97,22 +97,10 @@ def _split_by_heading_level(text: str, level: int) -> list[tuple[str | None, str
     Body excludes the heading line itself. The first chunk has heading=None
     if the text doesn't start with a heading at this level.
     """
-    pattern = re.compile(rf"^{'#' * level}\s+(.*)$", re.MULTILINE)
+    boundary = re.compile(rf"^({'#' * level})(?!#)\s+(.*)$", re.MULTILINE)
     chunks: list[tuple[str | None, str]] = []
     last_idx = 0
     last_title: str | None = None
-    for m in pattern.finditer(text):
-        # Stop at deeper headings? No — we just match the requested level. But
-        # we must ensure we don't match `####` when looking for `###` — handled
-        # by the boundary: pattern requires exactly `level` hashes followed by space.
-        # However, `^#{3}\s` will also match `####` because `####` starts with `###`.
-        # Use negative-lookahead to be precise.
-        pass
-    # Re-do with proper boundary.
-    boundary = re.compile(rf"^({'#' * level})(?!#)\s+(.*)$", re.MULTILINE)
-    chunks = []
-    last_idx = 0
-    last_title = None
     for m in boundary.finditer(text):
         body = text[last_idx:m.start()]
         chunks.append((last_title, body))
@@ -184,6 +172,30 @@ def _rewrite_h3_within_slide(slide_body: str) -> str:
     return "".join(out)
 
 
+def _normalize_headings_outside_code(text: str) -> str:
+    """Apply `_normalize_heading` to each line that is not inside a fenced
+    code block. Fences are lines whose first non-space chars are ``` or ~~~.
+    """
+    out: list[str] = []
+    in_fence = False
+    fence_marker: str | None = None
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if not in_fence and (stripped.startswith("```") or stripped.startswith("~~~")):
+            in_fence = True
+            fence_marker = stripped[:3]
+            out.append(line)
+            continue
+        if in_fence:
+            if stripped.startswith(fence_marker or "```"):
+                in_fence = False
+                fence_marker = None
+            out.append(line)
+            continue
+        out.append(_normalize_heading(line))
+    return "\n".join(out)
+
+
 def _collapse_blank_lines(text: str) -> str:
     """Replace runs of 3+ blank lines with a single blank line."""
     return re.sub(r"\n{3,}", "\n\n", text)
@@ -198,7 +210,7 @@ def convert(master_md: str) -> str:
     text = _process_h3_fields(text)
     # After H3 processing, re-walk and normalize remaining H1 / H2 prefixes
     # for any heading we didn't touch.
-    text = "\n".join(_normalize_heading(line) for line in text.splitlines())
+    text = _normalize_headings_outside_code(text)
     text = _collapse_blank_lines(text)
     return text.strip() + "\n"
 

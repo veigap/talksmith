@@ -38,19 +38,6 @@ _IMG_TIMEOUT_SEC = 15
 # Tags whose content should be dropped entirely (boilerplate, navigation, ads).
 _DROP_TAGS = {"script", "style", "noscript", "nav", "footer", "aside", "form", "iframe"}
 
-# Inline-text tags whose text we keep but which don't add structure.
-_INLINE_TAGS = {"span", "em", "i", "strong", "b", "u", "small", "sub", "sup"}
-
-# Tags handled specifically (heading, list, etc.). Anything else is treated as
-# a generic block that emits a paragraph break before/after.
-_BLOCK_TAGS = {
-    "p", "div", "section", "article", "main", "header",
-    "blockquote", "ul", "ol", "li",
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "pre", "code", "table", "tr", "td", "th",
-    "hr", "br",
-}
-
 
 def _slugify(text: str) -> str:
     text = text.lower()
@@ -262,13 +249,41 @@ def _download_assets(image_urls: list[tuple[str, str]], base_url: str, assets_di
     return manifest
 
 
+def _yaml_quote(value: str) -> str:
+    """Escape an arbitrary string into a YAML double-quoted scalar.
+
+    Handles backslashes, double quotes, and control chars (newline, tab,
+    carriage return, etc.) — enough for the title / alt-text / URL fields
+    this script writes. Not a general YAML emitter.
+    """
+    out: list[str] = ['"']
+    for ch in value:
+        code = ord(ch)
+        if ch == "\\":
+            out.append("\\\\")
+        elif ch == '"':
+            out.append('\\"')
+        elif ch == "\n":
+            out.append("\\n")
+        elif ch == "\r":
+            out.append("\\r")
+        elif ch == "\t":
+            out.append("\\t")
+        elif code < 0x20 or code == 0x7F:
+            out.append(f"\\x{code:02x}")
+        else:
+            out.append(ch)
+    out.append('"')
+    return "".join(out)
+
+
 def _write_metadata_yaml(target: Path, url: str, title: str, status: int, byte_size: int, asset_manifest: list[dict]) -> None:
     """Write a simple YAML (hand-formatted; stdlib has no yaml dumper)."""
     fetched_at = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines: list[str] = [
-        f'url: "{url}"',
-        f'fetched_at: "{fetched_at}"',
-        f'title: "{title.replace(chr(34), chr(39))}"',
+        f"url: {_yaml_quote(url)}",
+        f"fetched_at: {_yaml_quote(fetched_at)}",
+        f"title: {_yaml_quote(title)}",
         f"http_status: {status}",
         f"byte_size: {byte_size}",
         "assets:",
@@ -278,7 +293,7 @@ def _write_metadata_yaml(target: Path, url: str, title: str, status: int, byte_s
     else:
         for a in asset_manifest:
             inline = ", ".join(
-                f'{k}: "{str(v).replace(chr(34), chr(39))}"' if isinstance(v, str) else f"{k}: {v}"
+                f"{k}: {_yaml_quote(str(v))}" if isinstance(v, str) else f"{k}: {v}"
                 for k, v in a.items()
             )
             lines.append(f"  - {{ {inline} }}")

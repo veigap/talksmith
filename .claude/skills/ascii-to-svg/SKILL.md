@@ -50,13 +50,7 @@ This avoids any reliance on the session's current working directory (which is un
 
 2. **Load style files.** Read `<repo_root>/knowledge/image-styles/style.md` (always). If `template_name` is non-null, also read `<repo_root>/knowledge/image-styles/<template_name>.txt`. Resolve both via the `repo_root` input — never via the current working directory. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`.
 
-3. **Pick semantic colors** from the slide context, **not** from box order. Use the *Semantic color → panel class* table in `style.md`:
-   - `slide_content_prose` words like "before / dirty / noisy / raw" → `.c-coral` or `.c-gray`
-   - "intermediate / improved / processing" → `.c-amber` or `.c-purple`
-   - "clean / final / synthetic / generated" → `.c-teal`
-   - "input / reference / ground-truth / neutral" → `.c-blue`
-   - "model / system / black-box" → `.c-purple` (full panel) or `.c-gray` (inset)
-   - When the slide is histological/biological tissue and `style.md`'s histology accent applies, use the pink ramp and document the deviation in `<desc>`.
+3. **Pick semantic colors** from the slide context, **not** from box order. Apply the *Semantic color → panel class* table in `style.md` to keywords found in `slide_content_prose`. `style.md` is the authority — do not restate its mappings here. If the slide is histological/biological tissue and `style.md`'s histology accent applies, use the pink ramp and document the deviation in `<desc>`.
 
 4. **Generate text from context, not from the ASCII.** The ASCII gives layout. The labels come from:
    - SVG `<title>`: `slide_title`
@@ -66,14 +60,7 @@ This avoids any reliance on the session's current working directory (which is un
    - In-panel callouts (axis labels, peak markers, equation captions): drawn from `speaker_notes` when it flags something to emphasize
    - **All text in `presentation_language`** — never mix languages. If unclear, fall back to the dominant language of `slide_content_prose`.
 
-5. **Render the SVG** following `style.md` end to end:
-   - Hard constraints: `viewBox="0 0 680 H"`, `role="img"`, `<title>` + `<desc>`, shared `<marker id="arrow">` def.
-   - Panel layout from `style.md`'s *Panel layout grid* table (2-up = 290+290 @ x=40,350; 3-up = 200×3; pipeline = 160×3 with arrows; etc.).
-   - Heading-position rule by layout type (above for stacked, inside for narrow pipeline boxes).
-   - Color tonal scale: pastel rect fill, mid rect stroke, **darkest** for primary polyline stroke, light for centerlines.
-   - Dash patterns: `2 2` for drop-lines, `3 3` for reference/orbit/zoom-connector.
-   - Bottom caption (when applicable): `x="340"`, `y=viewBox.H - 22`, `fill="#888780"`.
-   - Idioms section verbatim for the elements you use.
+5. **Render the SVG** following `style.md` end to end. `style.md` is the single source of truth for hard constraints (viewBox, `role`, `<title>`/`<desc>`, shared `<marker>`), the *Panel layout grid*, heading-position rules, the tonal scale, dash patterns, bottom-caption placement, and idioms. If a matched template (`<template_name>.txt`) is loaded, it overrides layout where applicable but does not loosen `style.md`'s constraints. Do not restate any of these here — read them from `style.md` per render.
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
 
@@ -84,7 +71,7 @@ This avoids any reliance on the session's current working directory (which is un
 
 ## You cannot ask questions
 
-This skill has no `AskUserQuestion`. If `style_md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
+This skill has no `AskUserQuestion`. If `style.md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
 
 **Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty (early-draft Mode A slides where the diagram exists before the prose), render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral semantic colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — the illustrator coordinator and presenter both expect the ASCII to render even early; an empty SVG is worse than a sparsely-labelled one.
 

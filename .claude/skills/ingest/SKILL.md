@@ -67,6 +67,7 @@ The folder is **never overwritten by default** — if it already exists and is n
 ## Boundaries
 
 - **Local file work only.** The script does not call out to AI services, OCR APIs, or external tooling beyond Python stdlib. JS-heavy sites that render content client-side will produce a thin `page.md` — `original.html` still captures whatever the server returned.
+- **No table structure.** `<table>`, `<tr>`, `<td>`, `<th>` are not specially handled — cell text is concatenated into the surrounding flow with no Markdown table syntax. For pages where tabular data matters, the librarian should be pointed at `original.html` and/or the presenter should hand-edit `page.md`.
 - **No paywall bypass.** If the page returns 403 / 401 / paywall HTML, that's what gets saved. Do not invent content.
 - **One URL per invocation.** For multiple URLs, call the skill once per URL with a distinct `folder_name` each time.
 - **Does not modify `master.md`, `compile/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles compilation in Step 3.
