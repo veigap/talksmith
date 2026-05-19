@@ -1,56 +1,83 @@
 # Schema — `talks/<Talk>/memory.md`
 
-Specification for `talks/<Talk>/memory.md`: the per-Talk progress log and restore point. Each Talk has exactly one. The orchestrator parses a single line — `**Current step:**` — on resume to know where to pick up; everything else is human-readable history.
+Specification for `talks/<Talk>/memory.md`: the per-Talk progress log and live restore point. Each Talk has exactly one. Captures **both** finished steps (the audit trail) **and** in-flight state (what's being asked right now, what the agent is waiting for, what status the current step is in) so that a resume picks up at the exact moment the previous session paused — not just at the last completed step.
 
 ## Purpose
 
-Append-only history of every completed Talksmith step, plus a single-line top-of-file state marker that lets the orchestrator resume mid-flow weeks later. Captures decisions, key inputs, files changed, and pending open questions per step.
+Two things live in this file:
+
+1. **Live state** — a small block of header lines that change as the step progresses (status, what the agent is currently awaiting from the presenter). The orchestrator parses these on resume.
+2. **Append-only history** — one entry per Talksmith step, dated, recording asks/answers as they happen and the closing fields (decisions, inputs, files, open questions) once the step completes.
+
+The orchestrator updates the live-state block directly (lightweight, no subagent dispatch). The editor owns the immutable Talk briefing and the closing fields of each step entry.
 
 ## Loading semantics
 
 | Reader / Writer | When | What for |
 |---|---|---|
-| `editor` subagent (writer) | After every completed step (1–8). **Sole writer.** | Initialize at Step 1 with the verbatim Talk briefing; append one dated entry per completed step; atomically update the `Current step:` line in the top-of-file header. |
-| Orchestrator (reader) | Step 0 on a Resume session; ad-hoc throughout | Parse the single `Current step:` line to determine where to resume. Read prior step entries when context is needed (rare — most session state lives in `master.md` and `knowledge/compile/`). |
+| Orchestrator (writer) | On every step transition and every presenter ask/answer | Maintain `**Current step:**` and `**Awaiting:**` header lines; append to the current step entry's `Asks log` as questions are asked / answered. Lightweight in-place edits — no editor dispatch. |
+| `editor` subagent (writer) | (a) Step 1 init: bootstrap from canonical empty form, write the briefing block, open the Step 1 entry. (b) Step closure (1–8): fill `What was decided` / `Key inputs` / `Files created/modified` / `Pending open questions` for the closing step; flip its `Status:` to `complete`. (c) Open the next step's entry on step-start dispatches if the orchestrator asks. | Capture decisions in a stable, audit-friendly form. The editor never overwrites prior step entries — only the currently-open one. |
+| Orchestrator (reader) | Step 0 on a Resume session; ad-hoc throughout | Parse `**Current step:**` + `**Awaiting:**` to know where to resume and whether a question was mid-air. Read prior step entries when context is needed. |
 
-The orchestrator never writes this file directly.
+## Live-state block (header)
 
-## Resume contract
+The top of the file holds the always-current state. Three lines, two of them dynamic:
 
-The **`Current step:` line is the single source of truth for resume.** Format: `**Current step:** <integer> — <phase name> complete`. Examples:
+```
+**Current step:** <integer> — <Phase name> <status>
+**Awaiting:** <YYYY-MM-DD HH:MM> — "<verbatim question or one-line context>"
+**Topic:** <one-line topic from Step 1>
+**Folder:** talks/<folder-name>/
+**Started:** <YYYY-MM-DD>
+```
 
-- `**Current step:** 1 — Frame complete`
-- `**Current step:** 4 — Draft complete`
-- `**Current step:** 6 — Polish complete`
+- `**Current step:**` — single source of truth for the resume target. `<status>` is one of: `in_progress` (working), `awaiting_presenter` (question outstanding), `complete` (step done; ready to advance).
+- `**Awaiting:**` — present **only** when `<status> = awaiting_presenter`. Holds the timestamp the question was asked and a verbatim or one-line gloss of what's expected. The orchestrator removes this line the moment the answer is received (and flips status back to `in_progress`).
+- `**Topic:**`, `**Folder:**`, `**Started:**` — written once at Step 1 init, never edited.
 
-The editor updates this line atomically when appending a new dated entry — never leaves it stale. The orchestrator's resume logic reads only this line; everything below is human-readable history.
+**Resume contract.** On a Resume session, the orchestrator reads `Current step:` and, if status is `awaiting_presenter`, also `Awaiting:` — then re-emits the outstanding question to the presenter rather than blindly advancing.
 
 ## Talk briefing block
 
-A `## Talk briefing` section near the top holds the verbatim Step-1 free-text answer from the presenter. This is the canonical context handed to every `librarian`, `composer`, and `editor` dispatch throughout the session — do not paraphrase it away. Once written at Step 1, the briefing block is **immutable** for the lifetime of the Talk. The editor leaves it untouched on every subsequent step's append.
+A `## Talk briefing` section immediately below the header holds the verbatim Step-1 free-text answer from the presenter. **Immutable** for the lifetime of the Talk — every subsequent step leaves it untouched. Canonical context handed to every `librarian`, `composer`, and `editor` dispatch.
 
 ## Append-only history
 
-After Step 1, every completed step appends a new dated entry below the briefing block. Old entries are never edited or deleted — they're the audit trail of how the Talk evolved.
+Below the briefing, one entry per step. The entry header is written when the step **starts**; the entry body grows during the step (asks/answers appended in real time) and is finalized when the step **completes**.
 
 Per-step entry shape:
 
 ```
 ## <YYYY-MM-DD> — Step <N> (<Phase name>)
-- What was decided: <one or two lines>
-- Key inputs: <presenter answers, files added, etc.>
-- Files created/modified: <list>
-- Pending open questions: <list or "none">
+- Status: <in_progress | awaiting_presenter | complete>
+- Asks log:
+  - <YYYY-MM-DD HH:MM> — "<verbatim question>" → <verbatim or one-line answer | pending>
+  - <...>
+- What was decided: <one or two lines>            ← filled at closure
+- Key inputs: <presenter answers, files added>    ← filled at closure
+- Files created/modified: <list>                  ← may grow during the step
+- Pending open questions: <list or "none">        ← filled at closure
 ```
+
+Rules:
+
+- **The orchestrator owns `Status:` and `Asks log:`** — updates them in place as work happens. Every chat-prompt question the orchestrator emits gets a new `Asks log` row (one ask, one row). When the presenter answers, the orchestrator rewrites the row's trailing `pending` with the verbatim or one-line answer (never deletes the row). Then it flips `Status:` from `awaiting_presenter` back to `in_progress` and removes the `Awaiting:` header line.
+- **The editor owns the closing fields** — `What was decided`, `Key inputs`, `Pending open questions`, and the final flip of `Status:` to `complete`. The editor may also append to `Files created/modified` whenever it writes during the step.
+- **Old entries are immutable.** Once a step entry's `Status:` flips to `complete`, no writer (orchestrator or editor) touches that entry again. The next step opens a new entry below.
+- **One open entry at a time.** If `Current step:` points to step N, the step-N entry is the only one with `Status: in_progress` or `awaiting_presenter`. All prior entries are `complete`.
+
+## What counts as an "ask" worth logging
+
+Log every presenter-facing question that's part of the workflow — the chat-prompt protocol's numbered-option asks and free-text prompts. Do **not** log conversational acknowledgments ("ready?", "OK to proceed?") or transient clarifications that the orchestrator resolves itself. The rule of thumb: if the question gates the next step (or the next significant action within the step), it goes in the log.
 
 ## Canonical empty form
 
-The editor bootstraps `talks/<Talk>/memory.md` from this form on its Step 1 init dispatch. The orchestrator passes the verbatim Step-1 briefing text in the dispatch prompt — write it under `## Talk briefing` exactly as received. The very first dated step entry (Step 1, Frame) is appended in the same dispatch.
+The editor bootstraps `talks/<Talk>/memory.md` from this form on its Step 1 init dispatch. The orchestrator passes the verbatim Step-1 briefing text in the dispatch prompt — write it under `## Talk briefing` exactly as received. The very first step entry (Step 1, Frame) is opened in the same dispatch with `Status: in_progress` and finalized to `Status: complete` once Step 1 finishes.
 
 ```markdown
 # memory.md — <Talk folder name>
 
-**Current step:** <N — Phase name complete>
+**Current step:** <N> — <Phase name> <in_progress | awaiting_presenter | complete>
 **Topic:** <one-line topic from Step 1>
 **Folder:** talks/<folder-name>/
 **Started:** <YYYY-MM-DD>
@@ -64,8 +91,11 @@ The editor bootstraps `talks/<Talk>/memory.md` from this form on its Step 1 init
 ---
 
 ## <YYYY-MM-DD> — Step <N> (<Phase name>)
-- What was decided: <one or two lines>
-- Key inputs: <presenter answers, files added, etc.>
+- Status: <in_progress | awaiting_presenter | complete>
+- Asks log:
+  - <YYYY-MM-DD HH:MM> — "<verbatim question>" → <answer | pending>
+- What was decided: <filled at closure>
+- Key inputs: <filled at closure>
 - Files created/modified: <list>
 - Pending open questions: <list or "none">
 

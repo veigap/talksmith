@@ -4,44 +4,59 @@ Specification for [`knowledge/profile.md`](../../knowledge/profile.md): the pres
 
 ## Purpose
 
-Captures per-presenter defaults that apply across every Talk: how presentations are typically consumed, who the typical audience is, and what language slides are delivered in. Read once at session start, then passed into every subagent dispatch as context.
+Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start, then passed into every subagent dispatch as context. Step 4 (Draft) reads these silently to populate `master.md` frontmatter — it does **not** re-prompt for any field listed here.
 
 ## Loading semantics
 
 | Reader | Read when | What for |
 |---|---|---|
-| Orchestrator | **Session start, eagerly** | Loaded into session context. If filled, treat sections as global defaults for audience, tone, agenda, and language. If absent or empty, Step 0.5 offers to fill it. |
+| Orchestrator | **Session start, eagerly** | Loaded into session context. If filled, treat sections as global defaults for presenter identity, audience, tone, duration, and language. If absent or any required section is missing/empty, Step 0.5 walks through the missing required sections (no skip). |
 | All four subagents (`librarian`, `composer`, `editor`, `illustrator`) | On every dispatch | The orchestrator passes the profile's content **in the dispatch prompt**. Subagents do **not** read this file from disk. If a dispatch prompt omits profile content entirely (orchestrator bug or empty profile), every subagent falls back to defaults and notes the omission in its final report — never stops. |
 
-The orchestrator writes the file when it persists newly-collected fields — e.g. when the presenter resolves `Presentation language` in Step 4 Pre-mode for the first time, the answer is written back so future Talks inherit it.
+The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
-## Canonical sections (exactly three)
+## Canonical sections (exactly six)
 
-| Section | Purpose |
-|---|---|
-| `How my presentations are consumed` | Live vs. recorded vs. async, default consumption mode. Drives slide density and speaker-note weight. |
-| `Audience defaults` | Typical audience profile across Talks (technical level, role, what they already know). Used as default `audience` for every Talk's frontmatter. |
-| `Presentation language` | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `master.md`, and the conversation with the agent. Single value or default + exception. |
+| Section | Required? | Purpose |
+|---|---|---|
+| `Subject` | **Required** | The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers", "Quantum computing seminar"). One fork per subject. Copied into every Talk's `master.md` frontmatter as the `presentation` field — every Talk in this fork shares it. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. |
+| `Presenter` | **Required** | One-line identity record — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). The Editor copies this verbatim into every Talk's `master.md` frontmatter as the default `presenter`. Per-Talk override: edit the `master.md` frontmatter directly in Step 5 Review. |
+| `How my presentations are consumed` | Optional | Live vs. recorded vs. async, default consumption mode. Drives slide density and speaker-note weight. May be left blank — Talksmith assumes live-talk defaults. |
+| `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `master.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `master.md` directly — never re-prompted in Step 4. |
+| `Default duration` | **Required** | Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's `master.md` frontmatter as the default `duration`. Per-Talk override: edit the `master.md` frontmatter directly in Step 5 Review. |
+| `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `master.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `master.md` prose. |
 
-**Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints"). **Do not remove any of the three canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
+**Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints" — these were intentionally removed). **Do not remove any of the six canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
 
 ## Empty vs. filled state
 
+Step 0.5's behavior depends on the state of `knowledge/profile.md`. The driving rule: **required sections must be filled before the orchestrator advances past Step 0.5**. Optional sections may be skipped.
+
 | State of `knowledge/profile.md` | Orchestrator action (Step 0.5) |
 |---|---|
-| All sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
-| Partially filled (some sections have content, others are blank or HTML-comment-only) | Load filled sections as global defaults. `AskUserQuestion`: fill the missing sections now or skip. Skipping is allowed — missing fields are re-prompted just-in-time (e.g. `Presentation language` is re-prompted in Step 4 Pre-mode). |
-| Exists but empty (only headings + HTML comments) | `AskUserQuestion`: fill now or skip. If fill: walk through every present section via `AskUserQuestion` with 2–4 concrete candidates per section. Never free-text. Write result back. |
-| Does not exist | `AskUserQuestion`: create + fill, or skip. If create: bootstrap from the *Canonical empty form* below → `knowledge/profile.md`, then proceed as the empty case above. |
+| All six sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
+| Partially filled — every required section has content; only optional sections empty | Load filled sections as global defaults. Ask the presenter: fill the optional section(s) now, or skip? Skipping is allowed because the section is optional. |
+| Partially filled — one or more **required** sections missing, empty, or HTML-comment-only | Load the filled sections as global defaults. Walk through every missing **required** section, prompting with 2–4 concrete candidates per section — **no skip option** for required sections. Then offer optional sections with skip. Write the result back. |
+| Exists but every section is empty (only headings + HTML comments) | Walk through every **required** section with the presenter (no skip), then offer optional sections with skip. Never free-text except where the section semantics demand it (Presenter is free-text by definition). Write the result back. |
+| Exists but missing one or more canonical section headings (e.g. legacy / hand-edited file that dropped `## Audience defaults`) | Treat the file as needing rebuild: re-bootstrap from the *Canonical empty form* below, **preserving any content under the canonical headings that did exist** (copy it into the rebuilt file under the same heading). Never silently drop presenter content. Then proceed as the "exists but every section is empty" case for whatever required sections came up empty after the rebuild. |
+| Does not exist | Bootstrap from the *Canonical empty form* below → `knowledge/profile.md`, then proceed as the "exists but every section is empty" case above. |
 
 ## Filling rules
 
 - Per-section content is free-form prose (not a structured key/value).
-- Leave a section blank (or its placeholder HTML comment intact) if it genuinely does not apply — Talksmith treats blank sections as "ask me each time".
+- For required sections, the orchestrator must walk them in Step 0.5 by asking the presenter. Concrete candidates the orchestrator should offer:
+  - `Subject`: free-text prompt (no candidates make sense — it's the unique overarching subject of this fork).
+  - `Presenter`: free-text prompt (no candidates make sense — it's a personal identity record).
+  - `Audience defaults`: 2–4 candidates such as "Technical peers / engineers", "Mixed technical + business", "University students (undergraduate)", "Domain practitioners (non-engineering)".
+  - `Default duration`: 2–4 candidates such as "30 min", "45 min", "60 min + Q&A", "90 min lecture".
+  - `Presentation language`: 2–3 candidates such as "Spanish", "English", "Portuguese".
+- Leave an optional section blank (or its placeholder HTML comment intact) if it genuinely does not apply — Talksmith treats blank optional sections as "ask me each time" or applies the live-talk default.
 
-## No `presenter` field by design
+## Step 4 (Draft) contract
 
-The profile is a *global preferences* file, not an *identity* record. The `presenter` frontmatter field in each Talk's `master.md` captures the per-Talk presenter identity (collected in Step 4 Pre-mode on the first session of a new Talk).
+Step 4 reads `Subject`, `Presenter`, `Audience defaults`, `Default duration`, and `Presentation language` **silently** from this file and uses them to populate `master.md` frontmatter (`presentation` ← `Subject`; `presenter` ← `Presenter`; `audience` ← `Audience defaults`; `duration` ← `Default duration`) plus the language of all prose the editor writes. It does not re-prompt for any of them. If a required section is unexpectedly empty when Step 4 begins (Step 0.5 bypassed, file edited out-of-band, etc.), Step 4 stops, redirects to Step 0.5 to collect the missing field, then resumes. No inline backstop prompts.
+
+The only frontmatter field Step 4 actively prompts for is `date` (always per-Talk, no profile default). The pass-through keys (`knowledge:`, `description:`) are populated by the editor from the schema's canonical empty form.
 
 ## Missing-profile fallback (shared rule)
 
@@ -50,7 +65,7 @@ This rule is referenced by all four subagents (`librarian`, `composer`, `editor`
 **When the dispatch prompt omits profile content entirely** (orchestrator bug, or `knowledge/profile.md` is genuinely empty), every subagent:
 
 1. Proceeds without stopping — a missing profile is never a fatal error.
-2. Derives audience from `master.md` frontmatter (`audience:` field). If absent, falls back to "general / unspecified" and surfaces the gap.
+2. Derives `presentation`, `presenter`, `audience`, `duration` from `master.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in its final report.
 3. Derives `Presentation language` from the dominant language of `master.md` prose. If `master.md` itself is empty (early Mode A pre-bootstrap), falls back to English and surfaces the gap.
 4. **Notes the omission in its final report** so the orchestrator can fix the dispatch contract or prompt the presenter to fill the profile.
 
@@ -69,15 +84,27 @@ Bootstrap `knowledge/profile.md` from this form on first creation. The one-line 
 
 ---
 
+## Subject
+
+<!-- Required. The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One fork per subject. Copied into every Talk's master.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. -->
+
+## Presenter
+
+<!-- Required. One line — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). Copied into every Talk's master.md frontmatter as the default `presenter`. Per-Talk override: edit master.md frontmatter directly in Step 5 Review. -->
+
 ## How my presentations are consumed
 
-<!-- Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? -->
+<!-- Optional. Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? Leave blank to use live-talk defaults. -->
 
 ## Audience defaults
 
-<!-- Who is typically in the room (or watching async)? Technical level, role, what they already know, what they care about. The Agent will use this as the default audience unless overridden per-presentation. -->
+<!-- Required. Who is typically in the room (or watching async)? Technical level, role, what they already know, what they care about. The Editor uses this as the default `audience` for every Talk's frontmatter. Per-Talk calibration happens in Step 5 Review by editing master.md directly — never re-prompted in Step 4. -->
+
+## Default duration
+
+<!-- Required. Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's master.md frontmatter as the default `duration`. Per-Talk override: edit master.md frontmatter directly in Step 5 Review. -->
 
 ## Presentation language
 
-<!-- The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and master.md prose. -->
+<!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and master.md prose. -->
 ```

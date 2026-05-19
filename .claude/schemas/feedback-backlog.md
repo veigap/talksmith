@@ -12,7 +12,7 @@ Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a
 
 | Reader | Read when | What for |
 |---|---|---|
-| Orchestrator | Step 7 entry | Scan for ≥3× recurrences across Talks, surface promotion candidates via `AskUserQuestion`. Read-only — never writes the file directly. |
+| Orchestrator | Step 7 entry | Scan for ≥3× recurrences across Talks, surface promotion candidates by asking the presenter. Read-only — never writes the file directly. |
 | `editor` subagent | Step 5 (Review) | Read existing tag vocabulary before appending a new closed-bullet row. **Sole writer.** Append-only in Step 5. |
 | `editor` subagent | Step 7 (Learnings), Move dispatch | Remove rows being relocated to `feedback-processed.md`. **Row-removal here is the sole deletion the editor performs in any step**, and is only allowed during a Step 7 Move — justified because the row is fully preserved (with `promoted_to:` + `promoted_at:` metadata) in `feedback-processed.md`. |
 
@@ -43,7 +43,7 @@ When the presenter declares `master.md` final and Step 7 begins, the orchestrato
 
 1. Scans entries added during this Talk and combines them with prior backlog history.
 2. Groups by tag and by recurring resolution shape.
-3. For any pattern that has appeared **3+ times across all Talks**, prompts the presenter via `AskUserQuestion` whether to promote it to `learnings.md` as a durable rule.
+3. For any pattern that has appeared **3+ times across all Talks**, asks the presenter whether to promote it to `learnings.md` as a durable rule.
 4. For each promoted pattern, dispatches the `editor` twice:
    - **Promote** — append a new entry to `learnings.md`.
    - **Move** — relocate the contributing backlog rows here into `feedback-processed.md`, stamping each with `promoted_to:` and `promoted_at:`.

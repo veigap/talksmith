@@ -48,7 +48,7 @@ Run in **two phases**:
 1. **Phase 1 — text sources (default).** Process all text end-to-end: articles, **PDFs (extract the text body)**, HTML, web captures, chat-export transcripts. For chat ZIPs, extract to a sibling temp folder under `/tmp/`, process the textual part, then remove the temp folder. **Defer image-format files** — do not transcribe, describe, or otherwise process any `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` file you encounter, whether it's loose in `knowledge/articles/`, inside `knowledge/web/<folder>/assets/`, or embedded in a chat-export ZIP. (Note: `.pdf` files are documents, **not** images — process them in Phase 1.)
 2. **Phase 2 — images (only when the orchestrator passes `process_images: true`).** Transcribe and describe every image you previously deferred.
 
-At the end of Phase 1, your final report **must include an `images_pending` section** listing every image you deferred with its absolute path and source context. The orchestrator will read this, surface the count + a time-cost warning to the presenter via `AskUserQuestion`, and re-dispatch you with `process_images: true` only if approved. **Do not silently process images** — image work is expensive (transcription, visual description, sometimes OCR) and the presenter should opt in.
+At the end of Phase 1, your final report **must include an `images_pending` section** listing every image you deferred with its absolute path and source context. The orchestrator will read this, surface the count + a time-cost warning to the presenter, and re-dispatch you with `process_images: true` only if approved. **Do not silently process images** — image work is expensive (transcription, visual description, sometimes OCR) and the presenter should opt in.
 
 ## Operating principles
 

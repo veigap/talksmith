@@ -40,7 +40,7 @@ The editor generates a stable `entry id` per promotion (incrementing integer or 
 
 1. Orchestrator scans `feedback-backlog.md` at presentation completion.
 2. Groups entries by tag and resolution shape.
-3. For any pattern recurring 3+ times across Talks, asks the presenter via `AskUserQuestion` whether to promote (options: *Promote* / *Skip* / *Promote with edits*).
+3. For any pattern recurring 3+ times across Talks, asks the presenter whether to promote (options: *Promote* / *Skip* / *Promote with edits*).
 4. For each approved pattern, dispatches the `editor` twice:
    - **Promote** — append a new entry here.
    - **Move** — relocate the contributing backlog rows from `feedback-backlog.md` to [`knowledge/feedback-processed.md`](../../knowledge/feedback-processed.md), stamping each with `promoted_to:` and `promoted_at:`.

@@ -22,6 +22,19 @@ One substrate underneath all of it: **Markdown.** Compiled sources, the outline 
 
 If that doesn't fit how you work, this is the wrong tool.
 
+## One fork per subject
+
+Talksmith expects **one fork of this repo per subject** — a university course, a recurring workshop, a research area you keep presenting in. Inside that fork, `talks/` accumulates class by class: every Talk you give on the subject lives in the same place.
+
+This isn't about repo hygiene — it's about compounding value over time:
+
+- **Compiled knowledge is reusable across classes.** A paper compiled in class 3 is still queryable for class 7. Each fork becomes a domain-specific knowledge base.
+- **`profile.md` calibrates to one audience.** "AI students in Biomedicine, undergraduate" is set once and inherited by every class in the fork. Different subject → different fork → different audience defaults. No global state to bleed.
+- **`learnings.md` accumulates per-subject editorial taste.** Recurring feedback ("don't open with the algorithm — open with the dataset") promoted in Step 7 applies to the next class on the same subject, not to unrelated topics.
+- **The audit trail stays scoped.** Feedback backlog, cut material, and open questions live next to the subject they came from. No cross-subject contamination.
+
+If you present on three subjects, that's three forks. Mixing subjects in one repo erodes every advantage above.
+
 ## How it works
 
 Four roles, one file as source of truth:
@@ -79,7 +92,7 @@ In either mode, the Presenter Agent will:
 
 1. Introduce itself and show the workflow chart.
 2. Load [`knowledge/profile.md`](knowledge/profile.md) if filled, or offer to fill it (Step 0.5).
-3. Ask via `AskUserQuestion` whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
+3. Ask in chat (with numbered options) whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
 
 Everything else flows from there. For the full operating spec, see [CLAUDE.md](CLAUDE.md).
 
@@ -185,7 +198,7 @@ Review repeats as many times as needed until the presenter declares the document
 - **Folder names are kebab-case** (e.g. `gan-networks`, `quantum-computing-intro`).
 - **Cite sources by filename.** Slide `Sources` reference files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`).
 - **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `master.md`.
-- **`AskUserQuestion` is the default interaction.** The agent proposes 2–4 concrete options for every decision rather than leaving the presenter to free-text. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
+- **Chat-prompt is the canonical interaction.** The agent asks every decision in chat with 2–4 numbered prose options derived from current context. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
 - **`knowledge/profile.md` is session-wide context.** Once filled, it's loaded automatically and passed into every subagent dispatch.
 - **`memory.md` is append-only.** Updated after every completed step; used to resume an in-progress talk.
 

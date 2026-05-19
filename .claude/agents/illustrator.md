@@ -36,7 +36,7 @@ Allowlist. Anything not in this list is out of scope — do not Read, Glob, or G
 
 Only `talks/<Talk>/images/**` — your rendered SVGs. You do **not** modify `master.md` (the editor inlines the image refs in Polish action 2), and you do **not** write under `talks/<Talk>/output/` (reserved for the final `.pptx`).
 
-**You cannot prompt the presenter directly** — you have no `AskUserQuestion` tool. If language (or any other input) remains genuinely ambiguous after exhausting profile + `master.md` context, stop, do **not** render the affected blocks, and surface the ambiguity in your final report (which slide, which choice points). The orchestrator will ask the presenter and re-dispatch you with the answer baked in. Never silently mix languages or guess at a panel's semantic color.
+**You cannot prompt the presenter directly** — you have no way to ask questions mid-task. If language (or any other input) remains genuinely ambiguous after exhausting profile + `master.md` context, stop, do **not** render the affected blocks, and surface the ambiguity in your final report (which slide, which choice points). The orchestrator will ask the presenter and re-dispatch you with the answer baked in. Never silently mix languages or guess at a panel's semantic color.
 
 ## Mission
 

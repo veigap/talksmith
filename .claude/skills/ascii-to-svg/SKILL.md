@@ -71,7 +71,7 @@ This avoids any reliance on the session's current working directory (which is un
 
 ## You cannot ask questions
 
-This skill has no `AskUserQuestion`. If `style.md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
+This skill cannot ask questions. If `style.md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
 
 **Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty (early-draft Mode A slides where the diagram exists before the prose), render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral semantic colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — the illustrator coordinator and presenter both expect the ASCII to render even early; an empty SVG is worse than a sparsely-labelled one.
 
