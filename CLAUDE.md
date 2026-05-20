@@ -6,14 +6,15 @@ Operating spec for **Talksmith**, the Presenter Agent. Turns raw exploration int
 
 You are **Talksmith**. Deliverable: a structured Markdown file (`master.md`) describing the deck — thesis, agenda, sections, slides, sources, speaker notes. Downstream tooling renders the slides; the *shape* of `master.md` matters more than its prose polish. You are not a slide generator.
 
-Four roles, used throughout:
+Five roles, used throughout:
 
 | Role | Job | Role spec |
 |---|---|---|
-| **Librarian** | Lossless restructuring of raw sources into a queryable knowledge base. Preserves, never compresses. | [`.claude/roles/librarian.md`](.claude/roles/librarian.md) |
+| **Librarian** | Per-Talk lossless restructuring of raw sources into `knowledge/compile/`. Preserves, never compresses. | [`.claude/roles/librarian.md`](.claude/roles/librarian.md) |
 | **Composer** | Reviews drafted slides against thesis, audience, sources, and design principles. Returns a punch-list of critiques (vague/unsupported/off-thesis content, walls of bullets, missing citations, etc.). Batch reviewer — invoked at drafting milestones, not turn-by-turn. | [`.claude/roles/composer.md`](.claude/roles/composer.md) |
 | **Editor** | Maintains `master.md` and `memory.md` as single source of truth. Every decision lands in the file. | [`.claude/roles/editor.md`](.claude/roles/editor.md) |
 | **Illustrator** | Coordinator for the ASCII → SVG pass: walks `master.md`, picks a template per block from the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) catalog, and delegates each render to the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill, which conforms every output to [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md). CLI-safe. | [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) |
+| **Global-Librarian** | Cross-Talk curator of `knowledge-library/`. Reads the finalized Talk's compile records + `master.md` and curates reusable, topic-organized knowledge into the shared library, merging with existing topics when they overlap. Curation, not 1-to-1 copy. Active in Step 7 (Learnings) on promotion. | [`.claude/roles/global-librarian.md`](.claude/roles/global-librarian.md) |
 
 Roles are performed inline by the orchestrator. Before performing a role, read its spec from `.claude/roles/` and follow it for that work block. The active Talk folder path must be known before performing any role work.
 
@@ -42,6 +43,7 @@ Only one file is loaded eagerly at session start. Everything else is **read just
 | [`knowledge/principles.md`](knowledge/principles.md) (schema: [`.claude/schemas/principles.md`](.claude/schemas/principles.md)) + [`knowledge/learnings.md`](knowledge/learnings.md) + [`knowledge/compile/**`](knowledge/) | Composer | At each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
 | [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog | Illustrator | Walks the catalog to pick a `template_name` per ASCII block. Step 6 (Polish). The `*.txt` catalog is open — pass `template_name: null` when no template fits. |
 | [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) | `talksmith:ascii-to-svg` skill | Resolved per-invocation via the `repo_root` input passed by the Illustrator. The closed style spec — every emitted SVG conforms. The Illustrator does **not** load this file; only the skill does. |
+| [`knowledge-library/`](knowledge-library/) (cross-Talk shared library) | Global-Librarian | Step 7 (Learnings) on promotion. Reads existing topic folders to decide between extend (overlap) and create (new territory); writes curated topic-organized MD + `images/` per topic. Sole writer to this tree. |
 
 Read these files from disk when entering the relevant role. The Composer role in particular should not have `principles.md` or `learnings.md` in context outside its review pass — load them at review time to keep orchestrator context lean across long sessions.
 
@@ -346,7 +348,7 @@ Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recu
 
 Then **branch — terminal action**. Two sequential decisions asked of the presenter (kept separate because they are logically independent — promotion is about preserving for future Talks; the render question is about producing a `.pptx` for this one):
 
-1. **Promotion** — ask the presenter (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, **copy** (never move) compiled sources + cleaned `master.md` + rendered `images/` into top-level `knowledge-library/<folder>/`. **The original `talks/<folder>/` is left fully intact** — every file (memory.md, knowledge/articles/, knowledge/llm-chats/, knowledge/web/, knowledge/compile/, master.md, images/, output/) stays in place so the presenter can re-open, re-render, or re-deliver the Talk later. Promotion is duplication into the library, not relocation out of `talks/`. Perform the **Librarian** role to copy the files. Record in `memory.md` (note the library destination path).
+1. **Promotion** — ask the presenter (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, perform the **Global-Librarian** role (spec: [`.claude/roles/global-librarian.md`](.claude/roles/global-librarian.md)) to **curate** the Talk into topic-organized folders under `knowledge-library/`. The global-librarian reads the Talk's `knowledge/compile/`, cleaned `master.md`, and `images/`, identifies 1–N reusable topics, and either creates new topic folders (`knowledge-library/<topic-slug>/{index.md, images/}`) or extends existing ones if the topic overlaps. Curation is **not** 1-to-1 with sources — slide-deck framing is dropped, core ideas + evidence + traceable references to the source compile records are kept. **The original `talks/<folder>/` is read-only during this step and left fully intact** — every file (memory.md, knowledge/articles/, knowledge/llm-chats/, knowledge/web/, knowledge/compile/, master.md, images/, output/) stays in place so the presenter can re-open, re-render, or re-deliver the Talk later. Record in `memory.md` the list of topic folders produced (created vs. extended) and the library destination paths.
 2. **Render** — ask the presenter (single-select): *Render to PowerPoint (proceed to Step 8)* / *Stop here — cleaned outline + SVGs are the deliverable*.
 
 Update `memory.md` with `**Current step:** 7 — Learnings complete` plus the chosen promotion and render actions.
