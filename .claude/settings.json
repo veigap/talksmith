@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Edit(/.claude/skills/polish-ascii/**)"
+      "Edit(/.claude/skills/polish-ascii/**)",
+      "Edit(/.claude/skills/upgrade-fork/**)"
     ]
   }
 }

@@ -35,6 +35,21 @@ This isn't about repo hygiene — it's about compounding value over time:
 
 If you present on three subjects, that's three forks. Mixing subjects in one repo erodes every advantage above.
 
+**Keeping a fork current.** When master ships new skills, role specs, or shared knowledge (`principles.md`, `image-styles/`), the [`talksmith:upgrade-fork`](.claude/skills/upgrade-fork/SKILL.md) skill pulls the latest core from `github.com/veigap/talksmith` (shallow clone of `main`) into your fork without ever touching its accumulated state.
+
+The skill exposes two operations:
+
+- **`diff`** — read-only inventory of what would change in your fork: files to create, files to modify, files only in your fork (potentially pruneable). Optional unified-diff bodies for text files.
+- **`apply`** — performs the copy after a confirmation prompt. Optional `prune` removes fork-only files under `.claude/` and `knowledge/image-styles/` to produce a clean mirror.
+
+Both operations default to cloning the upstream repo; pass a local master directory instead when working offline or iterating on upstream itself.
+
+| Touched by the skill | Never touched |
+|---|---|
+| `.claude/` · `CLAUDE.md` · `README.md` · `knowledge/principles.md` · `knowledge/image-styles/` | `talks/` · `knowledge/profile.md` · `knowledge/learnings.md` · `knowledge/feedback-backlog.md` · `knowledge/feedback-processed.md` |
+
+See [`.claude/skills/upgrade-fork/SKILL.md`](.claude/skills/upgrade-fork/SKILL.md) for the full contract, safety rules, and exit codes.
+
 ## How it works
 
 Four roles, one file as source of truth:
