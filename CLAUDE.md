@@ -20,7 +20,7 @@ Roles are performed inline by the orchestrator. Before performing a role, read i
 
 ## Philosophy — one fork per subject
 
-This repo is expected to be **forked once per subject** — a university course, a recurring workshop, a research area you keep presenting in. Inside the fork, `talks/` accumulates **class by class**: every Talk in the fork shares the same `Subject`, `Presenter`, `Audience`, `Default duration`, and `Presentation language` (all set once in `config/profile.md` during Step 0.5). The Step-1 briefing captures only what's specific to *this class* — its angle, scope, and thesis — never the overarching subject. Corpus knowledge, learned editorial rules, and the feedback audit trail compound across classes within the same fork; switching subjects means a different fork with its own profile. See [`README.md`](README.md) → *One fork per subject* for the full rationale.
+This repo is expected to be **forked once per subject** — a university course, a recurring workshop, a research area you keep presenting in. Inside the fork, `talks/` accumulates **class by class**: every Talk in the fork shares the same `Subject`, `Presenter`, `How my presentations are consumed`, `Audience defaults`, `Default duration`, and `Presentation language` (all six set once in `config/profile.md` during Step 0.5). The Step-1 briefing captures only what's specific to *this class* — its angle, scope, and thesis — never the overarching subject. Corpus knowledge, learned editorial rules, and the feedback audit trail compound across classes within the same fork; switching subjects means a different fork with its own profile. See [`README.md`](README.md) → *One fork per subject* for the full rationale.
 
 ## Session start — mandatory loads
 
@@ -67,7 +67,7 @@ Read these files from disk when entering the relevant role. The Composer role in
 | Step | Phase | Agent action | Presenter action |
 |------|-------|-------------|-------------------------|
 | 0 | Introduce | Introduce yourself + workflow chart, then ask new vs. resume. | Confirms / picks Talk folder. |
-| 0.5 | Profile | Load `profile.md`. For any **required** section that is missing/empty (Subject, Presenter, Audience defaults, Default duration, Presentation language), walk through it with the presenter — no skip. Optional sections (How my presentations are consumed) are offered with skip. | Fills required sections when prompted. |
+| 0.5 | Profile | Load `profile.md`. For any required section that is missing/empty (Subject, Presenter, How my presentations are consumed, Audience defaults, Default duration, Presentation language), walk through it with the presenter — no skip. All six sections are required and initialized once; never re-prompted per-Talk. | Fills required sections when prompted. |
 | 1 | Frame | Create folder tree under `talks/<folder>/`. | Provides topic + folder name. |
 | 2 | Collect | Offer the four intake channels (drop files, drop chat ZIPs, hand me a URL, **explore live with me right here**); capture live exploration to `knowledge/llm-chats/explore-*.md` on presenter's "ready". Wait. | Uploads to `knowledge/articles/` / `knowledge/llm-chats/`, hands over URLs, and/or explores live in chat. |
 | 3 | Corpus | Convert every source to uniform Markdown under `knowledge/corpus/`; copy/extract image bytes into per-source companion folders so the corpus is self-contained. | Confirms uploads complete. |
@@ -203,7 +203,7 @@ Do not proceed to Step 3 on your own.
 
 For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record under `knowledge/corpus/` (filename includes the original extension to avoid collisions — e.g. `paper.pdf.md`, `transcript.zip.md`, `arxiv-2401.web.md`) **plus a sibling companion folder** `knowledge/corpus/<source-stem>/images/` containing every image the source carried (extracted from ZIPs, copied verbatim from articles/web). The record's `## Images / diagrams` section references its companion images by relative path `<source-stem>/images/<file>` so the record and its assets travel together. Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)). The Librarian role runs in **two phases**:
 
-1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts). Defer every image (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs). Phase 1 returns an `images_pending` list.
+1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts) **and** extract/copy every image file (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs) to disk under the source's companion folder. Defer only the **transcription** prose for those images — the bytes are always on disk after Phase 1. Phase 1 returns an `images_pending` list (one entry per image awaiting transcription).
 2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when `process_images: true` is explicitly set.
 
 **Phase 1 always copies/extracts the image bytes** into the companion folder so the corpus is on disk and addressable, even before Phase 2 fills the prose. **Between phases**, if `images_pending` is non-empty, **ask the presenter** with a warning that image processing can take time: *"The librarian found N images (X figures from articles, Y from chat exports). Image processing requires per-image transcription and description and can be slow (~10–30s each). Process now, defer to later, or skip?"* Options: *Process now* (re-run Librarian role with `process_images: true`) / *Skip — text only* (Phase 2 never runs for this Talk) / *Defer to later* (mark in `memory.md`, prompt presenter again at the start of the next session). Never silently process images.
@@ -230,7 +230,7 @@ Before asking the presenter to pick a mode, run these checks and resolve these i
 
 1. **Corpus viability for B and C.** Check `talks/<Talk>/knowledge/corpus/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
 
-2. **Per-Talk frontmatter.** `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, `duration`, and `Presentation language` all come from `profile.md` (collected in Step 0.5). The only field Step 4 prompts for is `date` — ask the presenter with 2–4 candidates. Pass-through keys (`knowledge:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
+2. **Per-Talk frontmatter.** The frontmatter fields `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, and `duration` all come from `config/profile.md` (collected in Step 0.5). `Presentation language` is *not* a frontmatter field — it drives the prose language of `master.md` and SVG text, and is also read from the profile. The only frontmatter field Step 4 prompts for is `date` — ask the presenter with 2–4 candidates. Pass-through keys (`knowledge:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
 
 Once 1–2 are resolved, ask the presenter for the mode (free-text only when genuinely open). Question-density varies by mode (see *Question budget* below).
 
@@ -243,7 +243,7 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 **Question budget per mode:**
 
 - **A** (Interview) — unlimited; the agent drives the Q&A.
-- **B** (Agent Draft) — critical only. *Critical = the draft cannot proceed coherently without this answer.* Everything else: draft a best-guess and let the presenter correct it via Step-6 feedback bullets.
+- **B** (Agent Draft) — critical only. *Critical = the draft cannot proceed coherently without this answer.* Everything else: draft a best-guess and let the presenter correct it via Step-5 (Review) feedback bullets.
 - **C** (Presenter Outline) — **critical only, ideally zero.** Same definition as B. The brain-dump *is* the input; the agent's job is to structure and fill, not to re-interrogate the presenter. Defer ordering preferences, slide-title wording, keep/cut decisions, framing nuances, etc. to Step 5 Review where the presenter edits `master.md` directly.
 
 **What counts as "critical":**
