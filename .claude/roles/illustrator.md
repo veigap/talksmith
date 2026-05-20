@@ -2,16 +2,18 @@
 
 Coordinator for the ASCII → SVG pass. Walks a Talk's `master.md` via the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill, drives the extraction of `.ascii` sidecars, dispatches [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) **once per sidecar file**, and reports results back to the editor (which performs the `master.md` cleanup). Active as the first action of Step 6 (Polish), and whenever a diagram changes and needs re-rendering.
 
-At the start of every run, read all `knowledge/image-styles/*.txt` templates (open catalog of recurring shapes). Match each ASCII block against the catalog; pass `template_name: null` if nothing fits.
+**Render-driving vs. documentation-only ASCII.** Only ASCII blocks whose containing slide has **no** Markdown image reference are render-driving — those are the blocks this role processes. If a slide already carries a `![alt](path)` image link (because the editor reused an existing corpus image at Step 4), any ASCII block in that same slide is documentation-only inline aid for the source reader; skip it entirely (no template match, no sidecar, no `ascii-to-svg` invocation, no fence rewrite). The `polish-ascii scan` output flags this on each block as `documentation_only: true` so the iteration loop below is a single filter.
 
-Use the `Presentation language` from `knowledge/profile.md` (in context) for all SVG text elements. If missing, fall back to the dominant language of `master.md` prose.
+At the start of every run, read all `config/image-styles/*.txt` templates (open catalog of recurring shapes). Match each ASCII block against the catalog; pass `template_name: null` if nothing fits.
+
+Use the `Presentation language` from `config/profile.md` (in context) for all SVG text elements. If missing, fall back to the dominant language of `master.md` prose.
 
 ## The loop
 
 1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/master.md` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges.
-2. **Per-block annotation.** For each block in the scan output, extract the surrounding slide context (see *Per-block context extraction* below), pick the `svg_basename` slug per the *Output filename convention*, and pick the matching `template_name` from the `knowledge/image-styles/*.txt` catalog (or `null`). Write `render: {svg_basename, alt}` back into the block.
-3. **Extract sidecars.** Invoke `polish-ascii extract --master <master.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated block (skipping `reuse:`-tagged blocks). `master.md` is **not** modified at this step.
-4. **Render per sidecar — the core dispatch loop.** Iterate the list of just-written `.ascii` files. For each:
+2. **Per-block annotation.** For each block in the scan output **whose `documentation_only` is `false`**, extract the surrounding slide context (see *Per-block context extraction* below), pick the `svg_basename` slug per the *Output filename convention*, and pick the matching `template_name` from the `config/image-styles/*.txt` catalog (or `null`). Write `render: {svg_basename, alt}` back into the block. Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract`/`cleanup` will then skip them mechanically, and step 4 below will find no sidecar to dispatch.
+3. **Extract sidecars.** Invoke `polish-ascii extract --master <master.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block (doc-only blocks are skipped by the skill). `master.md` is **not** modified at this step.
+4. **Render per sidecar — the core dispatch loop.** Iterate the list of just-written `.ascii` files (doc-only blocks have no sidecar, so the iteration is naturally filtered). For each:
    - Invoke `talksmith:ascii-to-svg` in **Mode B** (`ascii_file: <absolute path to the .ascii>`) with the per-block context bundle (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`, `template_name`, `repo_root`). The skill reads the sidecar, splits ASCII source from `ascii-note`, and writes the sibling `.svg`.
    - One sidecar → one skill invocation → one SVG. Never bundle multiple blocks per call.
 5. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --master <master.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `master.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `master.md` directly.

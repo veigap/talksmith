@@ -1,6 +1,6 @@
 ---
 name: talksmith:polish-ascii
-description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `master.md` and emits structured JSON listing every fenced ASCII diagram block plus any `<!-- ascii-note: ... -->` HTML comment that follows it, with exact line ranges for both. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `master.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `master.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). CLI-safe, stdlib-only Python. Skip `reuse:`-tagged blocks in all write modes (no sidecar, no fence rewrite).
+description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `master.md` and emits structured JSON listing every fenced ASCII diagram block plus any `<!-- ascii-note: ... -->` HTML comment that follows it, with exact line ranges for both. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `master.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `master.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:polish-ascii — Mechanical ASCII extraction + master.md rewrite
@@ -58,7 +58,9 @@ The plan JSON has this shape:
 }
 ```
 
-A block with `"render": null` is skipped (not rewritten, no sidecar). A block whose captured `note.payload` contains a `reuse:` line is **also skipped automatically** — the skill never overwrites a reused asset's record.
+A block with `"render": null` is skipped (not rewritten, no sidecar).
+
+A block with `"documentation_only": true` is **also skipped automatically** — the slide already carries a Markdown image reference, so any ASCII in that slide is treated as inline visual aid for the source reader and bypassed by every Step-6 stage (no render, no sidecar, no fence rewrite). The flag is set by `scan` based on the surrounding slide content; the illustrator does not need to annotate it.
 
 `start_line` / `end_line` are **1-based**, **inclusive**, and refer to the opening and closing fence lines respectively (the fences themselves, not just the payload). For notes, they refer to the `<!-- ascii-note:` line and the line containing the terminal `-->`.
 
@@ -108,7 +110,7 @@ found 22 ASCII block(s) in talks/senales-1d-biomedicina/master.md:
 
 ```
 applied 22 block(s) to talks/senales-1d-biomedicina/master.md:
-  sidecars: 21 written, 1 unchanged, 1 skipped (reuse:)
+  sidecars: 21 written, 1 unchanged
   fences:   22 rewritten
 ```
 
@@ -117,10 +119,11 @@ applied 22 block(s) to talks/senales-1d-biomedicina/master.md:
 - **ASCII block** = a fenced code block whose language tag is empty, `ascii`, `text`, or `diagram`, AND whose payload either contains box / arrow glyphs (`─│┌┐└┘├┤┬┴┼+|→←↑↓` or `->`, `==>`, `─`, `│`) or spans ≥3 lines with spatially arranged characters. Fences tagged `python`, `bash`, etc. are ignored.
 - **Note** = an HTML comment of shape `<!-- ascii-note: ... -->` whose opening `<!-- ascii-note:` line appears **within 1 blank-line tolerance** after the closing fence. The comment is captured verbatim from its opening sentinel through the line containing `-->`.
 - **`slide_id`** = `s<section-N>-<slide-M>-<n>`. Section is the most recent `# N.` H1; slide is the most recent `## M.` H2 inside that section; `n` is the 1-based ordinal of the ASCII block within the current slide. Special locators: `# Agenda` → section `0`; `# Conclusiones` / `# Conclusions` → section `c`.
+- **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` echo left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads `master.md` source and are skipped by `extract`/`cleanup`/`apply`.
 
 ## Rewrite rules (used by `apply`)
 
-For each block with `render` non-null and no `reuse:` in the captured note:
+For each block with `render` non-null:
 
 1. **Sidecar.** Write `talks/<Talk>/images/<stem>.ascii` where `<stem>` is `svg_basename` minus `.svg`. Content layout:
    - ASCII payload verbatim (no fence, no leading/trailing blank-line manipulation).

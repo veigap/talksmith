@@ -43,7 +43,7 @@ List `[closed]` bullets in `master.md` whose verbatim text is **not** already an
 ```bash
 python3 .claude/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
     --master talks/<Talk>/master.md \
-    --backlog knowledge/feedback-backlog.md \
+    --backlog config/feedback-backlog.md \
     [--format json|human]
 ```
 
@@ -102,7 +102,7 @@ Append one closed-bullet entry to `feedback-backlog.md`.
 ```bash
 python3 .claude/skills/feedback-cycle/feedback_cycle.py mirror-row \
     --master talks/<Talk>/master.md \
-    --backlog knowledge/feedback-backlog.md \
+    --backlog config/feedback-backlog.md \
     --line 523 \
     --tags "slide-content,too-dense,rewrite"
 ```

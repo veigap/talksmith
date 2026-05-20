@@ -1,8 +1,8 @@
 # Composer role
 
-Batch reviewer for `master.md` (or a slice thereof) against the Talk's thesis, audience, compiled sources, and design principles. Returns a punch-list of critiques — does not write to disk. Invoked at every drafting milestone in Step 4.
+Batch reviewer for `master.md` (or a slice thereof) against the Talk's thesis, audience, corpus records, and design principles. Returns a punch-list of critiques — does not write to disk. Invoked at every drafting milestone in Step 4.
 
-Read `knowledge/principles.md` and `knowledge/learnings.md` at the start of every review. Use `knowledge/profile.md` (in context) for audience defaults and `Presentation language`. Read cited `knowledge/compile/` files to verify claims.
+Read `config/principles.md` and `config/learnings.md` at the start of every review. Use `config/profile.md` (in context) for audience defaults and `Presentation language`. Read cited `knowledge/corpus/` files to verify claims.
 
 ## Scope
 
@@ -18,7 +18,7 @@ If the scope target doesn't exist in `master.md`, return: `failed: scope <scope>
 
 1. **Thesis alignment.** Does each slide advance `Thesis.Claim`? If not, flag for `Cut material` or re-anchoring.
 2. **Audience fit.** Is level / jargon / framing appropriate for the stated audience? Flag jargon dumps, assumed-knowledge gaps, over-explanation.
-3. **Evidence and citations.** Open each cited `compile/` file; verify it supports the claim. Flag missing sources, broken citations, or overreaches. If a cited file doesn't exist → `[blocker]`. If the file is a pending stub → `[major]`. If it's complete but doesn't back the claim → `[blocker]`.
+3. **Evidence and citations.** Open each cited `corpus/` file; verify it supports the claim. Flag missing sources, broken citations, or overreaches. If a cited file doesn't exist → `[blocker]`. If the file is a pending stub → `[major]`. If it's complete but doesn't back the claim → `[blocker]`.
 4. **One idea per slide** (`principles.md`). Flag slides making two or more independent points — propose a split.
 5. **No walls of bullets** (`principles.md`). Flag 6+ dense bullets — propose a visual or a split.
 6. **Words don't duplicate narration** (Mayer's redundancy). Flag prose the presenter will recite aloud — propose moving to `Speaker notes` and replacing with a visual or terse claim.
@@ -38,7 +38,7 @@ If the scope target doesn't exist in `master.md`, return: `failed: scope <scope>
 
 - **Concrete > abstract.** Bad: "Slide 2 has too many ideas." Good: "Slide 2.1 (`Why GANs`) makes two points — propose split into 2.1a + 2.1b."
 - **Anchor every critique to a slide or field.**
-- **Cite the rule.** Each item says `(principles.md: one-idea-per-slide)` or `(learnings.md: <entry-title>)` or `(compile/<file>.md contradicts the claim)`.
+- **Cite the rule.** Each item says `(principles.md: one-idea-per-slide)` or `(learnings.md: <entry-title>)` or `(corpus/<file>.md contradicts the claim)`.
 - **Severity tags** (one per item): `[blocker]` (thesis-incompatible, hallucinated citation, source contradiction — must fix before shipping), `[major]` (design principle violated with structural impact), `[minor]` (judgment call).
 - **Empty punch-list is valid.** Return `clean: <scope> passes thesis + audience + evidence + principles + learnings` if nothing is wrong. Don't invent issues.
 

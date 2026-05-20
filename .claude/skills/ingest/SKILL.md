@@ -1,11 +1,11 @@
 ---
 name: talksmith:ingest
-description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) and persist it under `talks/<Talk>/knowledge/web/<folder-name>/` so the librarian compiles it in Step 3 alongside articles and chat exports. Invocation: pass a URL (required) and the active Talk path. Optional folder name (default = slug of URL host + first path segment). CLI-safe, stdlib-only Python; no Cowork dependency.
+description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) and persist it under `talks/<Talk>/knowledge/web/<folder-name>/` so the librarian ingests it into the corpus in Step 3 alongside articles and chat exports. Invocation: pass a URL (required) and the active Talk path. Optional folder name (default = slug of URL host + first path segment). CLI-safe, stdlib-only Python; no Cowork dependency.
 ---
 
 # talksmith:ingest — Capture a web page as Talk knowledge
 
-This skill downloads one web page and stores it under the active Talk's `knowledge/web/<folder-name>/` so the [`librarian`](../../agents/librarian.md) picks it up in Step 3 (Compile) alongside articles and chat exports.
+This skill downloads one web page and stores it under the active Talk's `knowledge/web/<folder-name>/` so the [`librarian`](../../roles/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
 
 The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python script (no `requests`, no `beautifulsoup4`, no external deps). The skill is the orchestration wrapper: it locates the active Talk, runs the script, surfaces errors back to the orchestrator.
 
@@ -13,7 +13,7 @@ The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python
 
 - Presenter mentions a URL during Collect (Step 2) and wants its content captured.
 - Presenter realizes mid-Draft that a referenced URL would back a slide and the page isn't yet in the knowledge base.
-- New sources arrive after Step 3 has already run — invoke `ingest` for each URL, then perform the Librarian role to compile the new web folder.
+- New sources arrive after Step 3 has already run — invoke `ingest` for each URL, then perform the Librarian role to add the new web folder to the corpus.
 
 ## Inputs
 
@@ -62,7 +62,7 @@ The folder is **never overwritten by default** — if it already exists and is n
 ## Re-running and edits
 
 - If the presenter wants to refresh a previously ingested page: confirm explicitly, then pass `--force`.
-- If the extracted `page.md` is poor (the page used heavy JS rendering or a custom DOM), suggest the presenter extract by hand from `original.html` (which is preserved verbatim regardless of `page.md` quality) and overwrite `page.md` with the corrected Markdown. The librarian will compile whichever Markdown is present at Step 3.
+- If the extracted `page.md` is poor (the page used heavy JS rendering or a custom DOM), suggest the presenter extract by hand from `original.html` (which is preserved verbatim regardless of `page.md` quality) and overwrite `page.md` with the corrected Markdown. The librarian will ingest whichever Markdown is present at Step 3.
 
 ## Boundaries
 
@@ -70,11 +70,11 @@ The folder is **never overwritten by default** — if it already exists and is n
 - **No table structure.** `<table>`, `<tr>`, `<td>`, `<th>` are not specially handled — cell text is concatenated into the surrounding flow with no Markdown table syntax. For pages where tabular data matters, the librarian should be pointed at `original.html` and/or the presenter should hand-edit `page.md`.
 - **No paywall bypass.** If the page returns 403 / 401 / paywall HTML, that's what gets saved. Do not invent content.
 - **One URL per invocation.** For multiple URLs, call the skill once per URL with a distinct `folder_name` each time.
-- **Does not modify `master.md`, `compile/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles compilation in Step 3.
+- **Does not modify `master.md`, `corpus/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles the corpus build in Step 3.
 
 ## Hand-off
 
 After `talksmith:ingest` succeeds, the orchestrator should:
 
 1. Mention to the presenter what got saved (folder, page title, asset count).
-2. If Step 3 (Compile) has already run for this Talk, perform the Librarian role on the new `knowledge/web/<folder-name>/` folder. Otherwise the Librarian role will pick it up naturally when Step 3 runs.
+2. If Step 3 (Corpus) has already run for this Talk, perform the Librarian role on the new `knowledge/web/<folder-name>/` folder. Otherwise the Librarian role will pick it up naturally when Step 3 runs.

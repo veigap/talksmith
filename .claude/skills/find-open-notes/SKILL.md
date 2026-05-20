@@ -76,7 +76,7 @@ For each note returned:
 1. **Stamp** the bullet in-place: `- [open] YYYY-MM-DD — "<verbatim text>"`
 2. **Apply** the change the bullet implies to the surrounding slide/section (perform Editor role).
 3. **Close**: flip to `- [closed] YYYY-MM-DD — "<verbatim>"` + `  Resolution: <what changed>`.
-4. **Mirror** to `knowledge/feedback-backlog.md`.
+4. **Mirror** to `config/feedback-backlog.md`.
 
 See `CLAUDE.md` → Step 5 for the full protocol.
 

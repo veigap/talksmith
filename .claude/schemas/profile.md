@@ -1,6 +1,6 @@
-# Schema — `knowledge/profile.md`
+# Schema — `config/profile.md`
 
-Specification for [`knowledge/profile.md`](../../knowledge/profile.md): the presenter's global profile that applies across every Talk in this repository.
+Specification for [`config/profile.md`](../../config/profile.md): the presenter's global profile that applies across every Talk in this repository.
 
 ## Purpose
 
@@ -11,7 +11,7 @@ Captures per-presenter defaults that apply across every Talk in this fork: the *
 | Reader | Read when | What for |
 |---|---|---|
 | Orchestrator | **Session start, eagerly** | Loaded into session context. If filled, treat sections as global defaults for presenter identity, audience, tone, duration, and language. If absent or any required section is missing/empty, Step 0.5 walks through the missing required sections (no skip). |
-| All four roles (Librarian, Composer, Editor, Illustrator) | When performing any role | Profile is in session context — roles read it directly. If the profile is empty, each role falls back to defaults and notes the omission — never stops. |
+| All five roles (Librarian, Composer, Editor, Illustrator, Global-Librarian) | When performing any role | Profile is in session context — roles read it directly. If the profile is empty, each role falls back to defaults and notes the omission — never stops. |
 
 The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
@@ -32,15 +32,15 @@ The orchestrator writes the file whenever Step 0.5 collects a value for a previo
 
 ## Empty vs. filled state
 
-Step 0.5's behavior depends on the state of `knowledge/profile.md`. The driving rule: **required sections must be filled before the orchestrator advances past Step 0.5**. Optional sections may be skipped.
+Step 0.5's behavior depends on the state of `config/profile.md`. The driving rule: **required sections must be filled before the orchestrator advances past Step 0.5**. Optional sections may be skipped.
 
-| State of `knowledge/profile.md` | Orchestrator action (Step 0.5) |
+| State of `config/profile.md` | Orchestrator action (Step 0.5) |
 |---|---|
 | All six sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
 | Partially filled — one or more **required** sections missing, empty, or HTML-comment-only | Load the filled sections as global defaults. Walk through every missing **required** section, prompting with 2–4 concrete candidates per section — **no skip option** for required sections. Write the result back. |
 | Exists but every section is empty (only headings + HTML comments) | Walk through every section with the presenter (no skip — all six are now required). Never free-text except where the section semantics demand it (Subject and Presenter are free-text by definition). Write the result back. |
 | Exists but missing one or more canonical section headings (e.g. legacy / hand-edited file that dropped `## Audience defaults`) | Treat the file as needing rebuild: re-bootstrap from the *Canonical empty form* below, **preserving any content under the canonical headings that did exist** (copy it into the rebuilt file under the same heading). Never silently drop presenter content. Then proceed as the "exists but every section is empty" case for whatever required sections came up empty after the rebuild. |
-| Does not exist | Bootstrap from the *Canonical empty form* below → `knowledge/profile.md`, then proceed as the "exists but every section is empty" case above. |
+| Does not exist | Bootstrap from the *Canonical empty form* below → `config/profile.md`, then proceed as the "exists but every section is empty" case above. |
 
 ## Filling rules
 
@@ -62,9 +62,9 @@ The only frontmatter field Step 4 actively prompts for is `date` (always per-Tal
 
 ## Missing-profile fallback (shared rule)
 
-This rule applies when performing any of the four roles (Librarian, Composer, Editor, Illustrator). It exists once, here, to keep the role specs consistent.
+This rule applies when performing any of the five roles (Librarian, Composer, Editor, Illustrator, Global-Librarian). It exists once, here, to keep the role specs consistent.
 
-**When `knowledge/profile.md` is genuinely empty or missing**, each role:
+**When `config/profile.md` is genuinely empty or missing**, each role:
 
 1. Proceeds without stopping — a missing profile is never a fatal error.
 2. Derives `presentation`, `presenter`, `audience`, `duration` from `master.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in the final report.
@@ -75,7 +75,7 @@ This rule applies when performing any of the four roles (Librarian, Composer, Ed
 
 ## Canonical empty form
 
-Bootstrap `knowledge/profile.md` from this form on first creation. The one-line schema pointer at the top stays; the section headings and HTML-comment placeholders below stay until the presenter fills them in.
+Bootstrap `config/profile.md` from this form on first creation. The one-line schema pointer at the top stays; the section headings and HTML-comment placeholders below stay until the presenter fills them in.
 
 ```markdown
 # Presenter Profile

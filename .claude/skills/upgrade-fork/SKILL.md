@@ -1,6 +1,6 @@
 ---
 name: talksmith:upgrade-fork
-description: Upgrade a downstream Talksmith fork with the latest core scripts, skills, role specs, and shared knowledge files from upstream master. By default, shallow-clones `https://github.com/veigap/talksmith` at `main` into a tempdir and uses that as master — override with `--upstream <git-url>`, `--ref <branch-tag-or-sha>`, or `--local-master <path>` (offline / dev). Two subcommands. `diff` walks master's core paths (`.claude/`, `CLAUDE.md`, `README.md`, `knowledge/principles.md`, `knowledge/image-styles/`) and reports every file that would be created, modified, or pruned in the target fork, with optional unified diffs for text files. `apply` performs the copy. Per-fork content (`talks/`, `knowledge/profile.md`, `knowledge/learnings.md`, `knowledge/feedback-backlog.md`, `knowledge/feedback-processed.md`) is **never touched** — those files are the fork's accumulated state and belong to it. Requires `git` on `PATH` unless `--local-master` is used. CLI-safe, stdlib-only Python.
+description: Upgrade a downstream Talksmith fork with the latest core scripts, skills, role specs, and shared config files from upstream master. By default, shallow-clones `https://github.com/veigap/talksmith` at `main` into a tempdir and uses that as master — override with `--upstream <git-url>`, `--ref <branch-tag-or-sha>`, or `--local-master <path>` (offline / dev). Two subcommands. `diff` walks master's core paths (`.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/image-styles/`) and reports every file that would be created, modified, or pruned in the target fork, with optional unified diffs for text files. `apply` performs the copy. Per-fork content (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`) is **never touched** — those files are the fork's accumulated state and belong to it. Requires `git` on `PATH` unless `--local-master` is used. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:upgrade-fork — Sync a downstream fork with master core
@@ -14,22 +14,22 @@ Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *O
 | `.claude/` | **Mirror** from master (create/modify; with `--prune`, also remove files no longer in master) | Skills, agents, role specs, schemas, settings spec. Pure core. |
 | `CLAUDE.md` | **Overwrite** from master | Orchestrator spec. Pure core. |
 | `README.md` | **Overwrite** from master | Project README. Pure core. |
-| `knowledge/principles.md` | **Overwrite** from master | Design principles — shared spec. |
-| `knowledge/image-styles/` | **Mirror** from master (`--prune` removes stale templates) | SVG style catalog — shared spec. |
+| `config/principles.md` | **Overwrite** from master | Design principles — shared spec. |
+| `config/image-styles/` | **Mirror** from master (`--prune` removes stale templates) | SVG style catalog — shared spec. |
 
 ## What is never touched
 
 | Path | Reason |
 |---|---|
 | `talks/` | Per-Talk content. Fork's product. |
-| `knowledge/profile.md` | Subject + presenter identity, set per fork in Step 0.5. |
-| `knowledge/learnings.md` | Cross-Talk learnings accumulated *within this fork*. |
-| `knowledge/feedback-backlog.md` | Live feedback audit trail. |
-| `knowledge/feedback-processed.md` | Promoted-feedback archive. |
-| `knowledge/compile/` *(if present at top level)* | Should not exist at top level — compile records live under `talks/<Talk>/knowledge/compile/`. Skipped defensively. |
+| `config/profile.md` | Subject + presenter identity, set per fork in Step 0.5. |
+| `config/learnings.md` | Cross-Talk learnings accumulated *within this fork*. |
+| `config/feedback-backlog.md` | Live feedback audit trail. |
+| `config/feedback-processed.md` | Promoted-feedback archive. |
+| `knowledge/corpus/` *(if present at top level)* | Should not exist at top level — corpus records live under `talks/<Talk>/knowledge/corpus/`. Skipped defensively. |
 | Anything else not in the *touched* list above | Default deny — never overwrite or delete files outside the explicit core path list. |
 
-If a fork has hand-added skills in `.claude/skills/` that don't exist in master, they are **preserved** by default — `apply` only adds and modifies. Pass `--prune` to also delete files under `.claude/` and `knowledge/image-styles/` that don't exist in master (use when you want a clean mirror).
+If a fork has hand-added skills in `.claude/skills/` that don't exist in master, they are **preserved** by default — `apply` only adds and modifies. Pass `--prune` to also delete files under `.claude/` and `config/image-styles/` that don't exist in master (use when you want a clean mirror).
 
 ## When to use
 
@@ -59,7 +59,7 @@ python3 .claude/skills/upgrade-fork/upgrade_fork.py apply --fork /path/to/your/f
 python3 .claude/skills/upgrade-fork/upgrade_fork.py apply --fork /path/to/your/fork \
     --local-master /path/to/local/talksmith
 
-# 6) apply + prune stale fork-only files under .claude/ and knowledge/image-styles/
+# 6) apply + prune stale fork-only files under .claude/ and config/image-styles/
 python3 .claude/skills/upgrade-fork/upgrade_fork.py apply --fork /path/to/your/fork --prune
 ```
 
@@ -87,7 +87,7 @@ python3 .claude/skills/upgrade-fork/upgrade_fork.py apply --fork /path/to/your/f
 | Input | Required? | Notes |
 |---|---|---|
 | `--fork` | yes | Same sanity check as `diff`. |
-| `--prune` | optional | Also delete files under `.claude/` and `knowledge/image-styles/` that exist in fork but not in master. Default off. |
+| `--prune` | optional | Also delete files under `.claude/` and `config/image-styles/` that exist in fork but not in master. Default off. |
 | `--dry-run` | optional | Print actions but don't touch the fork. |
 | `--yes` | optional | Skip the interactive confirmation prompt (for scripted runs). Without it, `apply` prints a summary and waits for `y/N` on stdin. |
 
@@ -114,7 +114,7 @@ Created (new in master, missing in fork):
 Modified (differ between master and fork):
   ~ CLAUDE.md            (1.2 KiB smaller in fork)
   ~ .claude/roles/editor.md
-  ~ knowledge/image-styles/style.md
+  ~ config/image-styles/style.md
 
 Pruneable (in fork only, not in master):
   - .claude/skills/old-skill-name/SKILL.md           (use --prune to remove)
@@ -127,7 +127,7 @@ applied to /Users/me/Documents/courses/llm-systems:
   created:  4 file(s)
   modified: 3 file(s)
   pruned:   0 file(s)
-  preserved (fork-owned, not touched): talks/, knowledge/profile.md, knowledge/learnings.md, knowledge/feedback-backlog.md, knowledge/feedback-processed.md
+  preserved (fork-owned, not touched): talks/, config/profile.md, config/learnings.md, config/feedback-backlog.md, config/feedback-processed.md
 ```
 
 ## Safety
@@ -135,7 +135,7 @@ applied to /Users/me/Documents/courses/llm-systems:
 - **`--fork` must contain `CLAUDE.md`** at its root. Otherwise the skill refuses to act — guards against pointing at the wrong directory.
 - **`--fork` must not resolve to the same path as master.** Self-upgrade is rejected with exit 2.
 - Every write is atomic per file (`.tmp + os.replace`). On per-file failure the partial state is the original file; the rest of the upgrade aborts.
-- `--prune` deletions are restricted to subtrees under `.claude/` and `knowledge/image-styles/` — never under `talks/`, `knowledge/profile.md`, `knowledge/learnings.md`, etc., even if you ask.
+- `--prune` deletions are restricted to subtrees under `.claude/` and `config/image-styles/` — never under `talks/`, `config/profile.md`, `config/learnings.md`, etc., even if you ask.
 
 ## Exit codes
 

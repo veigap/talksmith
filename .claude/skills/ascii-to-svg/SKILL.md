@@ -1,13 +1,13 @@
 ---
 name: talksmith:ascii-to-svg
-description: Render **one** ASCII diagram block into **one** styled SVG file following `knowledge/image-styles/style.md`. Invoked by the `illustrator` agent during Step 6 (Polish) — once per fenced ASCII block in `master.md`. The skill is the per-block renderer; the illustrator agent is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
+description: Render **one** ASCII diagram block into **one** styled SVG file following `config/image-styles/style.md`. Invoked by the `illustrator` role during Step 6 (Polish) — once per fenced ASCII block in `master.md`. The skill is the per-block renderer; the illustrator role is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
 ---
 
 # talksmith:ascii-to-svg — Render one ASCII block to one SVG
 
-This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`illustrator`](../../agents/illustrator.md) agent during Step 6 (Polish). Its scope is intentionally narrow:
+This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`illustrator`](../../roles/illustrator.md) role during Step 6 (Polish). Its scope is intentionally narrow:
 
-| | Caller (`illustrator` agent) does | This skill does |
+| | Caller (`illustrator` role) does | This skill does |
 |---|---|---|
 | 1 | Walk `master.md`, find fenced ASCII blocks | — |
 | 2 | Per block, extract slide context (title, content prose, notes, section goal, language) | — |
@@ -36,18 +36,18 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 | `section_title` | recommended | from the H1 the slide lives under |
 | `section_goal` | recommended | from the section's `**Goal of this section:**` line |
 | `talk_thesis` | recommended | top of `master.md` |
-| `presentation_language` | recommended | from `knowledge/profile.md` — determines language of all text in the SVG |
-| `template_name` | recommended | bare name (no extension, no path) of the [`knowledge/image-styles/*.txt`](../../../knowledge/image-styles/) template the illustrator picked for this block — e.g. `pipeline-3-stage`. Pass `null` if no template fits (skill renders a custom shape against `style.md` only). |
-| `repo_root` | yes | absolute path to the Talksmith repo root (the folder containing `CLAUDE.md`, `knowledge/`, `talks/`). The skill resolves `style.md` and template files relative to this — **not** relative to the current working directory. The illustrator agent passes it from its own dispatch context. |
+| `presentation_language` | recommended | from `config/profile.md` — determines language of all text in the SVG |
+| `template_name` | recommended | bare name (no extension, no path) of the [`config/image-styles/*.txt`](../../../config/image-styles/) template the illustrator picked for this block — e.g. `pipeline-3-stage`. Pass `null` if no template fits (skill renders a custom shape against `style.md` only). |
+| `repo_root` | yes | absolute path to the Talksmith repo root (the folder containing `CLAUDE.md`, `config/`, `talks/`). The skill resolves `style.md` and template files relative to this — **not** relative to the current working directory. The illustrator role passes it from its own dispatch context. |
 
 The skill resolves both style files relative to `repo_root`:
 
-- `<repo_root>/knowledge/image-styles/style.md` — always read.
-- `<repo_root>/knowledge/image-styles/<template_name>.txt` — read iff `template_name` is non-null.
+- `<repo_root>/config/image-styles/style.md` — always read.
+- `<repo_root>/config/image-styles/<template_name>.txt` — read iff `template_name` is non-null.
 
-This avoids any reliance on the session's current working directory (which is undefined when the skill is invoked from a subdir, a Cowork workspace, or any other harness). The illustrator agent does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name.
+This avoids any reliance on the session's current working directory (which is undefined when the skill is invoked from a subdir, a Cowork workspace, or any other harness). The illustrator role does the template **match** (one per block) by walking the `*.txt` catalog itself; the skill receives only the chosen name.
 
-**Do not read the canonical `knowledge/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
+**Do not read the canonical `config/image-styles/*.svg` files.** They are human reference only — they sit beside the `*.txt` templates as *examples* of finished output. The rendering contract is **style.md + matched `*.txt` template + slide context** alone. If something is unclear from those three inputs, it belongs in `style.md` (file an issue, do not reach for the SVGs). Reading the SVG corpus during a render bloats the skill's context, encourages cargo-culting one historical layout, and bypasses `style.md` as the single source of truth.
 
 ## Process
 
@@ -55,7 +55,7 @@ This avoids any reliance on the session's current working directory (which is un
 
 1. **Detect diagram vs code.** If the resolved ASCII payload is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
-2. **Load style files.** Read `<repo_root>/knowledge/image-styles/style.md` (always). If `template_name` is non-null, also read `<repo_root>/knowledge/image-styles/<template_name>.txt`. Resolve both via the `repo_root` input — never via the current working directory. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`.
+2. **Load style files.** Read `<repo_root>/config/image-styles/style.md` (always). If `template_name` is non-null, also read `<repo_root>/config/image-styles/<template_name>.txt`. Resolve both via the `repo_root` input — never via the current working directory. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`.
 
 3. **Pick semantic colors** from the slide context, **not** from box order. Apply the *Semantic color → panel class* table in `style.md` to keywords found in `slide_content_prose`. `style.md` is the authority — do not restate its mappings here. If the slide is histological/biological tissue and `style.md`'s histology accent applies, use the pink ramp and document the deviation in `<desc>`.
 
@@ -78,13 +78,13 @@ This avoids any reliance on the session's current working directory (which is un
 
 ## You cannot ask questions
 
-This skill cannot ask questions. If `style.md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator agent will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
+This skill cannot ask questions. If `style.md` + `slide_content_prose` + `speaker_notes` together don't disambiguate a critical choice (language, semantic color when slide context is silent, template when none fits), return `failed: ambiguous · <what's unresolved>`. The illustrator role will surface the ambiguity to the orchestrator, which will ask the presenter and re-invoke this skill with the disambiguation baked in.
 
 **Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty (early-draft Mode A slides where the diagram exists before the prose), render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral semantic colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — the illustrator coordinator and presenter both expect the ASCII to render even early; an empty SVG is worse than a sparsely-labelled one.
 
 ## What this skill is NOT
 
-- **Not** a coordinator. It renders one block. The illustrator agent walks `master.md` and invokes this skill per block.
+- **Not** a coordinator. It renders one block. The illustrator role walks `master.md` and invokes this skill per block.
 - **Not** allowed to write outside `output_path`. No edits to `master.md`, no creating sibling files.
 - **Not** a `.pptx` renderer. That's [`talksmith:md-to-pptx`](../md-to-pptx/SKILL.md).
 - **Not** allowed to read network resources. Pure local file work.
@@ -92,4 +92,4 @@ This skill cannot ask questions. If `style.md` + `slide_content_prose` + `speake
 
 ## Why a skill, not just the agent
 
-The illustrator agent does context extraction and per-Talk coordination (which slides have ASCII, what's the per-slide context, what should the output filename be). The actual rendering of one block from one structured-context bundle is repetitive and well-defined enough to factor out — making it a skill keeps each agent invocation small (one block of work per skill call), surfaces a stable per-block contract for testing, and lets the agent focus on judgement over context rather than mixing context-judgement with SVG-syntax bookkeeping.
+The illustrator role does context extraction and per-Talk coordination (which slides have ASCII, what's the per-slide context, what should the output filename be). The actual rendering of one block from one structured-context bundle is repetitive and well-defined enough to factor out — making it a skill keeps each agent invocation small (one block of work per skill call), surfaces a stable per-block contract for testing, and lets the agent focus on judgement over context rather than mixing context-judgement with SVG-syntax bookkeeping.

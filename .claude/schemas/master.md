@@ -54,7 +54,7 @@ The orchestrator does **not** write `master.md` directly — every change goes t
 | `Section.Goal of this section` | per Section | What this Section accomplishes for the overall thesis. |
 | `Section.Presenter feedback` | per Section | Feedback log on the framing/scope of this Section. |
 | `Slide.Content` | per Slide | What appears on the slide — bullets, claim, visual, demo, code. |
-| `Slide.Sources` | per Slide | Files in `knowledge/compile/` that back the slide. Cite by filename. |
+| `Slide.Sources` | per Slide | Files in `knowledge/corpus/` that back the slide. Cite by filename. |
 | `Slide.Speaker notes` | per Slide | What the presenter says aloud, transitions, timing. |
 | `Slide.Presenter feedback` | per Slide | Feedback log on this specific slide. |
 | `Conclusions` | end of file | Closing slides — key takeaways, call to action, Q&A. |
@@ -79,7 +79,7 @@ The illustrator derives SVG filenames from the same numbering: `s<section>-<slid
 
 `Presenter feedback` fields at Thesis, Agenda, every Section, and every Slide are append-only logs during Steps 4–5, then stripped wholesale during Step 6 (Polish). The audit trail survives because:
 
-1. every `[closed]` bullet is mirrored into [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md) by the editor during Review,
+1. every `[closed]` bullet is mirrored into [`config/feedback-backlog.md`](../../config/feedback-backlog.md) by the editor during Review,
 2. any `[open]` bullets still un-applied at the moment of Polish are rescued by the editor into `# Open questions` (location + verbatim quote) **before** the strip, and
 3. git history preserves prior `master.md` states.
 
@@ -106,8 +106,8 @@ The Editor role bootstraps `talks/<Talk>/master.md` from this form on its first 
 ---
 # presentation: one-line subject of the talk (e.g. "Intro to GANs for non-ML engineers")
 presentation: <One-line subject of the talk>
-# knowledge: relative path to the compiled knowledge base for this Presentation
-knowledge: knowledge/compile/
+# knowledge: relative path to the corpus knowledge base for this Presentation
+knowledge: knowledge/corpus/
 # description: structural shape downstream tooling expects — do not edit
 description: Slides are grouped into Sections. Each Section contains one or more Slides.
 # presenter: who is delivering the talk (name, role, org)

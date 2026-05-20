@@ -22,13 +22,13 @@ After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint**
 | Cleaned `master.md` | No `Presenter feedback` fields; ASCII blocks replaced by `![...](images/...)` refs | Stop. Polish hasn't run — return to Step 6. |
 | Pre-rendered local images | `talks/<Talk>/images/<file>` exists on disk for every **local** image ref in `master.md` (i.e. every `![...](images/...)` reference). Remote URLs (`http://`, `https://`) are checked separately — see below. | Stop. Dispatch `illustrator` to render missing SVGs, or stop and ask the presenter to drop a missing non-SVG asset into `images/`. |
 | Remote image refs handled | `master.md` contains no `![...](http(s)://...)` references — they survived Step 6 Polish unchanged, but `skill://antropic-skills:/pptx`'s behavior on remote URLs is implementation-defined and not guaranteed. | Stop and ask the presenter to either (a) download the asset into `images/` and rewrite the ref to `images/<file>`, or (b) explicitly accept the risk that the slide may ship without that image. Never silently ship a deck where a remote image was dropped. |
-| Reference template | [`knowledge/template.pptx`](../../../knowledge/template.pptx) exists (or the presenter-supplied override path) | Stop and ask. |
+| Reference template | [`config/template.pptx`](../../../config/template.pptx) exists (or the presenter-supplied override path) | Stop and ask. |
 
 ## Inputs
 
 - **Active `Talk` path** — absolute.
-- **`knowledge/profile.md` content** — pass the global presenter profile when non-empty so any rendering-relevant preferences inform pre-processing.
-- **Reference template** — defaults to [`knowledge/template.pptx`](../../../knowledge/template.pptx). Override only if the presenter explicitly passes a different path.
+- **`config/profile.md` content** — pass the global presenter profile when non-empty so any rendering-relevant preferences inform pre-processing.
+- **Reference template** — defaults to [`config/template.pptx`](../../../config/template.pptx). Override only if the presenter explicitly passes a different path.
 
 ## Output
 
@@ -66,7 +66,7 @@ talks/<Talk>/
 3. **Render** by invoking [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx) with three inputs:
    - the intermediate file at `output/master.intermediate.md`,
    - the image paths under `talks/<Talk>/images/` (the intermediate already references them — `skill://antropic-skills:/pptx` resolves them relative to the intermediate's parent),
-   - the reference template at [`knowledge/template.pptx`](../../../knowledge/template.pptx) (or the explicit override).
+   - the reference template at [`config/template.pptx`](../../../config/template.pptx) (or the explicit override).
 
    The skill must inherit the template's theme, fonts, colors, and master slide layouts — it must **not** author the deck from scratch using its own default theme. Use the inherit-wholesale mode if the skill offers a choice between modes.
 4. Verify `talks/<Talk>/output/master.pptx` exists and is non-empty.
@@ -75,7 +75,7 @@ talks/<Talk>/
 
 ## Rules
 
-- **The base template is mandatory, not advisory.** Every render inherits theme, fonts, colors, and master layouts from [`knowledge/template.pptx`](../../../knowledge/template.pptx) (or the explicit override). Decks authored from scratch with the native skill's default theme are a render failure even if the file is otherwise correct.
+- **The base template is mandatory, not advisory.** Every render inherits theme, fonts, colors, and master layouts from [`config/template.pptx`](../../../config/template.pptx) (or the explicit override). Decks authored from scratch with the native skill's default theme are a render failure even if the file is otherwise correct.
 - **One divider slide per Section.** Each numbered H1 produces a dedicated divider slide. Never collapse Sections.
 - **Never modify `master.md` during render.** All transformation happens in memory or in `output/master.intermediate.md`. The cleaned `master.md` from Polish stays the source of truth.
 - **Never re-render SVGs.** If an image ref points at a missing SVG, stop and tell the orchestrator to perform the Illustrator role rather than improvising.

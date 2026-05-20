@@ -1,6 +1,6 @@
-# Schema — `knowledge/principles.md`
+# Schema — `config/principles.md`
 
-Specification for [`knowledge/principles.md`](../../knowledge/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used when performing the Composer role to critique a draft.
+Specification for [`config/principles.md`](../../config/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used when performing the Composer role to critique a draft.
 
 ## Purpose
 
@@ -23,8 +23,8 @@ No other role and no orchestrator step loads this file. **No writer** — there 
 
 - **Each principle is a default, not a rule.** The presenter can override any of them per slide or per talk.
 - **Push back when a principle is broken without a stated reason.** If the presenter has already justified the break in a `Presenter feedback` bullet (e.g. "yes I know this slide is dense — it's a reference slide"), do **not** re-flag it. The composer's `Don't re-litigate closed feedback` rule applies.
-- **Principles are weaker than learnings.** When `knowledge/learnings.md` has a promoted entry whose "Where it applies" surface overlaps a principle, the learning wins. Cite the learning, not the principle.
+- **Principles are weaker than learnings.** When `config/learnings.md` has a promoted entry whose "Where it applies" surface overlaps a principle, the learning wins. Cite the learning, not the principle.
 
 ## Maintenance
 
-Principles change rarely. To add or modify: edit `knowledge/principles.md` directly. There is no automated path. Persistent presenter feedback that warrants a new default is captured via the `feedback-backlog.md` → `learnings.md` promotion pipeline, not as a principles edit.
+Principles change rarely. To add or modify: edit `config/principles.md` directly. There is no automated path. Persistent presenter feedback that warrants a new default is captured via the `feedback-backlog.md` → `learnings.md` promotion pipeline, not as a principles edit.

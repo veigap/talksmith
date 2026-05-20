@@ -34,12 +34,12 @@ CORE_PATHS: list[tuple[str, str]] = [
     (".claude", "dir"),
     ("CLAUDE.md", "file"),
     ("README.md", "file"),
-    ("knowledge/principles.md", "file"),
-    ("knowledge/image-styles", "dir"),
+    ("config/principles.md", "file"),
+    ("config/image-styles", "dir"),
 ]
 
 # Subtrees where --prune is allowed to delete fork-only files.
-PRUNE_ROOTS = {".claude", "knowledge/image-styles"}
+PRUNE_ROOTS = {".claude", "config/image-styles"}
 
 # Sanity marker — the fork must contain this file at root.
 FORK_MARKER = "CLAUDE.md"
@@ -47,10 +47,10 @@ FORK_MARKER = "CLAUDE.md"
 # Paths that are *always* preserved (never touched), shown to the user as a courtesy.
 PRESERVED_PATHS = [
     "talks/",
-    "knowledge/profile.md",
-    "knowledge/learnings.md",
-    "knowledge/feedback-backlog.md",
-    "knowledge/feedback-processed.md",
+    "config/profile.md",
+    "config/learnings.md",
+    "config/feedback-backlog.md",
+    "config/feedback-processed.md",
 ]
 
 

@@ -28,6 +28,8 @@ H1_SECTION = re.compile(r"^# (\d+)\.")
 H1_AGENDA = re.compile(r"^# (?:Agenda|Índice|Indice)\b", re.IGNORECASE)
 H1_CONCL = re.compile(r"^# (?:Conclusion|Conclusiones|Conclusions)\b", re.IGNORECASE)
 H2_SLIDE = re.compile(r"^## (\d+)\.")
+H1_OR_H2 = re.compile(r"^#{1,2} ")
+IMAGE_REF = re.compile(r"!\[[^\]]*\]\([^)]+\)")
 NOTE_OPEN = "<!-- ascii-note:"
 
 
@@ -126,6 +128,7 @@ def scan(master_path: Path) -> dict[str, Any]:
                             "note": note,
                             "render": None,
                             "detection_mode": detection_mode,
+                            "documentation_only": False,  # filled by _annotate_documentation_only below
                         })
                 in_fence = False
                 fence_lang = None
@@ -134,7 +137,63 @@ def scan(master_path: Path) -> dict[str, Any]:
                 buf.append(ln)
         i += 1
 
+    _annotate_documentation_only(lines, blocks)
     return {"master_path": str(master_path), "blocks": blocks}
+
+
+def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]]) -> None:
+    """Flag each ASCII block as documentation_only when its containing slide has a Markdown image ref.
+
+    Slide scope = lines between the most recent H1/H2 boundary at-or-before the block and the next
+    H1/H2 boundary after it. An image ref anywhere in that scope (outside the ASCII block lines
+    themselves and outside `<!-- ascii-source: ... -->` HTML comments left by prior Polish passes)
+    means the block is documentation-only — the pipeline must skip it.
+    """
+    boundaries = [i + 1 for i, ln in enumerate(lines) if H1_OR_H2.match(ln)]
+    boundaries.append(len(lines) + 1)
+
+    def slide_range(line_no: int) -> tuple[int, int]:
+        start = 1
+        end = len(lines)
+        for b in boundaries:
+            if b <= line_no:
+                start = b
+            else:
+                end = b - 1
+                break
+        return start, end
+
+    # Pre-compute ranges that are inside <!-- ascii-source: ... --> comments (legacy artifacts of
+    # earlier Polish passes) so we don't count their image-ref echo as a "real" image link.
+    ignored_ranges: list[tuple[int, int]] = []
+    i = 0
+    while i < len(lines):
+        if "<!-- ascii-source:" in lines[i]:
+            j = i
+            while j < len(lines) and "-->" not in lines[j]:
+                j += 1
+            ignored_ranges.append((i + 1, min(j + 1, len(lines))))
+            i = j + 1
+        else:
+            i += 1
+
+    def in_ignored(line_no: int) -> bool:
+        return any(lo <= line_no <= hi for lo, hi in ignored_ranges)
+
+    for b in blocks:
+        ascii_start = b["ascii"]["start_line"]
+        ascii_end = b["ascii"]["end_line"]
+        s_start, s_end = slide_range(ascii_start)
+        has_image_ref = False
+        for ln_no in range(s_start, s_end + 1):
+            if ascii_start <= ln_no <= ascii_end:
+                continue
+            if in_ignored(ln_no):
+                continue
+            if IMAGE_REF.search(lines[ln_no - 1]):
+                has_image_ref = True
+                break
+        b["documentation_only"] = has_image_ref
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
@@ -145,9 +204,12 @@ def cmd_scan(args: argparse.Namespace) -> int:
     result = scan(master_path)
     if args.format == "human":
         legacy_count = sum(1 for b in result["blocks"] if b.get("detection_mode") == "legacy-heuristic")
+        doc_only_count = sum(1 for b in result["blocks"] if b.get("documentation_only"))
         print(f"found {len(result['blocks'])} ASCII block(s) in {result['master_path']}:")
         if legacy_count:
             print(f"  ⚠  {legacy_count} block(s) detected via legacy glyph-heuristic — re-tag opening fence as ``` ascii ``` to make them canonical")
+        if doc_only_count:
+            print(f"  ℹ  {doc_only_count} block(s) marked documentation-only (slide has Markdown image ref) — pipeline will skip them")
         if result["blocks"]:
             print()
         for b in result["blocks"]:
@@ -155,22 +217,17 @@ def cmd_scan(args: argparse.Namespace) -> int:
             n = b["note"]
             ascii_lines = a["payload"].count("\n") + 1
             note_part = f"note: yes (lines {n['start_line']}–{n['end_line']})" if n else "note: no"
-            tag_part = "" if b.get("detection_mode") == "canonical" else "  [legacy]"
+            flags = []
+            if b.get("detection_mode") != "canonical":
+                flags.append("legacy")
+            if b.get("documentation_only"):
+                flags.append("doc-only")
+            tag_part = f"  [{', '.join(flags)}]" if flags else ""
             print(f"  {b['slide_id']:<10} lines {a['start_line']}–{a['end_line']} ({ascii_lines} ASCII lines)   {note_part}{tag_part}")
     else:
         json.dump(result, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
     return 0
-
-
-def is_reuse_note(note_payload: str | None) -> bool:
-    if not note_payload:
-        return False
-    for raw_line in note_payload.splitlines():
-        stripped = raw_line.strip()
-        if stripped.startswith("reuse:"):
-            return True
-    return False
 
 
 def build_sidecar_content(ascii_payload: str, note_payload: str | None) -> str:
@@ -203,28 +260,27 @@ def _load_plan(args: argparse.Namespace) -> tuple[Path, dict[str, Any]] | int:
     return master_path, plan
 
 
-def _write_sidecars(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, int, list[dict[str, Any]]]:
-    """Write .ascii sidecars. Returns (written, unchanged, skipped_reuse, skipped_no_render, sidecar_records)."""
+def _write_sidecars(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
+    """Write .ascii sidecars. Returns (written, unchanged, skipped_no_render, sidecar_records)."""
     blocks = plan.get("blocks") or []
     images_dir = master_path.parent / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
 
     written = 0
     unchanged = 0
-    skipped_reuse = 0
     skipped_no_render = 0
     sidecar_records: list[dict[str, Any]] = []
 
     for b in blocks:
+        if b.get("documentation_only"):
+            skipped_no_render += 1
+            continue
         render = b.get("render")
         if not render:
             skipped_no_render += 1
             continue
         note = b.get("note")
         note_payload = note["payload"] if note else None
-        if is_reuse_note(note_payload):
-            skipped_reuse += 1
-            continue
         svg_basename = render["svg_basename"]
         stem = svg_basename[:-4] if svg_basename.endswith(".svg") else svg_basename
         sidecar_path = images_dir / f"{stem}.ascii"
@@ -242,30 +298,27 @@ def _write_sidecars(master_path: Path, plan: dict[str, Any], dry_run: bool) -> t
             "path": str(sidecar_path.relative_to(master_path.parent)),
             "status": status,
         })
-    return written, unchanged, skipped_reuse, skipped_no_render, sidecar_records
+    return written, unchanged, skipped_no_render, sidecar_records
 
 
-def _rewrite_master(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int]:
-    """Rewrite master.md fences. Returns (rewritten, skipped_reuse, skipped_no_render)."""
+def _rewrite_master(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int]:
+    """Rewrite master.md fences. Returns (rewritten, skipped_no_render)."""
     blocks = plan.get("blocks") or []
     lines = master_path.read_text().splitlines(keepends=False)
     line_endings = "\n"
 
     rewritten = 0
-    skipped_reuse = 0
     skipped_no_render = 0
 
     # Sort descending by ascii.start_line so line-number rewrites don't shift.
     blocks_sorted = sorted(blocks, key=lambda b: b["ascii"]["start_line"], reverse=True)
     for b in blocks_sorted:
+        if b.get("documentation_only"):
+            skipped_no_render += 1
+            continue
         render = b.get("render")
         if not render:
             skipped_no_render += 1
-            continue
-        note = b.get("note")
-        note_payload = note["payload"] if note else None
-        if is_reuse_note(note_payload):
-            skipped_reuse += 1
             continue
         svg_basename = render["svg_basename"]
         alt = render.get("alt") or b["slide_id"]
@@ -289,7 +342,7 @@ def _rewrite_master(master_path: Path, plan: dict[str, Any], dry_run: bool) -> t
         tmp = master_path.with_suffix(master_path.suffix + ".tmp")
         tmp.write_text(new_text)
         os.replace(tmp, master_path)
-    return rewritten, skipped_reuse, skipped_no_render
+    return rewritten, skipped_no_render
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
@@ -297,12 +350,12 @@ def cmd_extract(args: argparse.Namespace) -> int:
     if isinstance(loaded, int):
         return loaded
     master_path, plan = loaded
-    written, unchanged, skipped_reuse, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
+    written, unchanged, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
     print(f"extracted sidecars from {master_path}:{tag}")
     print(f"  written:   {written}")
     print(f"  unchanged: {unchanged}")
-    print(f"  skipped:   {skipped_reuse} (reuse:), {skipped_no_render} (no render mapping)")
+    print(f"  skipped:   {skipped_no_render} (no render mapping)")
     return 0
 
 
@@ -311,11 +364,11 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
     if isinstance(loaded, int):
         return loaded
     master_path, plan = loaded
-    rewritten, skipped_reuse, skipped_no_render = _rewrite_master(master_path, plan, args.dry_run)
+    rewritten, skipped_no_render = _rewrite_master(master_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
     print(f"cleaned up {master_path}:{tag}")
     print(f"  fences rewritten: {rewritten}")
-    print(f"  skipped:          {skipped_reuse} (reuse:), {skipped_no_render} (no render mapping)")
+    print(f"  skipped:          {skipped_no_render} (no render mapping)")
     return 0
 
 
@@ -325,11 +378,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if isinstance(loaded, int):
         return loaded
     master_path, plan = loaded
-    written, unchanged, skipped_reuse, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
-    rewritten, _, _ = _rewrite_master(master_path, plan, args.dry_run)
+    written, unchanged, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
+    rewritten, _ = _rewrite_master(master_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
-    print(f"applied {rewritten + skipped_reuse + skipped_no_render} block(s) to {master_path}:{tag}")
-    print(f"  sidecars: {written} written, {unchanged} unchanged, {skipped_reuse} skipped (reuse:)")
+    print(f"applied {rewritten + skipped_no_render} block(s) to {master_path}:{tag}")
+    print(f"  sidecars: {written} written, {unchanged} unchanged")
     print(f"  fences:   {rewritten} rewritten")
     if skipped_no_render:
         print(f"  no-render: {skipped_no_render} block(s) had no render mapping (left untouched)")

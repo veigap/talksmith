@@ -2,11 +2,13 @@
 
 Maintains `master.md` and `memory.md` for the active Talk. `master.md` is the deliverable; `memory.md` is the progress log. Active during Steps 1, 4, 5, 6, and 7.
 
-`knowledge/profile.md` is in context — use it. Apply `Presentation language` to all prose written into `master.md`.
+`config/profile.md` is in context — use it. Apply `Presentation language` to all prose written into `master.md`.
 
 **Canonical slide locator** (used in composer punch-lists and presenter feedback): `<section-N>.<slide-M>` — e.g. `2.1` = Section 2 → Slide 1. Special tokens: `thesis`, `agenda`, `agenda.section:<N>` (n-th section bullet), `agenda.<n>` (n-th agenda ASCII block), `conclusions.N`, `conclusions.N.<k>` (k-th ASCII in conclusions slide N). Parse this notation before applying any change. If the target doesn't exist, report `target not found: <expected location>` — never apply to a best-guess neighbor.
 
-**Pending-stub awareness.** When a slide's `### Sources` cites a `knowledge/compile/` file that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub compile/<file>.md — re-verify after librarian Phase 2`.
+**Pending-stub awareness.** When a slide's `### Sources` cites a `knowledge/corpus/` record that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub corpus/<file>.md — re-verify after librarian Phase 2`.
+
+**The corpus is the canonical interface for source material.** Raw asset folders (`knowledge/articles/`, `knowledge/llm-chats/`, `knowledge/web/`) are inputs to Step 3 only — once the librarian has run, the editor reads exclusively from `knowledge/corpus/`. Image references and source citations always resolve through the corpus, never directly into raw folders. If the corpus is missing a needed image or claim, the fix is to re-run the librarian, not to reach around it.
 
 ## Steps
 
@@ -23,6 +25,28 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 - Add/edit/reorder Slides within Sections (each with `Content`, `Sources`, `Speaker notes`).
 - Move dropped content to `Cut material`. Log unresolved items in `Open questions`.
 
+**Visuals — image-first prioritization (mandatory, applies before any ASCII drafting).** Before drafting a fresh ASCII diagram for a slide, the editor **must** check whether an existing corpus image already covers the slide's communicative need. Existing images **always** take priority over newly authored ASCII.
+
+**Where to look — in this order (all corpus-only — never reach into raw asset folders):**
+
+1. **Corpus records — `## Images / diagrams` sections.** Every record under `talks/<Talk>/knowledge/corpus/*.md` lists the images its source carried, with `filename` (a relative path of the form `<source-stem>/images/<file>`), `depiction` (what's in it), `relevance` (why it matters), and `transcribed text`. This is the canonical index of every image the Talk has access to — read these sections first when drafting a slide that needs a visual. **A `<!-- pending: process_images -->` stub means Phase 2 of the librarian hasn't run yet — the filename + bytes exist on disk but depiction/relevance are unfilled.** Surface this to the orchestrator so it can prompt the presenter to run librarian Phase 2 before this slide's visual choice is locked, rather than guessing from the filename alone.
+2. **Corpus companion folders — `talks/<Talk>/knowledge/corpus/<source-stem>/images/<file>`.** This is where the actual image bytes live. Phase 1 of the librarian copies/extracts every source image into the companion folder, so the bytes are addressable even before Phase 2 transcription. Image references in `master.md` resolve here (e.g. `![<alt>](knowledge/corpus/<source-stem>/images/<file>.png)`).
+3. **Already-rendered Talk assets** — `talks/<Talk>/images/` (this Talk) and, for cross-Talk use, peer `talks/<other-Talk>/images/` or `knowledge-library/<topic>/images/`.
+
+**Decision rule.** For each slide that needs a visual:
+
+| Situation | Action |
+|---|---|
+| An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](knowledge/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` and rewrite the reference. The illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
+| Multiple existing images could plausibly fit; the choice matters | Ask the presenter with the candidate filenames + their `depiction` lines as options. Never silently pick. |
+| No existing image fits (or all candidates are clearly off-topic) | **Only then** draft a fresh ASCII per the syntax below. The illustrator will render it to SVG in Step 6. |
+
+**Never invent an ASCII when a corpus image already shows the same thing.** Re-drawing what an article already provides loses fidelity and creates double-maintenance. The presenter's source material is canonical; the deck rides on top of it.
+
+**Pre-flight check when writing the image ref.** Before committing the `![alt](<path>)` to `master.md`, verify the file exists at the declared path. If it doesn't (typo, file moved, librarian Phase 1 stub never resolved a real filename), fail loudly to the orchestrator — do not write a broken reference.
+
+**Optional ASCII alongside an image link (documentation-only).** When a slide already carries a Markdown image reference, the editor *may* add a small ASCII representation immediately after — purely as inline visual aid for whoever reads `master.md` source. The pipeline treats any ASCII block in a slide with an image link as **documentation-only**: the illustrator never renders it, `polish-ascii` never sidecars or rewrites it, and Step 6 leaves it in place verbatim. The image link is the slide's visual; the ASCII is for the human reader. Keep doc-only ASCII short — if it's elaborate, the image is probably the wrong choice and a fresh render is warranted.
+
 **ASCII diagrams — predefined block syntax + render-time hints.** Every ASCII diagram the editor writes into `master.md` **must** use the explicit `ascii` language tag on its opening fence. This is what makes diagram detection deterministic (no glyph-heuristic guessing) — exactly the same role `<!-- ascii-note: ... -->` plays for the note half. The full block convention:
 
 ```markdown
@@ -35,7 +59,7 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 intent: <one line — what this diagram is trying to show>
 emphasize: <which boxes/arrows/labels matter most; what should pop visually>
 labels: <if axes/legend/units exist, list them>
-template-hint: <optional — name a knowledge/image-styles/*.txt template the illustrator should try first>
+template-hint: <optional — name a config/image-styles/*.txt template the illustrator should try first>
 -->
 ```
 
@@ -49,18 +73,7 @@ Together, ` ```ascii ` + closing ` ``` ` are the diagram's open/close sentinel p
 
 The note is for the **rendering pass**, not the reader of `master.md`. Keep it terse (≤ 4 short lines) and factual — no narrative. The illustrator reads this comment when it walks the diagram in Step 6 and forwards it to the `talksmith:ascii-to-svg` skill as extra context, so the SVG can be labelled, colored, and laid out with intent rather than guessed at from the glyphs alone. **An ASCII block without an `ascii-note` is valid** (the illustrator falls back to slide title + Content + Speaker notes); add the note whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
 
-**Reuse hint — skip rendering when an existing SVG is being reused.** If the ASCII block is *not* meant to drive a fresh render — e.g. the slide is reusing an SVG produced for an earlier slide / earlier Talk / hand-authored asset that already lives under `images/` — declare it with a `reuse:` line inside the same `ascii-note`:
-
-```markdown
-<!-- ascii-note:
-reuse: images/<existing-file>.svg
-intent: <still useful so future maintainers know what the ASCII represents>
--->
-```
-
-When `reuse:` is present, the ASCII block exists **only as documentation** of what the existing SVG depicts — the illustrator must **skip** the `talksmith:ascii-to-svg` invocation entirely and report `reused: images/<existing-file>.svg`. The Step-6 inlining replaces the ASCII fence with `![<alt>](images/<existing-file>.svg)` and preserves the original ASCII in the `<!-- ascii-source: ... -->` comment, exactly as it would for a freshly rendered diagram. **Pre-flight check:** before reporting `reused`, verify the referenced file actually exists under `talks/<Talk>/images/` (or, for cross-Talk reuse, copy it in during Step 6's image-consolidation pass). If the file is missing, fail loudly — do not fall back to rendering.
-
-This convention applies only to ASCII drafted *now* (during slide drafting). The Step-6 `<!-- ascii-source: ... -->` comment is a different artifact — added by the editor *after* rendering — and the two can coexist beneath the same image reference once Step 6 runs.
+An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the illustrator renders it to SVG in Step 6 and the editor inlines the result. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
 **Step 5 — apply feedback.** Delegate all mechanical bookkeeping to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill plus its detection partner [`talksmith:find-open-notes`](../skills/find-open-notes/SKILL.md). The editor (LLM) **only** authors three things per bullet: the content fix in the slide, the one-sentence resolution, and the tag list. Every line edit on `master.md` and every row appended to `feedback-backlog.md` goes through the skill — do **not** read `master.md` end-to-end during a normal Review round.
 
@@ -87,11 +100,11 @@ Per-round loop:
           --master talks/<Talk>/master.md --line <N> \
           --resolution "<one-line summary of what changed>"
       ```
-   d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `knowledge/feedback-backlog.md` → *Tagging vocabulary*).
+   d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `config/feedback-backlog.md` → *Tagging vocabulary*).
       ```bash
       python3 .claude/skills/feedback-cycle/feedback_cycle.py mirror-row \
           --master talks/<Talk>/master.md \
-          --backlog knowledge/feedback-backlog.md \
+          --backlog config/feedback-backlog.md \
           --line <N> --tags "<csv>"
       ```
 
@@ -99,7 +112,7 @@ Per-round loop:
    ```bash
    python3 .claude/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
        --master talks/<Talk>/master.md \
-       --backlog knowledge/feedback-backlog.md
+       --backlog config/feedback-backlog.md
    ```
    Catches any `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each.
 
@@ -162,8 +175,6 @@ template-hint: ...
 
 **Idempotency:** if the `.ascii` file already exists and its bytes match the new content, skip the write (avoid touching the mtime). If it differs, overwrite — the new ASCII + note in `master.md` is authoritative.
 
-**Reuse case:** when an `ascii-note` carries `reuse: images/<file>.svg`, do **not** write a sidecar — the ASCII fence in `master.md` is documentation, not source-of-truth for the reused SVG, and writing a sidecar would overwrite the original asset's record. (If the original asset has its own sibling `.ascii` file from when it was first rendered, that file is left untouched.)
-
 (b) **Consolidate image refs.** Walk every `![alt](path)`. If `path` already starts with `images/`, leave it. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
 
 (c) **Rescue `[open]` feedback.** Delegate to [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md):
@@ -177,12 +188,12 @@ The skill walks every `[open]` bullet, appends `- <location> — "<verbatim>"` u
 
 **Step 7 — two passes, in order.**
 
-1. **Promote.** Append a new entry to `knowledge/learnings.md` in its existing format (rule, why, where it applies, evidence, date). Generate a stable entry id (incrementing integer or next slug — match the file's convention). Return the entry id.
-2. **Move.** For each backlog row to move: append it to `knowledge/feedback-processed.md` adding `promoted_to: <entry id>` and `promoted_at: <date>`, then remove it from `knowledge/feedback-backlog.md`. This removal is the only deletion the Editor performs in any step.
+1. **Promote.** Append a new entry to `config/learnings.md` in its existing format (rule, why, where it applies, evidence, date). Generate a stable entry id (incrementing integer or next slug — match the file's convention). Return the entry id.
+2. **Move.** For each backlog row to move: append it to `config/feedback-processed.md` adding `promoted_to: <entry id>` and `promoted_at: <date>`, then remove it from `config/feedback-backlog.md`. This removal is the only deletion the Editor performs in any step.
 
 ## Operating principles
 
-- **Cite by filename.** Slide `Sources` reference `knowledge/compile/` files (e.g. `compile/transformer-paper.md`). Never invent sources.
+- **Cite by filename.** Slide `Sources` reference `knowledge/corpus/` records (e.g. `corpus/transformer-paper.pdf.md`). Never invent sources.
 - **Never silently drop content.** Removed content goes to `Cut material` (with a one-line reason) or `Open questions`.
 - **Preserve structure.** Section headings: `# N. <Section Name>` (H1). Slide headings: `## N. <Slide Title>` (H2). Per-slide fields: `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` (H3). Insert `---` between every Slide and after each Section header. Section/Agenda-level feedback stays in paragraph form (`**Presenter feedback:**` + bullets).
 - **Field semantics** live in `.claude/schemas/master.md` → *Field semantics* table. Read it when filling a field.

@@ -1,10 +1,10 @@
-# Schema — `knowledge/feedback-backlog.md`
+# Schema — `config/feedback-backlog.md`
 
-Specification for [`knowledge/feedback-backlog.md`](../../knowledge/feedback-backlog.md): the cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review).
+Specification for [`config/feedback-backlog.md`](../../config/feedback-backlog.md): the cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review).
 
 ## Purpose
 
-Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 7) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`knowledge/learnings.md`](../../knowledge/learnings.md).
+Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 7) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`config/learnings.md`](../../config/learnings.md).
 
 ## Loading semantics
 
