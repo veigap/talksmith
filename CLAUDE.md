@@ -273,11 +273,7 @@ Loop until presenter declares the document final. Each round:
 
 1. Hand off: tell presenter to open `talks/<Talk>/master.md` in their external editor.
 2. Presenter appends plain `- "feedback"` bullets in `Presenter feedback` fields (no status tags, dates, or resolutions).
-3. Presenter signals done. Perform **Editor** role to:
-   - Scan for raw bullets without `[status]` tags.
-   - Stamp `- [open] YYYY-MM-DD — "<verbatim>"` using today's date.
-   - Apply each change.
-   - Flip to `- [closed]` (keep original date) with a `Resolution:` line.
+3. Presenter signals done. Perform **Editor** role, which delegates the mechanical line-edits to the [`talksmith:find-open-notes`](.claude/skills/find-open-notes/SKILL.md) + [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) skills. The editor authors only the content fix per slide, the one-line resolution wording, and the tag list; everything else (detection, stamping, closing, mirroring, sanity-check) is a skill subcommand keyed on the exact line number. See [editor.md](.claude/roles/editor.md) → *Step 5 — apply feedback* for the per-bullet loop.
 4. Report diff to presenter; update `memory.md`.
 
 **Rules:**
@@ -297,10 +293,16 @@ When the presenter declares the document final ("ready" / "done" / "looks good" 
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). Walk `master.md`, load the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog, extract per-slide context for every fenced ASCII block, and invoke the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg`. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). Walk `master.md`, load the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog, extract per-slide context for every fenced ASCII block, and invoke the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (descriptive slug appended per the illustrator's filename convention — see [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) → *Output filename convention*). Report rendered/unchanged/failed counts.
 
-2. **Clean `master.md`.** Perform the **Editor** role (spec: [`.claude/roles/editor.md`](.claude/roles/editor.md)). Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**:
-   - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
+2. **Clean `master.md`.** Perform the **Editor** role (spec: [`.claude/roles/editor.md`](.claude/roles/editor.md)). Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**. Transformation (a) is mechanical and is delegated to the [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) skill (`scan` → illustrator annotation → `apply`); do not re-implement its parsing or line-rewriting inline.
+   - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>-<short-description>.svg)`. Before replacing, **capture** any `<!-- ascii-note: ... -->` HTML comment that sits immediately after the closing fence (skipping at most one blank line) — opening sentinel through `-->`, verbatim. This captured note is what gets written into the sidecar below. Preserve the original ASCII source **two ways** — neither replaces the other:
+     1. In an HTML comment immediately after the image, so the diagram can be regenerated from `master.md` alone.
+     2. As a sidecar `.ascii` file with the same basename as the SVG (`images/<slide-id>-<n>-<short-description>.ascii`) that contains **both the ASCII source and the captured `ascii-note`** (if one was present). The sidecar makes the source recoverable even if the comment is later stripped, diffs cleanly under git, and turns `images/` into a self-contained record of every diagram in three representations: rendered SVG, ASCII source, render-time intent.
+
+     **The post-fence `<!-- ascii-note: ... -->` in `master.md` is left in place** after the replacement — it sits directly below the `<!-- ascii-source: ... -->` echo and continues to document intent for future re-renders. The Step 6 (d) strip targets `Presenter feedback` only, not `ascii-note`.
+
+     Example after Polish — `master.md`:
      ```markdown
      ![Input → output pipeline](images/s1-2-1.svg)
      <!-- ascii-source:
@@ -309,8 +311,20 @@ Triggered the moment the presenter declares `master.md` final. Runs end-to-end w
      +-----+      +-----+
      -->
      ```
+     …and `talks/<Talk>/images/s1-2-1.ascii`:
+     ```
+     +-----+      +-----+
+     | in  | -->  | out |
+     +-----+      +-----+
+
+     <!-- ascii-note:
+     intent: linear input → output pipeline
+     emphasize: the arrow between the two boxes
+     -->
+     ```
+     If the slide had no `ascii-note`, the sidecar contains only the ASCII bytes — no trailing comment. If `.ascii` already exists with identical bytes, skip the write (don't touch mtime); if it differs, overwrite — the new ASCII + note in `master.md` is authoritative. **Skip the sidecar entirely for `reuse:`-tagged ASCII blocks** — those reference existing assets and writing a sidecar would clobber the original record.
    - **Consolidate every other image reference into `images/`.** Walk every `![alt](path)` in `master.md`. If `path` is anything other than `images/<file>` (e.g. an asset from `knowledge/compile/assets/...`, an external/absolute path, a path under `output/`, a sibling Talk folder), **copy** the source file into `talks/<Talk>/images/<basename>` (do not move — the original stays) and rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename. **Remote URLs (`http://`, `https://`) are an exception: leave them untouched in `master.md`, and they will fail the Step 8 pre-render asset check unless the presenter manually downloads them first.** The cleaned `master.md` should reference **only** `images/...` paths or — at the presenter's risk for Step 8 — remote URLs, making the Talk folder self-contained and movable.
-   - **Rescue any remaining `[open]` feedback before stripping.** Before removing the `Presenter feedback` fields, scan every one of them for bullets still tagged `[open]` (the presenter declared `master.md` final but some feedback was never resolved). For each such bullet, append a line to `# Open questions` of the form `- <location> — "<verbatim feedback>"` where `<location>` is the slide / section locator (e.g. `Slide 2.1`, `Agenda`, `Thesis`). This preserves the audit trail for un-applied work — without this step the bullets would be silently destroyed (they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries). Only then proceed to the strip below.
+   - **Rescue any remaining `[open]` feedback before stripping.** Delegate to [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) → `rescue-open`. The skill walks every still-`[open]` bullet, appends `- <location> — "<verbatim feedback>"` to `# Open questions` (creating the section before `# Cut material` if missing), and is idempotent against existing entries. This preserves the audit trail for un-applied work — without this step the bullets would be silently destroyed (they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries). Only then proceed to the strip below.
    - **Remove every `Presenter feedback` field** at every level (Thesis, Agenda, Section, Slide), in all three syntactic forms (`### Presenter feedback` H3, `**Presenter feedback:**` paragraph, legacy `- **Presenter feedback:**` bullet). The audit trail is preserved as follows: every `[closed]` bullet was mirrored to [`feedback-backlog.md`](knowledge/feedback-backlog.md) during Review; any remaining `[open]` bullets were just rescued into `# Open questions` by the rule above; and prior `master.md` states live in git history.
 
    Goal: opening cleaned `master.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams (all served from a sibling `images/` folder), speaker notes. No working-meta fields visible.

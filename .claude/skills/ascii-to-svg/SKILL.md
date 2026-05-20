@@ -11,7 +11,7 @@ This skill renders **a single** ASCII diagram to **a single** SVG file. It is in
 |---|---|---|
 | 1 | Walk `master.md`, find fenced ASCII blocks | — |
 | 2 | Per block, extract slide context (title, content prose, notes, section goal, language) | — |
-| 3 | Decide the output filename `<slide-id>-<n>.svg` | — |
+| 3 | Decide the output filename `<slide-id>-<n>-<short-description>.svg` (illustrator computes the kebab-case description slug — see `.claude/roles/illustrator.md` → *Output filename convention*) | — |
 | 4 | — | **Render the SVG for that one block** |
 | 5 | Aggregate results, report rendered/unchanged/failed counts | — |
 
@@ -19,12 +19,17 @@ The agent is the coordinator; this skill is the worker. One invocation = one SVG
 
 ## Caller contract
 
-The agent must pass the following in the skill invocation prompt:
+The agent must pass the following in the skill invocation prompt. **Two input modes** for the ASCII payload — exactly one must be provided:
+
+- **Mode A — inline (legacy / one-off renders):** pass `ascii_block` as a verbatim string. Used when no `.ascii` sidecar exists yet.
+- **Mode B — from file (Step 6 standard):** pass `ascii_file` = absolute path to a `.ascii` sidecar produced by [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `extract`. The skill reads the file and **splits it on the `<!-- ascii-note:` sentinel**: everything before the sentinel (minus the separating blank line) is the ASCII payload; the comment from sentinel through `-->` populates the `ascii_note` context input. This is the canonical input mode during a normal Step 6 pass, because the sidecar already carries both the source and the illustrator's render-time intent.
 
 | Input | Required? | Example |
 |---|---|---|
-| `ascii_block` | yes | the fenced block's payload, verbatim |
-| `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1.svg` |
+| `ascii_block` | Mode A | the fenced block's payload, verbatim |
+| `ascii_file` | Mode B | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.ascii` |
+| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly when you've extracted it elsewhere. The `intent:` / `emphasize:` / `labels:` / `template-hint:` lines are used to drive labelling and color emphasis. |
+| `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.svg`. In Mode B, if omitted, the skill defaults to the sibling SVG path (same basename as `ascii_file`, `.svg` extension). |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
 | `slide_content_prose` | recommended | the `### Content` body — used for subtitles, in-panel callouts, axis labels. Pass an empty string when the slide field is empty (early-draft slides during Mode A); the skill will fall back to a minimal labelling and note `deviations: sparse-context` in its report. |
 | `speaker_notes` | recommended | the `### Speaker notes` body — used for `<desc>` and pedagogical-intent cues. Pass an empty string when the field is empty; the skill omits the `<desc>` emphasis cues and uses a default `<desc>` derived from `slide_title`. |
@@ -46,7 +51,9 @@ This avoids any reliance on the session's current working directory (which is un
 
 ## Process
 
-1. **Detect diagram vs code.** If `ascii_block` is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
+0. **Resolve input mode.** If `ascii_file` is provided, read it, split on the first line starting with `<!-- ascii-note:`. The ASCII payload is everything before that line (rstrip a trailing blank line); the `ascii_note` is everything from the sentinel through the line containing `-->` (inclusive). If no sentinel is present, the whole file is the ASCII payload and `ascii_note` is empty. If `ascii_block` was passed instead, use it directly and treat any caller-supplied `ascii_note` as authoritative.
+
+1. **Detect diagram vs code.** If the resolved ASCII payload is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
 2. **Load style files.** Read `<repo_root>/knowledge/image-styles/style.md` (always). If `template_name` is non-null, also read `<repo_root>/knowledge/image-styles/<template_name>.txt`. Resolve both via the `repo_root` input — never via the current working directory. Do **not** walk the full `image-styles/` catalog — the illustrator owns the match decision. If `template_name` is `null`, fall back to a custom shape — `style.md`'s palette, typography, idioms, and layout rules still apply. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`.
 
