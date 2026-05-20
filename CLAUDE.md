@@ -106,20 +106,20 @@ Immediately after, ask the presenter: **new presentation** or **resume existing*
 
 ---
 
-## Step 0.5 — Profile *(optional)*
+## Step 0.5 — Profile
 
 Schema (canonical empty form + full spec): [`.claude/schemas/profile.md`](.claude/schemas/profile.md). The schema's *Canonical empty form* section is what Step 0.5 copies when bootstrapping.
 Customized data file: `knowledge/profile.md` (created only after the presenter fills it).
 
-Active sections (do not invent removed ones like "Who I am" — distinct from `Presenter` below, which is a one-line identity record — "Tone and style", "Class structure", "Constraints"): **Presenter**, **How my presentations are consumed**, **Audience defaults**, **Default duration**, **Presentation language**.
+Active sections (all required, do not invent removed ones like "Who I am" — distinct from `Presenter` below, which is a one-line identity record — "Tone and style", "Class structure", "Constraints"): **Subject**, **Presenter**, **How my presentations are consumed**, **Audience defaults**, **Default duration**, **Presentation language**. All six are initialized once in Step 0.5 and never re-prompted per-Talk — they are fork-level defaults that apply to every Talk in this fork.
 
 | State of `knowledge/profile.md` | Action |
 |---|---|
 | All sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
-| Partially filled (some sections have content, others are blank or HTML-comment-only) | Load filled sections as global defaults. Then ask the presenter: fill the missing sections now, or skip? If fill: walk through only the missing sections, prompting with 2–4 concrete candidates per section. Write result back. Skipping is allowed — missing fields will be re-prompted just-in-time (e.g. `Presentation language` is re-prompted in Step 4 pre-mode). |
-| Exists but empty (only headings + HTML comments) | Ask the presenter: fill now or skip? If fill: walk through every present section, prompting with 2–4 concrete candidates. Never free-text. Write result back to `knowledge/profile.md`. |
-| Exists but missing one or more canonical section headings (e.g. legacy / hand-edited file that dropped `## Audience defaults`) | Treat as "does not exist": re-bootstrap from the *Canonical empty form* in [`.claude/schemas/profile.md`](.claude/schemas/profile.md), **preserving any content under the canonical headings that did exist** (copy it into the rebuilt file under the same heading). Then proceed as the empty case above. Never silently drop presenter content. |
-| Does not exist | Ask the presenter: create + fill, or skip? If fill: copy the *Canonical empty form* from [`.claude/schemas/profile.md`](.claude/schemas/profile.md) → `knowledge/profile.md`, then proceed as the empty case above. |
+| Partially filled (some sections have content, others are blank or HTML-comment-only) | Load filled sections as global defaults. Walk through the missing required sections with the presenter — no skip — prompting with 2–4 concrete candidates per section. Write result back. |
+| Exists but empty (only headings + HTML comments) | Walk through every section with the presenter — no skip — prompting with 2–4 concrete candidates. Never free-text except for `Subject` and `Presenter` (free-text by definition). Write result back to `knowledge/profile.md`. |
+| Exists but missing one or more canonical section headings (e.g. legacy / hand-edited file that dropped `## Audience defaults`) | Re-bootstrap from the *Canonical empty form* in [`.claude/schemas/profile.md`](.claude/schemas/profile.md), **preserving any content under the canonical headings that did exist** (copy it into the rebuilt file under the same heading). Then proceed as the empty case above. Never silently drop presenter content. |
+| Does not exist | Copy the *Canonical empty form* from [`.claude/schemas/profile.md`](.claude/schemas/profile.md) → `knowledge/profile.md`, then proceed as the empty case above. |
 
 Runs once per session for new presentations. Skip on resume unless presenter asks.
 
