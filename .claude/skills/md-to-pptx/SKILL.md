@@ -7,7 +7,7 @@ description: Convert a Talk's cleaned `master.md` into a PowerPoint (.pptx) deck
 
 **This skill is a thin orchestrator. All `.pptx` authoring must be delegated to Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).** Do not author the deck with any other tool — no `python-pptx`, no `pandoc`, no Marp, no hand-written XML. Pre-process `master.md`, then invoke `skill://antropic-skills:/pptx` with the intermediate file, the image paths, and the reference template. If that skill is not in the current session's registry (i.e. the session is not running inside Claude Cowork), stop and tell the presenter to run this step inside Cowork. No CLI fallback — see *Why Cowork-only* at the bottom.
 
-**Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the [`illustrator`](../../agents/illustrator.md) subagent's job, dispatched in Step 6 (Polish) before this skill ever runs. `master.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
+**Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the Illustrator role's job, performed in Step 6 (Polish) before this skill ever runs. `master.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
 
 ## When to use
 
@@ -78,7 +78,7 @@ talks/<Talk>/
 - **The base template is mandatory, not advisory.** Every render inherits theme, fonts, colors, and master layouts from [`knowledge/template.pptx`](../../../knowledge/template.pptx) (or the explicit override). Decks authored from scratch with the native skill's default theme are a render failure even if the file is otherwise correct.
 - **One divider slide per Section.** Each numbered H1 produces a dedicated divider slide. Never collapse Sections.
 - **Never modify `master.md` during render.** All transformation happens in memory or in `output/master.intermediate.md`. The cleaned `master.md` from Polish stays the source of truth.
-- **Never re-render SVGs.** If an image ref points at a missing SVG, stop and dispatch `illustrator` rather than improvising.
+- **Never re-render SVGs.** If an image ref points at a missing SVG, stop and tell the orchestrator to perform the Illustrator role rather than improvising.
 - **Speaker notes go into the notes pane**, never on the slide body.
 
 ## Failure modes to surface
@@ -87,7 +87,7 @@ talks/<Talk>/
 - Reference template missing or unreadable → stop and ask.
 - Reference template was loaded but not honored (rendered deck's theme/fonts/layouts don't match) → surface loudly; offer to rerun. Do not silently ship a deck with the wrong look.
 - `master.md` not yet cleaned (still contains `Presenter feedback` fields or unrendered ASCII fenced blocks) → stop; return to Step 6.
-- An image ref points at a missing SVG → stop; dispatch `illustrator` to render it.
+- An image ref points at a missing SVG → stop; orchestrator performs Illustrator role to render it.
 - A Section has zero Slides.
 - Native skill exits non-zero → surface its error message verbatim in the final report.
 - **H1-as-content-slide regression.** The H1-→-divider semantic is fully outsourced to `skill://antropic-skills:/pptx` — `convert.py` only strips the numeric prefix and passes H1 through. After render, spot-check: every numbered section in `master.md` must produce exactly one **divider** slide (large title, no body). If the native skill rendered an H1 as a normal content slide with the section name in the body, the contract was violated — surface as a render failure, do not silently ship.

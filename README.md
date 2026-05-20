@@ -44,7 +44,7 @@ Four roles, one file as source of truth:
 - **Editor** — the muscle. Keeps `master.md` and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from compiled sources, applies feedback, and cleans the file for delivery.
 - **Illustrator** — converts every ASCII diagram in `master.md` into a styled SVG during the Polish step.
 
-All four run as dedicated subagents at [.claude/agents/](.claude/agents/).
+Role specs live at [.claude/roles/](.claude/roles/) — performed inline by the orchestrator, not as separate agents.
 
 ## Getting started
 
@@ -182,11 +182,11 @@ Review repeats as many times as needed until the presenter declares the document
     │   ├── feedback-backlog.md        # knowledge/feedback-backlog.md schema (cross-Talk feedback log)
     │   ├── feedback-processed.md      # knowledge/feedback-processed.md schema (promoted-feedback archive)
     │   └── compile-record.md          # knowledge/compile/<file>.md schema (librarian's per-source records)
-    ├── agents/
-    │   ├── librarian.md               # Librarian subagent prompt
-    │   ├── composer.md                # Composer subagent prompt (design critic)
-    │   ├── editor.md                  # Editor subagent prompt (master.md/memory.md maintainer)
-    │   └── illustrator.md             # Illustrator subagent prompt (ASCII → SVG coordinator)
+    ├── roles/
+    │   ├── librarian.md               # Librarian role spec
+    │   ├── composer.md                # Composer role spec (design critic)
+    │   ├── editor.md                  # Editor role spec (master.md/memory.md maintainer)
+    │   └── illustrator.md             # Illustrator role spec (ASCII → SVG coordinator)
     └── skills/
         ├── ingest/                    # talksmith:ingest — capture a web page into knowledge/web/
         ├── ascii-to-svg/              # talksmith:ascii-to-svg — render one ASCII block to one SVG
@@ -199,7 +199,7 @@ Review repeats as many times as needed until the presenter declares the document
 - **Cite sources by filename.** Slide `Sources` reference files under `knowledge/compile/` (e.g. `compile/transformer-paper.md`).
 - **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `master.md`.
 - **Chat-prompt is the canonical interaction.** The agent asks every decision in chat with 2–4 numbered prose options derived from current context. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
-- **`knowledge/profile.md` is session-wide context.** Once filled, it's loaded automatically and passed into every subagent dispatch.
+- **`knowledge/profile.md` is session-wide context.** Once filled, it's loaded automatically and kept in context across all role work.
 - **`memory.md` is append-only.** Updated after every completed step; used to resume an in-progress talk.
 
 ## Author

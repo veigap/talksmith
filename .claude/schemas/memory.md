@@ -9,14 +9,14 @@ Two things live in this file:
 1. **Live state** — a small block of header lines that change as the step progresses (status, what the agent is currently awaiting from the presenter). The orchestrator parses these on resume.
 2. **Append-only history** — one entry per Talksmith step, dated, recording asks/answers as they happen and the closing fields (decisions, inputs, files, open questions) once the step completes.
 
-The orchestrator updates the live-state block directly (lightweight, no subagent dispatch). The editor owns the immutable Talk briefing and the closing fields of each step entry.
+The orchestrator updates the live-state block directly (lightweight, in-place). The Editor role owns the immutable Talk briefing and the closing fields of each step entry.
 
 ## Loading semantics
 
 | Reader / Writer | When | What for |
 |---|---|---|
-| Orchestrator (writer) | On every step transition and every presenter ask/answer | Maintain `**Current step:**` and `**Awaiting:**` header lines; append to the current step entry's `Asks log` as questions are asked / answered. Lightweight in-place edits — no editor dispatch. |
-| `editor` subagent (writer) | (a) Step 1 init: bootstrap from canonical empty form, write the briefing block, open the Step 1 entry. (b) Step closure (1–8): fill `What was decided` / `Key inputs` / `Files created/modified` / `Pending open questions` for the closing step; flip its `Status:` to `complete`. (c) Open the next step's entry on step-start dispatches if the orchestrator asks. | Capture decisions in a stable, audit-friendly form. The editor never overwrites prior step entries — only the currently-open one. |
+| Orchestrator (writer) | On every step transition and every presenter ask/answer | Maintain `**Current step:**` and `**Awaiting:**` header lines; append to the current step entry's `Asks log` as questions are asked / answered. Lightweight in-place edits. |
+| Editor role (writer) | (a) Step 1 init: bootstrap from canonical empty form, write the briefing block, open the Step 1 entry. (b) Step closure (1–8): fill `What was decided` / `Key inputs` / `Files created/modified` / `Pending open questions` for the closing step; flip its `Status:` to `complete`. | Capture decisions in a stable, audit-friendly form. The Editor role never overwrites prior step entries — only the currently-open one. |
 | Orchestrator (reader) | Step 0 on a Resume session; ad-hoc throughout | Parse `**Current step:**` + `**Awaiting:**` to know where to resume and whether a question was mid-air. Read prior step entries when context is needed. |
 
 ## Live-state block (header)
@@ -39,7 +39,7 @@ The top of the file holds the always-current state. Three lines, two of them dyn
 
 ## Talk briefing block
 
-A `## Talk briefing` section immediately below the header holds the verbatim Step-1 free-text answer from the presenter. **Immutable** for the lifetime of the Talk — every subsequent step leaves it untouched. Canonical context handed to every `librarian`, `composer`, and `editor` dispatch.
+A `## Talk briefing` section immediately below the header holds the verbatim Step-1 free-text answer from the presenter. **Immutable** for the lifetime of the Talk — every subsequent step leaves it untouched. Canonical context for all role work throughout the session.
 
 ## Append-only history
 
@@ -72,7 +72,7 @@ Log every presenter-facing question that's part of the workflow — the chat-pro
 
 ## Canonical empty form
 
-The editor bootstraps `talks/<Talk>/memory.md` from this form on its Step 1 init dispatch. The orchestrator passes the verbatim Step-1 briefing text in the dispatch prompt — write it under `## Talk briefing` exactly as received. The very first step entry (Step 1, Frame) is opened in the same dispatch with `Status: in_progress` and finalized to `Status: complete` once Step 1 finishes.
+The Editor role bootstraps `talks/<Talk>/memory.md` from this form during its Step 1 init pass. Write the verbatim Step-1 briefing text under `## Talk briefing` exactly as provided. The very first step entry (Step 1, Frame) is opened in the same pass with `Status: in_progress` and finalized to `Status: complete` once Step 1 finishes.
 
 ```markdown
 # memory.md — <Talk folder name>
@@ -86,7 +86,7 @@ The editor bootstraps `talks/<Talk>/memory.md` from this form on its Step 1 init
 
 ## Talk briefing
 
-<Verbatim presenter answer to the Step 1 free-text prompt. Do not paraphrase. This is the canonical context passed to librarian / composer / editor dispatches throughout the session.>
+<Verbatim presenter answer to the Step 1 free-text prompt. Do not paraphrase. This is the canonical context for all role work throughout the session.>
 
 ---
 

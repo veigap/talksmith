@@ -13,7 +13,7 @@ The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python
 
 - Presenter mentions a URL during Collect (Step 2) and wants its content captured.
 - Presenter realizes mid-Draft that a referenced URL would back a slide and the page isn't yet in the knowledge base.
-- New sources arrive after Step 3 has already run — invoke `ingest` for each URL, then re-dispatch `librarian` to compile the new web folder.
+- New sources arrive after Step 3 has already run — invoke `ingest` for each URL, then perform the Librarian role to compile the new web folder.
 
 ## Inputs
 
@@ -77,4 +77,4 @@ The folder is **never overwritten by default** — if it already exists and is n
 After `talksmith:ingest` succeeds, the orchestrator should:
 
 1. Mention to the presenter what got saved (folder, page title, asset count).
-2. If Step 3 (Compile) has already run for this Talk, re-dispatch `librarian` with a note that new web content is in `knowledge/web/<folder-name>/`. Otherwise the librarian will pick it up naturally when Step 3 runs.
+2. If Step 3 (Compile) has already run for this Talk, perform the Librarian role on the new `knowledge/web/<folder-name>/` folder. Otherwise the Librarian role will pick it up naturally when Step 3 runs.

@@ -1,6 +1,6 @@
 # Schema — `talks/<Talk>/master.md`
 
-Specification for `talks/<Talk>/master.md`: the per-Talk deliverable file Talksmith produces. Each Talk has exactly one. The shape defined here is parsed downstream by the `composer` and `editor` subagents and by the `talksmith:md-to-pptx` skill's `convert.py` — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
+Specification for `talks/<Talk>/master.md`: the per-Talk deliverable file Talksmith produces. Each Talk has exactly one. The shape defined here is parsed downstream by the Composer and Editor roles and by the `talksmith:md-to-pptx` skill's `convert.py` — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
 
 ## Purpose
 
@@ -10,9 +10,9 @@ Specification for `talks/<Talk>/master.md`: the per-Talk deliverable file Talksm
 
 | Reader / Writer | When | What for |
 |---|---|---|
-| `editor` subagent (writer) | Step 4 (Draft), Step 5 (Review), Step 6 (Polish). **Sole writer.** | Bootstrap on first Step 4 dispatch from the *Canonical empty form* below; fill thesis / agenda / sections / slides during Draft; apply presenter feedback during Review; inline SVGs + strip feedback fields during Polish. |
-| `composer` subagent (reader) | Every drafting milestone in Step 4 | Critique the scoped slice (`thesis` / `agenda` / `section:N` / `full`) against thesis alignment, audience fit, citations, principles, and learnings. Returns a punch-list; does **not** edit. |
-| `illustrator` subagent (reader) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; dispatch the `talksmith:ascii-to-svg` skill per block. Read-only. |
+| Editor role (writer) | Step 4 (Draft), Step 5 (Review), Step 6 (Polish). **Sole writer.** | Bootstrap on first Step 4 pass from the *Canonical empty form* below; fill thesis / agenda / sections / slides during Draft; apply presenter feedback during Review; inline SVGs + strip feedback fields during Polish. |
+| Composer role (reader) | Every drafting milestone in Step 4 | Critique the scoped slice (`thesis` / `agenda` / `section:N` / `full`) against thesis alignment, audience fit, citations, principles, and learnings. Returns a punch-list; does **not** edit. |
+| Illustrator role (reader) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; invoke the `talksmith:ascii-to-svg` skill per block. Read-only. |
 | `talksmith:md-to-pptx` skill / `convert.py` (reader) | Step 8 (Render PPTX) | Pre-process into an intermediate Markdown shape and hand to `skill://antropic-skills:/pptx`. Read-only. |
 
 The orchestrator does **not** write `master.md` directly — every change goes through the editor.
@@ -20,7 +20,7 @@ The orchestrator does **not** write `master.md` directly — every change goes t
 ## Lifecycle
 
 1. **Step 1 (Frame).** Folder tree created; `master.md` not yet created.
-2. **Step 4 (Draft) — first editor dispatch.** Editor bootstraps `master.md` from the *Canonical empty form* (below): copy the form, strip every HTML comment and every YAML frontmatter comment line, keep all headings / frontmatter keys (with empty values) / field labels. Then fill.
+2. **Step 4 (Draft) — first Editor role pass.** Editor bootstraps `master.md` from the *Canonical empty form* (below): copy the form, strip every HTML comment and every YAML frontmatter comment line, keep all headings / frontmatter keys (with empty values) / field labels. Then fill.
 3. **Steps 4–5 — iterate.** Editor fills and applies presenter feedback rounds.
 4. **Step 6 (Polish).** Illustrator renders ASCII → SVG; editor inlines image refs (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, rescues any remaining `[open]` feedback bullets into `# Open questions`, then strips every `Presenter feedback` field.
 5. **Step 7 (Learnings).** `master.md` is finalized; the orchestrator scans the cross-Talk feedback backlog.
@@ -100,7 +100,7 @@ Never delete closed entries during Step 5 (they're the audit trail). Step 6 stri
 
 ## Canonical empty form
 
-The editor bootstraps `talks/<Talk>/master.md` from this form on its first Step 4 dispatch: copy verbatim, strip every HTML comment (`<!-- ... -->`) and every YAML frontmatter comment line (lines beginning with `#` between the `---` fences), then start filling.
+The Editor role bootstraps `talks/<Talk>/master.md` from this form on its first Step 4 pass: copy verbatim, strip every HTML comment (`<!-- ... -->`) and every YAML frontmatter comment line (lines beginning with `#` between the `---` fences), then start filling.
 
 ```markdown
 ---

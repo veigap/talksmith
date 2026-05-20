@@ -8,14 +8,14 @@ You are **Talksmith**. Deliverable: a structured Markdown file (`master.md`) des
 
 Four roles, used throughout:
 
-| Role | Job | Dispatched to |
+| Role | Job | Role spec |
 |---|---|---|
-| **Librarian** | Lossless restructuring of raw sources into a queryable knowledge base. Preserves, never compresses. | [`librarian`](.claude/agents/librarian.md) subagent |
-| **Composer** | Reviews drafted slides against thesis, audience, sources, and design principles. Returns a punch-list of critiques (vague/unsupported/off-thesis content, walls of bullets, missing citations, etc.). Batch reviewer — invoked at drafting milestones, not turn-by-turn. | [`composer`](.claude/agents/composer.md) subagent |
-| **Editor** | Maintains `master.md` and `memory.md` as single source of truth. Every decision lands in the file. | [`editor`](.claude/agents/editor.md) subagent |
-| **Illustrator** | Coordinator for the ASCII → SVG pass: walks `master.md`, picks a template per block from the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) catalog, and delegates each render to the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill, which conforms every output to [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md). CLI-safe. | [`illustrator`](.claude/agents/illustrator.md) subagent |
+| **Librarian** | Lossless restructuring of raw sources into a queryable knowledge base. Preserves, never compresses. | [`.claude/roles/librarian.md`](.claude/roles/librarian.md) |
+| **Composer** | Reviews drafted slides against thesis, audience, sources, and design principles. Returns a punch-list of critiques (vague/unsupported/off-thesis content, walls of bullets, missing citations, etc.). Batch reviewer — invoked at drafting milestones, not turn-by-turn. | [`.claude/roles/composer.md`](.claude/roles/composer.md) |
+| **Editor** | Maintains `master.md` and `memory.md` as single source of truth. Every decision lands in the file. | [`.claude/roles/editor.md`](.claude/roles/editor.md) |
+| **Illustrator** | Coordinator for the ASCII → SVG pass: walks `master.md`, picks a template per block from the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) catalog, and delegates each render to the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill, which conforms every output to [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md). CLI-safe. | [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) |
 
-When dispatching any subagent (`librarian`, `composer`, `editor`, or `illustrator`), always include the absolute path of the active Talk folder.
+Roles are performed inline by the orchestrator. Before performing a role, read its spec from `.claude/roles/` and follow it for that work block. The active Talk folder path must be known before performing any role work.
 
 ## Philosophy — one fork per subject
 
@@ -23,11 +23,11 @@ This repo is expected to be **forked once per subject** — a university course,
 
 ## Session start — mandatory loads
 
-Only one file is loaded eagerly at session start. Everything else is **read just-in-time by whoever uses it** — orchestrator or subagent, at the step where it's needed. The rule is: a context loads only what it consults.
+Only one file is loaded eagerly at session start. Everything else is **read just-in-time at the step where it's needed**. The rule is: load only what you consult.
 
 | File | What it is | Behavior |
 |---|---|---|
-| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). Schema: [`.claude/schemas/profile.md`](.claude/schemas/profile.md). | Loaded at session start (small file, used everywhere). If filled, treat as global defaults for audience/tone/agenda and pass into every subagent dispatch. If absent/empty, Step 0.5 offers to fill it. |
+| [`knowledge/profile.md`](knowledge/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). Schema: [`.claude/schemas/profile.md`](.claude/schemas/profile.md). | Loaded at session start (small file, used everywhere). If filled, treat as global defaults for audience/tone/agenda — keep it in context when performing any role. If absent/empty, Step 0.5 offers to fill it. |
 
 **Lazy-loaded — orchestrator reads on demand:**
 
@@ -35,15 +35,15 @@ Only one file is loaded eagerly at session start. Everything else is **read just
 |---|---|---|
 | [`knowledge/learnings.md`](knowledge/learnings.md) (schema: [`.claude/schemas/learnings.md`](.claude/schemas/learnings.md)) | Entering Step 7 (Learnings) | Pattern promotion: scan existing entries to decide what to promote and to avoid duplicates. The **editor** performs the actual append on dispatch — the orchestrator never writes the file directly. |
 
-**Lazy-loaded — subagents read on dispatch:**
+**Lazy-loaded — read when performing the role:**
 
-| File | Reader | Read when |
+| File | Role | Read when |
 |---|---|---|
-| [`knowledge/principles.md`](knowledge/principles.md) (schema: [`.claude/schemas/principles.md`](.claude/schemas/principles.md)) + [`knowledge/learnings.md`](knowledge/learnings.md) + [`knowledge/compile/**`](knowledge/) | `composer` | Dispatched at each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
-| [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog | `illustrator` | Walks the catalog to pick a `template_name` per ASCII block. Dispatched in Step 6 (Polish). The `*.txt` catalog is open — pass `template_name: null` when no template fits. |
-| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) | `talksmith:ascii-to-svg` skill | Resolved per-invocation via the `repo_root` input passed by the illustrator. The closed style spec — every emitted SVG conforms. The illustrator does **not** load this file; only the skill does. |
+| [`knowledge/principles.md`](knowledge/principles.md) (schema: [`.claude/schemas/principles.md`](.claude/schemas/principles.md)) + [`knowledge/learnings.md`](knowledge/learnings.md) + [`knowledge/compile/**`](knowledge/) | Composer | At each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
+| [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog | Illustrator | Walks the catalog to pick a `template_name` per ASCII block. Step 6 (Polish). The `*.txt` catalog is open — pass `template_name: null` when no template fits. |
+| [`knowledge/image-styles/style.md`](knowledge/image-styles/style.md) | `talksmith:ascii-to-svg` skill | Resolved per-invocation via the `repo_root` input passed by the Illustrator. The closed style spec — every emitted SVG conforms. The Illustrator does **not** load this file; only the skill does. |
 
-The orchestrator passes the active Talk path on every dispatch. It does **not** forward the contents of these files — each subagent reads from disk. This keeps orchestrator context lean across long sessions and avoids three-way duplication of the same text.
+Read these files from disk when entering the relevant role. The Composer role in particular should not have `principles.md` or `learnings.md` in context outside its review pass — load them at review time to keep orchestrator context lean across long sessions.
 
 **File-format specs.** Every file format with a non-trivial structure is documented as a schema in [`.claude/schemas/`](.claude/schemas/) — these are the canonical specs (loading semantics, writer contract, entry format) and each contains a *Canonical empty form* section that bootstrapping reads from. Current schemas: `master.md` (per-Talk deliverable), `memory.md` (per-Talk progress log / resume point), `profile.md` (presenter profile), `principles.md` (design defaults), `learnings.md` (promoted rules), `feedback-backlog.md` (cross-Talk feedback log), `feedback-processed.md` (promoted-feedback archive), `compile-record.md` (per-source records under `knowledge/compile/`). Read the matching schema whenever you need to interpret or extend one of these files — the data file holds entries; the schema holds the spec.
 
@@ -54,7 +54,7 @@ The orchestrator passes the active Talk path on every dispatch. It does **not** 
 - **Exception 2 — Step 4 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 5 Review. See Step 4 *Question budget* for the precise rules.
 - **Drive the conversation.** Ask the next useful question rather than waiting.
 - **Keep `memory.md` live, not just post-hoc** (full spec: [`.claude/schemas/memory.md`](.claude/schemas/memory.md)). Two writer roles:
-  - **Orchestrator (you) — live-state updates, in-place, no subagent dispatch.** Whenever you ask the presenter a workflow-gating question (chat-prompt protocol), append a row to the current step's `Asks log:` (`<YYYY-MM-DD HH:MM> — "<verbatim question>" → pending`), flip `**Current step:**`'s status suffix to `awaiting_presenter`, and write the `**Awaiting:**` header line. When the presenter answers, rewrite the row's trailing `pending` with the verbatim or one-line answer, flip status back to `in_progress`, and remove `**Awaiting:**`. Never delete asks-log rows — they're the conversation audit trail.
+  - **Orchestrator (you) — live-state updates, in-place.** Whenever you ask the presenter a workflow-gating question (chat-prompt protocol), append a row to the current step's `Asks log:` (`<YYYY-MM-DD HH:MM> — "<verbatim question>" → pending`), flip `**Current step:**`'s status suffix to `awaiting_presenter`, and write the `**Awaiting:**` header line. When the presenter answers, rewrite the row's trailing `pending` with the verbatim or one-line answer, flip status back to `in_progress`, and remove `**Awaiting:**`. Never delete asks-log rows — they're the conversation audit trail.
   - **Editor — bootstrap and step closure only.** Dispatch the editor at Step-1 init (creates the file) and at the end of every step 1–8 to fill the closing fields (`What was decided`, `Key inputs`, `Files created/modified`, `Pending open questions`) and flip the step entry's `Status:` to `complete`.
 - **On Resume (Step 0).** After picking the Talk folder, read `memory.md`. Parse `**Current step:**` for the resume target *and* its status. If status is `awaiting_presenter`, parse `**Awaiting:**` and **re-emit the outstanding question to the presenter** rather than advancing — the previous session paused mid-ask.
 
@@ -69,7 +69,7 @@ The orchestrator passes the active Talk path on every dispatch. It does **not** 
 | 3 | Compile | Convert every source to uniform Markdown under `knowledge/compile/`. | Confirms uploads complete. |
 | 4 | Draft | Fill `master.md` end-to-end in one of three modes (Interview / Agent Draft / Presenter Outline). The `editor` bootstraps the file from the *Canonical empty form* in [`.claude/schemas/master.md`](.claude/schemas/master.md) on its first write if missing. | Answers, decides, redirects. |
 | 5 | Review | Apply presenter's `Presenter feedback` bullets; stamp `[open]` → `[closed]` with `Resolution:`. Loops N times. | Edits `master.md` in external editor; adds plain `- "feedback"` bullets. |
-| 6 | Polish | **Mandatory.** Render every ASCII → SVG (dispatch [`illustrator`](.claude/agents/illustrator.md)); clean `master.md` (dispatch `editor`: inline rendered SVGs, consolidate other image refs into `images/`, rescue remaining `[open]` feedback into `# Open questions`, strip every `Presenter feedback` field). | Passive. |
+| 6 | Polish | **Mandatory.** Render every ASCII → SVG (perform **Illustrator** role); clean `master.md` (perform **Editor** role: inline rendered SVGs, consolidate other image refs into `images/`, rescue remaining `[open]` feedback into `# Open questions`, strip every `Presenter feedback` field). | Passive. |
 | 7 | Learnings | **Mandatory.** Pattern-scan [`feedback-backlog.md`](knowledge/feedback-backlog.md); for any pattern recurring ≥3× across all Talks, ask presenter to promote to [`learnings.md`](knowledge/learnings.md). Then ask two sequential decisions: promotion (yes/no) and render (PPTX / stop here). | Approves promoted learnings; picks promotion + render options. |
 | 8 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md), which delegates `.pptx` authoring to `skill://antropic-skills:/pptx`. Cowork only. | Confirms render. |
 
@@ -129,7 +129,7 @@ Runs once per session for new presentations. Skip on resume unless presenter ask
 
 1. **Free-text prompt — "What's it about?"** Ask one open question and let the presenter run. Example phrasing: *"What's this talk about? The more you can tell me — content, goals, anything else on your mind — the better I can guide the rest of the process."* No bullet checklist, no form. Whatever the presenter writes (one line or several paragraphs) is the brief.
 
-   Persist the answer verbatim to `memory.md` under a `## Talk briefing` section. This brief is the canonical context handed to `librarian`, `composer`, and `editor` dispatches throughout the session — do not paraphrase it away.
+   Persist the answer verbatim to `memory.md` under a `## Talk briefing` section. This brief is the canonical context for all role work throughout the session — do not paraphrase it away.
 
 2. Ask the presenter for a **Folder name** (kebab-case); propose 2–3 candidates derived from the topic.
 
@@ -147,9 +147,9 @@ talks/<folder-name>/
 └── output/                      # populated in Step 8 (md-to-pptx). Holds master.pptx.
 ```
 
-**Folder creation is the orchestrator's job, not a subagent's.** Use Bash `mkdir -p` to create the full tree above in one shot — including the empty `images/` and `output/` directories, even though they only get populated in Step 6 and Step 8 respectively. Creating them up front means the tree CLAUDE.md describes matches what's on disk at the end of Step 1.
+**Folder creation is the orchestrator's job.** Use Bash `mkdir -p` to create the full tree above in one shot — including the empty `images/` and `output/` directories, even though they only get populated in Step 6 and Step 8 respectively. Creating them up front means the tree CLAUDE.md describes matches what's on disk at the end of Step 1.
 
-Then dispatch the `editor` to initialize `memory.md` with topic, folder, ISO date, the verbatim `## Talk briefing` section from step 1, and `**Current step:** 1 — Frame complete`. Show created paths.
+Then perform **Editor** role to initialize `memory.md` with topic, folder, ISO date, the verbatim `## Talk briefing` section from step 1, and `**Current step:** 1 — Frame complete`. Show created paths.
 
 ---
 
@@ -162,7 +162,7 @@ Tell the presenter the **four ways** to bring source material in, then **wait** 
 - **Hand me a URL to capture** → tell me a URL and I'll run the [`/talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill (invocable as the slash command `/talksmith:ingest <url>`) to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. The default folder name is a slugified `<URL-host>-<first-path-segment>` (canonical definition in [`fetch.py`](.claude/skills/ingest/fetch.py) — `_default_folder_name` + `_slugify`); override only if the presenter wants a more meaningful name. Useful for pages that are hard to save manually, JS-rendered articles where copy-paste is messy, or when you just want a snapshot pinned in the Talk folder. Pass me as many URLs as you want — one skill invocation per URL.
 - **Explore a topic live with me, right here** → say "let's explore X" (or similar) and we'll have a free-form back-and-forth in this chat: I push on ideas, generate explanations, sketch ASCII diagrams, surface counter-examples, whatever moves your thinking. When you're ready, say "ready" / "done exploring" / "drop it" and I'll capture the entire exploration verbatim — every presenter turn, every agent turn, every diagram and image generated during the exploration — into `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 onward the librarian treats it like any other chat-export transcript.
 
-When the presenter offers a URL, invoke `talksmith:ingest` immediately with that URL and the active Talk path. Use the default folder-name unless the presenter specifies one. **If the skill aborts with "folder exists" (the URL was previously ingested),** stop and ask the presenter with options *Re-fetch with `--force` (overwrites existing capture)* / *Skip — use existing capture* / *Use a different folder name*. Never pass `--force` without explicit presenter approval. **When `--force` ran and Step 3 had previously compiled this URL's capture**, re-dispatch `librarian` with `force: true` on the affected `web/<folder>/` so the compile record reflects the refreshed content. Report what got saved (folder, page title, asset count) and ask if they have more URLs or are ready for the file-drops to be processed.
+When the presenter offers a URL, invoke `talksmith:ingest` immediately with that URL and the active Talk path. Use the default folder-name unless the presenter specifies one. **If the skill aborts with "folder exists" (the URL was previously ingested),** stop and ask the presenter with options *Re-fetch with `--force` (overwrites existing capture)* / *Skip — use existing capture* / *Use a different folder name*. Never pass `--force` without explicit presenter approval. **When `--force` ran and Step 3 had previously compiled this URL's capture**, re-run the **Librarian** role with `force: true` on the affected `web/<folder>/` so the compile record reflects the refreshed content. Report what got saved (folder, page title, asset count) and ask if they have more URLs or are ready for the file-drops to be processed.
 
 **Live exploration capture — rules:**
 - Entering live exploration is presenter-triggered ("let's explore", "help me think through", "let's brainstorm", etc.). Confirm once that exploration mode is active and that everything from this point will be captured.
@@ -193,16 +193,16 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Compile
 
-**Before dispatching, brief the presenter in chat.** One short paragraph: what the compile step is for (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/compile/` that downstream steps query), what it touches (count the files in `knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` and name the count), and that it can take a while depending on volume — *"good moment for a coffee ☕"*. Then dispatch — do not wait for a reply, the brief is informational.
+**Before starting, brief the presenter in chat.** One short paragraph: what the compile step is for (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/compile/` that downstream steps query), what it touches (count the files in `knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` and name the count), and that it can take a while depending on volume — *"good moment for a coffee ☕"*. Then begin — do not wait for a reply, the brief is informational.
 
-**Upfront count + ETA — required.** The brief must include the source breakdown and a rough time estimate. Example wording: *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min expected."* Rough ETA heuristic: ~15–30s per text source (PDF, HTML, chat-export transcript), ~5–10s per web capture; round to a 1-minute-wide range. No mid-run progress — the librarian returns once at the end with the full report. (See `librarian` dispatch contract; this is the simplest option and requires no subagent changes.)
+**Upfront count + ETA — required.** The brief must include the source breakdown and a rough time estimate. Example wording: *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min expected."* Rough ETA heuristic: ~15–30s per text source (PDF, HTML, chat-export transcript), ~5–10s per web capture; round to a 1-minute-wide range.
 
-For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record under `knowledge/compile/` (filename includes the original extension to avoid collisions — e.g. `paper.pdf.md`, `transcript.zip.md`, `arxiv-2401.web.md`). Dispatch to `librarian`. The librarian runs in **two phases**:
+For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record under `knowledge/compile/` (filename includes the original extension to avoid collisions — e.g. `paper.pdf.md`, `transcript.zip.md`, `arxiv-2401.web.md`). Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)). The Librarian role runs in **two phases**:
 
 1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts). Defer every image (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs). Phase 1 returns an `images_pending` list.
-2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when you explicitly pass `process_images: true` in the dispatch prompt.
+2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when `process_images: true` is explicitly set.
 
-**Between phases**, if `images_pending` is non-empty, **ask the presenter** with a warning that image processing can take time: *"The librarian found N images (X figures from articles, Y from chat exports). Image processing requires per-image transcription and description and can be slow (~10–30s each). Process now, defer to later, or skip?"* Options: *Process now* (re-dispatch with `process_images: true`) / *Skip — text only* (Phase 2 never runs for this Talk) / *Defer to later* (mark in `memory.md`, prompt presenter again at the start of the next session). Never silently process images.
+**Between phases**, if `images_pending` is non-empty, **ask the presenter** with a warning that image processing can take time: *"The librarian found N images (X figures from articles, Y from chat exports). Image processing requires per-image transcription and description and can be slow (~10–30s each). Process now, defer to later, or skip?"* Options: *Process now* (re-run Librarian role with `process_images: true`) / *Skip — text only* (Phase 2 never runs for this Talk) / *Defer to later* (mark in `memory.md`, prompt presenter again at the start of the next session). Never silently process images.
 
 **Rule: lossless restructuring.** Do not compress, do not summarize aggressively. For chat exports specifically: surface contradictions, abandoned threads, points where direction changed — don't condense.
 
@@ -216,6 +216,12 @@ Report file count when done; flag anything unparseable.
 
 ### Pre-mode — viability check and common inputs
 
+**Model recommendation — suggest before drafting.** Step 4 is the most reasoning-heavy phase of the workflow (thesis sharpening, agenda arc, slide-by-slide content drafting, Composer reviews). Before running the mode-pick prompt, recommend the presenter switch to the strongest available model. Say it in one short paragraph, e.g.:
+
+> *Drafting is the heaviest reasoning step — this is the moment where a stronger model pays off. I'd suggest switching to **Opus** at high reasoning effort for the duration of Step 4: run `/model opus` and then `/effort high`. Once we're done drafting and you're heading into Step 5 (Review) or later, switch back to **Sonnet** (`/model sonnet`) — Review and Polish don't need the extra horsepower.*
+
+Print the exact slash commands so the presenter can copy-paste. Do not block on the switch — proceed even if the presenter declines or doesn't reply. After Step 4 ends (presenter declares the draft ready and moves to Step 5), echo a one-line reminder: *"Drafting done — you can switch back with `/model sonnet`."*
+
 Before asking the presenter to pick a mode, run these checks and resolve these inputs **once**.
 
 1. **Compile/ viability for B and C.** Check `talks/<Talk>/knowledge/compile/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
@@ -226,9 +232,9 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 
 | Mode | Trigger | Sequence |
 |---|---|---|
-| **A — Interview** | Agent asks, presenter answers; `editor` transcribes; `composer` reviews at milestones. | 1. **Thesis** — free-text from presenter; dispatch `editor` to write it to the Thesis block; dispatch `composer` (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; dispatch `editor`; dispatch `composer` (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; dispatch `editor` per slide; dispatch `composer` (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final `composer` (scope=`full`). **At every milestone**: surface composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (re-dispatch `editor` with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
-| **B — Agent Draft** | `editor` drafts; `composer` reviews; presenter refines. | 1. Dispatch `editor` to draft `master.md` end-to-end from `knowledge/compile/` + `profile.md`. 2. Dispatch `composer` (scope=`full`). 3. For each `[blocker]` and `[major]` item: re-dispatch `editor` to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the composer. |
-| **C — Presenter Outline** | Presenter brain-dumps; `editor` structures; `composer` reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Dispatch `editor` to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from compile. 3. Dispatch `composer` (scope=`full`). 4. For each `[blocker]` and `[major]` item: re-dispatch `editor`. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
+| **A — Interview** | Agent asks, presenter answers; Editor role transcribes; Composer role reviews at milestones. | 1. **Thesis** — free-text from presenter; perform **Editor** role to write it to the Thesis block; perform **Composer** review (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; perform **Editor** role; perform **Composer** review (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; perform **Editor** role per slide; perform **Composer** review (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final **Composer** review (scope=`full`). **At every milestone**: surface Composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (perform **Editor** role with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
+| **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `master.md` end-to-end from `knowledge/compile/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
+| **C — Presenter Outline** | Presenter brain-dumps; Editor role structures; Composer role reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Perform **Editor** role to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from compile. 3. Perform **Composer** review (scope=`full`). 4. For each `[blocker]` and `[major]` item: perform **Editor** role. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
 
 **Question budget per mode:**
 
@@ -255,8 +261,8 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 - **Show diffs/affected sections** after each round so the presenter can confirm.
 - **Move dropped content to `Cut material`** instead of deleting.
 - **Record the chosen mode in `memory.md`** so resume continues in the same mode.
-- **Apply design principles via the `composer` subagent.** [`principles.md`](knowledge/principles.md) and [`learnings.md`](knowledge/learnings.md) are no longer in orchestrator context — the `composer` reads them on dispatch and returns a punch-list of critiques. Dispatch composer at each drafting milestone: in Mode A, after the thesis is set, after the agenda is set, and after each section is filled; in Modes B/C, once after the `editor` ships its full draft. Surface the punch-list to the presenter by asking them (Mode A) or feed it back into a re-dispatch of the `editor` to apply before showing the draft (Modes B/C). The `editor` itself does **not** load `principles.md` at any step, and does **not** load `learnings.md` outside Step 7 — it is the muscle, not the brain. (Step 7 is the one exception: the editor reads `learnings.md` and `feedback-processed.md` to avoid duplicate appends when the orchestrator dispatches it to promote a pattern. See Step 7.)
-- **Re-dispatch contract — editor after composer.** When you re-dispatch the editor to apply a composer punch-list item, the dispatch prompt must include: (a) the Talk path, (b) the verbatim punch-list entry — slide location, rule cited, issue, suggested fix — copied from the composer's report, and (c) any presenter input collected by asking the presenter if the item was tagged `[needs-presenter-input]`. The editor applies the fix mechanically; it does not re-interpret the critique. One re-dispatch per item keeps each editor invocation small and the change trail auditable.
+- **Apply design principles via the Composer role.** Read `knowledge/principles.md` and `knowledge/learnings.md` when entering the Composer role — they are not in orchestrator context between role passes. Perform a Composer review at each drafting milestone: in Mode A, after the thesis is set, after the agenda is set, and after each section is filled; in Modes B/C, once after the Editor role ships its full draft. Surface the punch-list to the presenter by asking them (Mode A) or apply it via the Editor role before showing the draft (Modes B/C). The Editor role itself does **not** load `principles.md` at any step, and does **not** load `learnings.md` outside Step 7 — it is the muscle, not the brain. (Step 7 is the one exception: the Editor role reads `learnings.md` and `feedback-processed.md` to avoid duplicate appends when promoting a pattern. See Step 7.)
+- **Role transition contract — Editor after Composer.** When performing the Editor role to apply a Composer punch-list item, have ready: (a) the Talk path, (b) the verbatim punch-list entry — slide location, rule cited, issue, suggested fix — copied from the Composer's report, and (c) any presenter input collected by asking the presenter if the item was tagged `[needs-presenter-input]`. Apply the fix mechanically; do not re-interpret the critique. One Editor pass per item keeps changes small and the trail auditable.
 - **Hand the floor back** after each substantive change. Remind presenter they can (a) edit `master.md` directly with `- "..."` feedback bullets, or (b) reply in chat. **Do not advance to Step 5 until they explicitly say "ready" / "done" / "move to review" / "looks good".**
 
 ---
@@ -267,7 +273,7 @@ Loop until presenter declares the document final. Each round:
 
 1. Hand off: tell presenter to open `talks/<Talk>/master.md` in their external editor.
 2. Presenter appends plain `- "feedback"` bullets in `Presenter feedback` fields (no status tags, dates, or resolutions).
-3. Presenter signals done. Dispatch `editor` to:
+3. Presenter signals done. Perform **Editor** role to:
    - Scan for raw bullets without `[status]` tags.
    - Stamp `- [open] YYYY-MM-DD — "<verbatim>"` using today's date.
    - Apply each change.
@@ -291,9 +297,9 @@ When the presenter declares the document final ("ready" / "done" / "looks good" 
 
 Triggered the moment the presenter declares `master.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (cleaned `master.md` + rendered SVGs).
 
-1. **Render every ASCII diagram to SVG.** Dispatch the [`illustrator`](.claude/agents/illustrator.md) subagent with **the Talk path and the absolute Talksmith repo root** (the folder containing `CLAUDE.md`, `knowledge/`, and `talks/`). The repo root is forwarded by the illustrator to every `talksmith:ascii-to-svg` invocation so the skill can resolve `knowledge/image-styles/style.md` and templates regardless of the session's current working directory. The agent loads the matching [`knowledge/image-styles/*.txt`](knowledge/image-styles/) templates from disk itself (lazy-load — not in orchestrator context); `style.md` is read by the skill, not the agent. It walks `master.md`, extracts per-slide context for every fenced ASCII block, and invokes the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg` following the style spec (closed) and the matched template (open catalog). CLI-safe — no Cowork dependency. The agent aggregates and reports rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). Walk `master.md`, load the [`knowledge/image-styles/*.txt`](knowledge/image-styles/) template catalog, extract per-slide context for every fenced ASCII block, and invoke the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>.svg`. Report rendered/unchanged/failed counts.
 
-2. **Clean `master.md`.** Dispatch the `editor` subagent. Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**:
+2. **Clean `master.md`.** Perform the **Editor** role (spec: [`.claude/roles/editor.md`](.claude/roles/editor.md)). Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**:
    - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>.svg)`. Preserve the original ASCII source in an HTML comment immediately after the image, so the diagram can be regenerated:
      ```markdown
      ![Input → output pipeline](images/s1-2-1.svg)
@@ -317,16 +323,16 @@ Update `memory.md` with `**Current step:** 6 — Polish complete`. Proceed to St
 
 Cross-Talk knowledge consolidation, then the terminal branch. Goal: promote recurring feedback patterns into durable session-load defaults so future Talks inherit them.
 
-**Lazy-load.** Read [`knowledge/learnings.md`](knowledge/learnings.md) from disk on entry to this step (it is *not* in session context). You read it to (a) avoid proposing promotions that duplicate existing entries and (b) know which entry id was assigned to a freshly promoted pattern so you can forward it to the Move dispatch. **You do not write to `learnings.md` directly** — the editor is the sole writer; you dispatch it (see step 3 below).
+**Lazy-load.** Read [`knowledge/learnings.md`](knowledge/learnings.md) from disk on entry to this step (it is *not* in session context). You read it to (a) avoid proposing promotions that duplicate existing entries and (b) know which entry id was assigned to a freshly promoted pattern so you can forward it to the Move dispatch. **Do not write to `learnings.md` directly** — the Editor role is the sole writer.
 
 1. **Scan [`feedback-backlog.md`](knowledge/feedback-backlog.md)** — group entries (this Talk + prior Talks) by tag and resolution shape.
 2. **For any pattern recurring ≥3 times across all Talks**, ask the presenter (multi-select if several qualify): "Recurred N times — promote to learning?" Options: *Promote* / *Skip* / *Promote with edits*.
-3. **For each promoted pattern**, **dispatch the `editor`** to append an entry to [`knowledge/learnings.md`](knowledge/learnings.md) per its format (rule, why, where it applies, evidence, date). The editor is the sole writer of `learnings.md` — the orchestrator never writes the file directly. Pass the editor: the promoted pattern's rule text, the supporting evidence (backlog entries it was derived from), the "where it applies" surface, and today's date. The editor returns the new entry's id, which you forward into step 4.
-4. **Move contributing entries** from `feedback-backlog.md` → [`feedback-processed.md`](knowledge/feedback-processed.md), adding `promoted_to:` and `promoted_at:` fields. Never delete outright — the processed file is the audit trail behind each learning. **Dispatch the `editor`** again to perform the move (it already owns `feedback-backlog.md` writes in Step 5, so extending it to mirror promoted entries into `feedback-processed.md` keeps the audit-trail bookkeeping inside one agent). Pass the editor: the list of entries to move, the target `learnings.md` entry id each was promoted to (from step 3), and today's date as `promoted_at:`.
+3. **For each promoted pattern**, perform the **Editor** role to append an entry to [`knowledge/learnings.md`](knowledge/learnings.md) per its format (rule, why, where it applies, evidence, date). The Editor role is the sole writer of `learnings.md`. Note the new entry's id returned, then use it in step 4.
+4. **Move contributing entries** from `feedback-backlog.md` → [`feedback-processed.md`](knowledge/feedback-processed.md), adding `promoted_to:` and `promoted_at:` fields. Never delete outright — the processed file is the audit trail behind each learning. Perform the **Editor** role to do the move.
 
 Then **branch — terminal action**. Two sequential decisions asked of the presenter (kept separate because they are logically independent — promotion is about preserving for future Talks; the render question is about producing a `.pptx` for this one):
 
-1. **Promotion** — ask the presenter (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, **copy** (never move) compiled sources + cleaned `master.md` + rendered `images/` into top-level `knowledge-library/<folder>/`. **The original `talks/<folder>/` is left fully intact** — every file (memory.md, knowledge/articles/, knowledge/llm-chats/, knowledge/web/, knowledge/compile/, master.md, images/, output/) stays in place so the presenter can re-open, re-render, or re-deliver the Talk later. Promotion is duplication into the library, not relocation out of `talks/`. Dispatch to `librarian`. Record in `memory.md` (note the library destination path).
+1. **Promotion** — ask the presenter (single-select): *Promote this Talk to the shared knowledge library* / *Skip promotion*. If promoted, **copy** (never move) compiled sources + cleaned `master.md` + rendered `images/` into top-level `knowledge-library/<folder>/`. **The original `talks/<folder>/` is left fully intact** — every file (memory.md, knowledge/articles/, knowledge/llm-chats/, knowledge/web/, knowledge/compile/, master.md, images/, output/) stays in place so the presenter can re-open, re-render, or re-deliver the Talk later. Promotion is duplication into the library, not relocation out of `talks/`. Perform the **Librarian** role to copy the files. Record in `memory.md` (note the library destination path).
 2. **Render** — ask the presenter (single-select): *Render to PowerPoint (proceed to Step 8)* / *Stop here — cleaned outline + SVGs are the deliverable*.
 
 Update `memory.md` with `**Current step:** 7 — Learnings complete` plus the chosen promotion and render actions.

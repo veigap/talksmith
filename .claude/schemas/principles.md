@@ -1,6 +1,6 @@
 # Schema — `knowledge/principles.md`
 
-Specification for [`knowledge/principles.md`](../../knowledge/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used by the `composer` subagent when critiquing a draft.
+Specification for [`knowledge/principles.md`](../../knowledge/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used when performing the Composer role to critique a draft.
 
 ## Purpose
 
@@ -15,9 +15,9 @@ Encodes the methodology and evidence-based guidance Talksmith uses to evaluate s
 
 | Reader | Read when | What for |
 |---|---|---|
-| `composer` subagent | Every drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C) | Apply each principle as a soft rule when producing the punch-list of critiques. Cite by name in every punch-list item that invokes one: `(principles.md: <principle-name>)`. |
+| Composer role | Every drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C) | Apply each principle as a soft rule when producing the punch-list of critiques. Cite by name in every punch-list item that invokes one: `(principles.md: <principle-name>)`. |
 
-No other agent and no orchestrator step loads this file. **No writer** — there is no automated promotion path into `principles.md` (unlike `learnings.md`); maintain it by hand.
+No other role and no orchestrator step loads this file. **No writer** — there is no automated promotion path into `principles.md` (unlike `learnings.md`); maintain it by hand.
 
 ## How to interpret the principles
 

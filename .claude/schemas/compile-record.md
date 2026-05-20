@@ -1,6 +1,6 @@
 # Schema — `knowledge/compile/<filename>.md`
 
-Specification for the per-source compile records the `librarian` subagent emits during Step 3 (Compile). One record per raw source — article, chat-export ZIP, web capture, or image. Each record is what downstream consumers (the `editor` for drafting, the `composer` for citation verification) read when they need source material.
+Specification for the per-source compile records the Librarian role emits during Step 3 (Compile). One record per raw source — article, chat-export ZIP, web capture, or image. Each record is what downstream consumers (the Editor role for drafting, the Composer role for citation verification) read when they need source material.
 
 ## Purpose
 
@@ -10,9 +10,9 @@ Lossless restructuring of every raw source under `talks/<Talk>/knowledge/article
 
 | Reader / Writer | When | What for |
 |---|---|---|
-| `librarian` subagent (writer) | Step 3 (Compile), Phase 1 and Phase 2. **Sole writer.** | One output file per source. Phase 1 writes text-source records and image stubs; Phase 2 fills the stubs when the orchestrator dispatches with `process_images: true`. |
-| `editor` subagent (reader) | Step 4 (Draft) in Modes B and C; Step 5 (Review) when applying source citations | Draft slide Content / Sources from compiled records. Cite by filename. |
-| `composer` subagent (reader) | Every drafting milestone in Step 4 | Verify every cited file exists and supports the slide's claim; flag pending stubs as `[major]` and overreaches as `[blocker]`. |
+| Librarian role (writer) | Step 3 (Compile), Phase 1 and Phase 2. **Sole writer.** | One output file per source. Phase 1 writes text-source records and image stubs; Phase 2 fills the stubs when `process_images: true` is set. |
+| Editor role (reader) | Step 4 (Draft) in Modes B and C; Step 5 (Review) when applying source citations | Draft slide Content / Sources from compiled records. Cite by filename. |
+| Composer role (reader) | Every drafting milestone in Step 4 | Verify every cited file exists and supports the slide's claim; flag pending stubs as `[major]` and overreaches as `[blocker]`. |
 
 The orchestrator never reads or writes this file directly.
 
@@ -41,12 +41,12 @@ Exactly one of:
 
 The librarian uses HTML-comment markers when a record is incomplete:
 
-- `<!-- pending: process_images -->` — image stub from Phase 1; Phase 2 fills `Depiction` / `Why it matters` / `Transcribed text` when the orchestrator dispatches with `process_images: true`.
+- `<!-- pending: process_images -->` — image stub from Phase 1; Phase 2 fills `Depiction` / `Why it matters` / `Transcribed text` when the Librarian role is re-run with `process_images: true`.
 - `<!-- pending: failed: <one-line reason> -->` — image unreadable (corrupted, unsupported codec, zero bytes); listed under `Unparseable` in the librarian's final report.
 
 A compile file is **complete** iff it exists, is non-empty, **and** contains no `<!-- pending: ... -->` markers anywhere. The librarian's idempotency check skips complete files unless the orchestrator passes `force: true`.
 
-The `editor` watches for these markers via its *Pending-stub awareness* rule (in `.claude/agents/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `master.md` rather than silently dropping the citation. The `composer` flags pending-stub citations as `[major]` punch-list items.
+The Editor role watches for these markers via its *Pending-stub awareness* rule (in `.claude/roles/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `master.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
 
 ## Canonical empty form
 

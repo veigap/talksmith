@@ -4,14 +4,14 @@ Specification for [`knowledge/profile.md`](../../knowledge/profile.md): the pres
 
 ## Purpose
 
-Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start, then passed into every subagent dispatch as context. Step 4 (Draft) reads these silently to populate `master.md` frontmatter — it does **not** re-prompt for any field listed here.
+Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `master.md` frontmatter — it does **not** re-prompt for any field listed here.
 
 ## Loading semantics
 
 | Reader | Read when | What for |
 |---|---|---|
 | Orchestrator | **Session start, eagerly** | Loaded into session context. If filled, treat sections as global defaults for presenter identity, audience, tone, duration, and language. If absent or any required section is missing/empty, Step 0.5 walks through the missing required sections (no skip). |
-| All four subagents (`librarian`, `composer`, `editor`, `illustrator`) | On every dispatch | The orchestrator passes the profile's content **in the dispatch prompt**. Subagents do **not** read this file from disk. If a dispatch prompt omits profile content entirely (orchestrator bug or empty profile), every subagent falls back to defaults and notes the omission in its final report — never stops. |
+| All four roles (Librarian, Composer, Editor, Illustrator) | When performing any role | Profile is in session context — roles read it directly. If the profile is empty, each role falls back to defaults and notes the omission — never stops. |
 
 The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
@@ -60,18 +60,16 @@ The only frontmatter field Step 4 actively prompts for is `date` (always per-Tal
 
 ## Missing-profile fallback (shared rule)
 
-This rule is referenced by all four subagents (`librarian`, `composer`, `editor`, `illustrator`). It exists once, here, to keep the four agent prompts from drifting.
+This rule applies when performing any of the four roles (Librarian, Composer, Editor, Illustrator). It exists once, here, to keep the role specs consistent.
 
-**When the dispatch prompt omits profile content entirely** (orchestrator bug, or `knowledge/profile.md` is genuinely empty), every subagent:
+**When `knowledge/profile.md` is genuinely empty or missing**, each role:
 
 1. Proceeds without stopping — a missing profile is never a fatal error.
-2. Derives `presentation`, `presenter`, `audience`, `duration` from `master.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in its final report.
+2. Derives `presentation`, `presenter`, `audience`, `duration` from `master.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in the final report.
 3. Derives `Presentation language` from the dominant language of `master.md` prose. If `master.md` itself is empty (early Mode A pre-bootstrap), falls back to English and surfaces the gap.
-4. **Notes the omission in its final report** so the orchestrator can fix the dispatch contract or prompt the presenter to fill the profile.
+4. **Notes the omission in the final report** so the orchestrator can prompt the presenter to fill the profile.
 
-**When a specific profile section is missing, empty, or contains only an HTML-comment placeholder**, the same fallback applies for that section alone. Subagents do not refuse to run; they degrade gracefully and report.
-
-The orchestrator is responsible for **forwarding profile content** in every dispatch prompt. Subagents never read `knowledge/profile.md` from disk.
+**When a specific profile section is missing, empty, or contains only an HTML-comment placeholder**, the same fallback applies for that section alone. Roles do not refuse to run; they degrade gracefully and report.
 
 ## Canonical empty form
 
