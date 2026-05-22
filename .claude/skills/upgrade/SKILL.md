@@ -9,6 +9,8 @@ Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *O
 
 **Single source of master.** Always `https://github.com/veigap/talksmith` @ `main`. No flags to override.
 
+**The master-owned path set is itself shipped from master.** On each run, the script reads `.claude/upgrade-paths.txt` from the freshly cloned master and uses it as the list of paths to mirror. This means: when master adds a new master-owned path, the **next** `upgrade apply` in any fork picks it up — no two-step upgrade needed, even when the running script predates the addition. A hardcoded `FALLBACK_CORE_PATHS` inside the script is used only when the manifest is missing or malformed (e.g. running against an older master).
+
 ## Two paths, two rules
 
 | Tree | Policy on `apply` |
@@ -132,7 +134,7 @@ The output is the orchestrator's input for the inference step described above �
 
 - **`--fork` must contain `CLAUDE.md`** at its root. Otherwise the skill refuses to act — guards against pointing at the wrong directory.
 - **`--fork` must not resolve to the same path as the freshly cloned master.** Self-upgrade is rejected with exit 2.
-- **Deletions are scoped to master-owned paths only.** The `_collect()` walk only ever returns paths within `CORE_PATHS`, so the `f_files - m_files` set difference can never reach user-owned content. `talks/` and the user-owned config files are structurally unreachable by the delete step.
+- **Deletions are scoped to master-owned paths only.** The `_collect()` walk only ever returns paths listed in `.claude/upgrade-paths.txt` (or the hardcoded fallback), so the `f_files - m_files` set difference can never reach user-owned content. `talks/` and the user-owned config files are structurally unreachable by the delete step.
 - **`.claude/settings.local.json` is explicitly excluded.** The skill subtracts it from the delete set unconditionally.
 - Every write is atomic per file (`.tmp + os.replace`). On per-file failure the partial state is the original file; the rest of the upgrade aborts.
 - Empty directories left behind after deletions (e.g. an emptied `.claude/skills/upgrade-fork/`) are removed bottom-up so the fork tree stays clean.

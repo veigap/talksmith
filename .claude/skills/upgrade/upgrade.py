@@ -43,9 +43,15 @@ from pathlib import Path
 UPSTREAM = "https://github.com/veigap/talksmith.git"
 REF = "main"
 
-# Core paths owned by master, relative to repo root. (path, kind ∈ {"dir","file"}).
-# These are the only paths apply will create, modify, or delete files within.
-CORE_PATHS: list[tuple[str, str]] = [
+# Master-owned paths are read at runtime from `.claude/upgrade-paths.txt` in the
+# freshly cloned master. The hardcoded list below is a fallback used only when
+# the manifest is missing (e.g. running this script against an older master
+# that predates the manifest) or malformed. Keeping the manifest in master
+# means: when master adds a new master-owned path, the next `upgrade apply`
+# in any fork picks it up on the very next run — no two-step upgrade.
+PATHS_MANIFEST = Path(".claude/upgrade-paths.txt")
+
+FALLBACK_CORE_PATHS: list[tuple[str, str]] = [
     (".claude", "dir"),
     ("CLAUDE.md", "file"),
     ("README.md", "file"),
@@ -109,10 +115,45 @@ def _walk_files(root: Path, rel_root: Path) -> list[Path]:
     return sorted(out)
 
 
-def _collect(root: Path) -> set[Path]:
-    """Set of relative paths under `root` covered by CORE_PATHS."""
+def _load_paths(master: Path) -> list[tuple[str, str]]:
+    """Read the master-owned paths manifest from the cloned master.
+
+    Falls back to `FALLBACK_CORE_PATHS` when the manifest is missing, empty, or
+    contains a malformed line. The fallback exists so this script keeps working
+    against older masters that predate the manifest.
+    """
+    manifest = master / PATHS_MANIFEST
+    if not manifest.exists():
+        return FALLBACK_CORE_PATHS
+    try:
+        raw_text = manifest.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"warning: could not read {manifest}: {exc} — falling back to hardcoded paths", file=sys.stderr)
+        return FALLBACK_CORE_PATHS
+    paths: list[tuple[str, str]] = []
+    for raw in raw_text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 2 or parts[0] not in ("dir", "file"):
+            print(f"warning: malformed line in {manifest}: {raw!r} — falling back to hardcoded paths", file=sys.stderr)
+            return FALLBACK_CORE_PATHS
+        kind, rel = parts[0], parts[1]
+        if rel.startswith("/") or ".." in rel.split("/"):
+            print(f"warning: unsafe path in {manifest}: {rel!r} — falling back to hardcoded paths", file=sys.stderr)
+            return FALLBACK_CORE_PATHS
+        paths.append((rel, kind))
+    if not paths:
+        print(f"warning: empty manifest at {manifest} — falling back to hardcoded paths", file=sys.stderr)
+        return FALLBACK_CORE_PATHS
+    return paths
+
+
+def _collect(root: Path, paths: list[tuple[str, str]]) -> set[Path]:
+    """Set of relative paths under `root` covered by the master-owned manifest."""
     files: set[Path] = set()
-    for rel, kind in CORE_PATHS:
+    for rel, kind in paths:
         target = root / rel
         if kind == "file":
             if target.exists():
@@ -123,9 +164,15 @@ def _collect(root: Path) -> set[Path]:
 
 
 def _classify(master: Path, fork: Path) -> dict[str, list[Path]]:
-    """Return {created, modified, deleted, identical} relative to fork."""
-    m_files = _collect(master)
-    f_files = _collect(fork)
+    """Return {created, modified, deleted, identical} relative to fork.
+
+    The set of master-owned paths is loaded from the cloned master's manifest
+    (`.claude/upgrade-paths.txt`) so newly-added paths are picked up on the
+    very next `upgrade apply`, even when the running script predates them.
+    """
+    paths = _load_paths(master)
+    m_files = _collect(master, paths)
+    f_files = _collect(fork, paths)
     created = sorted(m_files - f_files)
     deleted = sorted(f_files - m_files - USER_LOCAL)
     common = sorted(m_files & f_files)

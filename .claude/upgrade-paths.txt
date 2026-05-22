@@ -1,0 +1,20 @@
+# Master-owned paths — read by .claude/skills/upgrade/upgrade.py at run time.
+# Strict-mirrored from master into every fork: created, modified, or deleted
+# so the fork matches master exactly within these paths.
+#
+# Format: <kind> <path>
+#   kind ∈ {dir, file}
+#   path is relative to the repo root, no leading slash, no `..`
+#
+# Lines starting with `#` are comments. Blank lines are ignored.
+#
+# When master adds a new master-owned path, add a line here. The change ships
+# in master and the next `upgrade apply` in any fork picks it up on the very
+# next run — no two-step upgrade required (the running script reads this file
+# from the cloned master, not from its own source).
+
+dir  .claude
+file CLAUDE.md
+file README.md
+file config/principles.md
+file config/diagram-style.md
