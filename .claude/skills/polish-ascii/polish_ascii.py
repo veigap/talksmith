@@ -507,6 +507,8 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
             skipped_no_render += 1
             continue
         svg_basename = render["svg_basename"]
+        if not svg_basename.endswith(".svg"):
+            svg_basename = f"{svg_basename}.svg"
         alt = render.get("alt") or b["slide_id"]
         start_idx = b["ascii"]["start_line"] - 1
         end_idx = b["ascii"]["end_line"] - 1

@@ -154,6 +154,8 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 For each block with `render` non-null:
 
+**`svg_basename` is accepted with or without the `.svg` extension.** The canonical form (per the illustrator's filename convention in [`.claude/roles/illustrator.md`](../../roles/illustrator.md)) includes `.svg` — e.g. `s1-2-1-cuatro-senales.svg`. If a stem-only form is passed (`s1-2-1-cuatro-senales`), both `extract` and `cleanup` normalize it: the sidecar lands at `<stem>.ascii` and the `final.md` image reference resolves to `images/<stem>.svg`. Mismatched leniency between the two subcommands was a real bug — an extension-less annotation used to land a correct sidecar but a 404-ing image reference. Both paths are now symmetric.
+
 1. **Sidecar.** Write `talks/<Talk>/images/<stem>.ascii` where `<stem>` is `svg_basename` minus `.svg`. Content layout:
    - ASCII payload verbatim (no fence, no leading/trailing blank-line manipulation).
    - If `note.payload` exists: one blank line, then the captured note verbatim through `-->`.
