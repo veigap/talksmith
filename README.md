@@ -35,20 +35,22 @@ This isn't about repo hygiene — it's about compounding value over time:
 
 If you present on three subjects, that's three forks. Mixing subjects in one repo erodes every advantage above.
 
-**Keeping a fork current.** When master ships new skills, role specs, or shared knowledge (`principles.md`, `image-styles/`), the [`talksmith:upgrade-fork`](.claude/skills/upgrade-fork/SKILL.md) skill pulls the latest core from `github.com/veigap/talksmith` (shallow clone of `main`) into your fork without ever touching its accumulated state.
+**Keeping a fork current.** When master ships new skills, role specs, or shared knowledge (`principles.md`, `image-styles/`), the [`talksmith:upgrade`](.claude/skills/upgrade/SKILL.md) skill pulls the latest core from `github.com/veigap/talksmith` (shallow clone of `main`) into your fork without ever touching its accumulated state.
 
 The skill exposes two operations:
 
-- **`diff`** — read-only inventory of what would change in your fork: files to create, files to modify, files only in your fork (potentially pruneable). Optional unified-diff bodies for text files.
-- **`apply`** — performs the copy after a confirmation prompt. Optional `prune` removes fork-only files under `.claude/` and `config/image-styles/` to produce a clean mirror.
+- **`diff`** — read-only inventory of what would change in your fork: files to create, files to modify.
+- **`apply`** — performs the copy after a confirmation prompt. Create + modify only; the fork is never deleted from. Files that were removed or renamed upstream linger in your fork until you delete them by hand.
 
-Both operations default to cloning the upstream repo; pass a local master directory instead when working offline or iterating on upstream itself.
+When master ships structural changes (renames, removals, restructures), the manual steps land in [`MIGRATION.md`](MIGRATION.md) at the repo root. The skill copies that file into your fork like any other core file, and prints a banner after `apply` when it was just created or updated — pointing you to the dated section(s) added since your last upgrade. Per-Talk content under `talks/` is **never** mass-edited by the skill (each Talk is your product), so renames affecting per-Talk files always need the manual step.
+
+The skill always pulls master from `https://github.com/veigap/talksmith` @ `main` — no flags to override. If you need to upgrade from anywhere else, this isn't the tool.
 
 | Touched by the skill | Never touched |
 |---|---|
-| `.claude/` · `CLAUDE.md` · `README.md` · `config/principles.md` · `config/image-styles/` | `talks/` · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` |
+| `.claude/` · `CLAUDE.md` · `README.md` · `MIGRATION.md` · `config/principles.md` · `config/image-styles/` | `talks/` · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` |
 
-See [`.claude/skills/upgrade-fork/SKILL.md`](.claude/skills/upgrade-fork/SKILL.md) for the full contract, safety rules, and exit codes.
+See [`.claude/skills/upgrade/SKILL.md`](.claude/skills/upgrade/SKILL.md) for the full contract, safety rules, and exit codes.
 
 ## How it works
 
