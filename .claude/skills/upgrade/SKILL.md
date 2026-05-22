@@ -1,65 +1,57 @@
 ---
 name: talksmith:upgrade
-description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, deleted, or renamed in the target fork. `apply` does both layers in one pass — (1) strict-mirror within master-owned paths (`.claude/`, `CLAUDE.md`, `README.md`, `MIGRATION.md`, `config/principles.md`, `config/image-styles/`), and (2) declared renames parsed from `<!-- migration:rename from=... to=... -->` directives embedded in master's MIGRATION.md, typically renaming per-Talk paths under `talks/` so they match new specs. Renames preserve file content — only paths change. User-owned data (the *bytes inside* `talks/<Talk>/*.md`, `config/profile.md`, etc.) is never overwritten or deleted. Conflicts (both old and new exist) are skipped and reported. `.claude/settings.local.json` is excluded from strict-mirror. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
+description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, or deleted in the target fork. `apply` mirrors master into the fork — **user-owned content** (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, plus `.claude/settings.local.json`) is never touched; **master-owned content** (`.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/image-styles/`) is strict-mirrored, so renames and removals upstream propagate automatically. When structural changes affect user-owned paths too (e.g. per-Talk file naming conventions), the orchestrator infers the required adjustment from the upgrade diff and applies it by hand when next resuming the Talk — the skill never auto-edits user-owned content. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
 ---
 
-# talksmith:upgrade — Mirror master into a downstream fork (with declared migrations)
+# talksmith:upgrade — Mirror master into a downstream fork
 
-Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *One fork per subject*). A fork accumulates per-subject state — talks, profile, learnings, feedback log — that **must survive** across upgrades. Master ships the core machinery (orchestrator spec, role specs, skills, schemas, design principles, image-style catalog) and the migration directives needed to keep per-fork content aligned with structural changes upstream. This skill applies both, in one pass.
+Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *One fork per subject*). Every fork accumulates per-subject state — talks, profile, learnings, feedback log — that **must survive** across upgrades. The **core machinery** (orchestrator spec, role specs, skills, schemas, design principles, image-style catalog) lives in master and improves over time. This skill keeps a fork's master-owned tree in lockstep with master without touching the fork's accumulated state.
 
 **Single source of master.** Always `https://github.com/veigap/talksmith` @ `main`. No flags to override.
 
-## Two layers, one `apply`
+## Two paths, two rules
 
-### Layer 1 — strict mirror within master-owned paths
-
-These paths are owned by master. The fork is brought into exact alignment with master's tree:
-
-- `.claude/` (skills, roles, schemas, settings spec)
-- `CLAUDE.md`, `README.md`, `MIGRATION.md`
-- `config/principles.md`
-- `config/image-styles/`
-
-Files in master that are missing in the fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted from the fork.** A rename upstream (e.g. `.claude/schemas/master.md` → `.claude/schemas/draft.md`) becomes "old path deleted + new path created" automatically.
-
-**Exclusion:** `.claude/settings.local.json` is user-local config (gitignored, never shipped by master) and is never touched.
-
-### Layer 2 — declared renames outside the strict-mirror tree
-
-Master can ship structural renames that affect content *outside* its owned tree — typically per-Talk path renames under `talks/`. These are declared inline in `MIGRATION.md` using HTML-comment directives the skill parses:
-
-```html
-<!-- migration:rename from="talks/*/master.md" to="draft.md" -->
-```
-
-- `from` is a relative-path glob with a single `*` matching one path segment.
-- `to` is the new basename — same-directory rename. The file's parent path is preserved; only the leaf changes.
-
-For each directive, the skill walks the matching paths in the fork and applies the rename **idempotently**:
-
-| Fork state | Skill behavior |
+| Tree | Policy on `apply` |
 |---|---|
-| old exists, new doesn't | Rename (`os.replace`). File content preserved unchanged. |
-| old doesn't exist | Already done. Silent no-op. |
-| both exist | Conflict — **skipped** and reported. User resolves by hand, then re-runs. |
+| **User-owned** — `talks/` (every byte under it), `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, `.claude/settings.local.json` | **Never touched.** Full stop. |
+| **Master-owned** — `.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/image-styles/` | **Strict mirror.** Files missing in fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted** from the fork. |
 
-**Renames preserve content.** They change the path of a file, not its bytes. The skill never opens, overwrites, or merges file content during a rename.
+A rename in master is naturally just "old path gone + new path appears" under strict mirror — both halves happen in one `apply`.
 
-## What is never touched
+## What strict-mirror catches
 
-| Path / data | Why |
+| Master change | What `apply` does in the fork |
 |---|---|
-| The *bytes inside* `talks/<Talk>/*` | Your per-Talk content — drafts, feedback, corpus records, images. Renames may move the path; the content is preserved verbatim. |
-| `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md` | Per-fork accumulated state. Neither mirrored nor renamed. |
-| `.claude/settings.local.json` | User-local config master never ships. |
-| Build artifacts (`__pycache__`, `*.pyc`, `.DS_Store`) | Ignored on both sides of the comparison. |
+| New file added under `.claude/skills/foo/SKILL.md` | Creates it. |
+| Existing file edited (e.g. `CLAUDE.md`) | Overwrites the fork's copy. |
+| File renamed (e.g. `.claude/schemas/master.md` → `.claude/schemas/draft.md`) | Deletes `master.md` from the fork, creates `draft.md` from master. |
+| Skill directory renamed (e.g. `.claude/skills/upgrade-fork/` → `.claude/skills/upgrade/`) | Deletes every file under the old dir, creates every file under the new dir. Empty parent directories get cleaned up. |
+| File removed (e.g. an obsolete style template) | Deletes it from the fork. |
 
-If a fork has hand-added skills under `.claude/skills/` that aren't in master, **they will be deleted** by the strict-mirror step. The model is: customize via the user-owned trees, not by adding files inside master-owned paths.
+## What strict-mirror does NOT do
+
+- Touch any byte under `talks/` — your per-Talk content is yours, full creative authority.
+- Touch the four top-level `config/` files (`profile`, `learnings`, `feedback-backlog`, `feedback-processed`) — accumulated per-fork state.
+- Touch `.claude/settings.local.json` — gitignored user-local config.
+- Delete build artifacts (`__pycache__`, `.pyc`, `.DS_Store`) — those are ignored on both sides of the comparison.
+
+## Handling stale user-owned content after an upgrade
+
+When master ships a structural change, the strict-mirror step updates the spec (CLAUDE.md, role specs, schemas) but leaves user-owned content alone. This is correct — the skill must never silently edit a user's drafts, feedback logs, learnings, or rendered output. **But it does mean user-owned paths can drift out of alignment with the updated spec.** The most common case: master renames a per-Talk file convention (e.g. `master.md` → `draft.md`), so existing `talks/<Talk>/master.md` files in the fork no longer match what the orchestrator expects to read.
+
+**The rule for handling this is on the orchestrator, not the skill.** After `upgrade apply` reports its diff, the orchestrator (the LLM operating the fork) is expected to:
+
+1. **Read the upgrade diff** — the list of files that were created, modified, or deleted in the master-owned tree gives a complete picture of what restructured upstream.
+2. **Infer the corresponding adjustment for user-owned content.** A schema rename like `.claude/schemas/master.md` → `draft.md` strongly implies a matching per-Talk rename `talks/*/master.md` → `talks/*/draft.md`. A renamed output file (e.g. `output/master.pptx` → `output/final.pptx` documented in the new CLAUDE.md spec for Step 8) implies the existing rendered output in any Talk should be renamed similarly.
+3. **Apply the inferred adjustment when next opening the affected Talk** — typically at the Step-0 Resume hand-off, before reading `memory.md` and continuing the workflow. A rename preserves the file's bytes; only the path changes. If a path conflict exists (both old and new already present), stop and ask the presenter which to keep.
+4. **Never touch user content** beyond renaming paths. If the new spec implies a *semantic* change (e.g. "re-run Step 6 to produce `final.md` from `draft.md`"), surface it to the presenter and let them decide whether to re-run; don't silently re-execute workflow steps.
+
+This puts inference where it belongs — the LLM has the context to read the diff and reason about implications. The skill's job is just to surface what changed mechanically and to leave user data alone.
 
 ## When to use
 
-- A teaching collaborator opens an old fork after master has shipped new skills, restructures, or per-Talk file renames.
-- Mid-semester: master adds a Step 6 improvement and a path rename; you want both in your active fork without losing this semester's talks.
+- A teaching collaborator opens an old fork after master has shipped new skills.
+- Mid-semester: master adds a Step 6 improvement; you want it in your active fork without re-cloning and losing this semester's talks.
 - After hand-editing a skill in master, you want to pull the change into a fork before resuming work.
 
 ## Invocation
@@ -91,8 +83,8 @@ python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --dry-
 | Input | Required? | Notes |
 |---|---|---|
 | `--fork` | yes | Same sanity check as `diff`. |
-| `--dry-run` | optional | Print actions but don't touch the fork. Useful when reviewing a large delete or rename plan before committing. |
-| `--yes` | optional | Skip the interactive confirmation prompt. Without it, `apply` prints the plan, lists the files that would be deleted or renamed, and waits for `y/N`. |
+| `--dry-run` | optional | Print actions but don't touch the fork. Useful when reviewing a large delete list before committing. |
+| `--yes` | optional | Skip the interactive confirmation prompt (for scripted runs). Without it, `apply` prints a summary, lists the files that would be deleted, and waits for `y/N` on stdin. |
 
 ## Output
 
@@ -103,31 +95,26 @@ fork:   /Users/me/Documents/courses/llm-systems
 master: https://github.com/veigap/talksmith.git@main
 
 Summary:
-  4 file(s) would be created   (master-owned paths)
-  3 file(s) would be modified  (master-owned paths)
-  6 file(s) would be deleted   (master-owned paths, no longer in master)
-  5 file(s) would be renamed   (declared migrations, content preserved)
-  18 file(s) already up-to-date (master-owned paths)
+    4 file(s) would be created
+    3 file(s) would be modified
+    6 file(s) would be deleted (no longer in master)
+   18 file(s) already up-to-date
 
 Created (new in master, missing in fork):
   + .claude/skills/upgrade/SKILL.md
   + .claude/skills/upgrade/upgrade.py
   + .claude/schemas/draft.md
-  + MIGRATION.md
+  + .claude/roles/global-librarian.md
 
 Modified (differ between master and fork):
   ~ CLAUDE.md  (+1234 bytes)
   ~ .claude/roles/editor.md  (+512 bytes)
+  ~ config/image-styles/style.md  (-87 bytes)
 
 Deleted (in fork but no longer in master — usually a rename or removal upstream):
   - .claude/schemas/master.md
   - .claude/skills/upgrade-fork/SKILL.md
   - .claude/skills/upgrade-fork/upgrade_fork.py
-
-Renamed (per declared migrations — content preserved, only path changes):
-  → talks/biomedical-signals/master.md  →  talks/biomedical-signals/draft.md
-  → talks/biomedical-signals/output/master.pptx  →  talks/biomedical-signals/output/final.pptx
-  → talks/quantum-intro/master.md  →  talks/quantum-intro/draft.md
 ```
 
 ### `apply` — summary
@@ -137,23 +124,19 @@ applied to /Users/me/Documents/courses/llm-systems:
   created:  4 file(s)
   modified: 3 file(s)
   deleted:  6 file(s)
-  renamed:  5 file(s) (content preserved)
-  preserved (user-owned, not touched): talks/  (content), config/profile.md, config/learnings.md, config/feedback-backlog.md, config/feedback-processed.md
+  preserved (user-owned, not touched): talks/, config/profile.md, config/learnings.md, config/feedback-backlog.md, config/feedback-processed.md
 ```
 
-When `MIGRATION.md` was created or updated in the run, an additional banner is printed pointing the user at it for *non-mechanical* steps (renames are already done; the banner is for things like "re-run Step 6 on a finalized Talk" that need user judgement).
-
-If any declared rename hit a conflict (both old and new paths existed), the conflict list is printed and those renames are skipped. The user resolves by hand and re-runs.
+The output is the orchestrator's input for the inference step described above — read the created/modified/deleted lists and reason about whether any user-owned content needs to be renamed when next opening an affected Talk.
 
 ## Safety
 
-- **`--fork` must contain `CLAUDE.md`** at its root. Otherwise the skill refuses to act.
+- **`--fork` must contain `CLAUDE.md`** at its root. Otherwise the skill refuses to act — guards against pointing at the wrong directory.
 - **`--fork` must not resolve to the same path as the freshly cloned master.** Self-upgrade is rejected with exit 2.
-- **Strict-mirror deletes are scoped to master-owned paths only.** The `_collect()` walk only ever returns paths within `CORE_PATHS`, so the `f_files - m_files` set difference can never reach user-owned content.
-- **Migration renames only change paths, never content.** The implementation uses `os.replace(old, new)` — a single atomic rename. The file's bytes are not opened, read, or written. If the rename fails (e.g. permission denied), the original file is intact.
-- **Conflicts halt the rename, never overwrite.** If both old and new paths exist for a declared migration, the skill skips that rename and reports the conflict. Neither file is touched.
-- Every strict-mirror write is atomic per file (`.tmp + os.replace`).
-- Empty directories left behind after deletions are removed bottom-up so the fork tree stays clean.
+- **Deletions are scoped to master-owned paths only.** The `_collect()` walk only ever returns paths within `CORE_PATHS`, so the `f_files - m_files` set difference can never reach user-owned content. `talks/` and the user-owned config files are structurally unreachable by the delete step.
+- **`.claude/settings.local.json` is explicitly excluded.** The skill subtracts it from the delete set unconditionally.
+- Every write is atomic per file (`.tmp + os.replace`). On per-file failure the partial state is the original file; the rest of the upgrade aborts.
+- Empty directories left behind after deletions (e.g. an emptied `.claude/skills/upgrade-fork/`) are removed bottom-up so the fork tree stays clean.
 
 ## Exit codes
 
@@ -161,16 +144,3 @@ If any declared rename hit a conflict (both old and new paths existed), the conf
 - `2` — bad input (fork doesn't exist, lacks `CLAUDE.md`, equals master, etc.).
 - `3` — `apply` aborted by the user at the confirmation prompt.
 - `4` — per-file copy or delete failure mid-upgrade (rare; the file that failed is named in stderr).
-
-## Migration directive syntax (for master maintainers)
-
-To declare a same-directory rename that should be applied to forks on the next upgrade, embed an HTML comment inside a dated section of `MIGRATION.md`:
-
-```html
-<!-- migration:rename from="<glob>" to="<basename>" -->
-```
-
-- `from` — relative-path glob from the repo root. Single `*` allowed at one path segment (matches any name at that level).
-- `to` — new basename. Same-directory rename only; the parent path of each match is preserved.
-
-Idempotent by construction: each directive is safe to ship and safe to re-apply. The skill never tracks "which migrations have been applied" because the filesystem state itself is the record — if the old path is gone, the rename is done.

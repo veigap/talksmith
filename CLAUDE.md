@@ -243,7 +243,7 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 
 | Mode | Trigger | Sequence |
 |---|---|---|
-| **A — Interview** | Agent asks, presenter answers; Editor role transcribes; Composer role reviews at milestones. | 1. **Thesis** — free-text from presenter; perform **Editor** role to write it to the Thesis block; perform **Composer** review (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; perform **Editor** role; perform **Composer** review (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; perform **Editor** role per slide; perform **Composer** review (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final **Composer** review (scope=`full`). **At every milestone**: surface Composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (perform **Editor** role with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
+| **A — Interview** | Agent asks, presenter answers; Editor role transcribes into `draft.md`; Composer role reviews at milestones. | 1. **Thesis** — free-text from presenter; perform **Editor** role to write it to the Thesis block in `draft.md`; perform **Composer** review (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; perform **Editor** role to update `draft.md`; perform **Composer** review (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; perform **Editor** role per slide on `draft.md`; perform **Composer** review (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final **Composer** review (scope=`full`). **At every milestone**: surface Composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (perform **Editor** role with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
 | **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `draft.md` end-to-end from `knowledge/corpus/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
 | **C — Presenter Outline** | Presenter brain-dumps; Editor role structures; Composer role reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Perform **Editor** role to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from the corpus. 3. Perform **Composer** review (scope=`full`). 4. For each `[blocker]` and `[major]` item: perform **Editor** role. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
 
@@ -292,7 +292,7 @@ Loop until presenter declares `draft.md` final. Each round:
 - Never edit raw feedback wording. Preserve verbatim inside quotes.
 - Never delete closed entries — they are the audit trail.
 - When closing `[open]` → `[closed]`, **keep the original date**.
-- Unresolvable bullets stay `[open]`; mirror into `Open questions` if they block finalization.
+- Unresolvable bullets stay `[open]` in `draft.md`. Step 6 (c) `rescue-open` will automatically copy every remaining `[open]` bullet into `final.md`'s `# Open questions` — do not manually mirror in Step 5.
 - For ambiguous feedback, ask the presenter with 2–4 concrete resolutions before applying.
 - **Mirror every `[closed]` to [`config/feedback-backlog.md`](config/feedback-backlog.md):** talk folder, date, location (Thesis/Agenda/Section/Slide), verbatim feedback, one-line resolution, tags. Reuse existing tags before inventing new ones.
 
@@ -310,39 +310,43 @@ Triggered the moment the presenter declares `draft.md` final. Runs end-to-end wi
 
 2. **Clean `final.md`.** Perform the **Editor** role (spec: [`.claude/roles/editor.md`](.claude/roles/editor.md)). Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**. Transformation (a) is mechanical and is delegated to the [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) skill — five stages: `scan` → illustrator annotation (per-block `render: {svg_basename, alt}`) → `extract` (sidecars) → per-sidecar `talksmith:ascii-to-svg` render → `cleanup` (rewrite fences in `final.md`). Do not re-implement its parsing or line-rewriting inline. The legacy `apply` subcommand (sidecars + cleanup in one pass) exists for quick out-of-band re-renders; the staged flow is canonical.
 
-   **Scope of (a) — render-driving ASCII only.** Transformation (a) applies to ASCII blocks whose slide has *no* Markdown image reference. When a slide already carries a `![alt](path)` image reference (the editor chose an existing corpus image at Step 4), any ASCII block in that same slide is **documentation only** — visual aid for whoever reads the source — and is **skipped** by the pipeline: no render, no sidecar, no fence rewrite. The image link wins; the ASCII stays in place verbatim. Transformation (b) — *Consolidate image refs* — still copies the linked file into `images/` and rewrites the path as usual.
+   **(a) Inline rendered ASCII blocks as SVG references.** Applies only to ASCII blocks in slides that have **no** Markdown image reference. If a slide already carries a `![alt](path)` image reference (the editor chose an existing corpus image at Step 4), any ASCII block in that same slide is **documentation only** — visual aid for whoever reads the source — and is **skipped** by every Step-6 stage: no render, no sidecar, no fence rewrite. The image link wins; the ASCII stays in place verbatim. (Transformation (b) below still consolidates the image link itself as usual.)
 
-   For each render-driving ASCII block (no image ref present in its slide):
-   - **Replace each rendered ASCII block** with a Markdown image reference to the SVG: `![<alt from slide title>](images/<slide-id>-<n>-<short-description>.svg)`. Before replacing, **capture** any `<!-- ascii-note: ... -->` HTML comment that sits immediately after the closing fence (skipping at most one blank line) — opening sentinel through `-->`, verbatim. This captured note is what gets written into the sidecar below. Preserve the original ASCII source **two ways** — neither replaces the other:
-     1. In an HTML comment immediately after the image, so the diagram can be regenerated from `final.md` alone.
-     2. As a sidecar `.ascii` file with the same basename as the SVG (`images/<slide-id>-<n>-<short-description>.ascii`) that contains **both the ASCII source and the captured `ascii-note`** (if one was present). The sidecar makes the source recoverable even if the comment is later stripped, diffs cleanly under git, and turns `images/` into a self-contained record of every diagram in three representations: rendered SVG, ASCII source, render-time intent.
+   For each render-driving ASCII block, the [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) skill:
+   1. Captures any post-fence `<!-- ascii-note: ... -->` HTML comment (within one blank-line tolerance) verbatim. This goes into the sidecar below.
+   2. Replaces the ASCII fence with `![<alt from slide title>](images/<slide-id>-<n>-<short-description>.svg)` followed by a `<!-- ascii-source: ... -->` echo so the diagram can be regenerated from `final.md` alone.
+   3. Writes a sidecar `.ascii` file at `images/<slide-id>-<n>-<short-description>.ascii` containing the ASCII source plus the captured `ascii-note` (when one was present). The sidecar makes the source recoverable even if the comment is later stripped, diffs cleanly under git, and turns `images/` into a self-contained record of every diagram in three representations: rendered SVG, ASCII source, render-time intent.
+   4. Leaves the post-fence `<!-- ascii-note: ... -->` in `final.md` in place after the replacement — it sits directly below the `<!-- ascii-source: ... -->` echo and continues to document intent for future re-renders. The (d) strip targets `Presenter feedback` only, not `ascii-note`.
 
-     **The post-fence `<!-- ascii-note: ... -->` in `final.md` is left in place** after the replacement — it sits directly below the `<!-- ascii-source: ... -->` echo and continues to document intent for future re-renders. The Step 6 (d) strip targets `Presenter feedback` only, not `ascii-note`. (Note: `draft.md` is untouched throughout — the ASCII fence and any `ascii-note` continue to live verbatim in `draft.md` so a fresh re-run of Step 6 starts from the same source.)
+   `draft.md` is untouched throughout — the ASCII fence and any `ascii-note` continue to live verbatim in `draft.md` so a fresh re-run of Step 6 starts from the same source.
 
-     Example after Polish — `final.md`:
-     ```markdown
-     ![Input → output pipeline](images/s1-2-1.svg)
-     <!-- ascii-source:
-     +-----+      +-----+
-     | in  | -->  | out |
-     +-----+      +-----+
-     -->
-     ```
-     …and `talks/<Talk>/images/s1-2-1.ascii`:
-     ```
-     +-----+      +-----+
-     | in  | -->  | out |
-     +-----+      +-----+
+   Example after Polish — `final.md`:
+   ```markdown
+   ![Input → output pipeline](images/s1-2-1.svg)
+   <!-- ascii-source:
+   +-----+      +-----+
+   | in  | -->  | out |
+   +-----+      +-----+
+   -->
+   ```
+   …and `talks/<Talk>/images/s1-2-1.ascii`:
+   ```
+   +-----+      +-----+
+   | in  | -->  | out |
+   +-----+      +-----+
 
-     <!-- ascii-note:
-     intent: linear input → output pipeline
-     emphasize: the arrow between the two boxes
-     -->
-     ```
-     If the slide had no `ascii-note`, the sidecar contains only the ASCII bytes — no trailing comment. If `.ascii` already exists with identical bytes, skip the write (don't touch mtime); if it differs, overwrite — the new ASCII + note in `final.md` is authoritative. **None of this applies when the slide also carries a Markdown image link** — those ASCII blocks are bypassed entirely per the scope rule above.
-   - **Consolidate every other image reference into `images/`.** Walk every `![alt](path)` in `final.md`. If `path` is anything other than `images/<file>` (e.g. a corpus-companion path like `knowledge/corpus/<source-stem>/images/<file>`, an external/absolute path, a path under `output/`, a sibling Talk folder), **copy** the source file into `talks/<Talk>/images/<basename>` (do not move — the original stays) and rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename. **Remote URLs (`http://`, `https://`) are an exception: leave them untouched in `final.md`, and they will fail the Step 8 pre-render asset check unless the presenter manually downloads them first.** The cleaned `final.md` should reference **only** `images/...` paths or — at the presenter's risk for Step 8 — remote URLs, making the Talk folder self-contained and movable.
-   - **Rescue any remaining `[open]` feedback before stripping.** Delegate to [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) → `rescue-open`. The skill walks every still-`[open]` bullet in `final.md`, appends `- <location> — "<verbatim feedback>"` to `# Open questions` (creating the section before `# Cut material` if missing), and is idempotent against existing entries. This preserves the audit trail for un-applied work — without this step the bullets would be silently destroyed (they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries). Only then proceed to the strip below.
-   - **Remove every `Presenter feedback` field from `final.md`** at every level (Thesis, Agenda, Section, Slide), in all three syntactic forms (`### Presenter feedback` H3, `**Presenter feedback:**` paragraph, legacy `- **Presenter feedback:**` bullet). The audit trail is preserved as follows: every `[closed]` bullet was mirrored to [`feedback-backlog.md`](config/feedback-backlog.md) during Review; any remaining `[open]` bullets were just rescued into `# Open questions` by the rule above; `draft.md` still carries the full feedback log verbatim; and prior states live in git history.
+   <!-- ascii-note:
+   intent: linear input → output pipeline
+   emphasize: the arrow between the two boxes
+   -->
+   ```
+   If the slide had no `ascii-note`, the sidecar contains only the ASCII bytes — no trailing comment. If `.ascii` already exists with identical bytes, skip the write (don't touch mtime); if it differs, overwrite — the new ASCII + note in `final.md` is authoritative.
+
+   **(b) Consolidate image references into `images/`.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave it. For any other local path (a corpus-companion path like `knowledge/corpus/<source-stem>/images/<file>`, an external/absolute path, a path under `output/`, a sibling Talk folder), **copy** the source file into `talks/<Talk>/images/<basename>` (do not move — the original stays) and rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename. Remote URLs (`http://`, `https://`) are the only exception: leave them untouched in `final.md`; they will fail the Step 8 pre-render asset check unless the presenter manually downloads them first. After (b), `final.md` references **only** `images/...` paths or — at the presenter's risk for Step 8 — remote URLs. The Talk folder is now self-contained and movable.
+
+   **(c) Rescue remaining `[open]` feedback into `# Open questions`.** Delegate to [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) → `rescue-open --final talks/<Talk>/final.md`. The skill walks every still-`[open]` bullet in `final.md`, appends `- <location> — "<verbatim feedback>"` under `# Open questions` (creating the section before `# Cut material` if missing), and is idempotent against existing entries. This preserves un-applied work before (d) strips the `Presenter feedback` blocks — without (c) those `[open]` bullets would be silently destroyed (they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries). `draft.md` retains the full feedback log verbatim regardless.
+
+   **(d) Strip every `Presenter feedback` field from `final.md`** at every level (Thesis, Agenda, Section, Slide), in all three syntactic forms (`### Presenter feedback` H3, `**Presenter feedback:**` paragraph, legacy `- **Presenter feedback:**` bullet). The audit trail is preserved: every `[closed]` bullet was mirrored to [`feedback-backlog.md`](config/feedback-backlog.md) during Review; any remaining `[open]` bullets were just rescued into `# Open questions` by (c); `draft.md` still carries the full feedback log verbatim; and prior states live in git history.
 
    Goal: opening `final.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams (all served from a sibling `images/` folder), speaker notes. No working-meta fields visible. `draft.md` continues to read as the unredacted working file with the full feedback trail.
 
