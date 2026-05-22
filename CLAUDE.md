@@ -31,32 +31,21 @@ This repo is expected to be **forked once per subject** — a university course,
 
 ## Session start — mandatory loads
 
-Only one file is loaded eagerly at session start. Everything else is **read just-in-time at the step where it's needed**. The rule is: load only what you consult.
+Only [`config/profile.md`](config/profile.md) is loaded eagerly (presenter's global defaults — consumption mode, audience, language; schema: [`.claude/schemas/profile.md`](.claude/schemas/profile.md)). Everything else is **read just-in-time at the step where it's needed** — load only what you consult.
 
-| File | What it is | Behavior |
+| File | Read when | By whom |
 |---|---|---|
-| [`config/profile.md`](config/profile.md) | Presenter's filled-in global profile (consumption mode, audience defaults). Schema: [`.claude/schemas/profile.md`](.claude/schemas/profile.md). | Loaded at session start (small file, used everywhere). If filled, treat as global defaults for audience/tone/agenda — keep it in context when performing any role. If absent/empty, Step 0.5 offers to fill it. |
+| [`config/learnings.md`](config/learnings.md) | Step 7 entry | Orchestrator (read-only — Editor writes). |
+| [`config/principles.md`](config/principles.md) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/knowledge/corpus/**` | Each Step-4 drafting milestone | Composer role. |
+| [`config/image-styles/*.txt`](config/image-styles/) catalog | Step 6 (Polish) | Illustrator role picks a `template_name` per ASCII block (or `null`). |
+| [`config/image-styles/style.md`](config/image-styles/style.md) | Per `talksmith:ascii-to-svg` invocation | The skill (resolved via `repo_root`); Illustrator does **not** load it. |
+| [`knowledge-library/`](knowledge-library/) | Step 7 (Learnings) on promotion | Global-Librarian (sole writer). |
 
-**Lazy-loaded — orchestrator reads on demand:**
+The Composer in particular must not carry `principles.md` / `learnings.md` in context outside its review pass — load at review time to keep orchestrator context lean.
 
-| File | Read when | Used for |
-|---|---|---|
-| [`config/learnings.md`](config/learnings.md) (schema: [`.claude/schemas/learnings.md`](.claude/schemas/learnings.md)) | Entering Step 7 (Learnings) | Pattern promotion: scan existing entries to decide what to promote and to avoid duplicates. The **editor** performs the actual append on dispatch — the orchestrator never writes the file directly. |
+**File-format specs.** Every structured file format has a canonical schema in [`.claude/schemas/`](.claude/schemas/) (loading semantics, writer contract, *Canonical empty form*). Current: `draft.md` (per-Talk working file + how Step 6 derives `final.md`), `memory.md`, `profile.md`, `principles.md`, `learnings.md`, `feedback-backlog.md`, `feedback-processed.md`, `corpus-record.md`. Read the matching schema when interpreting or extending one of these files.
 
-**Lazy-loaded — read when performing the role:**
-
-| File | Role | Read when |
-|---|---|---|
-| [`config/principles.md`](config/principles.md) (schema: [`.claude/schemas/principles.md`](.claude/schemas/principles.md)) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/knowledge/corpus/**` | Composer | At each drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C). Returns a punch-list of critiques. |
-| [`config/image-styles/*.txt`](config/image-styles/) template catalog | Illustrator | Walks the catalog to pick a `template_name` per ASCII block. Step 6 (Polish). The `*.txt` catalog is open — pass `template_name: null` when no template fits. |
-| [`config/image-styles/style.md`](config/image-styles/style.md) | `talksmith:ascii-to-svg` skill | Resolved per-invocation via the `repo_root` input passed by the Illustrator. The closed style spec — every emitted SVG conforms. The Illustrator does **not** load this file; only the skill does. |
-| [`knowledge-library/`](knowledge-library/) (cross-Talk shared library) | Global-Librarian | Step 7 (Learnings) on promotion. Reads existing topic folders to decide between extend (overlap) and create (new territory); writes curated topic-organized MD + `images/` per topic. Sole writer to this tree. |
-
-Read these files from disk when entering the relevant role. The Composer role in particular should not have `principles.md` or `learnings.md` in context outside its review pass — load them at review time to keep orchestrator context lean across long sessions.
-
-**File-format specs.** Every file format with a non-trivial structure is documented as a schema in [`.claude/schemas/`](.claude/schemas/) — these are the canonical specs (loading semantics, writer contract, entry format) and each contains a *Canonical empty form* section that bootstrapping reads from. Current schemas: `draft.md` (per-Talk working file; the spec also describes how Step 6 derives `final.md` from it), `memory.md` (per-Talk progress log / resume point), `profile.md` (presenter profile), `principles.md` (design defaults), `learnings.md` (promoted rules), `feedback-backlog.md` (cross-Talk feedback log), `feedback-processed.md` (promoted-feedback archive), `corpus-record.md` (per-source records under `talks/<Talk>/knowledge/corpus/`). Read the matching schema whenever you need to interpret or extend one of these files — the data file holds entries; the schema holds the spec.
-
-**Corpus is the canonical interface for downstream roles.** The raw asset folders — `knowledge/articles/`, `knowledge/llm-chats/`, `knowledge/web/` — are **inputs to Step 3 only**. After the corpus is built, every role (Editor, Composer, Illustrator, Global-Librarian) references content exclusively through `knowledge/corpus/<source-stem>.md` records and their companion `knowledge/corpus/<source-stem>/images/` folders. Roles never reach back into the raw folders. This keeps the contract simple: the corpus is the queryable knowledge base; raw folders are dropoff zones.
+**Corpus is the canonical interface for downstream roles.** Raw asset folders (`knowledge/articles/`, `knowledge/llm-chats/`, `knowledge/web/`) are **inputs to Step 3 only**. After Step 3, every role (Editor, Composer, Illustrator, Global-Librarian) reads exclusively through `knowledge/corpus/<source-stem>.md` records and their companion `<source-stem>/images/` folders. Never reach back into raw folders.
 
 ## Interaction defaults
 
@@ -170,33 +159,29 @@ Tell the presenter the **four ways** to bring source material in, then **wait** 
 
 - **Drop files into `knowledge/articles/`** → PDFs, HTML exports, papers, article screenshots. Drag-and-drop or `cp`.
 - **Drop chat ZIPs into `knowledge/llm-chats/`** → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
-- **Hand me a URL to capture** → tell me a URL and I'll run the [`/talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill (invocable as the slash command `/talksmith:ingest <url>`) to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. The default folder name is a slugified `<URL-host>-<first-path-segment>` (canonical definition in [`fetch.py`](.claude/skills/ingest/fetch.py) — `_default_folder_name` + `_slugify`); override only if the presenter wants a more meaningful name. Useful for pages that are hard to save manually, JS-rendered articles where copy-paste is messy, or when you just want a snapshot pinned in the Talk folder. Pass me as many URLs as you want — one skill invocation per URL.
-- **Explore a topic live with me, right here** → say "let's explore X" (or similar) and we'll have a free-form back-and-forth in this chat: I push on ideas, generate explanations, sketch ASCII diagrams, surface counter-examples, whatever moves your thinking. When you're ready, say "ready" / "done exploring" / "drop it" and I'll capture the entire exploration verbatim — every presenter turn, every agent turn, every diagram and image generated during the exploration — into `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 onward the librarian treats it like any other chat-export transcript.
+- **Hand me a URL to capture** → invocable as the slash command `/talksmith:ingest <url>`. Runs the [`talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. Default folder-name is a slugified `<host>-<first-path-segment>`; override only on request. If the skill aborts with "folder exists", ask the presenter: *Re-fetch with `--force`* / *Skip — use existing* / *Use a different folder name* — never pass `--force` without explicit approval. After a forced re-fetch on a URL that had a prior corpus record, re-run the **Librarian** role on `web/<folder>/` with `force: true`. Report folder, page title, asset count.
+- **Explore a topic live with me, right here** → say "let's explore X" and we have a free-form back-and-forth in chat: I push ideas, draft ASCII diagrams, surface counter-examples. When you say "ready" / "done exploring" / "drop it", I capture the full exchange verbatim into `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 the librarian treats it like any other chat-export transcript.
 
-When the presenter offers a URL, invoke `talksmith:ingest` immediately with that URL and the active Talk path. Use the default folder-name unless the presenter specifies one. **If the skill aborts with "folder exists" (the URL was previously ingested),** stop and ask the presenter with options *Re-fetch with `--force` (overwrites existing capture)* / *Skip — use existing capture* / *Use a different folder name*. Never pass `--force` without explicit presenter approval. **When `--force` ran and Step 3 had previously built a corpus record for this URL's capture**, re-run the **Librarian** role with `force: true` on the affected `web/<folder>/` so the corpus record reflects the refreshed content. Report what got saved (folder, page title, asset count) and ask if they have more URLs or are ready for the file-drops to be processed.
+**Live exploration — rules while active:**
 
-**Live exploration capture — rules:**
-- Entering live exploration is presenter-triggered ("let's explore", "help me think through", "let's brainstorm", etc.). Confirm once that exploration mode is active and that everything from this point will be captured.
-- **Visual mode indicator (mandatory while exploring).** Two complementary cues, applied to every agent message emitted between entry and capture:
-  - **Entry banner** — first message after the trigger opens with a fenced block exactly:
-    ```
-    ▶ EXPLORATION MODE
-    topic: <topic>
-    capture trigger: "ready" / "done exploring" / "drop it"
-    ```
-  - **Per-turn prefix** — every subsequent agent message begins with the line `🔭 [exploring: <topic>]` on its own, followed by a blank line, then the actual response. No exceptions while the mode is active (including short clarifying replies).
-  - **Exit banner** — the message that confirms capture opens with a fenced block exactly:
-    ```
-    ■ EXPLORATION CAPTURED
-    file: knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md
-    messages: <N>
-    assets: <K>
-    ```
-    After this banner the per-turn prefix stops; subsequent messages return to normal Talksmith formatting.
-- During exploration, do not advance the Talksmith workflow. Stay in the topic. Push, question, generate examples, draft ASCII diagrams, surface tensions. Treat it as the presenter's pre-source-collection thinking session, not a slide-drafting session.
-- Capture trigger: the presenter says "ready" / "done exploring" / "drop it" / "capture it" / equivalent. When triggered, write **one** Markdown file to `talks/<Talk>/knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md` with frontmatter (`source_type: live-exploration`, `started_at`, `ended_at`, `topic`) followed by the full transcript: every presenter message and every agent message in order, verbatim, as fenced blocks (`### Presenter` / `### Agent`). Include every ASCII diagram inline; if any images were generated, save them alongside the transcript under `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>-assets/` and reference them by relative path. **Do not paraphrase the exploration** — losslessness is the rule, same as for any other source.
-- After writing the file, report the path, message count, and any image asset count, then ask whether the presenter wants to keep exploring (same topic or new), drop more sources via the other three channels, or move on to Step 3.
-- Multiple live explorations per Talk are allowed — each produces its own dated `explore-*.md` file.
+1. **Confirm entry once** when the presenter triggers ("let's explore", "help me think through", "brainstorm", etc.). Stay in the topic; do not advance the workflow.
+2. **Visual mode indicators (every agent message until capture):**
+   - First message opens with a fenced **entry banner**:
+     ```
+     ▶ EXPLORATION MODE
+     topic: <topic>
+     capture trigger: "ready" / "done exploring" / "drop it"
+     ```
+   - Every subsequent message begins with `🔭 [exploring: <topic>]` on its own line, blank line, then the response. No exceptions.
+   - The capture-confirming message opens with an **exit banner** (then the prefix stops):
+     ```
+     ■ EXPLORATION CAPTURED
+     file: knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md
+     messages: <N>
+     assets: <K>
+     ```
+3. **On capture**, write **one** file `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md` with frontmatter (`source_type: live-exploration`, `started_at`, `ended_at`, `topic`) and the full verbatim transcript as fenced `### Presenter` / `### Agent` blocks. Save any generated images under `explore-<topic-slug>-<YYYY-MM-DD>-assets/`. Do not paraphrase. Multiple explorations per Talk are allowed — each is its own dated file.
+4. **After capture**, report path / message count / asset count and ask whether to keep exploring, drop more sources, or move to Step 3.
 
 Do not proceed to Step 3 on your own.
 
@@ -204,22 +189,13 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Corpus
 
-**Before starting, brief the presenter in chat.** One short paragraph: what the corpus step is for (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/corpus/`, each with a companion `<source-stem>/images/` folder so the corpus is self-contained and every downstream step can query it without touching raw folders), what it touches (count the files in `knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` and name the count), and that it can take a while depending on volume — *"good moment for a coffee ☕"*. Then begin — do not wait for a reply, the brief is informational.
+**Brief the presenter first.** One short paragraph: what Step 3 does (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/corpus/`, each with a companion `<source-stem>/images/` folder), an explicit source breakdown + rough ETA (~15–30s per text source, ~5–10s per web capture; round to a 1-minute-wide range, e.g. *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min."*), and a coffee-break aside if the volume warrants it. The brief is informational — do not wait for a reply.
 
-**Upfront count + ETA — required.** The brief must include the source breakdown and a rough time estimate. Example wording: *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min expected."* Rough ETA heuristic: ~15–30s per text source (PDF, HTML, chat-export transcript), ~5–10s per web capture; round to a 1-minute-wide range.
+Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)) on every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, and every captured-page folder in `knowledge/web/`. Output: one record per source under `knowledge/corpus/` plus a sibling `<source-stem>/images/` companion folder. Per-record format: [`.claude/schemas/corpus-record.md`](.claude/schemas/corpus-record.md).
 
-For every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, **and every captured page folder in `knowledge/web/`**, emit one Markdown record under `knowledge/corpus/` (filename includes the original extension to avoid collisions — e.g. `paper.pdf.md`, `transcript.zip.md`, `arxiv-2401.web.md`) **plus a sibling companion folder** `knowledge/corpus/<source-stem>/images/` containing every image the source carried (extracted from ZIPs, copied verbatim from articles/web). The record's `## Images / diagrams` section references its companion images by relative path `<source-stem>/images/<file>` so the record and its assets travel together. Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)). The Librarian role runs in **two phases**:
+**Two phases.** Phase 1 (always) processes text sources end-to-end **and** copies/extracts every image byte to disk under its companion folder — only image *transcription* prose is deferred. Phase 1 returns `images_pending`. If non-empty, **ask the presenter** with a time warning (~10–30s per image): *Process now* (re-run with `process_images: true`) / *Skip — text only* / *Defer to later* (note in `memory.md`, re-prompt next session). Never silently process images.
 
-1. **Phase 1 (default):** process all text sources end-to-end (articles, PDFs, chat-export transcripts) **and** extract/copy every image file (`.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, embedded figures inside ZIPs) to disk under the source's companion folder. Defer only the **transcription** prose for those images — the bytes are always on disk after Phase 1. Phase 1 returns an `images_pending` list (one entry per image awaiting transcription).
-2. **Phase 2 (opt-in):** transcribe + describe every deferred image. Only runs when `process_images: true` is explicitly set.
-
-**Phase 1 always copies/extracts the image bytes** into the companion folder so the corpus is on disk and addressable, even before Phase 2 fills the prose. **Between phases**, if `images_pending` is non-empty, **ask the presenter** with a warning that image processing can take time: *"The librarian found N images (X figures from articles, Y from chat exports). Image processing requires per-image transcription and description and can be slow (~10–30s each). Process now, defer to later, or skip?"* Options: *Process now* (re-run Librarian role with `process_images: true`) / *Skip — text only* (Phase 2 never runs for this Talk) / *Defer to later* (mark in `memory.md`, prompt presenter again at the start of the next session). Never silently process images.
-
-**Rule: lossless restructuring.** Do not compress, do not summarize aggressively. For chat exports specifically: surface contradictions, abandoned threads, points where direction changed — don't condense.
-
-Per-file format spec (filename convention, `source_type` enum, companion-folder layout, pending markers, canonical empty form): [`.claude/schemas/corpus-record.md`](.claude/schemas/corpus-record.md). The librarian writes each corpus record using the schema's canonical empty form verbatim.
-
-Report file count when done; flag anything unparseable.
+**Rule: lossless restructuring.** Do not compress. For chat exports specifically: surface contradictions, abandoned threads, points where direction changed. Report file count when done; flag anything unparseable.
 
 ---
 
@@ -247,34 +223,17 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 | **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `draft.md` end-to-end from `knowledge/corpus/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
 | **C — Presenter Outline** | Presenter brain-dumps; Editor role structures; Composer role reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Perform **Editor** role to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from the corpus. 3. Perform **Composer** review (scope=`full`). 4. For each `[blocker]` and `[major]` item: perform **Editor** role. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
 
-**Question budget per mode:**
-
-- **A** (Interview) — unlimited; the agent drives the Q&A.
-- **B** (Agent Draft) — critical only. *Critical = the draft cannot proceed coherently without this answer.* Everything else: draft a best-guess and let the presenter correct it via Step-5 (Review) feedback bullets.
-- **C** (Presenter Outline) — **critical only, ideally zero.** Same definition as B. The brain-dump *is* the input; the agent's job is to structure and fill, not to re-interrogate the presenter. Defer ordering preferences, slide-title wording, keep/cut decisions, framing nuances, etc. to Step 5 Review where the presenter edits `draft.md` directly.
-
-**What counts as "critical":**
-- Required field can't be inferred (e.g. duration is missing and the profile has no default).
-- Two interpretations of the brain-dump lead to **structurally incompatible** drafts (not just different wording).
-- A slide is anchored on a corpus record that flatly contradicts another, and the resolution changes the slide's thesis.
-
-**What does NOT count as critical** (defer to async feedback):
-- Section ordering preferences.
-- Slide-title wording.
-- Whether to keep a slide that has no supporting source — draft it with a `TODO source` placeholder and let the presenter cut or fill in Step 5.
-- Tone, emoji density, level of formality.
-- Choice between two plausible visual idioms for the same concept.
+**Question budget per mode.** Mode A is unlimited (the agent drives the Q&A). Modes B and C are **critical-only** — *critical* = the draft can't proceed coherently without the answer (a required field can't be inferred, or two interpretations of the input lead to structurally incompatible drafts, or a slide's thesis hinges on resolving a flat contradiction between corpus records). Everything else — ordering, slide-title wording, keep/cut decisions, tone, visual idiom — is deferred to Step 5 Review where the presenter edits `draft.md` directly. In Mode C the budget is ideally zero: the brain-dump *is* the input.
 
 **Common to all modes:**
 
-- **Cite sources by filename** when proposing content (e.g. `corpus/transformer-paper.pdf.md`, *Key claims*).
-- **Surface Step-3 inconsistencies** when relevant to a slide.
-- **Show diffs/affected sections** after each round so the presenter can confirm.
-- **Move dropped content to `Cut material`** instead of deleting.
-- **Record the chosen mode in `memory.md`** so resume continues in the same mode.
-- **Apply design principles via the Composer role.** Read `config/principles.md` and `config/learnings.md` when entering the Composer role — they are not in orchestrator context between role passes. Perform a Composer review at each drafting milestone: in Mode A, after the thesis is set, after the agenda is set, and after each section is filled; in Modes B/C, once after the Editor role ships its full draft. Surface the punch-list to the presenter by asking them (Mode A) or apply it via the Editor role before showing the draft (Modes B/C). The Editor role itself does **not** load `principles.md` at any step, and does **not** load `learnings.md` outside Step 7 — it is the muscle, not the brain. (Step 7 is the one exception: the Editor role reads `learnings.md` and `feedback-processed.md` to avoid duplicate appends when promoting a pattern. See Step 7.)
-- **Role transition contract — Editor after Composer.** When performing the Editor role to apply a Composer punch-list item, have ready: (a) the Talk path, (b) the verbatim punch-list entry — slide location, rule cited, issue, suggested fix — copied from the Composer's report, and (c) any presenter input collected by asking the presenter if the item was tagged `[needs-presenter-input]`. Apply the fix mechanically; do not re-interpret the critique. One Editor pass per item keeps changes small and the trail auditable.
-- **Hand the floor back** after each substantive change. Remind presenter they can (a) edit `draft.md` directly with `- "..."` feedback bullets, or (b) reply in chat. **Do not advance to Step 5 until they explicitly say "ready" / "done" / "move to review" / "looks good".**
+- Cite sources by filename when proposing content (e.g. `corpus/transformer-paper.pdf.md`, *Key claims*).
+- Surface Step-3 inconsistencies when relevant to a slide.
+- Show diffs / affected sections after each round so the presenter can confirm.
+- Move dropped content to `Cut material` instead of deleting.
+- Record the chosen mode in `memory.md` so resume continues in the same mode.
+- **Apply design principles via the Composer role.** The Composer reads `config/principles.md` and `config/learnings.md` at entry to each review (Mode A: after thesis, agenda, each section; Modes B/C: once after the full draft). Surface its punch-list to the presenter (Mode A) or apply via Editor before showing the draft (B/C). The Editor never loads `principles.md`, and only loads `learnings.md` in Step 7. Full contract: [`.claude/roles/composer.md`](.claude/roles/composer.md), [`.claude/roles/editor.md`](.claude/roles/editor.md).
+- **Hand the floor back** after each substantive change. Remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Do not advance to Step 5 until they explicitly say "ready" / "done" / "move to review" / "looks good".
 
 ---
 
@@ -302,53 +261,20 @@ When the presenter declares `draft.md` final ("ready" / "done" / "looks good" / 
 
 ## Step 6 — Polish *(mandatory, runs on Review approval)*
 
-Triggered the moment the presenter declares `draft.md` final. Runs end-to-end without prompts. Goal: produce the readable deliverable on disk (`final.md` + rendered SVGs) **without ever mutating `draft.md`** — so Step 6 stays re-runnable.
+Triggered the moment the presenter declares `draft.md` final. Runs end-to-end without prompts. Goal: produce the deliverable on disk (`final.md` + rendered SVGs) **without ever mutating `draft.md`** — so Step 6 stays re-runnable.
 
-0. **Copy `draft.md` → `final.md`.** Verbatim byte copy. If `final.md` already exists (re-running Step 6), overwrite it — `draft.md` is authoritative; `final.md` is always a derived artifact. Use `cp talks/<Talk>/draft.md talks/<Talk>/final.md`. **From this point on in Step 6, every read and write targets `final.md`. `draft.md` is read-only for the rest of the workflow.**
+0. **Copy `draft.md` → `final.md`.** Verbatim byte copy (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`). Overwrite if `final.md` already exists. From here on, every Step-6 read/write targets `final.md`; `draft.md` is read-only for the rest of the workflow.
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). Walk `final.md`, load the [`config/image-styles/*.txt`](config/image-styles/) template catalog, extract per-slide context for every fenced ASCII block, and invoke the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — the skill writes one SVG to `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (descriptive slug appended per the illustrator's filename convention — see [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) → *Output filename convention*). Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). It walks `final.md`, picks templates from [`config/image-styles/*.txt`](config/image-styles/), and dispatches the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
 
-2. **Clean `final.md`.** Perform the **Editor** role (spec: [`.claude/roles/editor.md`](.claude/roles/editor.md)). Four transformations — apply (a), (b), (c) in any order among themselves; (d) **last**. Transformation (a) is mechanical and is delegated to the [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) skill — five stages: `scan` → illustrator annotation (per-block `render: {svg_basename, alt}`) → `extract` (sidecars) → per-sidecar `talksmith:ascii-to-svg` render → `cleanup` (rewrite fences in `final.md`). Do not re-implement its parsing or line-rewriting inline. The legacy `apply` subcommand (sidecars + cleanup in one pass) exists for quick out-of-band re-renders; the staged flow is canonical.
+2. **Clean `final.md`.** Perform the **Editor** role (full spec: [`.claude/roles/editor.md`](.claude/roles/editor.md) → *Step 6 — produce `final.md`*). Four transformations on `final.md`; (a), (b), (c) in any order, (d) **last** (it depends on (c) having read the still-`[open]` bullets):
 
-   **(a) Inline rendered ASCII blocks as SVG references.** Applies only to ASCII blocks in slides that have **no** Markdown image reference. If a slide already carries a `![alt](path)` image reference (the editor chose an existing corpus image at Step 4), any ASCII block in that same slide is **documentation only** — visual aid for whoever reads the source — and is **skipped** by every Step-6 stage: no render, no sidecar, no fence rewrite. The image link wins; the ASCII stays in place verbatim. (Transformation (b) below still consolidates the image link itself as usual.)
+   - **(a) Inline rendered ASCII blocks as SVG references** — delegated to [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) (`scan` → illustrator annotates → `extract` sidecars → render → `cleanup` fences). Only ASCII blocks in slides without a Markdown image ref are render-driving; ASCII in slides that already carry an image link is documentation-only and bypassed. The `<!-- ascii-note: ... -->` HTML comment after each fence (if present) is preserved as documentation and copied into the sidecar.
+   - **(b) Consolidate image references into `images/`** — every `![alt](path)` whose path is not already `images/<file>` gets the source file copied into `talks/<Talk>/images/<basename>` and the reference rewritten. Remote URLs are the only exception (left in place; will fail the Step 8 asset check if not manually downloaded).
+   - **(c) Rescue remaining `[open]` feedback** — delegate to [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) → `rescue-open --final talks/<Talk>/final.md`. Appends each `[open]` bullet to `# Open questions` in `final.md` (idempotent). Without this, `[open]` bullets would be silently destroyed by (d) — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
+   - **(d) Strip every `Presenter feedback` field from `final.md`** at every level (H3, paragraph, legacy bullet). The audit trail survives in `feedback-backlog.md` (`[closed]` mirrored during Step 5), in `final.md`'s `# Open questions` (rescued by (c)), and in `draft.md` (unredacted, frozen, verbatim).
 
-   For each render-driving ASCII block, the [`talksmith:polish-ascii`](.claude/skills/polish-ascii/SKILL.md) skill:
-   1. Captures any post-fence `<!-- ascii-note: ... -->` HTML comment (within one blank-line tolerance) verbatim. This goes into the sidecar below.
-   2. Replaces the ASCII fence with `![<alt from slide title>](images/<slide-id>-<n>-<short-description>.svg)` followed by a `<!-- ascii-source: ... -->` echo so the diagram can be regenerated from `final.md` alone.
-   3. Writes a sidecar `.ascii` file at `images/<slide-id>-<n>-<short-description>.ascii` containing the ASCII source plus the captured `ascii-note` (when one was present). The sidecar makes the source recoverable even if the comment is later stripped, diffs cleanly under git, and turns `images/` into a self-contained record of every diagram in three representations: rendered SVG, ASCII source, render-time intent.
-   4. Leaves the post-fence `<!-- ascii-note: ... -->` in `final.md` in place after the replacement — it sits directly below the `<!-- ascii-source: ... -->` echo and continues to document intent for future re-renders. The (d) strip targets `Presenter feedback` only, not `ascii-note`.
-
-   `draft.md` is untouched throughout — the ASCII fence and any `ascii-note` continue to live verbatim in `draft.md` so a fresh re-run of Step 6 starts from the same source.
-
-   Example after Polish — `final.md`:
-   ```markdown
-   ![Input → output pipeline](images/s1-2-1.svg)
-   <!-- ascii-source:
-   +-----+      +-----+
-   | in  | -->  | out |
-   +-----+      +-----+
-   -->
-   ```
-   …and `talks/<Talk>/images/s1-2-1.ascii`:
-   ```
-   +-----+      +-----+
-   | in  | -->  | out |
-   +-----+      +-----+
-
-   <!-- ascii-note:
-   intent: linear input → output pipeline
-   emphasize: the arrow between the two boxes
-   -->
-   ```
-   If the slide had no `ascii-note`, the sidecar contains only the ASCII bytes — no trailing comment. If `.ascii` already exists with identical bytes, skip the write (don't touch mtime); if it differs, overwrite — the new ASCII + note in `final.md` is authoritative.
-
-   **(b) Consolidate image references into `images/`.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave it. For any other local path (a corpus-companion path like `knowledge/corpus/<source-stem>/images/<file>`, an external/absolute path, a path under `output/`, a sibling Talk folder), **copy** the source file into `talks/<Talk>/images/<basename>` (do not move — the original stays) and rewrite the reference to `images/<basename>`. On filename collision with different content, append `-2`, `-3`, … to the basename. Remote URLs (`http://`, `https://`) are the only exception: leave them untouched in `final.md`; they will fail the Step 8 pre-render asset check unless the presenter manually downloads them first. After (b), `final.md` references **only** `images/...` paths or — at the presenter's risk for Step 8 — remote URLs. The Talk folder is now self-contained and movable.
-
-   **(c) Rescue remaining `[open]` feedback into `# Open questions`.** Delegate to [`talksmith:feedback-cycle`](.claude/skills/feedback-cycle/SKILL.md) → `rescue-open --final talks/<Talk>/final.md`. The skill walks every still-`[open]` bullet in `final.md`, appends `- <location> — "<verbatim feedback>"` under `# Open questions` (creating the section before `# Cut material` if missing), and is idempotent against existing entries. This preserves un-applied work before (d) strips the `Presenter feedback` blocks — without (c) those `[open]` bullets would be silently destroyed (they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries). `draft.md` retains the full feedback log verbatim regardless.
-
-   **(d) Strip every `Presenter feedback` field from `final.md`** at every level (Thesis, Agenda, Section, Slide), in all three syntactic forms (`### Presenter feedback` H3, `**Presenter feedback:**` paragraph, legacy `- **Presenter feedback:**` bullet). The audit trail is preserved: every `[closed]` bullet was mirrored to [`feedback-backlog.md`](config/feedback-backlog.md) during Review; any remaining `[open]` bullets were just rescued into `# Open questions` by (c); `draft.md` still carries the full feedback log verbatim; and prior states live in git history.
-
-   Goal: opening `final.md` in any Markdown editor reads as the finished deliverable — title, frontmatter, thesis, agenda, sections with inline diagrams (all served from a sibling `images/` folder), speaker notes. No working-meta fields visible. `draft.md` continues to read as the unredacted working file with the full feedback trail.
+   Goal: `final.md` reads as the finished deliverable — no working-meta fields visible. `draft.md` continues to read as the unredacted working file with the full feedback trail.
 
 Update `memory.md` with `**Current step:** 6 — Polish complete`. Proceed to Step 7 automatically.
 
