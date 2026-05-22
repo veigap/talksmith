@@ -43,7 +43,11 @@ talks/<Talk>/
 │   └── ...
 └── output/
     ├── final.pptx               # this skill writes via skill://antropic-skills:/pptx
-    └── final.intermediate.md    # transient pre-processed file (produced by convert.py)
+    ├── final.intermediate.md    # transient pre-processed file (produced by convert.py)
+    └── .critique/               # critique-only slide previews (git-ignored)
+        ├── slide-01.png
+        ├── slide-02.png
+        └── ...
 ```
 
 ## Process

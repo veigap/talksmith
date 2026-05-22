@@ -62,8 +62,19 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
 
-7. **Return** a one-line report:
-   - On success: `rendered: <output_path> · directives_applied: <count> · deviations: <none|description>`
+7. **Rasterize a critique-companion PNG.** Render the SVG to a PNG sibling at `<output_path parent>/.critique/<basename>.png` (create `.critique/` if missing). This PNG is **not** referenced from `final.md` and is **not** consumed by Step 8 — it exists solely so the illustrator role can perform visual analysis on rasterized pixels in step 5b of its loop (XML inspection of an SVG is not a substitute for visual critique).
+
+   Use `qlmanage` (built into macOS, zero install):
+
+   ```bash
+   qlmanage -t -s 1600 -o <parent>/.critique/ <output_path>
+   mv <parent>/.critique/<basename>.svg.png <parent>/.critique/<basename>.png
+   ```
+
+   `qlmanage` writes the thumbnail as `<input-filename>.png` (it appends `.png` rather than replacing `.svg`), so the `mv` normalizes the basename. If `qlmanage` exits non-zero or the resulting PNG is missing / 0-byte, still report the SVG as `rendered` but add `png_companion: failed` to the report — a missing PNG degrades critique fidelity but doesn't invalidate the render. Never delete the SVG because the PNG step failed.
+
+8. **Return** a one-line report:
+   - On success: `rendered: <output_path> · png_companion: <path|failed> · directives_applied: <count> · deviations: <none|description>`
    - On skip: `skipped: <reason>`
    - On failure: `failed: <reason>` — and do **not** write a broken SVG.
 
