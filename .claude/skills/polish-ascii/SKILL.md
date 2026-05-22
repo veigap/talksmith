@@ -1,6 +1,6 @@
 ---
 name: talksmith:polish-ascii
-description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block plus any `<!-- ascii-note: ... -->` HTML comment that follows it, with exact line ranges for both. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
+description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block, any `<!-- ascii-note: ... -->` HTML comment that follows it (with exact line ranges for both), **and per-block slide context** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) so callers — including parallel-render subagents — never need to re-parse `final.md` themselves. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:polish-ascii — Mechanical ASCII extraction + final.md rewrite
@@ -11,10 +11,10 @@ The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per bloc
 
 **Canonical Step 6 sequence** (matches the editor + illustrator role specs):
 
-1. **`scan`** — read `final.md`, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges.
-2. **Illustrator slug pass** — illustrator annotates each block in the plan with `render.svg_basename` (kebab-case slug from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)) and `render.alt`.
+1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
+2. **Illustrator annotation pass** — judgement-only: illustrator adds `render: {svg_basename, alt, template_name}` per block (slug derived from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)). Context fields are already populated by `scan`; the illustrator does not extract them.
 3. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
-4. **Per-sidecar render** — illustrator iterates the sidecars and invokes [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). Each invocation reads the sidecar, splits source from note, and writes the sibling `.svg`. The sidecar is the renderer's authoritative input.
+4. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the plan JSON (no `final.md` re-parse). Easily parallelizable across subagents.
 5. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
 A single-pass `apply` subcommand exists for quick passes (does steps 3 + 5 together, skipping the per-sidecar render in step 4 — useful when you've already rendered SVGs separately and just want to finish the cleanup).
@@ -32,6 +32,7 @@ A single-pass `apply` subcommand exists for quick passes (does steps 3 + 5 toget
 |---|---|---|
 | `final_path` | yes | Positional. Path to the Talk's `final.md`. |
 | `--format` | optional | `json` (default) or `human` |
+| `--language` | optional | Presentation language (e.g. `Spanish`). When provided, stamped into each block's `context.presentation_language` so the caller doesn't need to splice it in post-hoc. |
 
 ### `extract` / `cleanup` / `apply`
 
@@ -51,14 +52,28 @@ The plan JSON has this shape:
       "slide_id": "s1-2-1",
       "ascii": {"start_line": 84, "end_line": 101, "payload": "<verbatim>"},
       "note": {"start_line": 102, "end_line": 106, "payload": "<!-- ascii-note: ... -->"},
+      "context": {
+        "slide_title": "Cuatro señales 1D",
+        "slide_content_prose": "Audio, ECG, accelerometer, EEG ...",
+        "speaker_notes": "Pause for ~10 seconds before clicking ...",
+        "section_title": "Foundations",
+        "section_goal": "Establish the vocabulary the audience needs ...",
+        "talk_thesis": "**Claim:** Signals are interesting. **Why it matters:** ...",
+        "presentation_language": "Spanish"
+      },
       "render": {
         "svg_basename": "s1-2-1-cuatro-senales.svg",
-        "alt": "Cuatro señales 1D"
+        "alt": "Cuatro señales 1D",
+        "template_name": "stack-signals"
       }
     }
   ]
 }
 ```
+
+`context` is emitted by `scan` automatically — derived mechanically from `final.md`'s structure (nearest H2 above the block = `slide_title`; nearest H1 above = `section_title`; `**Goal of this section:**` line under the H1 = `section_goal`; `### Content` and `### Speaker notes` bodies inside the slide; `# Thesis` block at top of file). Fenced code blocks, HTML comments, and `---` horizontal rules are stripped from prose. `presentation_language` is present only when the caller passes `--language`.
+
+`render` is added by the illustrator (judgement: template choice, slug, alt) before `extract` / `cleanup` / `apply` is invoked.
 
 A block with `"render": null` is skipped (not rewritten, no sidecar).
 
@@ -92,6 +107,15 @@ python3 .claude/skills/polish-ascii/polish_ascii.py apply --final talks/<Talk>/f
       "slide_id": "s1-2-1",
       "ascii": {"start_line": 84, "end_line": 101, "payload": "[gray]  Audio …"},
       "note": {"start_line": 102, "end_line": 106, "payload": "<!-- ascii-note:\nintent: …\n-->"},
+      "context": {
+        "slide_title": "Cuatro señales 1D",
+        "slide_content_prose": "...",
+        "speaker_notes": "...",
+        "section_title": "Foundations",
+        "section_goal": "...",
+        "talk_thesis": "**Claim:** ...",
+        "presentation_language": "Spanish"
+      },
       "render": null
     }
   ]

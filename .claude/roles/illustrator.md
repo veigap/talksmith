@@ -12,31 +12,21 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 
 ## The loop
 
-1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/final.md` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges.
-2. **Per-block annotation.** For each block in the scan output **whose `documentation_only` is `false`**, extract the surrounding slide context (see *Per-block context extraction* below), pick the `svg_basename` slug per the *Output filename convention*, and pick the matching `template_name` from the `config/image-styles/*.txt` catalog (or `null`). Write `render: {svg_basename, alt}` back into the block. Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract`/`cleanup` will then skip them mechanically, and step 4 below will find no sidecar to dispatch.
-3. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block (doc-only blocks are skipped by the skill). `final.md` is **not** modified at this step.
-4. **Render per sidecar — the core dispatch loop.** Iterate the list of just-written `.ascii` files (doc-only blocks have no sidecar, so the iteration is naturally filtered). For each:
-   - Invoke `talksmith:ascii-to-svg` in **Mode B** (`ascii_file: <absolute path to the .ascii>`) with the per-block context bundle (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`, `template_name`, `repo_root`). The skill reads the sidecar, splits ASCII source from `ascii-note`, and writes the sibling `.svg`.
-   - One sidecar → one skill invocation → one SVG. Never bundle multiple blocks per call.
+1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/final.md --language <profile language>` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`) extracted mechanically. The illustrator never re-parses `final.md` for context.
+2. **Per-block annotation (judgement-only).** For each block in the scan output **whose `documentation_only` is `false`**, write `render: {svg_basename, alt, template_name}` back into the block:
+   - `svg_basename` — kebab-case slug per the *Output filename convention* below (derived from `ascii-note → intent`, then `context.slide_title`, then `### Content` heading — all of which are now in the plan).
+   - `alt` — short caption for the Markdown image reference.
+   - `template_name` — pick from the `config/image-styles/*.txt` catalog (or `null` for a custom shape).
+
+   Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract` / `cleanup` skip them automatically.
+3. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block. `final.md` is **not** modified at this step.
+4. **Render per sidecar — the core dispatch loop.** For each sidecar, invoke [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) in **Mode B** (`ascii_file: <abs path>`) with the corresponding plan block's `context` bundle (passed straight through — no extraction), plus `template_name` and `repo_root`. The skill reads ASCII source + note from the sidecar; the bundle supplies the slide context. One sidecar → one invocation → one SVG. Trivially parallelizable: dispatch all 21 to a subagent without further parsing.
 5. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
 6. Aggregate per-block render results for the final report.
 
-Do not modify `final.md` — `polish-ascii cleanup` does (driven by the editor). Do not modify `draft.md` — it is read-only from Step 6 onward. Do not emit SVG XML — `ascii-to-svg` does that. Do not parse `final.md` by hand for ASCII blocks — `polish-ascii scan` is the single source of line ranges.
+Do not modify `final.md` — `polish-ascii cleanup` does (driven by the editor). Do not modify `draft.md` — it is read-only from Step 6 onward. Do not emit SVG XML — `ascii-to-svg` does that. Do not parse `final.md` by hand for ASCII blocks or for slide context — `polish-ascii scan` is the single source of both.
 
-## Per-block context extraction
-
-Pull from `final.md` before invoking the skill:
-
-| Field | Source |
-|---|---|
-| `slide_title` | H2 heading (prefix-stripped) |
-| `slide_content_prose` | `### Content` body around the block |
-| `speaker_notes` | `### Speaker notes` body |
-| `section_title` + `section_goal` | H1 heading + `**Goal of this section:**` line |
-| `talk_thesis` | `# Thesis` block |
-| `presentation_language` | profile context |
-
-If `### Content` and/or `### Speaker notes` are empty (common in early drafts), invoke the skill anyway with empty strings. The skill handles sparse context. Surface these in the report as `sparse-context: <slide-id>`.
+If `context.slide_content_prose` or `context.speaker_notes` come back empty (common in early drafts), pass through to the skill as empty strings — the skill handles sparse context. Flag affected blocks in the report as `sparse-context: <slide-id>`.
 
 ## Operating principles
 

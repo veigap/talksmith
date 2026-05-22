@@ -43,7 +43,161 @@ def is_ascii_payload(payload: str) -> bool:
     return payload.count("\n") >= 2
 
 
-def scan(final_path: Path) -> dict[str, Any]:
+# ── per-block context extraction ────────────────────────────────────────────
+
+_H3 = re.compile(r"^###\s+(.+?)\s*$")
+_GOAL_LINE = re.compile(r"^\*\*Goal of this section:\*\*\s*(.*)$")
+_H1_NUMBERED_STRIP = re.compile(r"^#\s+\d+\.\s*")
+_H2_NUMBERED_STRIP = re.compile(r"^##\s+\d+\.\s*")
+_H1_PLAIN_STRIP = re.compile(r"^#\s+")
+_INLINE_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _strip_prose(body_lines: list[str]) -> str:
+    """Return body text with fenced code blocks, HTML comments, and `---` horizontal rules removed."""
+    if not body_lines:
+        return ""
+    text = "\n".join(body_lines)
+    # Strip single-line and multi-line HTML comments first (handles nested ascii-source / ascii-note echoes).
+    text = _INLINE_COMMENT.sub("", text)
+    # Strip fenced code blocks (any language) and horizontal rules.
+    out_lines: list[str] = []
+    in_fence = False
+    for ln in text.splitlines():
+        if FENCE_OPEN.match(ln) or FENCE_CLOSE.match(ln):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if ln.strip() in ("---", "***", "___"):
+            continue
+        out_lines.append(ln)
+    return "\n".join(out_lines).strip()
+
+
+def _extract_thesis(lines: list[str]) -> str:
+    """Body of the `# Thesis` block (Claim + Why it matters paragraphs), stripped."""
+    body: list[str] = []
+    in_thesis = False
+    for ln in lines:
+        if ln.startswith("# ") and not ln.startswith("## "):
+            if ln.strip().lower().startswith("# thesis"):
+                in_thesis = True
+                continue
+            if in_thesis:
+                break
+        if in_thesis:
+            body.append(ln)
+    return _strip_prose(body)
+
+
+def _strip_h1(line: str) -> str:
+    if H1_AGENDA.match(line):
+        return "Agenda"
+    if H1_CONCL.match(line):
+        return _H1_PLAIN_STRIP.sub("", line).strip()
+    return _H1_NUMBERED_STRIP.sub("", line).strip()
+
+
+def _strip_h2(line: str) -> str:
+    return _H2_NUMBERED_STRIP.sub("", line).strip()
+
+
+def _is_section_heading(ln: str) -> bool:
+    return bool(H1_SECTION.match(ln) or H1_AGENDA.match(ln) or H1_CONCL.match(ln))
+
+
+def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str, str]:
+    """Walk back from the ASCII block (1-based line) to gather slide + section context."""
+    start_idx = ascii_start_line - 1  # 0-based
+
+    # Walk back to find the most recent H2 (slide), then the most recent section H1.
+    slide_idx = -1
+    section_idx = -1
+    for i in range(start_idx - 1, -1, -1):
+        ln = lines[i]
+        if slide_idx < 0 and H2_SLIDE.match(ln):
+            slide_idx = i
+            continue
+        if _is_section_heading(ln):
+            section_idx = i
+            break
+
+    slide_title = _strip_h2(lines[slide_idx]) if slide_idx >= 0 else ""
+    section_title = _strip_h1(lines[section_idx]) if section_idx >= 0 else ""
+
+    # section_goal: scan lines between section heading and the first H2 inside the section.
+    section_goal = ""
+    if section_idx >= 0:
+        end_idx = slide_idx if slide_idx >= 0 else len(lines)
+        # If no slide above us, scan to next H2 or H1 below the section heading.
+        if slide_idx < 0:
+            for j in range(section_idx + 1, len(lines)):
+                if H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j]):
+                    end_idx = j
+                    break
+        for j in range(section_idx + 1, end_idx):
+            m = _GOAL_LINE.match(lines[j])
+            if not m:
+                continue
+            goal_text = m.group(1).strip()
+            # If the goal continues on subsequent lines, accumulate until a blank line / structural marker.
+            if not goal_text:
+                continuation: list[str] = []
+                for k in range(j + 1, end_idx):
+                    nxt = lines[k]
+                    if not nxt.strip():
+                        if continuation:
+                            break
+                        continue
+                    if nxt.startswith("**") or nxt.startswith("#") or nxt.strip() == "---":
+                        break
+                    continuation.append(nxt.strip())
+                section_goal = " ".join(continuation).strip()
+            else:
+                section_goal = goal_text
+            break
+
+    # slide body: from the H2 line up to the next H2 / H1.
+    slide_content_prose = ""
+    speaker_notes = ""
+    if slide_idx >= 0:
+        slide_end = len(lines)
+        for j in range(slide_idx + 1, len(lines)):
+            if H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j]):
+                slide_end = j
+                break
+        # Walk H3 fields within the slide.
+        j = slide_idx + 1
+        while j < slide_end:
+            m = _H3.match(lines[j])
+            if not m:
+                j += 1
+                continue
+            h3_title = m.group(1).strip().lower()
+            body_start = j + 1
+            body_end = slide_end
+            for k in range(j + 1, slide_end):
+                if _H3.match(lines[k]):
+                    body_end = k
+                    break
+            body = lines[body_start:body_end]
+            if h3_title == "content":
+                slide_content_prose = _strip_prose(body)
+            elif h3_title in ("speaker notes", "notes"):
+                speaker_notes = _strip_prose(body)
+            j = body_end
+
+    return {
+        "slide_title": slide_title,
+        "section_title": section_title,
+        "section_goal": section_goal,
+        "slide_content_prose": slide_content_prose,
+        "speaker_notes": speaker_notes,
+    }
+
+
+def scan(final_path: Path, presentation_language: str | None = None) -> dict[str, Any]:
     text = final_path.read_text()
     lines = text.splitlines()
 
@@ -142,6 +296,16 @@ def scan(final_path: Path) -> dict[str, Any]:
         i += 1
 
     _annotate_documentation_only(lines, blocks)
+
+    # Per-block context (mechanical extraction so callers don't re-parse final.md per render).
+    thesis = _extract_thesis(lines)
+    for b in blocks:
+        ctx = _extract_block_context(lines, b["ascii"]["start_line"])
+        ctx["talk_thesis"] = thesis
+        if presentation_language:
+            ctx["presentation_language"] = presentation_language
+        b["context"] = ctx
+
     return {"final_path": str(final_path), "blocks": blocks}
 
 
@@ -205,7 +369,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
     if not final_path.exists():
         print(f"error: final.md not found: {final_path}", file=sys.stderr)
         return 2
-    result = scan(final_path)
+    result = scan(final_path, presentation_language=args.language)
     if args.format == "human":
         legacy_count = sum(1 for b in result["blocks"] if b.get("detection_mode") == "legacy-heuristic")
         doc_only_count = sum(1 for b in result["blocks"] if b.get("documentation_only"))
@@ -397,9 +561,10 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="polish_ascii", description="Step 6 ASCII extractor / final.md rewriter for Talksmith.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_scan = sub.add_parser("scan", help="emit JSON describing every ASCII block + ascii-note in a Talk's final.md")
+    p_scan = sub.add_parser("scan", help="emit JSON describing every ASCII block + ascii-note + per-block context in a Talk's final.md")
     p_scan.add_argument("final_path", help="path to the Talk's final.md (the Step-6 derived file)")
     p_scan.add_argument("--format", choices=["json", "human"], default="json")
+    p_scan.add_argument("--language", help="presentation language (e.g. 'Spanish'); stamped into each block's context.presentation_language so the caller doesn't need to add it post-hoc")
     p_scan.set_defaults(func=cmd_scan)
 
     def _add_plan_args(p: argparse.ArgumentParser) -> None:

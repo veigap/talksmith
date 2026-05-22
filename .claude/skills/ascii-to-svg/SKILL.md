@@ -9,13 +9,13 @@ This skill renders **a single** ASCII diagram to **a single** SVG file. It is in
 
 | | Caller (`illustrator` role) does | This skill does |
 |---|---|---|
-| 1 | Walk `final.md`, find fenced ASCII blocks | — |
-| 2 | Per block, extract slide context (title, content prose, notes, section goal, language) | — |
-| 3 | Decide the output filename `<slide-id>-<n>-<short-description>.svg` (illustrator computes the kebab-case description slug — see `.claude/roles/illustrator.md` → *Output filename convention*) | — |
+| 1 | Invoke [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `scan` once; the scan output enumerates every fenced ASCII block **and** carries each block's pre-extracted slide context (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) | — |
+| 2 | Pick the output filename `<slide-id>-<n>-<short-description>.svg` (kebab-case slug — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md) → *Output filename convention*) and the `template_name` (from [`config/image-styles/*.txt`](../../../config/image-styles/) or `null`) | — |
+| 3 | Pass through the scan's `context` bundle + chosen `template_name` + `repo_root` + sidecar path | — |
 | 4 | — | **Render the SVG for that one block** |
 | 5 | Aggregate results, report rendered/unchanged/failed counts | — |
 
-The agent is the coordinator; this skill is the worker. One invocation = one SVG file.
+The agent is the coordinator; this skill is the worker. One invocation = one SVG file. The caller never re-parses `final.md` — every context field comes from the scan bundle. This makes the dispatch trivially parallelizable across subagents.
 
 ## Caller contract
 
