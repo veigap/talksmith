@@ -39,16 +39,18 @@ If you present on three subjects, that's three forks. Mixing subjects in one rep
 
 The skill exposes two operations:
 
-- **`diff`** — read-only inventory of what would change in your fork: files to create, files to modify.
-- **`apply`** — performs the copy after a confirmation prompt. Create + modify only; the fork is never deleted from. Files that were removed or renamed upstream linger in your fork until you delete them by hand.
+- **`diff`** — read-only inventory of what would change in your fork: files to create, modify, delete, or rename.
+- **`apply`** — does both in one pass:
+  1. **Strict-mirrors master-owned paths.** New files appear, changed files update, files that disappeared from master are deleted from your fork. Renames inside this tree (e.g. a renamed schema or skill) propagate as "old gone + new appears".
+  2. **Applies declared renames from MIGRATION.md.** Master can ship `<!-- migration:rename from="..." to="..." -->` directives that adjust per-Talk paths (e.g. `talks/*/master.md` → `draft.md`) to match new specs. The skill walks each glob in your fork and renames matches. **Content is preserved** — only paths change. Conflicts (both old and new exist) are skipped and reported.
 
-When master ships structural changes (renames, removals, restructures), the manual steps land in [`MIGRATION.md`](MIGRATION.md) at the repo root. The skill copies that file into your fork like any other core file, and prints a banner after `apply` when it was just created or updated — pointing you to the dated section(s) added since your last upgrade. Per-Talk content under `talks/` is **never** mass-edited by the skill (each Talk is your product), so renames affecting per-Talk files always need the manual step.
+The bytes inside your per-Talk files and your four user-owned config files (`profile.md`, `learnings.md`, `feedback-backlog.md`, `feedback-processed.md`) are never overwritten or deleted. The skill is allowed to move per-Talk *paths* when master declares it, but it never touches what's *inside*.
 
 The skill always pulls master from `https://github.com/veigap/talksmith` @ `main` — no flags to override. If you need to upgrade from anywhere else, this isn't the tool.
 
-| Touched by the skill | Never touched |
+| Master-owned (strict-mirrored) | User-owned (content preserved; paths may be renamed when master declares it) |
 |---|---|
-| `.claude/` · `CLAUDE.md` · `README.md` · `MIGRATION.md` · `config/principles.md` · `config/image-styles/` | `talks/` · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` |
+| `.claude/` · `CLAUDE.md` · `README.md` · `MIGRATION.md` · `config/principles.md` · `config/image-styles/` | `talks/` (file content) · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` · `.claude/settings.local.json` |
 
 See [`.claude/skills/upgrade/SKILL.md`](.claude/skills/upgrade/SKILL.md) for the full contract, safety rules, and exit codes.
 

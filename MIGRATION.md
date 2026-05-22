@@ -1,68 +1,39 @@
 # Migration notes
 
-Structural changes shipped by Talksmith master that downstream forks may need to align with by hand.
+Structural changes shipped by Talksmith master. Applied to forks by [`talksmith:upgrade`](.claude/skills/upgrade/SKILL.md) in two layers, in one `apply`:
 
-The [`talksmith:upgrade`](.claude/skills/upgrade/SKILL.md) skill is **additive only** — it creates and modifies files from master into your fork, but **never deletes** and **never touches per-Talk content under `talks/`**. That keeps the upgrade non-destructive, but it means structural changes (renames, removals, restructures) leave stale files in your fork and may leave per-Talk files misnamed against the new spec. This file is the channel for telling you what to fix.
+1. **Strict mirror within master-owned paths** (`.claude/`, `CLAUDE.md`, `README.md`, `MIGRATION.md`, `config/principles.md`, `config/image-styles/`) — create / modify / delete to match master exactly.
+2. **Declared renames** parsed from `<!-- migration:rename from="<glob>" to="<basename>" -->` directives in the dated sections below — same-directory renames typically affecting per-Talk paths under `talks/`. Idempotent: rename if only old exists; no-op if only new exists; skip + report if both exist. **Renames preserve content** — file bytes are untouched, only paths change.
 
-The skill surfaces this file automatically: after `upgrade apply`, if this file was created or modified in the run, it prints a banner pointing you here. Read the dated section(s) added since your last upgrade and run the commands. Each section is dated and self-contained.
-
----
-
-## 2026-05-21 — `master.md` split into `draft.md` + `final.md`, plus skill renames
-
-### What changed in master
-
-- **`master.md` was split into two files** per Talk:
-  - `draft.md` — the working file used in Steps 1–5 (where the presenter authors and feedback bullets land).
-  - `final.md` — the Step-6-derived deliverable, produced by `cp draft.md final.md` at the start of Polish. Steps 6–8 only touch `final.md`; `draft.md` is frozen after Step 5 so Polish is re-runnable.
-- **Schema file renamed.** `.claude/schemas/master.md` → `.claude/schemas/draft.md` (the schema now documents both files in one spec).
-- **PPTX output renamed.** `talks/<Talk>/output/master.pptx` → `talks/<Talk>/output/final.pptx`. Same for the transient `master.intermediate.md` → `final.intermediate.md`.
-- **Skill renamed.** `.claude/skills/upgrade-fork/` → `.claude/skills/upgrade/`. Python file inside: `upgrade_fork.py` → `upgrade.py`. CLI prog name: `talksmith:upgrade-fork` → `talksmith:upgrade`.
-- **CLI flag renames.** `feedback-cycle.py`: `--master` → `--draft` (Step 5 subcmds) or `--final` (rescue-open). `polish-ascii.py`: `--master` → `--final`, positional `master_path` → `final_path`. `md-to-pptx/convert.py` positional `master_md` → `final_md`. No behavior change otherwise.
-
-### Manual steps for your fork
-
-Run these from your fork's root. Each block is safe to copy-paste; each command is idempotent.
-
-**1. Remove stale upstream files that `upgrade apply` couldn't delete.**
-
-```bash
-# old schema (the new one is .claude/schemas/draft.md)
-rm -f .claude/schemas/master.md
-
-# old skill directory (the new one is .claude/skills/upgrade/)
-rm -rf .claude/skills/upgrade-fork
-```
-
-**2. Rename per-Talk files to match the new spec.** Per-Talk content under `talks/` is never touched by `upgrade apply`, so existing Talks will keep their `master.md` until you rename it. The orchestrator's Step 0 resume logic now expects `draft.md`.
-
-```bash
-# rename every existing Talk's master.md → draft.md
-for talk in talks/*/; do
-  if [ -f "$talk/master.md" ] && [ ! -f "$talk/draft.md" ]; then
-    mv "$talk/master.md" "$talk/draft.md"
-    echo "renamed: $talk/master.md → draft.md"
-  fi
-done
-
-# rename rendered PPTX output(s), if any
-for talk in talks/*/; do
-  if [ -f "$talk/output/master.pptx" ] && [ ! -f "$talk/output/final.pptx" ]; then
-    mv "$talk/output/master.pptx" "$talk/output/final.pptx"
-    echo "renamed: $talk/output/master.pptx → final.pptx"
-  fi
-done
-```
-
-**3. (Optional) Re-run Step 6 (Polish) on any finalized Talks to produce a fresh `final.md`.** This is only needed if you want the Polish-cleaned version on disk for a Talk you already finalized under the old single-file model. The new model expects `draft.md` (the file you just renamed) to drive Step 6 — Talksmith will copy it to `final.md` and apply transforms (a) inline SVGs, (b) consolidate image refs, (c) rescue `[open]` feedback, (d) strip `Presenter feedback`. The orchestrator does this automatically; you don't need to.
-
-**4. No action needed for these.**
-
-- Your `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md` — never touched by `upgrade apply`.
-- Any custom skills you added under `.claude/skills/` that aren't in master — preserved.
-- The `knowledge/corpus/` records inside each Talk — preserved (those are per-Talk content).
-- The CLI flag renames in skills are mechanical implementation details — the editor role specs already point at the new flags, so no action required from you.
+User-owned content (the *bytes inside* `talks/<Talk>/*` and the four `config/{profile,learnings,feedback-backlog,feedback-processed}.md` files) is never overwritten or deleted. The skill prints a banner pointing here whenever this file was created or updated in a run.
 
 ---
 
-<!-- When adding the next migration section, paste a new `## YYYY-MM-DD — <title>` block above this comment, mirroring the structure above. Each section should be self-contained so a user reading from any starting point can apply only the sections added since their last upgrade. -->
+## 2026-05-21 — `master.md` split into `draft.md` + `final.md`
+
+**What changed in master:**
+
+- Per-Talk `master.md` split into `draft.md` (working file, Steps 1–5) + `final.md` (polished deliverable, produced by `cp draft.md final.md` at the start of Step 6 so Polish is re-runnable).
+- PPTX output renamed: `output/master.pptx` → `output/final.pptx` (same for the transient `master.intermediate.md` → `final.intermediate.md`).
+- Schema rename (`.claude/schemas/master.md` → `draft.md`) and skill rename (`upgrade-fork` → `upgrade`) — master-owned, handled by strict-mirror.
+- CLI flag renames inside the affected skills (`--master` → `--draft`/`--final`) — internal; role specs already updated, no action needed.
+
+**Declared renames** (applied automatically):
+
+<!-- migration:rename from="talks/*/master.md" to="draft.md" -->
+<!-- migration:rename from="talks/*/output/master.pptx" to="final.pptx" -->
+<!-- migration:rename from="talks/*/output/master.intermediate.md" to="final.intermediate.md" -->
+
+**Needs your judgement** (skill won't do it):
+
+- **(Optional) Re-run Step 6 (Polish) on previously-finalized Talks** to produce a fresh `final.md`. The orchestrator does this automatically when you resume the Talk — only needed if you want it pre-rendered without re-opening.
+
+---
+
+<!--
+Adding the next migration section:
+- Paste a new `## YYYY-MM-DD — <title>` block above this comment.
+- For mechanical renames (within talks/ or other user-owned trees), declare inline with `<!-- migration:rename from="<glob>" to="<basename>" -->`. Single `*` wildcard at one path segment; `to` is a same-directory basename. Idempotent.
+- For master-owned-tree changes (`.claude/`, etc.), no directive needed — strict-mirror handles them.
+- For non-mechanical steps that need user judgement, describe in prose.
+-->
