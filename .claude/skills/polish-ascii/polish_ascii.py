@@ -75,13 +75,31 @@ def _strip_prose(body_lines: list[str]) -> str:
     return "\n".join(out_lines).strip()
 
 
+def _skip_frontmatter(lines: list[str]) -> int:
+    """If `lines` opens with a YAML `---` frontmatter block, return the 0-based index
+    of the first line *after* the closing `---`. Otherwise return 0."""
+    if not lines or lines[0].strip() != "---":
+        return 0
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            return i + 1
+    # Unclosed frontmatter — treat whole file as frontmatter-less to be safe.
+    return 0
+
+
 def _extract_thesis(lines: list[str]) -> str:
-    """Body of the `# Thesis` block (Claim + Why it matters paragraphs), stripped."""
+    """Body of the `# Thesis` block (Claim + Why it matters paragraphs), stripped.
+
+    Skips YAML frontmatter so that comments like `# thesis: ...` inside it aren't
+    misread as the Thesis heading. Matches the heading exactly (case-insensitively
+    after strip) to avoid matching ad-hoc headings like `# Thesis revision 2`.
+    """
+    start = _skip_frontmatter(lines)
     body: list[str] = []
     in_thesis = False
-    for ln in lines:
+    for ln in lines[start:]:
         if ln.startswith("# ") and not ln.startswith("## "):
-            if ln.strip().lower().startswith("# thesis"):
+            if ln.strip().lower() == "# thesis":
                 in_thesis = True
                 continue
             if in_thesis:
@@ -92,11 +110,11 @@ def _extract_thesis(lines: list[str]) -> str:
 
 
 def _strip_h1(line: str) -> str:
-    if H1_AGENDA.match(line):
-        return "Agenda"
-    if H1_CONCL.match(line):
-        return _H1_PLAIN_STRIP.sub("", line).strip()
-    return _H1_NUMBERED_STRIP.sub("", line).strip()
+    """Strip the leading `# ` (and any numbered prefix `N. `) from an H1 heading, preserving the heading text."""
+    if H1_SECTION.match(line):
+        return _H1_NUMBERED_STRIP.sub("", line).strip()
+    # Agenda, Conclusions, anything else: strip just the `# ` prefix and preserve the rest verbatim.
+    return _H1_PLAIN_STRIP.sub("", line).strip()
 
 
 def _strip_h2(line: str) -> str:
