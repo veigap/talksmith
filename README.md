@@ -48,7 +48,7 @@ The skill always pulls master from `https://github.com/veigap/talksmith` @ `main
 
 | Master-owned (strict-mirrored) | User-owned (never touched by the skill) |
 |---|---|
-| `.claude/` · `CLAUDE.md` · `README.md` · `config/principles.md` · `config/image-styles/` | `talks/` · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` · `.claude/settings.local.json` |
+| `.claude/` · `CLAUDE.md` · `README.md` · `config/principles.md` · `config/diagram-style.md` | `talks/` · `config/profile.md` · `config/learnings.md` · `config/feedback-backlog.md` · `config/feedback-processed.md` · `.claude/settings.local.json` |
 
 See [`.claude/skills/upgrade/SKILL.md`](.claude/skills/upgrade/SKILL.md) for the full contract, safety rules, and exit codes.
 
@@ -176,7 +176,7 @@ Review repeats as many times as needed until the presenter declares the document
 │   ├── learnings.md                   # durable rules promoted from feedback patterns
 │   ├── feedback-backlog.md            # cross-Talk feedback log
 │   ├── feedback-processed.md          # archived feedback promoted to learnings
-│   ├── image-styles/                  # SVG style spec + recurring shape templates (illustrator/ascii-to-svg)
+│   ├── diagram-style.md               # standing visual rules the ascii-to-svg skill applies to every SVG
 │   └── template.pptx                  # PowerPoint reference template (Step 8 Render)
 ├── talks/
 │   └── <talk-folder>/                 # one folder per talk
