@@ -1,6 +1,6 @@
 ---
 name: talksmith:polish-ascii
-description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block, any `<!-- ascii-note: ... -->` HTML comment that follows it (with exact line ranges for both), **and per-block slide context** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) so callers — including parallel-render subagents — never need to re-parse `final.md` themselves. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
+description: Step 6 (Polish) helper for the editor + illustrator roles. Six subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block, any `<!-- ascii-note: ... -->` HTML comment that follows it (with exact line ranges for both), **and per-block slide context** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) so callers — including parallel-render subagents — never need to re-parse `final.md` themselves. `inspect-intents` prints one row per block (`slide_id | slide_title | ascii-note intent`) for quick eyeballing of the scan. `annotate-renders` merges an LLM-authored `slide_id → {svg_basename, alt}` map into a scan plan, emitting an annotated plan with `render` fields set (and `null` for documentation-only / unmapped blocks). `prepare-render-args` fans an annotated plan into one `<slide_id>.json` args file per renderable block, ready to feed parallel `talksmith:ascii-to-svg` invocations. `extract` takes the annotated plan and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same plan and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:polish-ascii — Mechanical ASCII extraction + final.md rewrite
@@ -12,12 +12,15 @@ The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per bloc
 **Canonical Step 6 sequence** (matches the editor + illustrator role specs):
 
 1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
-2. **Illustrator annotation pass** — judgement-only: illustrator adds `render: {svg_basename, alt}` per block (slug derived from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)). Context fields are already populated by `scan`; the illustrator does not extract them.
-3. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
-4. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the plan JSON (no `final.md` re-parse). Easily parallelizable across subagents.
-5. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
+2. **`inspect-intents`** *(optional)* — eyeball the scan as a 3-column table (`slide_id | slide_title | intent`) before authoring slugs. Pure read; no mutation.
+3. **Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`.claude/roles/illustrator.md`](../../roles/illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
+4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr.
+5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
+6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each.
+7. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the args file. Easily parallelizable across subagents.
+8. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
-A single-pass `apply` subcommand exists for quick passes (does steps 3 + 5 together, skipping the per-sidecar render in step 4 — useful when you've already rendered SVGs separately and just want to finish the cleanup).
+A single-pass `apply` subcommand exists for quick passes (does steps 5 + 8 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup).
 
 ## When to use
 
@@ -83,16 +86,30 @@ A block with `"documentation_only": true` is **also skipped automatically** — 
 ## Invocation
 
 ```bash
-# Phase 1 — capture
-python3 .claude/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/plan.json
+# Phase 1 — scan
+python3 .claude/skills/polish-ascii/polish_ascii.py \
+    scan talks/<Talk>/final.md --language Spanish > /tmp/plan.json
 
-# (illustrator picks templates, dispatches renders, annotates /tmp/plan.json with render fields)
+# Phase 2 — eyeball (optional) and author a renders map
+python3 .claude/skills/polish-ascii/polish_ascii.py inspect-intents --plan /tmp/plan.json
+#   illustrator writes /tmp/renders.json:
+#     {"s1-2-1": {"svg_basename": "s1-2-1-cuatro-senales.svg", "alt": "Cuatro señales"}, ...}
 
-# Phase 2 — write sidecars + rewrite final.md
-python3 .claude/skills/polish-ascii/polish_ascii.py apply --final talks/<Talk>/final.md --plan /tmp/plan.json
+# Phase 3 — annotate the plan, write sidecars, fan args out for parallel rendering
+python3 .claude/skills/polish-ascii/polish_ascii.py \
+    annotate-renders --plan /tmp/plan.json --renders /tmp/renders.json -o /tmp/plan.annotated.json
+python3 .claude/skills/polish-ascii/polish_ascii.py \
+    extract --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
+python3 .claude/skills/polish-ascii/polish_ascii.py \
+    prepare-render-args --plan /tmp/plan.annotated.json \
+        --out-dir /tmp/ts-args --repo-root "$(pwd)"
+
+# Phase 4 — parallel renders (one Agent per /tmp/ts-args/<slide_id>.json), then cleanup
+python3 .claude/skills/polish-ascii/polish_ascii.py \
+    cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 
-`apply` is idempotent: re-running with the same plan produces no diff if sidecars and fence rewrites already match.
+`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk. All subcommands are idempotent.
 
 ## Output
 

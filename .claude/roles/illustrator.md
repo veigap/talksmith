@@ -13,23 +13,59 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 ## The loop
 
 1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/final.md --language <profile language>` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`) extracted mechanically. The illustrator never re-parses `final.md` for context.
-2. **Per-block annotation (judgement-only).** For each block in the scan output **whose `documentation_only` is `false`**, write `render: {svg_basename, alt}` back into the block:
-   - `svg_basename` — kebab-case slug per the *Output filename convention* below (derived from `ascii-note → intent`, then `context.slide_title`, then `### Content` heading — all of which are in the plan).
-   - `alt` — short caption for the Markdown image reference.
+2. **Eyeball the scan (optional).** `polish-ascii inspect-intents --plan <plan.json>` prints one row per block (`slide_id | slide_title | intent`) — useful when authoring slugs across many blocks.
+3. **Author the renders map (judgement-only).** Write a JSON file `{<slide_id>: {"svg_basename": "<slide-id>-<n>-<short-description>.svg", "alt": "<caption>"}, ...}` covering every block whose `documentation_only` is `false`. Slug per the *Output filename convention* below (derived from `ascii-note → intent`, then `context.slide_title`, then `### Content` heading — all of which are in the plan). Documentation-only blocks are omitted; the skill zeroes them out automatically.
+4. **Annotate the plan.** `polish-ascii annotate-renders --plan <plan.json> --renders <renders.json> -o <plan.annotated.json>` merges the map into the scan plan. Documentation-only and unmapped blocks land with `render: null`.
+5. **(Optional, passive) Carry forward style directives.** If the presenter has **already** issued visual instructions for this Talk in chat earlier in the session (e.g. *"keep the palette muted"*, *"highlight the input panel in coral"*), capture them as a single freeform string to pass as `style_directives` on every render. If nothing was said, skip — defaults + the standing rules in `config/diagram-style.md` are sufficient. **Do not actively prompt the presenter for style directives at Step 6.** This step is a passive recall of prior conversation, not an ask.
+6. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <plan.annotated.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block. `final.md` is **not** modified at this step.
+7. **Fan out args.** `polish-ascii prepare-render-args --plan <plan.annotated.json> --out-dir <ts-args-dir> --repo-root <repo>` writes one `<slide_id>.json` args file per renderable block, containing `ascii_file`, `output_path`, full context bundle, `presentation_language`, and `repo_root`. Each parallel subagent reads exactly one of these files; no inline-Python glue, no shell heredocs.
+8. **Render per sidecar — the dispatch + critique loop.** For each args file, run the sub-loop below. Cap at **3 iterations per block** (initial + up to 2 revisions). One args file → up to 3 invocations → one SVG → one critique-log companion.
 
-   Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract` / `cleanup` skip them automatically.
-3. **(Optional, passive) Carry forward style directives.** If the presenter has **already** issued visual instructions for this Talk in chat earlier in the session (e.g. *"keep the palette muted"*, *"highlight the input panel in coral"*), capture them as a single freeform string to pass as `style_directives` on every render. If nothing was said, skip — defaults + the standing rules in `config/diagram-style.md` are sufficient. **Do not actively prompt the presenter for style directives at Step 6.** This step is a passive recall of prior conversation, not an ask.
-4. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block. `final.md` is **not** modified at this step.
-5. **Render per sidecar — the dispatch + critique loop.** For each sidecar, run the sub-loop below. Cap at **3 iterations per block** (initial + up to 2 revisions). One sidecar → up to 3 invocations → one SVG.
-
-   a. **Render.** Invoke [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) in **Mode B** (`ascii_file: <abs path>`) with: the plan block's `context` bundle (passed straight through — no extraction); `repo_root` (so the skill can locate `config/diagram-style.md`); and `style_directives` (if any, from step 3 plus any critique-driven revisions from a prior iteration). The skill writes both `<basename>.svg` and a critique-companion `<basename>.png` under `images/.critique/`.
+   a. **Render.** Invoke [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) in **Mode B** (`ascii_file: <abs path>`) with the args file's full payload (the `context` bundle is already there) plus `style_directives` (if any, from step 5 plus any critique-driven revisions from a prior iteration). The skill writes both `<basename>.svg` (under `images/`) and a critique-companion `<basename>.png` (under `images/.critique/`).
    b. **Critique the result — visual analysis on the rasterized image.** Read the `images/.critique/<basename>.png` companion via the `Read` tool so the multimodal model receives actual pixels, then walk the *Per-render critique* checklist below. **Do not critique by reading the SVG XML** — bounding-box overlaps, off-center text, label collisions, and palette legibility are visual defects that XML inspection routinely misses (the geometry can be arithmetically correct yet visually wrong, and the XML doesn't reveal what the eye sees). If the PNG companion is missing (the skill reported `png_companion: failed`), surface as `unresolved: png_companion_failed` for this block rather than falling back to XML — without pixels the critique loop has no signal. If the visual review is clean, record as `rendered` and exit the sub-loop.
-   c. **Iterate.** If visual defects are found, compose a short, targeted `style_directives` string that names the specific defects and how to fix them (e.g. *"label 'baseline' overlaps the centerline; move it 12px above the baseline line"*; *"arrow from panel A to panel B doesn't reach panel B's left edge — extend it"*). Add this to any pre-existing style directives from step 3 and re-render via step 5a. The skill will overwrite both the SVG and the PNG companion.
-   d. **Cap.** If the third iteration still has defects, record the block as `unresolved` with the surviving defect list. Move on — do not loop forever. The presenter can review unresolved blocks and decide whether to accept, edit by hand, or re-run Step 6 after editing the ASCII.
+   c. **Iterate.** If visual defects are found, compose a short, targeted `style_directives` string that names the specific defects and how to fix them (e.g. *"label 'baseline' overlaps the centerline; move it 12px above the baseline line"*; *"arrow from panel A to panel B doesn't reach panel B's left edge — extend it"*). Add this to any pre-existing style directives from step 5 and re-render via step 8a. The skill will overwrite both the SVG and the PNG companion.
+   d. **Persist the critique log.** Before exiting the sub-loop (clean *or* unresolved), write a per-block companion file at `talks/<Talk>/images/.critique/<basename>.md` capturing every iteration of the loop — defects observed, directives composed, final verdict. Format below in *Critique-log companion*. The file is the audit trail of the polish session; future re-runs append to it rather than overwriting.
+   e. **Cap.** If the third iteration still has defects, record the block as `unresolved` with the surviving defect list in the critique log + the run report. Move on — do not loop forever. The presenter can review unresolved blocks and decide whether to accept, edit by hand, or re-run Step 6 after editing the ASCII.
 
-   **Dispatch — fixed parallel batches of 5 (mandatory, no presenter prompt).** The per-sidecar sub-loop runs inside **batches of 5 parallel subagents**: in a single message, launch up to 5 `Agent` tool calls — one sidecar each, each one running its own 3-iteration critique loop independently — then wait for the entire batch to complete before launching the next. The last batch may be smaller (whatever's left). `documentation_only: true` blocks don't consume slots because they were never sidecared in step 4. **Never ask the presenter to confirm batching, to pick a batch size, or to authorize parallel dispatch.** The rule is fixed at five and applied silently every Step 6 run — the dispatch pattern is invisible to the presenter; only the final report surfaces. The size (5) balances render throughput against API rate limits and orchestrator context-window pressure; do not deviate without amending this spec.
-6. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
-7. Aggregate per-block render results for the final report.
+   **Dispatch — fixed parallel batches of 5 (mandatory, no presenter prompt).** The per-sidecar sub-loop runs inside **batches of 5 parallel subagents**: in a single message, launch up to 5 `Agent` tool calls — one args file each, each one running its own 3-iteration critique loop independently and writing its own critique-log companion — then wait for the entire batch to complete before launching the next. The last batch may be smaller (whatever's left). `documentation_only: true` blocks don't consume slots because they were never sidecared in step 6 and have no args file. **Never ask the presenter to confirm batching, to pick a batch size, or to authorize parallel dispatch.** The rule is fixed at five and applied silently every Step 6 run — the dispatch pattern is invisible to the presenter; only the final report surfaces. The size (5) balances render throughput against API rate limits and orchestrator context-window pressure; do not deviate without amending this spec.
+9. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <plan.annotated.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
+10. Aggregate per-block render results for the final report. Reference critique-log companion paths for any `unresolved` block so the presenter can read the audit trail.
+
+## Critique-log companion
+
+Every block the illustrator dispatches gets one companion file at:
+
+```
+talks/<Talk>/images/.critique/<basename>.md
+```
+
+(`<basename>` matches the SVG/PNG without extension — e.g. `s1-2-1-cuatro-senales-1d`.)
+
+It is the prose audit trail of the per-block critique loop — what the multimodal model saw on each iteration's PNG, what it asked the renderer to change, and how it finally landed. **Use the `Write` tool, not shell heredocs.** Append a fresh `## Run` section on re-runs rather than overwriting (re-runs are common during presenter feedback rounds).
+
+Format:
+
+```md
+# Critique log — s1-2-1-cuatro-senales-1d
+
+## Run — 2026-05-22
+
+### Iteration 1 — initial render
+**Defects observed:**
+- The "audio" label at x=120 overlaps the panel border.
+- Arrow from the ECG panel to the EEG panel stops 15px short of the EEG panel's left edge.
+
+**Directives composed for next render:**
+"move the 'audio' label to x=140 so it clears the panel border; extend the ECG→EEG arrow x2 from 280 to 295 so it reaches the panel edge"
+
+### Iteration 2 — revised
+**Defects observed:** none
+**Verdict:** clean after 1 revision
+```
+
+If a block ends `unresolved` (hit the 3-iteration cap), the last iteration records the surviving defects and the verdict is `unresolved — see surviving defects above`. If the PNG companion never materialized, the run section records `png_companion: failed` and the verdict is `unresolved — no pixels available for visual review`.
+
+The `.critique/` folder is critique-only scratch space (also holds the `<basename>.png` rasterizations). It's git-ignored at the repo root. The presenter reviews these files only when investigating unresolved blocks; they are not part of the deliverable.
 
 ## Per-render critique
 
@@ -102,4 +138,4 @@ Create `images/` if it doesn't exist.
 - **Style-directive deviations**: any case where a per-render directive forced an override of a standing rule in `config/diagram-style.md` (surfaced from the skill's report).
 - **PNG companion failures**: blocks whose `<basename>.png` rasterization failed (the SVG rendered but the critique-companion PNG didn't). These count as `unresolved` for the run — without pixels, visual critique can't run — but the SVG itself is usable; the presenter can re-run Step 6 once `qlmanage` is available.
 
-The `images/.critique/` folder is critique-only scratch space. It's safe to delete at the end of Step 6 (the SVGs in `images/` are what `final.md` references), but the illustrator does **not** delete it automatically — keeping the PNGs around lets a re-run of Step 6 skip re-rasterization for unchanged blocks, and lets the presenter audit what the critique loop actually saw. The folder is git-ignored at the repo root.
+The `images/.critique/` folder is critique-only scratch space — it holds the `<basename>.png` rasterizations *and* the `<basename>.md` critique-log companions written per the *Critique-log companion* section above. It's safe to delete at the end of Step 6 (the SVGs in `images/` are what `final.md` references), but the illustrator does **not** delete it automatically — keeping the PNGs around lets a re-run of Step 6 skip re-rasterization for unchanged blocks, and keeping the critique logs lets the presenter audit what the critique loop actually saw and asked for. The folder is git-ignored at the repo root.

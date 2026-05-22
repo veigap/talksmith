@@ -2,10 +2,13 @@
 """talksmith:polish-ascii — Step 6 helper.
 
 Subcommands:
-  scan     <final.md> [--format json|human]
-  extract  --final <final.md> --plan <plan.json|-> [--dry-run]
-  cleanup  --final <final.md> --plan <plan.json|-> [--dry-run]
-  apply    --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass (compat)
+  scan              <final.md> [--format json|human]
+  inspect-intents   --plan <plan.json|->
+  annotate-renders  --plan <plan.json|-> --renders <renders.json|-> [-o <out.json|->]
+  prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>]
+  extract           --final <final.md> --plan <plan.json|-> [--dry-run]
+  cleanup           --final <final.md> --plan <plan.json|-> [--dry-run]
+  apply             --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass (compat)
 
 All subcommands operate on `talks/<Talk>/final.md` — the Step-6 derived file
 produced from `draft.md` by the editor's Polish copy step. `draft.md` itself
@@ -560,6 +563,124 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
     return 0
 
 
+_INTENT_LINE = re.compile(r"^\s*(?:[#\-*<!]\s*)*intent\s*:\s*(.+?)\s*-*>?\s*$", re.IGNORECASE | re.MULTILINE)
+
+
+def _read_json_arg(value: str) -> Any:
+    text = sys.stdin.read() if value == "-" else Path(value).read_text()
+    return json.loads(text)
+
+
+def cmd_inspect_intents(args: argparse.Namespace) -> int:
+    plan = _read_json_arg(args.plan)
+    print(f"{'slide_id':<10} | {'title':<50} | intent")
+    print(f"{'-' * 10}-+-{'-' * 50}-+-{'-' * 60}")
+    for b in plan.get("blocks", []):
+        sid = b.get("slide_id", "")
+        title = (b.get("context", {}).get("slide_title") or "")[:50]
+        note = b.get("note") or {}
+        payload = (note.get("payload") or "")
+        m = _INTENT_LINE.search(payload)
+        intent = (m.group(1).strip() if m else "")[:80]
+        flags = []
+        if b.get("documentation_only"):
+            flags.append("doc-only")
+        if b.get("detection_mode") == "legacy-heuristic":
+            flags.append("legacy")
+        flag_part = f"  [{','.join(flags)}]" if flags else ""
+        print(f"{sid:<10} | {title:<50} | {intent}{flag_part}")
+    return 0
+
+
+def cmd_annotate_renders(args: argparse.Namespace) -> int:
+    plan = _read_json_arg(args.plan)
+    renders = _read_json_arg(args.renders)
+    if not isinstance(renders, dict):
+        print("error: --renders JSON must be an object mapping slide_id → {svg_basename, alt}", file=sys.stderr)
+        return 2
+
+    missing: list[str] = []
+    annotated = 0
+    skipped_doc = 0
+    for b in plan.get("blocks", []):
+        sid = b.get("slide_id", "")
+        if b.get("documentation_only"):
+            b["render"] = None
+            skipped_doc += 1
+            continue
+        entry = renders.get(sid)
+        if not entry:
+            b["render"] = None
+            missing.append(sid)
+            continue
+        basename = entry.get("svg_basename") or entry.get("basename")
+        if not basename:
+            b["render"] = None
+            missing.append(sid)
+            continue
+        if not basename.endswith(".svg"):
+            basename = f"{basename}.svg"
+        b["render"] = {"svg_basename": basename, "alt": entry.get("alt") or ""}
+        annotated += 1
+
+    out_text = json.dumps(plan, indent=2, ensure_ascii=False) + "\n"
+    if args.output and args.output != "-":
+        Path(args.output).write_text(out_text)
+    else:
+        sys.stdout.write(out_text)
+
+    print(f"annotated {annotated} block(s); skipped {skipped_doc} documentation-only", file=sys.stderr)
+    if missing:
+        print(f"  ⚠  {len(missing)} block(s) had no render entry (set to render: null): {', '.join(missing)}", file=sys.stderr)
+    return 0
+
+
+def cmd_prepare_render_args(args: argparse.Namespace) -> int:
+    plan = _read_json_arg(args.plan)
+    final_path_str = plan.get("final_path")
+    if not final_path_str:
+        print("error: plan missing 'final_path' field — re-run `scan` to regenerate", file=sys.stderr)
+        return 2
+    final_path = Path(final_path_str).resolve()
+    images_dir = (final_path.parent / "images").resolve()
+    out_dir = Path(args.out_dir).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else None
+
+    written = 0
+    skipped = 0
+    for b in plan.get("blocks", []):
+        sid = b.get("slide_id", "")
+        if b.get("documentation_only") or not b.get("render"):
+            skipped += 1
+            continue
+        basename = b["render"]["svg_basename"]
+        if not basename.endswith(".svg"):
+            basename = f"{basename}.svg"
+        stem = basename[:-4]
+        ctx = b.get("context") or {}
+        payload: dict[str, Any] = {
+            "ascii_file": str(images_dir / f"{stem}.ascii"),
+            "output_path": str(images_dir / basename),
+            "slide_title": ctx.get("slide_title", ""),
+            "slide_content_prose": ctx.get("slide_content_prose", ""),
+            "speaker_notes": ctx.get("speaker_notes", ""),
+            "section_title": ctx.get("section_title", ""),
+            "section_goal": ctx.get("section_goal", ""),
+            "talk_thesis": ctx.get("talk_thesis", ""),
+            "presentation_language": ctx.get("presentation_language", ""),
+        }
+        if repo_root:
+            payload["repo_root"] = str(repo_root)
+        (out_dir / f"{sid}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+        written += 1
+
+    print(f"wrote args for {written} block(s) to {out_dir}", file=sys.stderr)
+    if skipped:
+        print(f"  skipped {skipped} block(s) (documentation-only or no render mapping)", file=sys.stderr)
+    return 0
+
+
 def cmd_apply(args: argparse.Namespace) -> int:
     """Convenience wrapper — extract + cleanup in one pass."""
     loaded = _load_plan(args)
@@ -591,6 +712,22 @@ def main(argv: list[str]) -> int:
         p.add_argument("--final", required=True, help="path to the Talk's final.md")
         p.add_argument("--plan", required=True)
         p.add_argument("--dry-run", action="store_true")
+
+    p_inspect = sub.add_parser("inspect-intents", help="print one row per ASCII block — slide_id | slide_title | ascii-note intent — for quick eyeballing of a scan plan")
+    p_inspect.add_argument("--plan", required=True, help="path to a scan JSON (or '-' for stdin)")
+    p_inspect.set_defaults(func=cmd_inspect_intents)
+
+    p_annot = sub.add_parser("annotate-renders", help="merge a slide_id→{svg_basename,alt} renders map into a scan plan, emitting an annotated plan ready for extract/cleanup/apply")
+    p_annot.add_argument("--plan", required=True, help="path to a scan JSON (or '-' for stdin)")
+    p_annot.add_argument("--renders", required=True, help="path to a JSON object mapping slide_id → {svg_basename, alt} (or '-' for stdin)")
+    p_annot.add_argument("-o", "--output", help="write the annotated plan here (default: stdout). Use '-' for stdout explicitly.")
+    p_annot.set_defaults(func=cmd_annotate_renders)
+
+    p_prep = sub.add_parser("prepare-render-args", help="fan an annotated plan out to one <slide_id>.json args file per renderable block, ready to drive parallel `talksmith:ascii-to-svg` invocations")
+    p_prep.add_argument("--plan", required=True, help="path to an annotated plan JSON (or '-' for stdin) — must have render fields set")
+    p_prep.add_argument("--out-dir", required=True, help="directory to write per-block args files into (created if missing)")
+    p_prep.add_argument("--repo-root", help="repository root, stamped into each args file so `ascii-to-svg` can locate `config/diagram-style.md` (optional)")
+    p_prep.set_defaults(func=cmd_prepare_render_args)
 
     p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no final.md mutation)")
     _add_plan_args(p_extract)
