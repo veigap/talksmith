@@ -15,7 +15,7 @@ Five roles:
 
 | Role | Job | Spec |
 |---|---|---|
-| **Librarian** | Step 3 — restructure raw sources losslessly into `knowledge/corpus/`; one record per source + companion `<source-stem>/images/`. | [`librarian.md`](.claude/roles/librarian.md) |
+| **Librarian** | Step 3 — restructure raw sources losslessly into `research/corpus/`; one record per source + companion `<source-stem>/images/`. | [`librarian.md`](.claude/roles/librarian.md) |
 | **Composer** | Batch reviewer at each Step-4 drafting milestone — punch-list against thesis / audience / principles / learnings. Read-only. | [`composer.md`](.claude/roles/composer.md) |
 | **Editor** | Sole writer of `draft.md` (Steps 1–5), `final.md` (Step 6+), and `memory.md`. | [`editor.md`](.claude/roles/editor.md) |
 | **Illustrator** | Step 6 — walks `final.md`, dispatches [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) per block with optional presenter style directives. | [`illustrator.md`](.claude/roles/illustrator.md) |
@@ -32,7 +32,7 @@ Only [`config/profile.md`](config/profile.md) is loaded eagerly (presenter's glo
 | File | Read when | By whom |
 |---|---|---|
 | [`config/learnings.md`](config/learnings.md) | Step 7 entry | Orchestrator (read-only — Editor writes). |
-| [`config/principles.md`](config/principles.md) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/knowledge/corpus/**` | Each Step-4 drafting milestone | Composer role. |
+| [`config/principles.md`](config/principles.md) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/research/corpus/**` | Each Step-4 drafting milestone | Composer role. |
 | [`config/diagram-style.md`](config/diagram-style.md) | Per `talksmith:ascii-to-svg` invocation | The skill (standing visual rules applied to every SVG). |
 | [`knowledge-library/`](knowledge-library/) | Step 7 (Learnings) on promotion | Global-Librarian (sole writer). |
 
@@ -40,7 +40,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 
 **File-format specs.** Every structured file format has a canonical schema in [`.claude/schemas/`](.claude/schemas/) (loading semantics, writer contract, *Canonical empty form*). Current: `draft.md` (per-Talk working file + how Step 6 derives `final.md`), `memory.md`, `profile.md`, `principles.md`, `learnings.md`, `feedback-backlog.md`, `feedback-processed.md`, `corpus-record.md`. Read the matching schema when interpreting or extending one of these files.
 
-**Corpus is the canonical interface for downstream roles.** Raw asset folders (`knowledge/articles/`, `knowledge/llm-chats/`, `knowledge/web/`) are **inputs to Step 3 only**. After Step 3, every role (Editor, Composer, Illustrator, Global-Librarian) reads exclusively through `knowledge/corpus/<source-stem>.md` records and their companion `<source-stem>/images/` folders. Never reach back into raw folders.
+**Corpus is the canonical interface for downstream roles.** Raw asset folders (`research/articles/`, `research/llm-chats/`, `research/web/`) are **inputs to Step 3 only**. After Step 3, every role (Editor, Composer, Illustrator, Global-Librarian) reads exclusively through `research/corpus/<source-stem>.md` records and their companion `<source-stem>/images/` folders. Never reach back into raw folders.
 
 ## Interaction defaults
 
@@ -63,7 +63,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 | 0.5 | Profile | Walk through any missing required section of `profile.md` (once per fork). | Fills missing sections. |
 | 1 | Frame | Create folder tree under `talks/<folder>/`. | Topic + folder name. |
 | 2 | Collect | Offer four intake channels (files, chat ZIPs, URLs, live exploration). Wait. | Drops sources / explores in chat. |
-| 3 | Corpus | Librarian: raw sources → `knowledge/corpus/`. | Confirms uploads. |
+| 3 | Corpus | Librarian: raw sources → `research/corpus/`. | Confirms uploads. |
 | 4 | Draft | Fill `draft.md` in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers / decides / redirects. |
 | 5 | Review | Apply `Presenter feedback` bullets in `draft.md`. Loops. | Edits `draft.md`; appends `- "feedback"` bullets. |
 | 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG; clean `final.md`. | Passive. |
@@ -131,7 +131,7 @@ Create exactly:
 ```
 talks/<folder-name>/
 ├── memory.md                    # progress log (draft.md is created later by `editor` in Step 4; final.md is created in Step 6 (Polish))
-├── knowledge/
+├── research/
 │   ├── articles/                # PDFs, HTML, papers, screenshots — presenter drops files here
 │   ├── llm-chats/                # chat session ZIPs — presenter drops files here
 │   ├── web/                     # one folder per URL captured by `talksmith:ingest` (metadata.yaml, original.html, page.md, assets/)
@@ -150,10 +150,10 @@ Then perform **Editor** role to initialize `memory.md` with topic, folder, ISO d
 
 Tell the presenter the **four ways** to bring source material in, then **wait** for explicit confirmation that they're done:
 
-- **Drop files into `knowledge/articles/`** → PDFs, HTML exports, papers, article screenshots. Drag-and-drop or `cp`.
-- **Drop chat ZIPs into `knowledge/llm-chats/`** → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
-- **Hand me a URL to capture** → invocable as the slash command `/talksmith:ingest <url>`. Runs the [`talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `knowledge/web/<folder-name>/`. Default folder-name is a slugified `<host>-<first-path-segment>`; override only on request. If the skill aborts with "folder exists", ask the presenter: *Re-fetch with `--force`* / *Skip — use existing* / *Use a different folder name* — never pass `--force` without explicit approval. After a forced re-fetch on a URL that had a prior corpus record, re-run the **Librarian** role on `web/<folder>/` with `force: true`. Report folder, page title, asset count.
-- **Explore a topic live with me, right here** → say "let's explore X" and we have a free-form back-and-forth in chat: I push ideas, draft ASCII diagrams, surface counter-examples. When you say "ready" / "done exploring" / "drop it", I capture the full exchange verbatim into `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 the librarian treats it like any other chat-export transcript.
+- **Drop files into `research/articles/`** → PDFs, HTML exports, papers, article screenshots. Drag-and-drop or `cp`.
+- **Drop chat ZIPs into `research/llm-chats/`** → Explore a topic in a chat session (Claude/ChatGPT/Gemini) — learn, push, generate diagrams — then export to ZIP and drop here.
+- **Hand me a URL to capture** → invocable as the slash command `/talksmith:ingest <url>`. Runs the [`talksmith:ingest`](.claude/skills/ingest/SKILL.md) skill to fetch the page (HTML + best-effort Markdown extraction + referenced images) into `research/web/<folder-name>/`. Default folder-name is a slugified `<host>-<first-path-segment>`; override only on request. If the skill aborts with "folder exists", ask the presenter: *Re-fetch with `--force`* / *Skip — use existing* / *Use a different folder name* — never pass `--force` without explicit approval. After a forced re-fetch on a URL that had a prior corpus record, re-run the **Librarian** role on `web/<folder>/` with `force: true`. Report folder, page title, asset count.
+- **Explore a topic live with me, right here** → say "let's explore X" and we have a free-form back-and-forth in chat: I push ideas, draft ASCII diagrams, surface counter-examples. When you say "ready" / "done exploring" / "drop it", I capture the full exchange verbatim into `research/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md`. From Step 3 the librarian treats it like any other chat-export transcript.
 
 **Live exploration — rules while active:**
 
@@ -169,11 +169,11 @@ Tell the presenter the **four ways** to bring source material in, then **wait** 
    - The capture-confirming message opens with an **exit banner** (then the prefix stops):
      ```
      ■ EXPLORATION CAPTURED
-     file: knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md
+     file: research/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md
      messages: <N>
      assets: <K>
      ```
-3. **On capture**, write **one** file `knowledge/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md` with frontmatter (`source_type: live-exploration`, `started_at`, `ended_at`, `topic`) and the full verbatim transcript as fenced `### Presenter` / `### Agent` blocks. Save any generated images under `explore-<topic-slug>-<YYYY-MM-DD>-assets/`. Do not paraphrase. Multiple explorations per Talk are allowed — each is its own dated file.
+3. **On capture**, write **one** file `research/llm-chats/explore-<topic-slug>-<YYYY-MM-DD>.md` with frontmatter (`source_type: live-exploration`, `started_at`, `ended_at`, `topic`) and the full verbatim transcript as fenced `### Presenter` / `### Agent` blocks. Save any generated images under `explore-<topic-slug>-<YYYY-MM-DD>-assets/`. Do not paraphrase. Multiple explorations per Talk are allowed — each is its own dated file.
 4. **After capture**, report path / message count / asset count and ask whether to keep exploring, drop more sources, or move to Step 3.
 
 Do not proceed to Step 3 on your own.
@@ -182,9 +182,9 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Corpus
 
-**Brief the presenter first.** One short paragraph: what Step 3 does (lossless restructuring of every dropped source into uniform Markdown records under `knowledge/corpus/`, each with a companion `<source-stem>/images/` folder), an explicit source breakdown + rough ETA (~15–30s per text source, ~5–10s per web capture; round to a 1-minute-wide range, e.g. *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min."*), and a coffee-break aside if the volume warrants it. The brief is informational — do not wait for a reply.
+**Brief the presenter first.** One short paragraph: what Step 3 does (lossless restructuring of every dropped source into uniform Markdown records under `research/corpus/`, each with a companion `<source-stem>/images/` folder), an explicit source breakdown + rough ETA (~15–30s per text source, ~5–10s per web capture; round to a 1-minute-wide range, e.g. *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min."*), and a coffee-break aside if the volume warrants it. The brief is informational — do not wait for a reply.
 
-Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)) on every file in `knowledge/articles/`, every chat ZIP in `knowledge/llm-chats/`, and every captured-page folder in `knowledge/web/`. Output: one record per source under `knowledge/corpus/` plus a sibling `<source-stem>/images/` companion folder. Per-record format: [`.claude/schemas/corpus-record.md`](.claude/schemas/corpus-record.md).
+Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/roles/librarian.md)) on every file in `research/articles/`, every chat ZIP in `research/llm-chats/`, and every captured-page folder in `research/web/`. Output: one record per source under `research/corpus/` plus a sibling `<source-stem>/images/` companion folder. Per-record format: [`.claude/schemas/corpus-record.md`](.claude/schemas/corpus-record.md).
 
 **Two phases.** Phase 1 (always) processes text sources end-to-end **and** copies/extracts every image byte to disk under its companion folder — only image *transcription* prose is deferred. Phase 1 returns `images_pending`. If non-empty, **ask the presenter** with a time warning (~10–30s per image): *Process now* (re-run with `process_images: true`) / *Skip — text only* / *Defer to later* (note in `memory.md`, re-prompt next session). Never silently process images.
 
@@ -200,16 +200,16 @@ Perform the **Librarian** role (spec: [`.claude/roles/librarian.md`](.claude/rol
 
 Before asking the presenter to pick a mode, run these checks **once**:
 
-1. **Corpus viability for B and C.** Check `talks/<Talk>/knowledge/corpus/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
+1. **Corpus viability for B and C.** Check `talks/<Talk>/research/corpus/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
 
-2. **Per-Talk frontmatter.** The frontmatter fields `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, and `duration` all come from `config/profile.md` (collected in Step 0.5). `Presentation language` is *not* a frontmatter field — it drives the prose language of `draft.md` and SVG text, and is also read from the profile. The only frontmatter field Step 4 prompts for is `date` — ask the presenter with 2–4 candidates. Pass-through keys (`knowledge:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
+2. **Per-Talk frontmatter.** The frontmatter fields `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, and `duration` all come from `config/profile.md` (collected in Step 0.5). `Presentation language` is *not* a frontmatter field — it drives the prose language of `draft.md` and SVG text, and is also read from the profile. The only frontmatter field Step 4 prompts for is `date` — ask the presenter with 2–4 candidates. Pass-through keys (`research:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
 
 Once 1–2 are resolved, ask the presenter for the mode (free-text only when genuinely open). Question-density varies by mode (see *Question budget* below).
 
 | Mode | Trigger | Sequence |
 |---|---|---|
 | **A — Interview** | Agent asks, presenter answers; Editor role transcribes into `draft.md`; Composer role reviews at milestones. | 1. **Thesis** — free-text from presenter; perform **Editor** role to write it to the Thesis block in `draft.md`; perform **Composer** review (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; perform **Editor** role to update `draft.md`; perform **Composer** review (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; perform **Editor** role per slide on `draft.md`; perform **Composer** review (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final **Composer** review (scope=`full`). **At every milestone**: surface Composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (perform **Editor** role with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
-| **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `draft.md` end-to-end from `knowledge/corpus/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
+| **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `draft.md` end-to-end from `research/corpus/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
 | **C — Presenter Outline** | Presenter brain-dumps; Editor role structures; Composer role reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Perform **Editor** role to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from the corpus. 3. Perform **Composer** review (scope=`full`). 4. For each `[blocker]` and `[major]` item: perform **Editor** role. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
 
 **Question budget per mode.** Mode A is unlimited (the agent drives the Q&A). Modes B and C are **critical-only** — *critical* = the draft can't proceed coherently without the answer (a required field can't be inferred, or two interpretations of the input lead to structurally incompatible drafts, or a slide's thesis hinges on resolving a flat contradiction between corpus records). Everything else — ordering, slide-title wording, keep/cut decisions, tone, visual idiom — is deferred to Step 5 Review where the presenter edits `draft.md` directly. In Mode C the budget is ideally zero: the brain-dump *is* the input.
@@ -254,7 +254,7 @@ Triggered when the presenter signals ready in Step 5. Runs end-to-end without pr
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). It walks `final.md`, optionally collects style directives from the presenter, and dispatches the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). It walks `final.md`, passively carries forward any visual directives the presenter mentioned earlier (does **not** actively ask), and dispatches the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block in **fixed parallel batches of 5 subagents** — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
 
 2. **Clean `final.md`.** Perform the **Editor** role (full spec: [`.claude/roles/editor.md`](.claude/roles/editor.md) → *Step 6 — produce `final.md`*). Four transformations on `final.md`; (a), (b), (c) in any order, (d) **last** (it depends on (c) having read the still-`[open]` bullets):
 
@@ -280,7 +280,7 @@ Promote recurring feedback patterns into durable session-load defaults so future
 
 Then ask two sequential decisions (independent — promotion preserves for future Talks; render produces a `.pptx` for this one):
 
-1. **Promotion** — *Promote this Talk to the shared knowledge library* / *Skip*. If promoted, perform the **Global-Librarian** role ([`global-librarian.md`](.claude/roles/global-librarian.md)) to curate `knowledge/corpus/`, `final.md`, and `images/` into topic folders under `knowledge-library/<topic-slug>/{index.md, images/}` — creating new topics or extending existing on overlap. Curation, not 1-to-1 copy. The Talk folder is read-only during this step.
+1. **Promotion** — *Promote this Talk to the shared knowledge library* / *Skip*. If promoted, perform the **Global-Librarian** role ([`global-librarian.md`](.claude/roles/global-librarian.md)) to curate `research/corpus/`, `final.md`, and `images/` into topic folders under `knowledge-library/<topic-slug>/{index.md, images/}` — creating new topics or extending existing on overlap. Curation, not 1-to-1 copy. The Talk folder is read-only during this step.
 2. **Render** — *Render to PowerPoint (Step 8)* / *Stop here*.
 
 ---

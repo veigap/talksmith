@@ -1,4 +1,4 @@
-"""Fetch a web page and save its contents under `talks/<Talk>/knowledge/web/<folder-name>/`.
+"""Fetch a web page and save its contents under `talks/<Talk>/research/web/<folder-name>/`.
 
 Outputs:
     metadata.yaml      url, fetched_at, title, http_status, byte_size
@@ -301,10 +301,10 @@ def _write_metadata_yaml(target: Path, url: str, title: str, status: int, byte_s
 
 
 def fetch(url: str, talk_path: Path, folder_name: str | None = None, force: bool = False) -> Path:
-    """Fetch `url` and persist into `talk_path/knowledge/web/<folder_name>/`. Returns the folder."""
+    """Fetch `url` and persist into `talk_path/research/web/<folder_name>/`. Returns the folder."""
     folder = folder_name or _default_folder_name(url)
     folder = _slugify(folder)
-    target = talk_path / "knowledge" / "web" / folder
+    target = talk_path / "research" / "web" / folder
     if target.exists() and not force:
         if any(target.iterdir()):
             raise FileExistsError(
@@ -347,7 +347,7 @@ def fetch(url: str, talk_path: Path, folder_name: str | None = None, force: bool
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Fetch a web page into talks/<Talk>/knowledge/web/<folder-name>/."
+        description="Fetch a web page into talks/<Talk>/research/web/<folder-name>/."
     )
     parser.add_argument("url", help="URL to fetch (http/https).")
     parser.add_argument(
@@ -356,11 +356,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--folder-name", default=None,
-        help="Output sub-folder name under knowledge/web/. Default = slug of URL host + first path segment.",
+        help="Output sub-folder name under research/web/. Default = slug of URL host + first path segment.",
     )
     parser.add_argument(
         "--force", action="store_true",
-        help="Overwrite an existing knowledge/web/<folder-name>/ directory.",
+        help="Overwrite an existing research/web/<folder-name>/ directory.",
     )
     args = parser.parse_args()
 

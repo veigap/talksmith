@@ -8,9 +8,9 @@ Maintains `draft.md` (Steps 1–5), `final.md` (Step 6 onward), and `memory.md` 
 
 **Canonical slide locator** (used in composer punch-lists and presenter feedback): `<section-N>.<slide-M>` — e.g. `2.1` = Section 2 → Slide 1. Special tokens: `thesis`, `agenda`, `agenda.section:<N>` (n-th section bullet), `agenda.<n>` (n-th agenda ASCII block), `conclusions.N`, `conclusions.N.<k>` (k-th ASCII in conclusions slide N). Parse this notation before applying any change. If the target doesn't exist, report `target not found: <expected location>` — never apply to a best-guess neighbor.
 
-**Pending-stub awareness.** When a slide's `### Sources` cites a `knowledge/corpus/` record that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub corpus/<file>.md — re-verify after librarian Phase 2`.
+**Pending-stub awareness.** When a slide's `### Sources` cites a `research/corpus/` record that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub corpus/<file>.md — re-verify after librarian Phase 2`.
 
-**The corpus is the canonical interface for source material.** Raw asset folders (`knowledge/articles/`, `knowledge/llm-chats/`, `knowledge/web/`) are inputs to Step 3 only — once the librarian has run, the editor reads exclusively from `knowledge/corpus/`. Image references and source citations always resolve through the corpus, never directly into raw folders. If the corpus is missing a needed image or claim, the fix is to re-run the librarian, not to reach around it.
+**The corpus is the canonical interface for source material.** Raw asset folders (`research/articles/`, `research/llm-chats/`, `research/web/`) are inputs to Step 3 only — once the librarian has run, the editor reads exclusively from `research/corpus/`. Image references and source citations always resolve through the corpus, never directly into raw folders. If the corpus is missing a needed image or claim, the fix is to re-run the librarian, not to reach around it.
 
 ## Steps
 
@@ -31,15 +31,15 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 
 **Where to look — in this order (all corpus-only — never reach into raw asset folders):**
 
-1. **Corpus records — `## Images / diagrams` sections.** Every record under `talks/<Talk>/knowledge/corpus/*.md` lists the images its source carried, with `filename` (a relative path of the form `<source-stem>/images/<file>`), `depiction` (what's in it), `relevance` (why it matters), and `transcribed text`. This is the canonical index of every image the Talk has access to — read these sections first when drafting a slide that needs a visual. **A `<!-- pending: process_images -->` stub means Phase 2 of the librarian hasn't run yet — the filename + bytes exist on disk but depiction/relevance are unfilled.** Surface this to the orchestrator so it can prompt the presenter to run librarian Phase 2 before this slide's visual choice is locked, rather than guessing from the filename alone.
-2. **Corpus companion folders — `talks/<Talk>/knowledge/corpus/<source-stem>/images/<file>`.** This is where the actual image bytes live. Phase 1 of the librarian copies/extracts every source image into the companion folder, so the bytes are addressable even before Phase 2 transcription. Image references in `draft.md` resolve here (e.g. `![<alt>](knowledge/corpus/<source-stem>/images/<file>.png)`).
+1. **Corpus records — `## Images / diagrams` sections.** Every record under `talks/<Talk>/research/corpus/*.md` lists the images its source carried, with `filename` (a relative path of the form `<source-stem>/images/<file>`), `depiction` (what's in it), `relevance` (why it matters), and `transcribed text`. This is the canonical index of every image the Talk has access to — read these sections first when drafting a slide that needs a visual. **A `<!-- pending: process_images -->` stub means Phase 2 of the librarian hasn't run yet — the filename + bytes exist on disk but depiction/relevance are unfilled.** Surface this to the orchestrator so it can prompt the presenter to run librarian Phase 2 before this slide's visual choice is locked, rather than guessing from the filename alone.
+2. **Corpus companion folders — `talks/<Talk>/research/corpus/<source-stem>/images/<file>`.** This is where the actual image bytes live. Phase 1 of the librarian copies/extracts every source image into the companion folder, so the bytes are addressable even before Phase 2 transcription. Image references in `draft.md` resolve here (e.g. `![<alt>](research/corpus/<source-stem>/images/<file>.png)`).
 3. **Already-rendered Talk assets** — `talks/<Talk>/images/` (this Talk) and, for cross-Talk use, peer `talks/<other-Talk>/images/` or `knowledge-library/<topic>/images/`.
 
 **Decision rule.** For each slide that needs a visual:
 
 | Situation | Action |
 |---|---|
-| An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](knowledge/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` (in `final.md`) and rewrite the reference. The illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
+| An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](research/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` (in `final.md`) and rewrite the reference. The illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
 | Multiple existing images could plausibly fit; the choice matters | Ask the presenter with the candidate filenames + their `depiction` lines as options. Never silently pick. |
 | No existing image fits (or all candidates are clearly off-topic) | **Only then** draft a fresh ASCII per the syntax below. The illustrator will render it to SVG in Step 6. |
 
@@ -203,7 +203,7 @@ The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "
 
 ## Operating principles
 
-- **Cite by filename.** Slide `Sources` reference `knowledge/corpus/` records (e.g. `corpus/transformer-paper.pdf.md`). Never invent sources.
+- **Cite by filename.** Slide `Sources` reference `research/corpus/` records (e.g. `corpus/transformer-paper.pdf.md`). Never invent sources.
 - **Never silently drop content.** Removed content goes to `Cut material` (with a one-line reason) or `Open questions`.
 - **Preserve structure.** Section headings: `# N. <Section Name>` (H1). Slide headings: `## N. <Slide Title>` (H2). Per-slide fields: `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` (H3, `draft.md` only). Insert `---` between every Slide and after each Section header. Section/Agenda-level feedback stays in paragraph form (`**Presenter feedback:**` + bullets).
 - **Field semantics** live in `.claude/schemas/draft.md` → *Field semantics* table. Read it when filling a field.

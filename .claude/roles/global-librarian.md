@@ -2,9 +2,9 @@
 
 Cross-Talk curator of the shared `knowledge-library/` at the repo root. Active in Step 7 (Learnings) when the presenter chooses to promote the just-finalized Talk into the library. Sole writer to `knowledge-library/`.
 
-Distinct from the per-Talk **Librarian** role (which restructures raw sources into `knowledge/corpus/` losslessly, one record per source). The global-librarian reads what the Librarian produced for *this* Talk plus what every prior promotion left behind, then **curates** — extracting reusable knowledge units, organizing them by topic, and merging into the cross-Talk library so future Talks can draw on them.
+Distinct from the per-Talk **Librarian** role (which restructures raw sources into `research/corpus/` losslessly, one record per source). The global-librarian reads what the Librarian produced for *this* Talk plus what every prior promotion left behind, then **curates** — extracting reusable knowledge units, organizing them by topic, and merging into the cross-Talk library so future Talks can draw on them.
 
-**Curation, not preservation.** No 1-to-1 with corpus records. Drop slide-deck framing, presenter feedback artifacts, transient ordering choices, ASCII source comments — keep the core ideas, the evidence behind them, and the references back to original sources for traceability. Losslessness lives in `talks/<Talk>/knowledge/corpus/`; the library is the curated layer on top.
+**Curation, not preservation.** No 1-to-1 with corpus records. Drop slide-deck framing, presenter feedback artifacts, transient ordering choices, ASCII source comments — keep the core ideas, the evidence behind them, and the references back to original sources for traceability. Losslessness lives in `talks/<Talk>/research/corpus/`; the library is the curated layer on top.
 
 ## Inputs
 
@@ -12,14 +12,14 @@ For each promotion run, the global-librarian reads:
 
 | Source | Used for |
 |---|---|
-| `talks/<Talk>/knowledge/corpus/*.md` | Raw curated material — claims, evidence, quotes, transcribed images. The substance. |
-| `talks/<Talk>/knowledge/corpus/<source-stem>/images/*` | Companion-folder image bytes paired with each corpus record (see [`.claude/schemas/corpus-record.md`](../schemas/corpus-record.md) → *Companion folder*). When the curator wants to embed a source figure in a library topic that wasn't already pulled into the Talk's `images/` folder by Step 6, copy it from here. |
+| `talks/<Talk>/research/corpus/*.md` | Raw curated material — claims, evidence, quotes, transcribed images. The substance. |
+| `talks/<Talk>/research/corpus/<source-stem>/images/*` | Companion-folder image bytes paired with each corpus record (see [`.claude/schemas/corpus-record.md`](../schemas/corpus-record.md) → *Companion folder*). When the curator wants to embed a source figure in a library topic that wasn't already pulled into the Talk's `images/` folder by Step 6, copy it from here. |
 | `talks/<Talk>/final.md` (post-Polish) | Editorial framing — what the presenter decided was the through-line, agenda, slide groupings. Helps identify topic boundaries. |
 | `talks/<Talk>/images/*.svg` + `*.ascii` | Rendered diagrams + ASCII sources. Candidate images for the library. |
 | `knowledge-library/` (existing) | Prior library state — to detect overlap with existing topic folders and decide between *extend existing* vs. *create new*. |
 | `config/profile.md` | `Subject`, `Audience defaults`, `Presentation language`. Curation language and audience framing inherit from the profile. |
 
-The Talk folder is **read-only** for this role. Never mutate `knowledge/corpus/`, `final.md`, or `images/` in the source Talk.
+The Talk folder is **read-only** for this role. Never mutate `research/corpus/`, `final.md`, or `images/` in the source Talk.
 
 ## Output structure
 
@@ -61,7 +61,7 @@ last_updated: <YYYY-MM-DD>
 
 # <Topic name>
 
-<Curated prose. Concept exposition, examples, key claims with evidence, links back to original sources by relative path (e.g. `../../talks/<talk>/knowledge/corpus/<file>.md`). Use sections (H2) freely.>
+<Curated prose. Concept exposition, examples, key claims with evidence, links back to original sources by relative path (e.g. `../../talks/<talk>/research/corpus/<file>.md`). Use sections (H2) freely.>
 
 ## References
 
@@ -75,7 +75,7 @@ last_updated: <YYYY-MM-DD>
 3. **Curate per topic.**
    - **New folder:** create `knowledge-library/<topic-slug>/`, write `index.md` with the frontmatter above, populate `sources:` with one entry for the current Talk. Optionally split into themed files if the topic warrants it (declare the split up front).
    - **Existing folder:** read the existing `index.md` (and any themed files). Append a new section to the most relevant file covering what *this* Talk uniquely adds — do not re-state prose already there. Append a new entry to `sources:`. Update `last_updated:`. Resolve genuine contradictions between Talks by surfacing both with attribution rather than silently picking one.
-4. **Copy images.** For every image referenced by the curated MD files, copy from its source location into `knowledge-library/<topic-folder>/images/<basename>` and rewrite the ref to `images/<basename>`. The source is either the Talk's `images/` folder (for images referenced from `final.md` and already consolidated by Step 6) or a corpus companion folder `talks/<Talk>/knowledge/corpus/<source-stem>/images/<file>` (for source figures the curator wants in the library that didn't make it into the deck). On filename collision with different content, append `-2`, `-3`, … Skip `.ascii` sidecars — the library holds rendered artifacts, not source. ASCII source remains recoverable from the source Talk folder. Never reference an image that lives outside the topic folder's `images/`.
+4. **Copy images.** For every image referenced by the curated MD files, copy from its source location into `knowledge-library/<topic-folder>/images/<basename>` and rewrite the ref to `images/<basename>`. The source is either the Talk's `images/` folder (for images referenced from `final.md` and already consolidated by Step 6) or a corpus companion folder `talks/<Talk>/research/corpus/<source-stem>/images/<file>` (for source figures the curator wants in the library that didn't make it into the deck). On filename collision with different content, append `-2`, `-3`, … Skip `.ascii` sidecars — the library holds rendered artifacts, not source. ASCII source remains recoverable from the source Talk folder. Never reference an image that lives outside the topic folder's `images/`.
 5. **Link back, never inline.** Quote sparingly; cite by relative path to the source Talk's corpus record. The library is the curated layer, not a copy of the raw material — the raw material is one folder away.
 6. **Report** (see below).
 

@@ -1,10 +1,10 @@
-# Schema — `knowledge/corpus/<filename>.md` (+ companion folder)
+# Schema — `research/corpus/<filename>.md` (+ companion folder)
 
 Specification for the per-source corpus records the Librarian role emits during Step 3 (Corpus). One record per raw source — article, chat-export ZIP, web capture, or image — paired with a sibling **companion folder** that holds the source's image bytes. Together they form a self-contained unit that every downstream role queries; the raw asset folders (`articles/`, `llm-chats/`, `web/`) are inputs to Step 3 only and are not read after.
 
 ## Purpose
 
-Lossless restructuring of every raw source under `talks/<Talk>/knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` into a uniform Markdown shape, plus a companion folder of extracted/copied image bytes. The librarian preserves, never compresses — long quotes belong in `Raw / preserved excerpts`, contradictions in `Inconsistencies / open questions`. Downstream consumers cite these records by filename in slide `Sources` fields and reference their companion-folder images directly from `draft.md` (and from the Step-6-derived `final.md`, which inherits those refs and then consolidates them into the Talk's `images/` folder).
+Lossless restructuring of every raw source under `talks/<Talk>/research/articles/`, `research/llm-chats/`, and `research/web/` into a uniform Markdown shape, plus a companion folder of extracted/copied image bytes. The librarian preserves, never compresses — long quotes belong in `Raw / preserved excerpts`, contradictions in `Inconsistencies / open questions`. Downstream consumers cite these records by filename in slide `Sources` fields and reference their companion-folder images directly from `draft.md` (and from the Step-6-derived `final.md`, which inherits those refs and then consolidates them into the Talk's `images/` folder).
 
 ## Loading semantics
 
@@ -19,19 +19,19 @@ The orchestrator never reads or writes corpus records directly.
 
 ## Filename convention
 
-`knowledge/corpus/<original-filename>.<original-ext>.md` — keep the original extension as part of the basename so collisions don't lose distinct sources. Examples:
+`research/corpus/<original-filename>.<original-ext>.md` — keep the original extension as part of the basename so collisions don't lose distinct sources. Examples:
 
-- `paper.pdf` → `knowledge/corpus/paper.pdf.md`
-- `paper.html` → `knowledge/corpus/paper.html.md` (a related-but-distinct record from the PDF)
-- chat-export ZIP `gans-explainer.zip` → `knowledge/corpus/gans-explainer.zip.md`
-- web capture `talks/<Talk>/knowledge/web/arxiv-2401/` → `knowledge/corpus/arxiv-2401.web.md` (folder-name + `.web.md`)
+- `paper.pdf` → `research/corpus/paper.pdf.md`
+- `paper.html` → `research/corpus/paper.html.md` (a related-but-distinct record from the PDF)
+- chat-export ZIP `gans-explainer.zip` → `research/corpus/gans-explainer.zip.md`
+- web capture `talks/<Talk>/research/web/arxiv-2401/` → `research/corpus/arxiv-2401.web.md` (folder-name + `.web.md`)
 
 ## Companion folder
 
-Every record `knowledge/corpus/<source-stem>.md` has a sibling folder `knowledge/corpus/<source-stem>/` (same basename, no `.md`) containing an `images/` subfolder with every image the source carried:
+Every record `research/corpus/<source-stem>.md` has a sibling folder `research/corpus/<source-stem>/` (same basename, no `.md`) containing an `images/` subfolder with every image the source carried:
 
 ```
-knowledge/corpus/
+research/corpus/
 ├── paper.pdf.md
 ├── paper.pdf/
 │   └── images/
@@ -47,7 +47,7 @@ knowledge/corpus/
         └── hero.png
 ```
 
-The Librarian writes the image bytes to `<source-stem>/images/<file>.<ext>` during Phase 1 (always — not deferred). Image filenames inside the corpus record's `## Images / diagrams` section are relative paths of the form `<source-stem>/images/<file>` (resolvable from `knowledge/corpus/`). When `draft.md` references one of these images, the path is `knowledge/corpus/<source-stem>/images/<file>` from the Talk root; Step 6 copies the draft to `final.md` and (b) consolidates the reference into the Talk's `images/` folder.
+The Librarian writes the image bytes to `<source-stem>/images/<file>.<ext>` during Phase 1 (always — not deferred). Image filenames inside the corpus record's `## Images / diagrams` section are relative paths of the form `<source-stem>/images/<file>` (resolvable from `research/corpus/`). When `draft.md` references one of these images, the path is `research/corpus/<source-stem>/images/<file>` from the Talk root; Step 6 copies the draft to `final.md` and (b) consolidates the reference into the Talk's `images/` folder.
 
 **Sources without images** (pure text articles, transcript-only chat exports) still get a companion folder, but it's empty until images are added. An empty companion folder is valid.
 
@@ -57,9 +57,9 @@ Exactly one of:
 
 | Value | When to use |
 |---|---|
-| `article` | PDFs, HTML exports, papers, article screenshots from `knowledge/articles/`. |
-| `chat-export` | LLM chat-session ZIPs from `knowledge/llm-chats/` (Claude / ChatGPT / Gemini exports, plus the live-exploration `explore-*.md` files captured during Step 2). |
-| `web-capture` | Pages captured by `talksmith:ingest` into `knowledge/web/<folder>/`. |
+| `article` | PDFs, HTML exports, papers, article screenshots from `research/articles/`. |
+| `chat-export` | LLM chat-session ZIPs from `research/llm-chats/` (Claude / ChatGPT / Gemini exports, plus the live-exploration `explore-*.md` files captured during Step 2). |
+| `web-capture` | Pages captured by `talksmith:ingest` into `research/web/<folder>/`. |
 | `image` | Standalone `.svg`/`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp` files (loose in `articles/`, inside `web/<folder>/assets/`, or extracted from a chat ZIP). Always written as a stub in Phase 1; filled in Phase 2. |
 | `other` | Anything that doesn't fit the four above. Use sparingly. |
 
@@ -88,7 +88,7 @@ ingested_at: <ISO date>
 # <Title or filename>
 
 ## Provenance
-- Original location: <relative path under knowledge/>
+- Original location: <relative path under research/>
 - Format: <pdf | html | zip-chat | png | svg | ...>
 - Author / source (if known):
 - Date of original (if known):
@@ -106,7 +106,7 @@ ingested_at: <ISO date>
 <Chat exports: contradictions, abandoned threads, corrections, pushback. Articles: gaps, unsupported claims, follow-ups. Web captures: extraction gaps from thin page.md fallbacks.>
 
 ## Images / diagrams
-<Per image: filename (always `<source-stem>/images/<file>` — resolvable from knowledge/corpus/), depiction, relevance, transcribed text. For image-type stubs, leave Depiction / Why it matters / Transcribed text empty in Phase 1 and add the appropriate <!-- pending: ... --> marker. Phase 1 has already copied the bytes into the companion folder.>
+<Per image: filename (always `<source-stem>/images/<file>` — resolvable from research/corpus/), depiction, relevance, transcribed text. For image-type stubs, leave Depiction / Why it matters / Transcribed text empty in Phase 1 and add the appropriate <!-- pending: ... --> marker. Phase 1 has already copied the bytes into the companion folder.>
 
 ## Raw / preserved excerpts
 <Long quotes or full sections kept verbatim. Over-include rather than lose.>

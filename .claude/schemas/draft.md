@@ -55,7 +55,7 @@ Identical in `draft.md` and `final.md` (modulo the Step-6 differences listed in 
 
 | Block | Heading | Sub-fields |
 |---|---|---|
-| Frontmatter | YAML between `---` fences | `presentation`, `presenter`, `audience`, `duration`, `date`, plus pass-through keys `knowledge` and `description` that downstream tooling reads — do not edit those last two |
+| Frontmatter | YAML between `---` fences | `presentation`, `presenter`, `audience`, `duration`, `date`, plus pass-through keys `research` and `description` that downstream tooling reads — do not edit those last two |
 | Thesis | `# Thesis` | `**Claim:**`, `**Why it matters:**`, `**Presenter feedback:**` (in `draft.md` only) |
 | Agenda | `# Agenda` | `**Narrative arc:**`, `**Sections (in delivery order):**`, `**Presenter feedback:**` (in `draft.md` only) |
 | Section | `# <N>. <Section Name>` (H1, numbered with period) | `**Goal of this section:**`, `**Presenter feedback:**` (in `draft.md` only) |
@@ -79,7 +79,7 @@ Identical in `draft.md` and `final.md` (modulo the Step-6 differences listed in 
 | `Section.Goal of this section` | per Section | What this Section accomplishes for the overall thesis. |
 | `Section.Presenter feedback` | per Section in `draft.md` | Feedback log on the framing/scope of this Section. Stripped from `final.md`. |
 | `Slide.Content` | per Slide | What appears on the slide — bullets, claim, visual, demo, code. |
-| `Slide.Sources` | per Slide | Files in `knowledge/corpus/` that back the slide. Cite by filename. |
+| `Slide.Sources` | per Slide | Files in `research/corpus/` that back the slide. Cite by filename. |
 | `Slide.Speaker notes` | per Slide | What the presenter says aloud, transitions, timing. |
 | `Slide.Presenter feedback` | per Slide in `draft.md` | Feedback log on this specific slide. Stripped from `final.md`. |
 | `Conclusions` | end of file | Closing slides — key takeaways, call to action, Q&A. |
@@ -131,8 +131,8 @@ The Editor role bootstraps `talks/<Talk>/draft.md` from this form on its first S
 ---
 # presentation: one-line subject of the talk (e.g. "Intro to GANs for non-ML engineers")
 presentation: <One-line subject of the talk>
-# knowledge: relative path to the corpus knowledge base for this Presentation
-knowledge: knowledge/corpus/
+# research: relative path to the corpus research base for this Presentation
+research: research/corpus/
 # description: structural shape downstream tooling expects — do not edit
 description: Slides are grouped into Sections. Each Section contains one or more Slides.
 # presenter: who is delivering the talk (name, role, org)

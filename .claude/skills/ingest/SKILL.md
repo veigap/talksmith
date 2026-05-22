@@ -1,11 +1,11 @@
 ---
 name: talksmith:ingest
-description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) and persist it under `talks/<Talk>/knowledge/web/<folder-name>/` so the librarian ingests it into the corpus in Step 3 alongside articles and chat exports. Invocation: pass a URL (required) and the active Talk path. Optional folder name (default = slug of URL host + first path segment). CLI-safe, stdlib-only Python; no Cowork dependency.
+description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) and persist it under `talks/<Talk>/research/web/<folder-name>/` so the librarian ingests it into the corpus in Step 3 alongside articles and chat exports. Invocation: pass a URL (required) and the active Talk path. Optional folder name (default = slug of URL host + first path segment). CLI-safe, stdlib-only Python; no Cowork dependency.
 ---
 
-# talksmith:ingest — Capture a web page as Talk knowledge
+# talksmith:ingest — Capture a web page as Talk research
 
-This skill downloads one web page and stores it under the active Talk's `knowledge/web/<folder-name>/` so the [`librarian`](../../roles/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
+This skill downloads one web page and stores it under the active Talk's `research/web/<folder-name>/` so the [`librarian`](../../roles/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
 
 The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python script (no `requests`, no `beautifulsoup4`, no external deps). The skill is the orchestration wrapper: it locates the active Talk, runs the script, surfaces errors back to the orchestrator.
 
@@ -26,7 +26,7 @@ The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python
 ## Output
 
 ```
-talks/<Talk>/knowledge/web/<folder-name>/
+talks/<Talk>/research/web/<folder-name>/
 ├── metadata.yaml      # url, fetched_at (UTC ISO 8601), title, http_status, byte_size, asset manifest
 ├── original.html      # raw fetched HTML — the source of truth (preserved verbatim)
 ├── page.md            # best-effort HTML → Markdown extraction (headings, paragraphs, lists, links, code, images)
@@ -70,11 +70,11 @@ The folder is **never overwritten by default** — if it already exists and is n
 - **No table structure.** `<table>`, `<tr>`, `<td>`, `<th>` are not specially handled — cell text is concatenated into the surrounding flow with no Markdown table syntax. For pages where tabular data matters, the librarian should be pointed at `original.html` and/or the presenter should hand-edit `page.md`.
 - **No paywall bypass.** If the page returns 403 / 401 / paywall HTML, that's what gets saved. Do not invent content.
 - **One URL per invocation.** For multiple URLs, call the skill once per URL with a distinct `folder_name` each time.
-- **Does not modify `draft.md`, `final.md`, `corpus/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles the corpus build in Step 3.
+- **Does not modify `draft.md`, `final.md`, `corpus/`, or any other Talk file.** Only writes under `research/web/<folder-name>/`. The librarian handles the corpus build in Step 3.
 
 ## Hand-off
 
 After `talksmith:ingest` succeeds, the orchestrator should:
 
 1. Mention to the presenter what got saved (folder, page title, asset count).
-2. If Step 3 (Corpus) has already run for this Talk, perform the Librarian role on the new `knowledge/web/<folder-name>/` folder. Otherwise the Librarian role will pick it up naturally when Step 3 runs.
+2. If Step 3 (Corpus) has already run for this Talk, perform the Librarian role on the new `research/web/<folder-name>/` folder. Otherwise the Librarian role will pick it up naturally when Step 3 runs.

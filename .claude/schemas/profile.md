@@ -58,7 +58,7 @@ Step 0.5's behavior depends on the state of `config/profile.md`. The driving rul
 
 Step 4 reads `Subject`, `Presenter`, `Audience defaults`, `Default duration`, and `Presentation language` **silently** from this file and uses them to populate `draft.md` frontmatter (`presentation` ← `Subject`; `presenter` ← `Presenter`; `audience` ← `Audience defaults`; `duration` ← `Default duration`) plus the language of all prose the editor writes. It does not re-prompt for any of them. If a required section is unexpectedly empty when Step 4 begins (Step 0.5 bypassed, file edited out-of-band, etc.), Step 4 stops, redirects to Step 0.5 to collect the missing field, then resumes. No inline backstop prompts.
 
-The only frontmatter field Step 4 actively prompts for is `date` (always per-Talk, no profile default). The pass-through keys (`knowledge:`, `description:`) are populated by the editor from the schema's canonical empty form.
+The only frontmatter field Step 4 actively prompts for is `date` (always per-Talk, no profile default). The pass-through keys (`research:`, `description:`) are populated by the editor from the schema's canonical empty form.
 
 ## Missing-profile fallback (shared rule)
 

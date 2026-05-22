@@ -14,7 +14,7 @@ Talksmith isn't a generic "ask an LLM to make a deck" tool. It encodes a four-ph
 ```
 
 - **Explore — LLMs are the brainstorming partner, not the deck generator.** Use Claude (or any LLM) to learn the topic, stress-test ideas, generate charts, and chase tangents. Read papers, capture notes. Actually engage with the material before structuring anything.
-- **Corpus — preserve, don't summarize.** Drop papers and notes into `knowledge/articles/`, export worthwhile chat sessions to ZIP under `knowledge/llm-chats/`. The Librarian restructures every source into uniform Markdown — contradictions, abandoned threads, and course-corrections preserved — and copies every image into per-source companion folders so the corpus is self-contained. The next phase works from your actual thinking, not a blank prompt.
+- **Corpus — preserve, don't summarize.** Drop papers and notes into `research/articles/`, export worthwhile chat sessions to ZIP under `research/llm-chats/`. The Librarian restructures every source into uniform Markdown — contradictions, abandoned threads, and course-corrections preserved — and copies every image into per-source companion folders so the corpus is self-contained. The next phase works from your actual thinking, not a blank prompt.
 - **Draft — thesis-first, sourced.** Every slide is challenged against a one-sentence thesis and cited back to a corpus record. Talksmith won't invent content out of thin air.
 - **Refine — audit-tracked loop.** Feedback bullets land in `draft.md` in your editor of choice; cut material and closed feedback stay in the file as an audit trail, never silently deleted. Step 6 (Polish) makes a separate `final.md` so polishing never overwrites the audit trail — you can re-run Polish as many times as you want against the same untouched `draft.md`.
 
@@ -56,7 +56,7 @@ See [`.claude/skills/upgrade/SKILL.md`](.claude/skills/upgrade/SKILL.md) for the
 
 Five roles, one file as source of truth:
 
-- **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `knowledge/corpus/`, with a companion `<source-stem>/images/` folder per source so the corpus is self-contained. Preserves; does not compress.
+- **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `research/corpus/`, with a companion `<source-stem>/images/` folder per source so the corpus is self-contained. Preserves; does not compress.
 - **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and learned rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone.
 - **Editor** — the muscle. Keeps `draft.md` (Steps 1–5), `final.md` (Step 6+), and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from corpus records, applies feedback in `draft.md`, then in Step 6 copies `draft.md` → `final.md` and cleans `final.md` for delivery.
 - **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during the Polish step.
@@ -84,7 +84,7 @@ Talksmith runs inside a Claude Code session — the agent definition lives in [C
    claude --model opus "Hi Talksmith"
    ```
 
-The Presenter Agent introduces itself on the first turn. Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/knowledge/articles/` and `talks/<folder>/knowledge/llm-chats/`.
+The Presenter Agent introduces itself on the first turn. Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/research/articles/` and `talks/<folder>/research/llm-chats/`.
 
 ### Option 2 — Claude Code on the web (Cowork)
 
@@ -92,7 +92,7 @@ The Presenter Agent introduces itself on the first turn. Your talk folders live 
 2. Open [claude.com/code](https://claude.com/code) and connect the repo as a workspace.
 3. Start a new session against the repo — the agent boots from `CLAUDE.md` the same way as in the CLI.
 
-In the web/Cowork flow, upload source files (PDFs, chat ZIPs, images) via the session's file attachment UI; the agent will place them under the active talk's `knowledge/articles/` or `knowledge/llm-chats/` folder before Step 3 (Corpus).
+In the web/Cowork flow, upload source files (PDFs, chat ZIPs, images) via the session's file attachment UI; the agent will place them under the active talk's `research/articles/` or `research/llm-chats/` folder before Step 3 (Corpus).
 
 ### Option 3 — Claude Code Cowork on Desktop
 
@@ -102,7 +102,7 @@ In the web/Cowork flow, upload source files (PDFs, chat ZIPs, images) via the se
    - **GitHub-backed workspace** — connect the GitHub repo, same as Option 2; the desktop app uses the cloud workspace.
 3. Open a new session on the workspace — the agent boots from `CLAUDE.md` automatically.
 
-The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `knowledge/articles/` and `knowledge/llm-chats/` work natively, and you can keep `draft.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop.
+The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `research/articles/` and `research/llm-chats/` work natively, and you can keep `draft.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop.
 
 ### What happens next
 
@@ -124,7 +124,7 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
        v
   [2] Collect     <-- presenter: upload PDFs/papers, chat ZIPs, URLs
        v
-  [3] Corpus       -- librarian: sources -> knowledge/corpus/*.md + <source-stem>/images/
+  [3] Corpus       -- librarian: sources -> research/corpus/*.md + <source-stem>/images/
        v
   [4] Draft       <-- one of three modes (A Interview / B Agent Draft / C Outline)
                      editor writes; composer critiques at every milestone
@@ -183,7 +183,7 @@ Review repeats as many times as needed until the presenter declares the document
 │       ├── draft.md                   # the working outline (Steps 1–5, presenter edits this)
 │       ├── final.md                   # the polished deliverable (produced in Step 6 from draft.md)
 │       ├── memory.md                  # progress log / restore point
-│       ├── knowledge/
+│       ├── research/
 │       │   ├── articles/              # PDFs, HTML, papers
 │       │   ├── llm-chats/             # ZIP exports of LLM chat sessions
 │       │   ├── web/                   # captured pages (one folder per URL, written by talksmith:ingest)
@@ -201,7 +201,7 @@ Review repeats as many times as needed until the presenter declares the document
     │   ├── learnings.md               # config/learnings.md schema (promoted rules)
     │   ├── feedback-backlog.md        # config/feedback-backlog.md schema (cross-Talk feedback log)
     │   ├── feedback-processed.md      # config/feedback-processed.md schema (promoted-feedback archive)
-    │   └── corpus-record.md          # talks/<Talk>/knowledge/corpus/<file>.md schema (librarian's per-source records + companion folders)
+    │   └── corpus-record.md          # talks/<Talk>/research/corpus/<file>.md schema (librarian's per-source records + companion folders)
     ├── roles/
     │   ├── librarian.md               # Librarian role spec
     │   ├── composer.md                # Composer role spec (design critic)
@@ -209,7 +209,7 @@ Review repeats as many times as needed until the presenter declares the document
     │   ├── illustrator.md             # Illustrator role spec (ASCII → SVG coordinator)
     │   └── global-librarian.md        # Global-Librarian role spec (cross-Talk curator of knowledge-library/)
     └── skills/
-        ├── ingest/                    # talksmith:ingest — capture a web page into knowledge/web/
+        ├── ingest/                    # talksmith:ingest — capture a web page into research/web/
         ├── ascii-to-svg/              # talksmith:ascii-to-svg — render one ASCII block to one SVG
         └── md-to-pptx/                # talksmith:md-to-pptx — render final.md to .pptx (Step 8)
 ```
@@ -217,7 +217,7 @@ Review repeats as many times as needed until the presenter declares the document
 ## Key conventions
 
 - **Folder names are kebab-case** (e.g. `gan-networks`, `quantum-computing-intro`).
-- **Cite sources by filename.** Slide `Sources` reference files under `knowledge/corpus/` (e.g. `corpus/transformer-paper.pdf.md`).
+- **Cite sources by filename.** Slide `Sources` reference files under `research/corpus/` (e.g. `corpus/transformer-paper.pdf.md`).
 - **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `draft.md`.
 - **Chat-prompt is the canonical interaction.** The agent asks every decision in chat with 2–4 numbered prose options derived from current context. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
 - **`config/profile.md` is session-wide context.** Once filled, it's loaded automatically and kept in context across all role work.
