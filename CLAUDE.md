@@ -294,6 +294,29 @@ Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) on `final.md`. The s
 - Reuses images at `talks/<Talk>/images/` (rendered + consolidated in Step 6); does not regenerate. ASCII source in HTML comments is ignored.
 - Output: `talks/<Talk>/output/final.pptx`. Reference template: [`config/template.pptx`](config/template.pptx) (override only on request).
 
+### Post-render visual review
+
+After the initial deck lands at `output/final.pptx`, run a self-review pass — analogous to the illustrator's per-render critique (see [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) → *Per-render critique*). Inspect the deck (Cowork's `pptx` skill exposes slide-level reads), check the rendered slides against the ten practices below, and dispatch targeted edits back to the skill where defects are found. **Cap at 2 iterations** of review + edit beyond the initial render. After the cap, surface unresolved defects to the presenter rather than looping further.
+
+| # | Practice | What to look for |
+|---|---|---|
+| 1 | **Consistent type hierarchy across slides** | Title / subtitle / body / caption sizes uniform deck-wide. No one-off oversized titles, no shrunken bodies. The template's master styles are the source of truth — every slide should inherit them, not override locally. |
+| 2 | **No text overflow or truncation** | Titles fit on 1–2 lines without orphan words; body text stays inside placeholders; nothing bleeds off-slide or gets ellipsized. If a slide can't fit, the slide needs a split (surface as unresolved). |
+| 3 | **≤ 5–7 bullets per slide** | More bullets = audience reads instead of listens. If a slide has 8+ bullets, flag for split rather than shrink-fitting. |
+| 4 | **Body text isn't a wall of paragraphs** | Markdown paragraphs that landed as one long text block on a slide are speaker-notes territory, not slide-body. The slide should be glance-able; the paragraph belongs in the notes pane. |
+| 5 | **Generous safe margins** | Content respects the template's content area; no text or image hugs the slide edges. Whitespace around content makes it breathe. |
+| 6 | **Visual balance** | Slide weight (text + images) distributed — not all stacked on the left, right, or top. Eye should not strain to find the secondary content. |
+| 7 | **Image scale appropriate to role** | Hero images dominate; supporting images supplement. Aspect ratio preserved (no stretching). Image-text gutters consistent — images don't crash into adjacent text. |
+| 8 | **Section dividers are distinct** | Each numbered H1 must produce a *divider* slide — large title, no body. If a section divider rendered as a content slide with text in the body placeholder, the convert step or the native skill failed the H1-as-divider contract. Re-render. |
+| 9 | **Single focal point per slide** | One element the eye lands on first. Avoid two equally-prominent images, two equally-bold headings, etc. Hierarchy makes the slide readable; ambiguity makes it confusing. |
+| 10 | **Theme consistency** | Template fonts, colors, and master layouts are honored across every slide. No ad-hoc one-off colors, no system-font fallbacks creeping in from copy-paste, no unstyled fragments. Cross-check against [`config/template.pptx`](config/template.pptx). |
+
+**Critique discipline.** Be surgical and slide-specific, just like the illustrator: *"Slide 7 title 'Why bipedal robots are hard' wraps onto a third line — shorten to 'Why bipedal locomotion is hard' (fits on two)"*. Vague comments produce vague edits.
+
+**When to declare clean.** A first-pass deck that passes all ten practices is the goal. Don't manufacture issues to fill the iteration budget — the cost of unneeded edits is regression risk in adjacent slides.
+
+**Report at the end:** `clean on first pass` | `clean after N edit pass(es)` | `unresolved: <slide N — defect>` (presenter reviews unresolved slides and decides whether to accept, hand-edit, or restructure `final.md` and re-render).
+
 ---
 
 ## Conventions

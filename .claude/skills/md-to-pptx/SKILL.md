@@ -76,6 +76,8 @@ talks/<Talk>/
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
 6. Report: slide count, image references resolved, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
+The **post-render visual review** — the 10-point check for type hierarchy / overflow / bullet density / balance / focal point / theme consistency / etc. — is performed by the **orchestrator** after this skill returns, not by the skill itself. The orchestrator inspects the deck via Cowork's `pptx` skill and dispatches targeted edits back to the skill (capped at 2 iterations beyond the initial render). See [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Render PPTX* → *Post-render visual review* for the full checklist. The skill stays focused on rendering; the orchestrator stays focused on judgement.
+
 ## Rules
 
 - **The base template is mandatory, not advisory.** Every render inherits theme, fonts, colors, and master layouts from [`config/template.pptx`](../../../config/template.pptx) (or the explicit override). Decks authored from scratch with the native skill's default theme are a render failure even if the file is otherwise correct.
