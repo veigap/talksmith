@@ -4,7 +4,7 @@ Specification for [`config/profile.md`](../../config/profile.md): the presenter'
 
 ## Purpose
 
-Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `master.md` frontmatter — it does **not** re-prompt for any field listed here.
+Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `draft.md` frontmatter — it does **not** re-prompt for any field listed here.
 
 ## Loading semantics
 
@@ -15,18 +15,18 @@ Captures per-presenter defaults that apply across every Talk in this fork: the *
 
 The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
-**One-time, session-load settings.** Three sections in particular — `How my presentations are consumed`, `Audience defaults`, and `Presentation language` — are **initialized once** during Step 0.5 and **never re-prompted per-Talk**. They are fork-level defaults read silently at session start; per-Talk calibration (e.g. a one-off audience tweak for a specific class) happens by editing `master.md` frontmatter directly in Step 5 Review.
+**One-time, session-load settings.** Three sections in particular — `How my presentations are consumed`, `Audience defaults`, and `Presentation language` — are **initialized once** during Step 0.5 and **never re-prompted per-Talk**. They are fork-level defaults read silently at session start; per-Talk calibration (e.g. a one-off audience tweak for a specific class) happens by editing `draft.md` frontmatter directly in Step 5 Review.
 
 ## Canonical sections (exactly six)
 
 | Section | Required? | Purpose |
 |---|---|---|
-| `Subject` | **Required** | The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers", "Quantum computing seminar"). One fork per subject. Copied into every Talk's `master.md` frontmatter as the `presentation` field — every Talk in this fork shares it. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. |
-| `Presenter` | **Required** | One-line identity record — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). The Editor copies this verbatim into every Talk's `master.md` frontmatter as the default `presenter`. Per-Talk override: edit the `master.md` frontmatter directly in Step 5 Review. |
+| `Subject` | **Required** | The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers", "Quantum computing seminar"). One fork per subject. Copied into every Talk's `draft.md` frontmatter as the `presentation` field — every Talk in this fork shares it. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. |
+| `Presenter` | **Required** | One-line identity record — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). The Editor copies this verbatim into every Talk's `draft.md` frontmatter as the default `presenter`. Per-Talk override: edit the `draft.md` frontmatter directly in Step 5 Review. |
 | `How my presentations are consumed` | **Required** | Live vs. recorded vs. async, default consumption mode. Drives slide density and speaker-note weight. Set once in Step 0.5 and never re-prompted per-Talk. |
-| `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `master.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `master.md` directly — never re-prompted in Step 4. |
-| `Default duration` | **Required** | Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's `master.md` frontmatter as the default `duration`. Per-Talk override: edit the `master.md` frontmatter directly in Step 5 Review. |
-| `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `master.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `master.md` prose. |
+| `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `draft.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `draft.md` directly — never re-prompted in Step 4. |
+| `Default duration` | **Required** | Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's `draft.md` frontmatter as the default `duration`. Per-Talk override: edit the `draft.md` frontmatter directly in Step 5 Review. |
+| `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `draft.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `draft.md` prose. |
 
 **Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints" — these were intentionally removed). **Do not remove any of the six canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
 
@@ -56,7 +56,7 @@ Step 0.5's behavior depends on the state of `config/profile.md`. The driving rul
 
 ## Step 4 (Draft) contract
 
-Step 4 reads `Subject`, `Presenter`, `Audience defaults`, `Default duration`, and `Presentation language` **silently** from this file and uses them to populate `master.md` frontmatter (`presentation` ← `Subject`; `presenter` ← `Presenter`; `audience` ← `Audience defaults`; `duration` ← `Default duration`) plus the language of all prose the editor writes. It does not re-prompt for any of them. If a required section is unexpectedly empty when Step 4 begins (Step 0.5 bypassed, file edited out-of-band, etc.), Step 4 stops, redirects to Step 0.5 to collect the missing field, then resumes. No inline backstop prompts.
+Step 4 reads `Subject`, `Presenter`, `Audience defaults`, `Default duration`, and `Presentation language` **silently** from this file and uses them to populate `draft.md` frontmatter (`presentation` ← `Subject`; `presenter` ← `Presenter`; `audience` ← `Audience defaults`; `duration` ← `Default duration`) plus the language of all prose the editor writes. It does not re-prompt for any of them. If a required section is unexpectedly empty when Step 4 begins (Step 0.5 bypassed, file edited out-of-band, etc.), Step 4 stops, redirects to Step 0.5 to collect the missing field, then resumes. No inline backstop prompts.
 
 The only frontmatter field Step 4 actively prompts for is `date` (always per-Talk, no profile default). The pass-through keys (`knowledge:`, `description:`) are populated by the editor from the schema's canonical empty form.
 
@@ -67,8 +67,8 @@ This rule applies when performing any of the five roles (Librarian, Composer, Ed
 **When `config/profile.md` is genuinely empty or missing**, each role:
 
 1. Proceeds without stopping — a missing profile is never a fatal error.
-2. Derives `presentation`, `presenter`, `audience`, `duration` from `master.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in the final report.
-3. Derives `Presentation language` from the dominant language of `master.md` prose. If `master.md` itself is empty (early Mode A pre-bootstrap), falls back to English and surfaces the gap.
+2. Derives `presentation`, `presenter`, `audience`, `duration` from `draft.md` frontmatter where present. If absent, falls back to neutral defaults and surfaces the gap in the final report.
+3. Derives `Presentation language` from the dominant language of `draft.md` prose. If `draft.md` itself is empty (early Mode A pre-bootstrap), falls back to English and surfaces the gap.
 4. **Notes the omission in the final report** so the orchestrator can prompt the presenter to fill the profile.
 
 **When a specific profile section is missing, empty, or contains only an HTML-comment placeholder**, the same fallback applies for that section alone. Roles do not refuse to run; they degrade gracefully and report.
@@ -86,11 +86,11 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 
 ## Subject
 
-<!-- Required. The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One fork per subject. Copied into every Talk's master.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. -->
+<!-- Required. The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One fork per subject. Copied into every Talk's draft.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. -->
 
 ## Presenter
 
-<!-- Required. One line — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). Copied into every Talk's master.md frontmatter as the default `presenter`. Per-Talk override: edit master.md frontmatter directly in Step 5 Review. -->
+<!-- Required. One line — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). Copied into every Talk's draft.md frontmatter as the default `presenter`. Per-Talk override: edit draft.md frontmatter directly in Step 5 Review. -->
 
 ## How my presentations are consumed
 
@@ -98,13 +98,13 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 
 ## Audience defaults
 
-<!-- Required. Who is typically in the room (or watching async)? Technical level, role, what they already know, what they care about. The Editor uses this as the default `audience` for every Talk's frontmatter. Per-Talk calibration happens in Step 5 Review by editing master.md directly — never re-prompted in Step 4. -->
+<!-- Required. Who is typically in the room (or watching async)? Technical level, role, what they already know, what they care about. The Editor uses this as the default `audience` for every Talk's frontmatter. Per-Talk calibration happens in Step 5 Review by editing draft.md directly — never re-prompted in Step 4. -->
 
 ## Default duration
 
-<!-- Required. Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's master.md frontmatter as the default `duration`. Per-Talk override: edit master.md frontmatter directly in Step 5 Review. -->
+<!-- Required. Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's draft.md frontmatter as the default `duration`. Per-Talk override: edit draft.md frontmatter directly in Step 5 Review. -->
 
 ## Presentation language
 
-<!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and master.md prose. -->
+<!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and draft.md prose. -->
 ```

@@ -12,7 +12,8 @@ Each Talk has at most one of each. The shape defined here is parsed downstream b
 |---|---|---|
 | Frontmatter, Thesis claim, Agenda arc, Section goals, Slide Content / Sources / Speaker notes, Conclusions, Cut material | Present | Present (verbatim copy from `draft.md`) |
 | `Presenter feedback` blocks (Thesis / Agenda / Section / Slide) | Append-only log of `- "..."`, `[open]`, and `[closed]` bullets — the audit trail | **Removed entirely** by Step 6 (d) (the strip targets the field at every level, in all three syntactic forms) |
-| Fenced ` ```ascii ` blocks (render-driving) | Present, with optional trailing `<!-- ascii-note: ... -->` HTML comment | Replaced by `![alt](images/<slide-id>-<n>-<short-description>.svg)` plus a `<!-- ascii-source: ... -->` echo. The `<!-- ascii-note: ... -->` HTML comment stays in place |
+| Fenced ` ```ascii ` blocks (render-driving — slide has no Markdown image ref) | Present, with optional trailing `<!-- ascii-note: ... -->` HTML comment | Replaced by `![alt](images/<slide-id>-<n>-<short-description>.svg)` plus a `<!-- ascii-source: ... -->` echo. The `<!-- ascii-note: ... -->` HTML comment stays in place |
+| Fenced ` ```ascii ` blocks (documentation-only — slide already carries a Markdown image ref) | Present | **Left verbatim** — no render, no sidecar, no fence rewrite. The image link wins; the ASCII is inline aid for whoever reads `final.md` source. (See [editor.md](../roles/editor.md) → *Optional ASCII alongside an image link* and [illustrator.md](../roles/illustrator.md) → *Render-driving vs. documentation-only*.) |
 | `![alt](path)` image refs | Present, may point at corpus-companion paths, external paths, etc. | Present, **all** rewritten to `images/<basename>` (remote URLs are the only exception — left untouched) |
 | `# Open questions` | Present, anything genuinely undecided | Present, also receives any **un-applied `[open]`** bullets rescued from feedback blocks before the strip |
 
@@ -60,7 +61,7 @@ Identical in `draft.md` and `final.md` (modulo the Step-6 differences listed in 
 | Section | `# <N>. <Section Name>` (H1, numbered with period) | `**Goal of this section:**`, `**Presenter feedback:**` (in `draft.md` only) |
 | Slide | `## <N>. <Slide Title>` (H2, same numbering, scoped within its Section) | `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` (in `draft.md` only) |
 | Conclusions | `# Conclusions` | Contains slides (`## N. <Slide Title>`) like any other Section |
-| Open questions | `# Open questions` | Free-form list. In `final.md` it **also contains rescued `[open]` Presenter feedback rows** mirrored by the editor at the start of Step 6 (Polish), in the form `- <location> — "<verbatim feedback>"` where `<location>` is the slide/section locator (e.g. `Slide 2.1`, `Agenda`, `Thesis`). |
+| Open questions | `# Open questions` | Free-form list. In `final.md` it **also contains rescued `[open]` Presenter feedback rows** mirrored by the editor during Step 6 (Polish) — transformation (c), before the `Presenter feedback` strip in (d) — in the form `- <location> — "<verbatim feedback>"` where `<location>` is the slide/section locator (e.g. `Slide 2.1`, `Agenda`, `Thesis`). |
 | Cut material | `# Cut material` | Free-form list (do not delete content; relocate here instead) |
 
 **Separator rule:** insert a `---` horizontal rule between every Slide and after each Section header. Section/Agenda-level `Presenter feedback` stays in paragraph form (`**Presenter feedback:**` followed by bullets); per-Slide `Presenter feedback` uses the H3 form (`### Presenter feedback`).

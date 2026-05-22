@@ -2,10 +2,14 @@
 """talksmith:polish-ascii — Step 6 helper.
 
 Subcommands:
-  scan     <master.md> [--format json|human]
-  extract  --master <master.md> --plan <plan.json|-> [--dry-run]
-  cleanup  --master <master.md> --plan <plan.json|-> [--dry-run]
-  apply    --master <master.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass (compat)
+  scan     <final.md> [--format json|human]
+  extract  --final <final.md> --plan <plan.json|-> [--dry-run]
+  cleanup  --final <final.md> --plan <plan.json|-> [--dry-run]
+  apply    --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass (compat)
+
+All subcommands operate on `talks/<Talk>/final.md` — the Step-6 derived file
+produced from `draft.md` by the editor's Polish copy step. `draft.md` itself
+is never read or written by this skill.
 
 See SKILL.md for the full contract.
 """
@@ -39,8 +43,8 @@ def is_ascii_payload(payload: str) -> bool:
     return payload.count("\n") >= 2
 
 
-def scan(master_path: Path) -> dict[str, Any]:
-    text = master_path.read_text()
+def scan(final_path: Path) -> dict[str, Any]:
+    text = final_path.read_text()
     lines = text.splitlines()
 
     section: str | int = 0  # 0 = pre-Agenda / Agenda; "c" = Conclusions
@@ -138,7 +142,7 @@ def scan(master_path: Path) -> dict[str, Any]:
         i += 1
 
     _annotate_documentation_only(lines, blocks)
-    return {"master_path": str(master_path), "blocks": blocks}
+    return {"final_path": str(final_path), "blocks": blocks}
 
 
 def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]]) -> None:
@@ -197,15 +201,15 @@ def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]])
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    master_path = Path(args.master_path)
-    if not master_path.exists():
-        print(f"error: master not found: {master_path}", file=sys.stderr)
+    final_path = Path(args.final_path)
+    if not final_path.exists():
+        print(f"error: final.md not found: {final_path}", file=sys.stderr)
         return 2
-    result = scan(master_path)
+    result = scan(final_path)
     if args.format == "human":
         legacy_count = sum(1 for b in result["blocks"] if b.get("detection_mode") == "legacy-heuristic")
         doc_only_count = sum(1 for b in result["blocks"] if b.get("documentation_only"))
-        print(f"found {len(result['blocks'])} ASCII block(s) in {result['master_path']}:")
+        print(f"found {len(result['blocks'])} ASCII block(s) in {result['final_path']}:")
         if legacy_count:
             print(f"  ⚠  {legacy_count} block(s) detected via legacy glyph-heuristic — re-tag opening fence as ``` ascii ``` to make them canonical")
         if doc_only_count:
@@ -240,9 +244,9 @@ def build_sidecar_content(ascii_payload: str, note_payload: str | None) -> str:
 
 
 def _load_plan(args: argparse.Namespace) -> tuple[Path, dict[str, Any]] | int:
-    master_path = Path(args.master).resolve()
-    if not master_path.exists():
-        print(f"error: master not found: {master_path}", file=sys.stderr)
+    final_path = Path(args.final).resolve()
+    if not final_path.exists():
+        print(f"error: final.md not found: {final_path}", file=sys.stderr)
         return 2
     if args.plan == "-":
         plan_text = sys.stdin.read()
@@ -257,13 +261,13 @@ def _load_plan(args: argparse.Namespace) -> tuple[Path, dict[str, Any]] | int:
     except json.JSONDecodeError as e:
         print(f"error: plan JSON invalid: {e}", file=sys.stderr)
         return 2
-    return master_path, plan
+    return final_path, plan
 
 
-def _write_sidecars(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
+def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
     """Write .ascii sidecars. Returns (written, unchanged, skipped_no_render, sidecar_records)."""
     blocks = plan.get("blocks") or []
-    images_dir = master_path.parent / "images"
+    images_dir = final_path.parent / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
 
     written = 0
@@ -295,16 +299,16 @@ def _write_sidecars(master_path: Path, plan: dict[str, Any], dry_run: bool) -> t
             status = "written"
         sidecar_records.append({
             "slide_id": b["slide_id"],
-            "path": str(sidecar_path.relative_to(master_path.parent)),
+            "path": str(sidecar_path.relative_to(final_path.parent)),
             "status": status,
         })
     return written, unchanged, skipped_no_render, sidecar_records
 
 
-def _rewrite_master(master_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int]:
-    """Rewrite master.md fences. Returns (rewritten, skipped_no_render)."""
+def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int]:
+    """Rewrite final.md fences. Returns (rewritten, skipped_no_render)."""
     blocks = plan.get("blocks") or []
-    lines = master_path.read_text().splitlines(keepends=False)
+    lines = final_path.read_text().splitlines(keepends=False)
     line_endings = "\n"
 
     rewritten = 0
@@ -339,9 +343,9 @@ def _rewrite_master(master_path: Path, plan: dict[str, Any], dry_run: bool) -> t
         new_text = line_endings.join(lines)
         if not new_text.endswith("\n"):
             new_text += "\n"
-        tmp = master_path.with_suffix(master_path.suffix + ".tmp")
+        tmp = final_path.with_suffix(final_path.suffix + ".tmp")
         tmp.write_text(new_text)
-        os.replace(tmp, master_path)
+        os.replace(tmp, final_path)
     return rewritten, skipped_no_render
 
 
@@ -349,10 +353,10 @@ def cmd_extract(args: argparse.Namespace) -> int:
     loaded = _load_plan(args)
     if isinstance(loaded, int):
         return loaded
-    master_path, plan = loaded
-    written, unchanged, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
+    final_path, plan = loaded
+    written, unchanged, skipped_no_render, _ = _write_sidecars(final_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
-    print(f"extracted sidecars from {master_path}:{tag}")
+    print(f"extracted sidecars from {final_path}:{tag}")
     print(f"  written:   {written}")
     print(f"  unchanged: {unchanged}")
     print(f"  skipped:   {skipped_no_render} (no render mapping)")
@@ -363,10 +367,10 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
     loaded = _load_plan(args)
     if isinstance(loaded, int):
         return loaded
-    master_path, plan = loaded
-    rewritten, skipped_no_render = _rewrite_master(master_path, plan, args.dry_run)
+    final_path, plan = loaded
+    rewritten, skipped_no_render = _rewrite_final(final_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
-    print(f"cleaned up {master_path}:{tag}")
+    print(f"cleaned up {final_path}:{tag}")
     print(f"  fences rewritten: {rewritten}")
     print(f"  skipped:          {skipped_no_render} (no render mapping)")
     return 0
@@ -377,11 +381,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
     loaded = _load_plan(args)
     if isinstance(loaded, int):
         return loaded
-    master_path, plan = loaded
-    written, unchanged, skipped_no_render, _ = _write_sidecars(master_path, plan, args.dry_run)
-    rewritten, _ = _rewrite_master(master_path, plan, args.dry_run)
+    final_path, plan = loaded
+    written, unchanged, skipped_no_render, _ = _write_sidecars(final_path, plan, args.dry_run)
+    rewritten, _ = _rewrite_final(final_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""
-    print(f"applied {rewritten + skipped_no_render} block(s) to {master_path}:{tag}")
+    print(f"applied {rewritten + skipped_no_render} block(s) to {final_path}:{tag}")
     print(f"  sidecars: {written} written, {unchanged} unchanged")
     print(f"  fences:   {rewritten} rewritten")
     if skipped_no_render:
@@ -390,24 +394,24 @@ def cmd_apply(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="polish_ascii", description="Step 6 ASCII extractor / master.md rewriter for Talksmith.")
+    parser = argparse.ArgumentParser(prog="polish_ascii", description="Step 6 ASCII extractor / final.md rewriter for Talksmith.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_scan = sub.add_parser("scan", help="emit JSON describing every ASCII block + ascii-note in a master.md")
-    p_scan.add_argument("master_path")
+    p_scan = sub.add_parser("scan", help="emit JSON describing every ASCII block + ascii-note in a Talk's final.md")
+    p_scan.add_argument("final_path", help="path to the Talk's final.md (the Step-6 derived file)")
     p_scan.add_argument("--format", choices=["json", "human"], default="json")
     p_scan.set_defaults(func=cmd_scan)
 
     def _add_plan_args(p: argparse.ArgumentParser) -> None:
-        p.add_argument("--master", required=True)
+        p.add_argument("--final", required=True, help="path to the Talk's final.md")
         p.add_argument("--plan", required=True)
         p.add_argument("--dry-run", action="store_true")
 
-    p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no master.md mutation)")
+    p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no final.md mutation)")
     _add_plan_args(p_extract)
     p_extract.set_defaults(func=cmd_extract)
 
-    p_cleanup = sub.add_parser("cleanup", help="rewrite master.md fences to image refs from an annotated scan plan (no sidecar writing)")
+    p_cleanup = sub.add_parser("cleanup", help="rewrite final.md fences to image refs from an annotated scan plan (no sidecar writing)")
     _add_plan_args(p_cleanup)
     p_cleanup.set_defaults(func=cmd_cleanup)
 

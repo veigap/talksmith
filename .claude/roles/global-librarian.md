@@ -14,12 +14,12 @@ For each promotion run, the global-librarian reads:
 |---|---|
 | `talks/<Talk>/knowledge/corpus/*.md` | Raw curated material — claims, evidence, quotes, transcribed images. The substance. |
 | `talks/<Talk>/knowledge/corpus/<source-stem>/images/*` | Companion-folder image bytes paired with each corpus record (see [`.claude/schemas/corpus-record.md`](../schemas/corpus-record.md) → *Companion folder*). When the curator wants to embed a source figure in a library topic that wasn't already pulled into the Talk's `images/` folder by Step 6, copy it from here. |
-| `talks/<Talk>/master.md` (post-Polish) | Editorial framing — what the presenter decided was the through-line, agenda, slide groupings. Helps identify topic boundaries. |
+| `talks/<Talk>/final.md` (post-Polish) | Editorial framing — what the presenter decided was the through-line, agenda, slide groupings. Helps identify topic boundaries. |
 | `talks/<Talk>/images/*.svg` + `*.ascii` | Rendered diagrams + ASCII sources. Candidate images for the library. |
 | `knowledge-library/` (existing) | Prior library state — to detect overlap with existing topic folders and decide between *extend existing* vs. *create new*. |
 | `config/profile.md` | `Subject`, `Audience defaults`, `Presentation language`. Curation language and audience framing inherit from the profile. |
 
-The Talk folder is **read-only** for this role. Never mutate `knowledge/corpus/`, `master.md`, or `images/` in the source Talk.
+The Talk folder is **read-only** for this role. Never mutate `knowledge/corpus/`, `final.md`, or `images/` in the source Talk.
 
 ## Output structure
 
@@ -70,12 +70,12 @@ last_updated: <YYYY-MM-DD>
 
 ## The flow
 
-1. **Plan.** Read `master.md` + the corpus records for the just-finalized Talk. Identify candidate topics — each topic is a knowledge unit that could stand on its own and be useful to a future, unrelated Talk. Typical count: 1–5 topics per Talk. Not every section of `master.md` is a topic; not every corpus record is a topic. The curator decides.
+1. **Plan.** Read `final.md` + the corpus records for the just-finalized Talk. Identify candidate topics — each topic is a knowledge unit that could stand on its own and be useful to a future, unrelated Talk. Typical count: 1–5 topics per Talk. Not every section of `final.md` is a topic; not every corpus record is a topic. The curator decides.
 2. **Match against existing library.** For each candidate topic, walk existing `knowledge-library/<folder>/` names and skim their `index.md` frontmatter `topic:` lines. Decide per topic: **extend an existing folder** (high overlap) or **create a new folder** (genuinely new territory). When unsure, ask the presenter with 2–3 options.
 3. **Curate per topic.**
    - **New folder:** create `knowledge-library/<topic-slug>/`, write `index.md` with the frontmatter above, populate `sources:` with one entry for the current Talk. Optionally split into themed files if the topic warrants it (declare the split up front).
    - **Existing folder:** read the existing `index.md` (and any themed files). Append a new section to the most relevant file covering what *this* Talk uniquely adds — do not re-state prose already there. Append a new entry to `sources:`. Update `last_updated:`. Resolve genuine contradictions between Talks by surfacing both with attribution rather than silently picking one.
-4. **Copy images.** For every image referenced by the curated MD files, copy from its source location into `knowledge-library/<topic-folder>/images/<basename>` and rewrite the ref to `images/<basename>`. The source is either the Talk's `images/` folder (for images referenced from `master.md` and already consolidated by Step 6) or a corpus companion folder `talks/<Talk>/knowledge/corpus/<source-stem>/images/<file>` (for source figures the curator wants in the library that didn't make it into the deck). On filename collision with different content, append `-2`, `-3`, … Skip `.ascii` sidecars — the library holds rendered artifacts, not source. ASCII source remains recoverable from the source Talk folder. Never reference an image that lives outside the topic folder's `images/`.
+4. **Copy images.** For every image referenced by the curated MD files, copy from its source location into `knowledge-library/<topic-folder>/images/<basename>` and rewrite the ref to `images/<basename>`. The source is either the Talk's `images/` folder (for images referenced from `final.md` and already consolidated by Step 6) or a corpus companion folder `talks/<Talk>/knowledge/corpus/<source-stem>/images/<file>` (for source figures the curator wants in the library that didn't make it into the deck). On filename collision with different content, append `-2`, `-3`, … Skip `.ascii` sidecars — the library holds rendered artifacts, not source. ASCII source remains recoverable from the source Talk folder. Never reference an image that lives outside the topic folder's `images/`.
 5. **Link back, never inline.** Quote sparingly; cite by relative path to the source Talk's corpus record. The library is the curated layer, not a copy of the raw material — the raw material is one folder away.
 6. **Report** (see below).
 
@@ -93,7 +93,7 @@ last_updated: <YYYY-MM-DD>
 
 ## Missing-profile fallback
 
-If `config/profile.md` is empty or missing required fields, follow the shared rule in [`.claude/schemas/profile.md`](../schemas/profile.md) → *Missing-profile fallback*. Derive language from `master.md` prose; surface the omission in the report.
+If `config/profile.md` is empty or missing required fields, follow the shared rule in [`.claude/schemas/profile.md`](../schemas/profile.md) → *Missing-profile fallback*. Derive language from `final.md` prose; surface the omission in the report.
 
 ## Report
 

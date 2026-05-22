@@ -1,29 +1,31 @@
 # Illustrator role
 
-Coordinator for the ASCII → SVG pass. Walks a Talk's `master.md` via the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill, drives the extraction of `.ascii` sidecars, dispatches [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) **once per sidecar file**, and reports results back to the editor (which performs the `master.md` cleanup). Active as the first action of Step 6 (Polish), and whenever a diagram changes and needs re-rendering.
+Coordinator for the ASCII → SVG pass. Walks a Talk's `final.md` via the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill, drives the extraction of `.ascii` sidecars, dispatches [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) **once per sidecar file**, and reports results back to the editor (which performs the `final.md` cleanup). Active as part of Step 6 (Polish), after the editor has produced `final.md` via the action-0 copy.
+
+The illustrator **never reads or writes `draft.md`**. By the time it runs, the editor has already copied `draft.md` → `final.md`, and every Step-6 operation targets `final.md` so that re-running Polish stays idempotent against the working file.
 
 **Render-driving vs. documentation-only ASCII.** Only ASCII blocks whose containing slide has **no** Markdown image reference are render-driving — those are the blocks this role processes. If a slide already carries a `![alt](path)` image link (because the editor reused an existing corpus image at Step 4), any ASCII block in that same slide is documentation-only inline aid for the source reader; skip it entirely (no template match, no sidecar, no `ascii-to-svg` invocation, no fence rewrite). The `polish-ascii scan` output flags this on each block as `documentation_only: true` so the iteration loop below is a single filter.
 
 At the start of every run, read all `config/image-styles/*.txt` templates (open catalog of recurring shapes). Match each ASCII block against the catalog; pass `template_name: null` if nothing fits.
 
-Use the `Presentation language` from `config/profile.md` (in context) for all SVG text elements. If missing, fall back to the dominant language of `master.md` prose.
+Use the `Presentation language` from `config/profile.md` (in context) for all SVG text elements. If missing, fall back to the dominant language of `final.md` prose.
 
 ## The loop
 
-1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/master.md` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges.
+1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/final.md` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges.
 2. **Per-block annotation.** For each block in the scan output **whose `documentation_only` is `false`**, extract the surrounding slide context (see *Per-block context extraction* below), pick the `svg_basename` slug per the *Output filename convention*, and pick the matching `template_name` from the `config/image-styles/*.txt` catalog (or `null`). Write `render: {svg_basename, alt}` back into the block. Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract`/`cleanup` will then skip them mechanically, and step 4 below will find no sidecar to dispatch.
-3. **Extract sidecars.** Invoke `polish-ascii extract --master <master.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block (doc-only blocks are skipped by the skill). `master.md` is **not** modified at this step.
+3. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block (doc-only blocks are skipped by the skill). `final.md` is **not** modified at this step.
 4. **Render per sidecar — the core dispatch loop.** Iterate the list of just-written `.ascii` files (doc-only blocks have no sidecar, so the iteration is naturally filtered). For each:
    - Invoke `talksmith:ascii-to-svg` in **Mode B** (`ascii_file: <absolute path to the .ascii>`) with the per-block context bundle (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`, `template_name`, `repo_root`). The skill reads the sidecar, splits ASCII source from `ascii-note`, and writes the sibling `.svg`.
    - One sidecar → one skill invocation → one SVG. Never bundle multiple blocks per call.
-5. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --master <master.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `master.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `master.md` directly.
+5. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
 6. Aggregate per-block render results for the final report.
 
-Do not modify `master.md` — `polish-ascii cleanup` does (driven by the editor). Do not emit SVG XML — `ascii-to-svg` does that. Do not parse `master.md` by hand for ASCII blocks — `polish-ascii scan` is the single source of line ranges.
+Do not modify `final.md` — `polish-ascii cleanup` does (driven by the editor). Do not modify `draft.md` — it is read-only from Step 6 onward. Do not emit SVG XML — `ascii-to-svg` does that. Do not parse `final.md` by hand for ASCII blocks — `polish-ascii scan` is the single source of line ranges.
 
 ## Per-block context extraction
 
-Pull from `master.md` before invoking the skill:
+Pull from `final.md` before invoking the skill:
 
 | Field | Source |
 |---|---|
@@ -41,16 +43,17 @@ If `### Content` and/or `### Speaker notes` are empty (common in early drafts), 
 - **Coordinate; don't render.** Every block goes through one `talksmith:ascii-to-svg` invocation. Never emit SVG XML directly.
 - **Complete context bundle before invoking.** The skill cannot ask follow-up questions.
 - **Semantic color reasoning happens here.** Decide which panels are "before/after", "input/output", etc. Pass semantic labels — the skill maps them to palette colors.
-- **Idempotency.** For fenced blocks: if `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` exists and the `<!-- ascii-source: ... -->` comment in `master.md` matches byte-for-byte, skip and report `unchanged`. Match on the `<slide-id>-<n>-` prefix — the description slug may drift without forcing a re-render unless the ASCII bytes themselves changed. For HTML-comment-form sources (`<!-- ascii-source: ... -->`), always re-render unconditionally.
+- **Idempotency.** For fenced blocks: if `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` exists and the `<!-- ascii-source: ... -->` comment in `final.md` matches byte-for-byte, skip and report `unchanged`. Match on the `<slide-id>-<n>-` prefix — the description slug may drift without forcing a re-render unless the ASCII bytes themselves changed. For HTML-comment-form sources (`<!-- ascii-source: ... -->`), always re-render unconditionally.
 - **One dispatch per block.** Multiple ASCII blocks in the same slide each get their own invocation with their own ordinal `<n>`.
 - **Failures are reported, not hidden.** Note failed renders and keep going.
+- **`draft.md` is read-only.** Never read from it during Step 6 — `final.md` is the byte-exact copy and is the only source of truth for the Illustrator.
 
 ## Detection rule
 
-ASCII diagrams in `master.md` use a **deterministic predefined block** — the fenced code block with the canonical `ascii` language tag is the open/close sentinel pair (analogue of `<!-- ascii-note:` + `-->`). Treat the following as ASCII diagrams, in priority order:
+ASCII diagrams in `final.md` use a **deterministic predefined block** — the fenced code block with the canonical `ascii` language tag is the open/close sentinel pair (analogue of `<!-- ascii-note:` + `-->`). Treat the following as ASCII diagrams, in priority order:
 
 1. **Canonical block — ` ```ascii ` fenced code block.** Opening fence is exactly ` ```ascii ` (lowercase, no trailing whitespace); closing fence is ` ``` ` on its own line. The payload between them is the diagram, no further inspection needed. This is the form the editor must use for all *new* ASCII (see `.claude/roles/editor.md` → *ASCII diagrams — predefined block syntax*).
-2. **Legacy heuristic — fenced block with an empty / `text` / `diagram` language tag**, accepted only when the payload contains box-drawing chars (`─│┌┐└┘├┤┬┴┼` or `+-|` as borders), arrow glyphs (`→ ← ↑ ↓ ⇒ --> ==>`), or ≥3 spatially arranged lines. Tolerated for older `master.md` files; report each such block with a `legacy-tag` flag so the editor can re-tag it as ` ```ascii ` on the next pass.
+2. **Legacy heuristic — fenced block with an empty / `text` / `diagram` language tag**, accepted only when the payload contains box-drawing chars (`─│┌┐└┘├┤┬┴┼` or `+-|` as borders), arrow glyphs (`→ ← ↑ ↓ ⇒ --> ==>`), or ≥3 spatially arranged lines. Tolerated for older `draft.md` files that produced this `final.md`; report each such block with a `legacy-tag` flag so the editor can re-tag it as ` ```ascii ` in `draft.md` on the next authoring pass.
 3. **HTML comments of shape `<!-- ascii-source: ... -->`** following an `images/<slide-id>-<n>-<short-description>.svg` ref. Treat the comment payload as the ASCII block and re-render unconditionally.
 
 Skip fenced blocks with real language tags (`python`, `bash`, `javascript`, `yaml`, `json`, `sh`, etc.) under all rules — the canonical tag is the only one that triggers detection without payload inspection.
@@ -69,7 +72,7 @@ The same basename rule applies to sidecars: `<slide-id>-<n>-<short-description>.
 
 Create `images/` if it doesn't exist.
 
-**Renaming legacy files.** If a Talk already has files using the old `<slide-id>-<n>.svg` form (no description), leave them in place — the convention applies to *new* renders and re-renders only. When a re-render fires for a legacy file, write the new descriptive filename and **delete** the old `<slide-id>-<n>.svg` + sibling `.ascii` to avoid two files referring to the same diagram. Update every reference in `master.md` to the new basename in the same pass.
+**Renaming legacy files.** If a Talk already has files using the old `<slide-id>-<n>.svg` form (no description), leave them in place — the convention applies to *new* renders and re-renders only. When a re-render fires for a legacy file, write the new descriptive filename and **delete** the old `<slide-id>-<n>.svg` + sibling `.ascii` to avoid two files referring to the same diagram. Update every reference in `final.md` to the new basename in the same pass.
 
 ## Report
 

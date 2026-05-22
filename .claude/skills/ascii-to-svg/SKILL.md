@@ -1,6 +1,6 @@
 ---
 name: talksmith:ascii-to-svg
-description: Render **one** ASCII diagram block into **one** styled SVG file following `config/image-styles/style.md`. Invoked by the `illustrator` role during Step 6 (Polish) — once per fenced ASCII block in `master.md`. The skill is the per-block renderer; the illustrator role is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
+description: Render **one** ASCII diagram block into **one** styled SVG file following `config/image-styles/style.md`. Invoked by the `illustrator` role during Step 6 (Polish) — once per fenced ASCII block in `final.md`. The skill is the per-block renderer; the illustrator role is the per-Talk coordinator. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and colored semantically. CLI-safe.
 ---
 
 # talksmith:ascii-to-svg — Render one ASCII block to one SVG
@@ -9,7 +9,7 @@ This skill renders **a single** ASCII diagram to **a single** SVG file. It is in
 
 | | Caller (`illustrator` role) does | This skill does |
 |---|---|---|
-| 1 | Walk `master.md`, find fenced ASCII blocks | — |
+| 1 | Walk `final.md`, find fenced ASCII blocks | — |
 | 2 | Per block, extract slide context (title, content prose, notes, section goal, language) | — |
 | 3 | Decide the output filename `<slide-id>-<n>-<short-description>.svg` (illustrator computes the kebab-case description slug — see `.claude/roles/illustrator.md` → *Output filename convention*) | — |
 | 4 | — | **Render the SVG for that one block** |
@@ -35,7 +35,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 | `speaker_notes` | recommended | the `### Speaker notes` body — used for `<desc>` and pedagogical-intent cues. Pass an empty string when the field is empty; the skill omits the `<desc>` emphasis cues and uses a default `<desc>` derived from `slide_title`. |
 | `section_title` | recommended | from the H1 the slide lives under |
 | `section_goal` | recommended | from the section's `**Goal of this section:**` line |
-| `talk_thesis` | recommended | top of `master.md` |
+| `talk_thesis` | recommended | top of `final.md` |
 | `presentation_language` | recommended | from `config/profile.md` — determines language of all text in the SVG |
 | `template_name` | recommended | bare name (no extension, no path) of the [`config/image-styles/*.txt`](../../../config/image-styles/) template the illustrator picked for this block — e.g. `pipeline-3-stage`. Pass `null` if no template fits (skill renders a custom shape against `style.md` only). |
 | `repo_root` | yes | absolute path to the Talksmith repo root (the folder containing `CLAUDE.md`, `config/`, `talks/`). The skill resolves `style.md` and template files relative to this — **not** relative to the current working directory. The illustrator role passes it from its own dispatch context. |
@@ -84,8 +84,8 @@ This skill cannot ask questions. If `style.md` + `slide_content_prose` + `speake
 
 ## What this skill is NOT
 
-- **Not** a coordinator. It renders one block. The illustrator role walks `master.md` and invokes this skill per block.
-- **Not** allowed to write outside `output_path`. No edits to `master.md`, no creating sibling files.
+- **Not** a coordinator. It renders one block. The illustrator role walks `final.md` and invokes this skill per block.
+- **Not** allowed to write outside `output_path`. No edits to `final.md`, no creating sibling files.
 - **Not** a `.pptx` renderer. That's [`talksmith:md-to-pptx`](../md-to-pptx/SKILL.md).
 - **Not** allowed to read network resources. Pure local file work.
 - **Not** willing to guess paths. If `repo_root` is missing from the invocation, the skill fails fast (`failed: repo_root input missing`) rather than defaulting to the current working directory — CWD is undefined when the skill runs from a subdir, a Cowork workspace, or any other harness.

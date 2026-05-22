@@ -1,10 +1,13 @@
-"""Convert a cleaned `master.md` into the slimmed Markdown that
+"""Convert a cleaned `final.md` into the slimmed Markdown that
 `skill://antropic-skills:/pptx` consumes.
 
 Input contract:
-    A Talk's cleaned `master.md` (post Step 6 Polish). Image refs already
-    point at `images/<file>`; `Presenter feedback` already stripped; ASCII
-    source preserved only in `<!-- ascii-source: ... -->` HTML comments.
+    A Talk's cleaned `final.md` (post Step 6 Polish — produced by the editor
+    copying `draft.md` → `final.md` then applying Polish transforms a/b/c/d).
+    Image refs already point at `images/<file>`; `Presenter feedback` already
+    stripped; ASCII source preserved only in `<!-- ascii-source: ... -->`
+    HTML comments. `draft.md` is not a valid input — passing it leaks
+    Presenter feedback bullets into slide bodies.
 
 Output contract (Markdown):
     - YAML frontmatter is dropped.
@@ -24,8 +27,8 @@ Output contract (Markdown):
     - Image refs (`![alt](path)`) pass through verbatim.
 
 Usage:
-    python convert.py <path-to-master.md> [-o <output.md>]
-    python convert.py <path-to-master.md>            # writes to stdout
+    python convert.py <path-to-final.md> [-o <output.md>]
+    python convert.py <path-to-final.md>            # writes to stdout
 
 The script is dependency-free (stdlib only) and CLI-safe — no Cowork required.
 """
@@ -201,9 +204,9 @@ def _collapse_blank_lines(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text)
 
 
-def convert(master_md: str) -> str:
-    """Run the full conversion pipeline on the contents of `master.md`."""
-    text = master_md
+def convert(final_md: str) -> str:
+    """Run the full conversion pipeline on the contents of `final.md`."""
+    text = final_md
     text = _strip_frontmatter(text)
     text = _strip_html_comments(text)
     text = _strip_h1_sections(text, _STRIP_H1)
@@ -217,21 +220,21 @@ def convert(master_md: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Convert a cleaned master.md into the Markdown shape "
+        description="Convert a cleaned final.md into the Markdown shape "
                     "consumed by skill://antropic-skills:/pptx."
     )
-    parser.add_argument("master_md", type=Path, help="Path to talks/<Talk>/master.md")
+    parser.add_argument("final_md", type=Path, help="Path to talks/<Talk>/final.md")
     parser.add_argument(
         "-o", "--output", type=Path, default=None,
         help="Output file (default: stdout)."
     )
     args = parser.parse_args()
 
-    if not args.master_md.is_file():
-        print(f"error: {args.master_md} not found", file=sys.stderr)
+    if not args.final_md.is_file():
+        print(f"error: {args.final_md} not found", file=sys.stderr)
         return 2
 
-    source = args.master_md.read_text(encoding="utf-8")
+    source = args.final_md.read_text(encoding="utf-8")
     converted = convert(source)
 
     if args.output:

@@ -70,7 +70,7 @@ The folder is **never overwritten by default** — if it already exists and is n
 - **No table structure.** `<table>`, `<tr>`, `<td>`, `<th>` are not specially handled — cell text is concatenated into the surrounding flow with no Markdown table syntax. For pages where tabular data matters, the librarian should be pointed at `original.html` and/or the presenter should hand-edit `page.md`.
 - **No paywall bypass.** If the page returns 403 / 401 / paywall HTML, that's what gets saved. Do not invent content.
 - **One URL per invocation.** For multiple URLs, call the skill once per URL with a distinct `folder_name` each time.
-- **Does not modify `master.md`, `corpus/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles the corpus build in Step 3.
+- **Does not modify `draft.md`, `final.md`, `corpus/`, or any other Talk file.** Only writes under `knowledge/web/<folder-name>/`. The librarian handles the corpus build in Step 3.
 
 ## Hand-off
 

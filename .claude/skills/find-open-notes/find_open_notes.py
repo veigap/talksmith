@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""find_open_notes.py — scan a master.md for unstamped Presenter feedback bullets.
+"""find_open_notes.py — scan a draft.md for unstamped Presenter feedback bullets.
 
 Unstamped = a bullet inside a Presenter feedback block that does NOT start with
 [open] or [closed]. These are the notes the presenter has written but the
 orchestrator has not yet processed via the Step 5 stamp→apply→close protocol.
 
+Step 5 always operates on `talks/<Talk>/draft.md` (the working file). After
+Step 6 (Polish) copies draft.md → final.md and strips Presenter feedback fields,
+there are by definition no unstamped bullets in final.md — pointing this script
+at final.md is valid but will produce zero results.
+
 Usage:
-    python3 find_open_notes.py <master_path> [--format tsv|human]
+    python3 find_open_notes.py <draft_path> [--format tsv|human]
 
 Output (human, default):
     found N open note(s):
@@ -39,11 +44,11 @@ _HR = re.compile(r"^---+\s*$")
 _HEADING = re.compile(r"^#{1,6} ")
 
 
-def find_open_notes(master_path: str) -> list[dict]:
+def find_open_notes(draft_path: str) -> list[dict]:
     """Return list of {line, section, slide, location, text} for unstamped bullets."""
-    path = Path(master_path)
+    path = Path(draft_path)
     if not path.exists():
-        raise FileNotFoundError(master_path)
+        raise FileNotFoundError(draft_path)
 
     lines = path.read_text(encoding="utf-8").splitlines()
 
@@ -142,15 +147,15 @@ def main(argv: list[str] | None = None) -> int:
             i += 1
 
     if not paths:
-        print("Usage: find_open_notes.py <master_path> [--format tsv|human]",
+        print("Usage: find_open_notes.py <draft_path> [--format tsv|human]",
               file=sys.stderr)
         return 1
 
-    master_path = paths[0]
+    draft_path = paths[0]
     try:
-        notes = find_open_notes(master_path)
+        notes = find_open_notes(draft_path)
     except FileNotFoundError:
-        print(f"error: file not found: {master_path}", file=sys.stderr)
+        print(f"error: file not found: {draft_path}", file=sys.stderr)
         return 1
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""talksmith:feedback-cycle — Step 5 mechanical bookkeeping.
+"""talksmith:feedback-cycle — Step 5 / Step 6 mechanical bookkeeping.
 
 Subcommands:
-  find-closed-unmirrored  --master <path> --backlog <path> [--format json|human]
-  stamp                   --master <path> --line N [--date YYYY-MM-DD]
-  close                   --master <path> --line N --resolution "<text>"
-  mirror-row              --master <path> --backlog <path> --line N [--tags "a,b,c"]
-  rescue-open             --master <path> [--dry-run]
+  find-closed-unmirrored  --draft <path> --backlog <path> [--format json|human]   # Step 5
+  stamp                   --draft <path> --line N [--date YYYY-MM-DD]              # Step 5
+  close                   --draft <path> --line N --resolution "<text>"            # Step 5
+  mirror-row              --draft <path> --backlog <path> --line N [--tags "a,b"]  # Step 5
+  rescue-open             --final <path> [--dry-run]                               # Step 6 (c)
+
+`--draft` targets the Talk's working file (`talks/<Talk>/draft.md`), edited by the
+presenter during Step 5. `--final` targets the Step-6 derived file
+(`talks/<Talk>/final.md`), produced from `draft.md` by the Polish copy step. The
+two flags are deliberately distinct so each subcommand makes it explicit which
+file it expects.
 
 See SKILL.md for the full contract.
 """
@@ -101,14 +107,14 @@ def _location_for_line(lines: list[str], line_idx: int) -> str:
     return "Thesis"
 
 
-def _talk_folder(master_path: Path) -> str:
-    return master_path.resolve().parent.name
+def _talk_folder(md_path: Path) -> str:
+    return md_path.resolve().parent.name
 
 
 # ─── find-closed-unmirrored ───────────────────────────────────────────────────
 
-def _all_closed_bullets(master_path: Path) -> list[dict[str, Any]]:
-    lines = _read_lines(master_path)
+def _all_closed_bullets(md_path: Path) -> list[dict[str, Any]]:
+    lines = _read_lines(md_path)
     in_feedback = False
     in_code = False
     results: list[dict[str, Any]] = []
@@ -169,10 +175,10 @@ def _existing_backlog_keys(backlog_path: Path, talk: str) -> set[tuple[str, str]
 
 
 def cmd_find_closed_unmirrored(args: argparse.Namespace) -> int:
-    master_path = Path(args.master).resolve()
+    draft_path = Path(args.draft).resolve()
     backlog_path = Path(args.backlog).resolve()
-    talk = _talk_folder(master_path)
-    closed = _all_closed_bullets(master_path)
+    talk = _talk_folder(draft_path)
+    closed = _all_closed_bullets(draft_path)
     existing = _existing_backlog_keys(backlog_path, talk)
     unmirrored = [c for c in closed if (talk, c["text"]) not in existing]
     if args.format == "json":
@@ -195,8 +201,8 @@ def cmd_find_closed_unmirrored(args: argparse.Namespace) -> int:
 # ─── stamp ────────────────────────────────────────────────────────────────────
 
 def cmd_stamp(args: argparse.Namespace) -> int:
-    master_path = Path(args.master).resolve()
-    lines = _read_lines(master_path)
+    draft_path = Path(args.draft).resolve()
+    lines = _read_lines(draft_path)
     idx = args.line - 1
     if idx < 0 or idx >= len(lines):
         print(f"error: line {args.line} out of range (file has {len(lines)} lines)", file=sys.stderr)
@@ -212,7 +218,7 @@ def cmd_stamp(args: argparse.Namespace) -> int:
     text = _strip_quotes(m.group(1))
     date = args.date or datetime.date.today().isoformat()
     lines[idx] = f'- [open] {date} — "{text}"'
-    _atomic_write(master_path, lines)
+    _atomic_write(draft_path, lines)
     print(f"stamped: line {args.line} → [open] {date}")
     return 0
 
@@ -220,8 +226,8 @@ def cmd_stamp(args: argparse.Namespace) -> int:
 # ─── close ────────────────────────────────────────────────────────────────────
 
 def cmd_close(args: argparse.Namespace) -> int:
-    master_path = Path(args.master).resolve()
-    lines = _read_lines(master_path)
+    draft_path = Path(args.draft).resolve()
+    lines = _read_lines(draft_path)
     idx = args.line - 1
     if idx < 0 or idx >= len(lines):
         print(f"error: line {args.line} out of range", file=sys.stderr)
@@ -241,7 +247,7 @@ def cmd_close(args: argparse.Namespace) -> int:
         lines[idx + 1] = resolution_line
     else:
         lines.insert(idx + 1, resolution_line)
-    _atomic_write(master_path, lines)
+    _atomic_write(draft_path, lines)
     print(f"closed: line {args.line} (date {date}) + Resolution")
     return 0
 
@@ -249,9 +255,9 @@ def cmd_close(args: argparse.Namespace) -> int:
 # ─── mirror-row ───────────────────────────────────────────────────────────────
 
 def cmd_mirror_row(args: argparse.Namespace) -> int:
-    master_path = Path(args.master).resolve()
+    draft_path = Path(args.draft).resolve()
     backlog_path = Path(args.backlog).resolve()
-    lines = _read_lines(master_path)
+    lines = _read_lines(draft_path)
     idx = args.line - 1
     if idx < 0 or idx >= len(lines):
         print(f"error: line {args.line} out of range", file=sys.stderr)
@@ -270,7 +276,7 @@ def cmd_mirror_row(args: argparse.Namespace) -> int:
         print(f"error: line {args.line + 1} is not a Resolution: continuation", file=sys.stderr)
         return 3
     resolution = rm.group(1).strip()
-    talk = _talk_folder(master_path)
+    talk = _talk_folder(draft_path)
     location = _location_for_line(lines, idx)
 
     tags = []
@@ -371,8 +377,8 @@ def _all_open_bullets(lines: list[str]) -> list[dict[str, Any]]:
 
 
 def cmd_rescue_open(args: argparse.Namespace) -> int:
-    master_path = Path(args.master).resolve()
-    lines = _read_lines(master_path)
+    final_path = Path(args.final).resolve()
+    lines = _read_lines(final_path)
     open_bullets = _all_open_bullets(lines)
     if not open_bullets:
         print("no [open] bullets to rescue.")
@@ -419,7 +425,7 @@ def cmd_rescue_open(args: argparse.Namespace) -> int:
             print(f"  {line}")
         return 0
 
-    _atomic_write(master_path, new_lines)
+    _atomic_write(final_path, new_lines)
     print(f"rescued: {appended} appended to # Open questions, {skipped} skipped (already present)")
     return 0
 
@@ -427,37 +433,37 @@ def cmd_rescue_open(args: argparse.Namespace) -> int:
 # ─── arg parsing ──────────────────────────────────────────────────────────────
 
 def main(argv: list[str]) -> int:
-    p = argparse.ArgumentParser(prog="feedback_cycle", description="Step 5 mechanical bookkeeping for Talksmith.")
+    p = argparse.ArgumentParser(prog="feedback_cycle", description="Step 5 / Step 6 mechanical bookkeeping for Talksmith.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    pf = sub.add_parser("find-closed-unmirrored")
-    pf.add_argument("--master", required=True)
+    pf = sub.add_parser("find-closed-unmirrored", help="list [closed] bullets in draft.md not yet mirrored to feedback-backlog.md (Step 5)")
+    pf.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     pf.add_argument("--backlog", required=True)
     pf.add_argument("--format", choices=["json", "human"], default="human")
     pf.set_defaults(func=cmd_find_closed_unmirrored)
 
-    ps = sub.add_parser("stamp")
-    ps.add_argument("--master", required=True)
+    ps = sub.add_parser("stamp", help="rewrite a single unstamped bullet in draft.md to [open] form (Step 5)")
+    ps.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     ps.add_argument("--line", type=int, required=True)
     ps.add_argument("--date")
     ps.set_defaults(func=cmd_stamp)
 
-    pc = sub.add_parser("close")
-    pc.add_argument("--master", required=True)
+    pc = sub.add_parser("close", help="flip a single [open] bullet in draft.md to [closed] + Resolution (Step 5)")
+    pc.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     pc.add_argument("--line", type=int, required=True)
     pc.add_argument("--resolution", required=True)
     pc.set_defaults(func=cmd_close)
 
-    pm = sub.add_parser("mirror-row")
-    pm.add_argument("--master", required=True)
+    pm = sub.add_parser("mirror-row", help="append one [closed]-bullet row from draft.md to feedback-backlog.md (Step 5)")
+    pm.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     pm.add_argument("--backlog", required=True)
     pm.add_argument("--line", type=int, required=True)
     pm.add_argument("--tags")
     pm.add_argument("--allow-empty-tags", action="store_true")
     pm.set_defaults(func=cmd_mirror_row)
 
-    pr = sub.add_parser("rescue-open")
-    pr.add_argument("--master", required=True)
+    pr = sub.add_parser("rescue-open", help="rescue still-[open] bullets in final.md into # Open questions (Step 6 (c))")
+    pr.add_argument("--final", required=True, help="path to the Talk's final.md")
     pr.add_argument("--dry-run", action="store_true")
     pr.set_defaults(func=cmd_rescue_open)
 

@@ -1,26 +1,28 @@
 ---
 name: talksmith:polish-ascii
-description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `master.md` and emits structured JSON listing every fenced ASCII diagram block plus any `<!-- ascii-note: ... -->` HTML comment that follows it, with exact line ranges for both. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `master.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `master.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). CLI-safe, stdlib-only Python.
+description: Step 6 (Polish) helper for the editor role. Three primary subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block plus any `<!-- ascii-note: ... -->` HTML comment that follows it, with exact line ranges for both. `extract` takes that JSON (annotated by the illustrator with the rendered SVG basename per slide_id) and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same annotated JSON and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
 ---
 
-# talksmith:polish-ascii — Mechanical ASCII extraction + master.md rewrite
+# talksmith:polish-ascii — Mechanical ASCII extraction + final.md rewrite
 
-The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per block; the editor owns the surrounding rewrite of `master.md` and the sidecar files. This skill is the editor's deterministic helper for that work — Python where Python belongs, no LLM reasoning needed.
+The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per block; the editor owns the surrounding rewrite of `final.md` and the sidecar files. This skill is the editor's deterministic helper for that work — Python where Python belongs, no LLM reasoning needed.
+
+**Always operates on `final.md`.** Step 6 begins with the editor copying `draft.md` → `final.md`; every subsequent Step-6 read/write — including every invocation of this skill — targets `final.md`. `draft.md` is read-only from Step 6 onward. The `--final <path>` flag (and the `final_path` positional for `scan`) is deliberately named so a `final draft.md` mix-up surfaces immediately as a mismatched argument rather than silently mutating the working file.
 
 **Canonical Step 6 sequence** (matches the editor + illustrator role specs):
 
-1. **`scan`** — read `master.md`, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges.
+1. **`scan`** — read `final.md`, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges.
 2. **Illustrator slug pass** — illustrator annotates each block in the plan with `render.svg_basename` (kebab-case slug from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)) and `render.alt`.
-3. **`extract`** — write `.ascii` sidecars per the annotated plan. `master.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
+3. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 4. **Per-sidecar render** — illustrator iterates the sidecars and invokes [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). Each invocation reads the sidecar, splits source from note, and writes the sibling `.svg`. The sidecar is the renderer's authoritative input.
-5. **`cleanup`** — rewrite `master.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
+5. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
 A single-pass `apply` subcommand exists for quick passes (does steps 3 + 5 together, skipping the per-sidecar render in step 4 — useful when you've already rendered SVGs separately and just want to finish the cleanup).
 
 ## When to use
 
-- Step 6 (Polish), transformation (a) — replacing every fenced ASCII block with an image reference and producing the matching sidecar.
-- Re-rendering a single diagram after the presenter edits an ASCII fence in `master.md` — `scan` reports the new line numbers; `apply` overwrites just that slide.
+- Step 6 (Polish), transformation (a) — replacing every fenced ASCII block in `final.md` with an image reference and producing the matching sidecar.
+- Re-rendering a single diagram after the presenter edits an ASCII fence in `draft.md`: re-run Step 6 from action 0 (`cp draft.md final.md`), then `scan` reports the new line numbers; `apply` overwrites just that slide.
 
 ## Inputs
 
@@ -28,14 +30,14 @@ A single-pass `apply` subcommand exists for quick passes (does steps 3 + 5 toget
 
 | Input | Required? | Notes |
 |---|---|---|
-| `master_path` | yes | Path to the Talk's `master.md` |
+| `final_path` | yes | Positional. Path to the Talk's `final.md`. |
 | `--format` | optional | `json` (default) or `human` |
 
-### `apply`
+### `extract` / `cleanup` / `apply`
 
 | Input | Required? | Notes |
 |---|---|---|
-| `--master` | yes | Path to the Talk's `master.md` (will be rewritten in place) |
+| `--final` | yes | Path to the Talk's `final.md` (will be rewritten in place by `cleanup` / `apply`; left untouched by `extract`). |
 | `--plan` | yes | Path to a JSON file: `scan` output **annotated** with `svg_basename` and `alt` per block (see schema below). Pass `-` to read from stdin. |
 | `--dry-run` | optional | Print the planned rewrite to stdout instead of touching disk. |
 
@@ -43,7 +45,7 @@ The plan JSON has this shape:
 
 ```json
 {
-  "master_path": "talks/<Talk>/master.md",
+  "final_path": "talks/<Talk>/final.md",
   "blocks": [
     {
       "slide_id": "s1-2-1",
@@ -68,12 +70,12 @@ A block with `"documentation_only": true` is **also skipped automatically** — 
 
 ```bash
 # Phase 1 — capture
-python3 .claude/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/master.md > /tmp/plan.json
+python3 .claude/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/plan.json
 
 # (illustrator picks templates, dispatches renders, annotates /tmp/plan.json with render fields)
 
-# Phase 2 — write sidecars + rewrite master.md
-python3 .claude/skills/polish-ascii/polish_ascii.py apply --master talks/<Talk>/master.md --plan /tmp/plan.json
+# Phase 2 — write sidecars + rewrite final.md
+python3 .claude/skills/polish-ascii/polish_ascii.py apply --final talks/<Talk>/final.md --plan /tmp/plan.json
 ```
 
 `apply` is idempotent: re-running with the same plan produces no diff if sidecars and fence rewrites already match.
@@ -84,7 +86,7 @@ python3 .claude/skills/polish-ascii/polish_ascii.py apply --master talks/<Talk>/
 
 ```json
 {
-  "master_path": "talks/senales-1d-biomedicina/master.md",
+  "final_path": "talks/senales-1d-biomedicina/final.md",
   "blocks": [
     {
       "slide_id": "s1-2-1",
@@ -99,7 +101,7 @@ python3 .claude/skills/polish-ascii/polish_ascii.py apply --master talks/<Talk>/
 ### `scan` — human
 
 ```
-found 22 ASCII block(s) in talks/senales-1d-biomedicina/master.md:
+found 22 ASCII block(s) in talks/senales-1d-biomedicina/final.md:
 
   s1-2-1   lines 84–101 (18 ASCII lines)   note: yes (lines 102–106)
   s1-3-1   lines 147–151 (5 ASCII lines)   note: yes (lines 152–155)
@@ -109,19 +111,23 @@ found 22 ASCII block(s) in talks/senales-1d-biomedicina/master.md:
 ### `apply` — summary
 
 ```
-applied 22 block(s) to talks/senales-1d-biomedicina/master.md:
+applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
   sidecars: 21 written, 1 unchanged
   fences:   22 rewritten
 ```
 
 ## Detection rules (used by `scan`)
 
-- **ASCII block** = a fenced code block whose language tag is empty, `ascii`, `text`, or `diagram`, AND whose payload either contains box / arrow glyphs (`─│┌┐└┘├┤┬┴┼+|→←↑↓` or `->`, `==>`, `─`, `│`) or spans ≥3 lines with spatially arranged characters. Fences tagged `python`, `bash`, etc. are ignored.
+- **ASCII block** — detection runs in two tiers, mirroring [illustrator.md](../../roles/illustrator.md) → *Detection rule*:
+  1. **Canonical (deterministic):** fence opens with exactly ` ```ascii ` (lowercase). Payload is trusted as a diagram, no glyph inspection. Scan emits `detection_mode: "canonical"`. This is the form the editor must use for all new ASCII.
+  2. **Legacy heuristic (fallback):** fence opens with an empty / `text` / `diagram` language tag AND payload contains box / arrow glyphs (`─│┌┐└┘├┤┬┴┼+|→←↑↓` or `->`, `==>`, `─`, `│`) or spans ≥3 lines with spatially arranged characters. Scan emits `detection_mode: "legacy-heuristic"` and the `human` formatter prints a migration warning per legacy block.
+
+  Fences tagged `python`, `bash`, `javascript`, `yaml`, `json`, `sh`, etc. are ignored under both tiers.
 - **Note** = an HTML comment of shape `<!-- ascii-note: ... -->` whose opening `<!-- ascii-note:` line appears **within 1 blank-line tolerance** after the closing fence. The comment is captured verbatim from its opening sentinel through the line containing `-->`.
 - **`slide_id`** = `s<section-N>-<slide-M>-<n>`. Section is the most recent `# N.` H1; slide is the most recent `## M.` H2 inside that section; `n` is the 1-based ordinal of the ASCII block within the current slide. Special locators: `# Agenda` → section `0`; `# Conclusiones` / `# Conclusions` → section `c`.
-- **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` echo left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads `master.md` source and are skipped by `extract`/`cleanup`/`apply`.
+- **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` HTML comment left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads the source and are skipped by `extract`/`cleanup`/`apply`.
 
-## Rewrite rules (used by `apply`)
+## Rewrite rules (used by `apply` / `cleanup`)
 
 For each block with `render` non-null:
 
@@ -130,7 +136,7 @@ For each block with `render` non-null:
    - If `note.payload` exists: one blank line, then the captured note verbatim through `-->`.
    - Trailing `\n` to keep POSIX-friendly.
    - Idempotency: skip the write if existing bytes match exactly.
-2. **Master rewrite.** Replace lines `ascii.start_line` … `ascii.end_line` (inclusive) in `master.md` with:
+2. **`final.md` rewrite.** Replace lines `ascii.start_line` … `ascii.end_line` (inclusive) in `final.md` with:
    ```
    ![<alt>](images/<svg_basename>)
    <!-- ascii-source:
@@ -139,12 +145,13 @@ For each block with `render` non-null:
    ```
    Do **not** modify the note region (lines `note.start_line` … `note.end_line`). It stays where it was, directly after the new image reference + `ascii-source` echo.
 
-Blocks are processed bottom-up so line numbers stay valid through the pass. The skill writes `master.md` atomically (write to `.tmp`, then `os.replace`).
+Blocks are processed bottom-up so line numbers stay valid through the pass. The skill writes `final.md` atomically (write to `.tmp`, then `os.replace`). `draft.md` is **never** touched.
 
 ## Boundaries
 
-- Reads `master.md`; in `scan` it is read-only; in `apply` it is rewritten atomically.
-- Writes only under `talks/<Talk>/images/`.
+- Reads `final.md`; in `scan` it is read-only; in `apply` / `cleanup` it is rewritten atomically.
+- Writes only under `talks/<Talk>/images/` (sidecars) and to `final.md` itself.
+- Never reads or writes `draft.md`.
 - Does **not** render SVGs — that's `talksmith:ascii-to-svg`.
 - Does **not** assign `svg_basename` — the illustrator does (filename convention spec in `.claude/roles/illustrator.md`).
 - Does **not** strip `Presenter feedback` (Step 6 (d)) or consolidate non-ASCII image refs (Step 6 (b)) — those remain editor responsibilities.
@@ -153,4 +160,4 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 
 - `0` — success.
 - `2` — malformed input (missing file, plan JSON missing required fields, line numbers out of range).
-- `3` — `apply` aborted because `master.md` mtime drifted between the plan's capture and the apply (stale plan — re-`scan`).
+- `3` — `apply` aborted because `final.md` mtime drifted between the plan's capture and the apply (stale plan — re-`scan`).

@@ -1,11 +1,11 @@
 ---
 name: talksmith:find-open-notes
-description: Scan a Talk's master.md for unstamped Presenter feedback bullets — bullets inside `### Presenter feedback` blocks that have not yet received `[open]` or `[closed]` status tags. Returns line number, slide/section location, and verbatim text. CLI-safe, stdlib-only Python.
+description: Scan a Talk's draft.md for unstamped Presenter feedback bullets — bullets inside `### Presenter feedback` blocks that have not yet received `[open]` or `[closed]` status tags. Returns line number, slide/section location, and verbatim text. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:find-open-notes — Find unstamped feedback notes
 
-Scans `master.md` and returns every bullet inside a `Presenter feedback` block
+Scans `draft.md` and returns every bullet inside a `Presenter feedback` block
 that the orchestrator has not yet stamped. Stamped bullets carry `[open]` or
 `[closed]` prefixes; anything else is an open note waiting to be processed.
 
@@ -13,9 +13,14 @@ Use this skill at the start of any Step 5 (Review) pass, or whenever the
 presenter says "process new note" / "process feedback" — it tells you exactly
 which lines to act on without reading the whole file.
 
+The skill always reads `draft.md` — the working file edited during Steps 1–5.
+After Step 6 (Polish) strips Presenter feedback fields from `final.md`, that
+file by definition contains no unstamped bullets; the skill will still parse
+it but always return an empty list.
+
 ## When to use
 
-- Presenter adds a bullet to `master.md` externally and asks you to process it.
+- Presenter adds a bullet to `draft.md` externally and asks you to process it.
 - Starting a Step 5 round: run the skill first to get a precise list before
   performing the Editor role.
 - Spot-check after applying feedback to confirm no bullets were missed.
@@ -24,14 +29,14 @@ which lines to act on without reading the whole file.
 
 | Input | Required? | Notes |
 |---|---|---|
-| `master_path` | yes | Path to the Talk's `master.md`, e.g. `talks/senales-1d-biomedicina/master.md` |
+| `draft_path` | yes | Path to the Talk's `draft.md`, e.g. `talks/senales-1d-biomedicina/draft.md` |
 | `--format` | optional | `human` (default, readable) or `tsv` (machine-readable, for piping) |
 
 ## Invocation
 
 ```bash
-python3 .claude/skills/find-open-notes/find_open_notes.py <master_path>
-python3 .claude/skills/find-open-notes/find_open_notes.py <master_path> --format tsv
+python3 .claude/skills/find-open-notes/find_open_notes.py <draft_path>
+python3 .claude/skills/find-open-notes/find_open_notes.py <draft_path> --format tsv
 ```
 
 ## Output
@@ -73,7 +78,7 @@ Content inside fenced code blocks (` ``` `) is never scanned.
 
 For each note returned:
 
-1. **Stamp** the bullet in-place: `- [open] YYYY-MM-DD — "<verbatim text>"`
+1. **Stamp** the bullet in-place in `draft.md`: `- [open] YYYY-MM-DD — "<verbatim text>"`
 2. **Apply** the change the bullet implies to the surrounding slide/section (perform Editor role).
 3. **Close**: flip to `- [closed] YYYY-MM-DD — "<verbatim>"` + `  Resolution: <what changed>`.
 4. **Mirror** to `config/feedback-backlog.md`.
@@ -82,7 +87,7 @@ See `CLAUDE.md` → Step 5 for the full protocol.
 
 ## Boundaries
 
-- Read-only: never modifies `master.md` or any other file.
+- Read-only: never modifies `draft.md` or any other file.
 - Scans a single file per invocation.
 - Does not validate whether the stamped bullets were correctly applied — it only
   finds bullets that haven't been touched yet.

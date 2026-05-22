@@ -1,8 +1,8 @@
 # Talksmith
 
-**Talksmith** is a Presenter Agent that helps a human presenter turn raw exploration — articles, papers, LLM chat sessions, screenshots, notes — into a well-structured presentation outline (`master.md`), and optionally renders it to PowerPoint.
+**Talksmith** is a Presenter Agent that helps a human presenter turn raw exploration — articles, papers, LLM chat sessions, screenshots, notes — into a well-structured presentation outline (`draft.md`), then a polished deliverable (`final.md`), and optionally renders it to PowerPoint.
 
-It is **not** a slide generator. The deliverable is a single structured Markdown file describing the deck: thesis, agenda, sections, slides, sources, and speaker notes. Downstream tooling consumes that file to render slides.
+It is **not** a slide generator. The deliverable is two plain Markdown files — `draft.md` (the working file the presenter edits during Steps 1–5) and `final.md` (the cleaned, Polish-stage derivative produced in Step 6) — describing the deck: thesis, agenda, sections, slides, sources, and speaker notes. Downstream tooling consumes `final.md` to render slides; `draft.md` stays around as the durable working file with the full feedback audit trail, untouched after Step 5.
 
 ## An opinionated methodology
 
@@ -16,9 +16,9 @@ Talksmith isn't a generic "ask an LLM to make a deck" tool. It encodes a four-ph
 - **Explore — LLMs are the brainstorming partner, not the deck generator.** Use Claude (or any LLM) to learn the topic, stress-test ideas, generate charts, and chase tangents. Read papers, capture notes. Actually engage with the material before structuring anything.
 - **Corpus — preserve, don't summarize.** Drop papers and notes into `knowledge/articles/`, export worthwhile chat sessions to ZIP under `knowledge/llm-chats/`. The Librarian restructures every source into uniform Markdown — contradictions, abandoned threads, and course-corrections preserved — and copies every image into per-source companion folders so the corpus is self-contained. The next phase works from your actual thinking, not a blank prompt.
 - **Draft — thesis-first, sourced.** Every slide is challenged against a one-sentence thesis and cited back to a corpus record. Talksmith won't invent content out of thin air.
-- **Refine — audit-tracked loop.** Feedback bullets land in `master.md` in your editor of choice; cut material and closed feedback stay in the file as an audit trail, never silently deleted.
+- **Refine — audit-tracked loop.** Feedback bullets land in `draft.md` in your editor of choice; cut material and closed feedback stay in the file as an audit trail, never silently deleted. Step 6 (Polish) makes a separate `final.md` so polishing never overwrites the audit trail — you can re-run Polish as many times as you want against the same untouched `draft.md`.
 
-One substrate underneath all of it: **Markdown.** Corpus records, the outline (`master.md`), the progress log (`memory.md`), feedback rounds — every artifact is a plain `.md` file. Diffable, versionable, editable in any tool, portable across renderers. Slides are a *projection* of the Markdown, not the source of truth.
+One substrate underneath all of it: **Markdown.** Corpus records, the outline (`draft.md` → `final.md`), the progress log (`memory.md`), feedback rounds — every artifact is a plain `.md` file. Diffable, versionable, editable in any tool, portable across renderers. Slides are a *projection* of the Markdown, not the source of truth.
 
 If that doesn't fit how you work, this is the wrong tool.
 
@@ -56,9 +56,9 @@ Five roles, one file as source of truth:
 
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `knowledge/corpus/`, with a companion `<source-stem>/images/` folder per source so the corpus is self-contained. Preserves; does not compress.
 - **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and learned rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone.
-- **Editor** — the muscle. Keeps `master.md` and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from corpus records, applies feedback, and cleans the file for delivery.
-- **Illustrator** — converts every ASCII diagram in `master.md` into a styled SVG during the Polish step.
-- **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `master.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
+- **Editor** — the muscle. Keeps `draft.md` (Steps 1–5), `final.md` (Step 6+), and `memory.md` current as the single source of truth: bootstraps from template, transcribes presenter decisions, drafts prose from corpus records, applies feedback in `draft.md`, then in Step 6 copies `draft.md` → `final.md` and cleans `final.md` for delivery.
+- **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during the Polish step.
+- **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `final.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
 
 Role specs live at [.claude/roles/](.claude/roles/) — performed inline by the orchestrator, not as separate agents.
 
@@ -100,7 +100,7 @@ In the web/Cowork flow, upload source files (PDFs, chat ZIPs, images) via the se
    - **GitHub-backed workspace** — connect the GitHub repo, same as Option 2; the desktop app uses the cloud workspace.
 3. Open a new session on the workspace — the agent boots from `CLAUDE.md` automatically.
 
-The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `knowledge/articles/` and `knowledge/llm-chats/` work natively, and you can keep `master.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop.
+The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `knowledge/articles/` and `knowledge/llm-chats/` work natively, and you can keep `draft.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop.
 
 ### What happens next
 
@@ -127,10 +127,11 @@ Everything else flows from there. For the full operating spec, see [CLAUDE.md](C
   [4] Draft       <-- one of three modes (A Interview / B Agent Draft / C Outline)
                      editor writes; composer critiques at every milestone
        v
-  [5] Review      <-- presenter edits master.md; loops N times
+  [5] Review      <-- presenter edits draft.md; loops N times
        v
-  [6] Polish       -- illustrator: ASCII -> SVG; editor: consolidate images,
-                     rescue open feedback, clean master.md
+  [6] Polish       -- editor: cp draft.md -> final.md (draft.md frozen here);
+                     illustrator: ASCII -> SVG; editor: consolidate images,
+                     rescue open feedback, clean final.md
        v
   [7] Learnings    -- promote >=3x recurring feedback to learnings.md
        v
@@ -141,7 +142,7 @@ Step 0 (Introduce) runs automatically on session start and isn't shown above. Th
 
 ### Draft has three modes
 
-When filling `master.md` from empty, the presenter picks how to work:
+When filling `draft.md` from empty, the presenter picks how to work:
 
 - **Interview** — agent asks structured questions, presenter answers.
 - **Agent Draft** — agent reads the corpus + profile, drafts everything, then asks targeted clarifying questions.
@@ -149,7 +150,7 @@ When filling `master.md` from empty, the presenter picks how to work:
 
 ### Review is a loop
 
-The first Draft is rarely final. In Review, the presenter opens `master.md` in their editor of choice (VS Code, Obsidian, plain text — anything), drops plain-text feedback bullets inside `Presenter feedback` fields:
+The first Draft is rarely final. In Review, the presenter opens `draft.md` in their editor of choice (VS Code, Obsidian, plain text — anything), drops plain-text feedback bullets inside `Presenter feedback` fields:
 
 ```
 ### Presenter feedback
@@ -177,7 +178,8 @@ Review repeats as many times as needed until the presenter declares the document
 │   └── template.pptx                  # PowerPoint reference template (Step 8 Render)
 ├── talks/
 │   └── <talk-folder>/                 # one folder per talk
-│       ├── master.md                  # the outline (deliverable)
+│       ├── draft.md                   # the working outline (Steps 1–5, presenter edits this)
+│       ├── final.md                   # the polished deliverable (produced in Step 6 from draft.md)
 │       ├── memory.md                  # progress log / restore point
 │       ├── knowledge/
 │       │   ├── articles/              # PDFs, HTML, papers
@@ -190,7 +192,7 @@ Review repeats as many times as needed until the presenter declares the document
     ├── settings.json                  # shared Claude Code settings
     ├── settings.local.json            # local overrides (gitignored)
     ├── schemas/                       # file-format specs (each holds spec + canonical empty form)
-    │   ├── master.md                  # talks/<Talk>/master.md schema (seeds the deliverable in Step 4)
+    │   ├── draft.md                   # talks/<Talk>/draft.md schema — also documents how final.md is derived from it (seeds the working file in Step 4)
     │   ├── memory.md                  # talks/<Talk>/memory.md schema (per-Talk progress log / resume point)
     │   ├── profile.md                 # config/profile.md schema (seeds the profile in Step 0.5)
     │   ├── principles.md              # config/principles.md schema (composer's design defaults)
@@ -201,20 +203,20 @@ Review repeats as many times as needed until the presenter declares the document
     ├── roles/
     │   ├── librarian.md               # Librarian role spec
     │   ├── composer.md                # Composer role spec (design critic)
-    │   ├── editor.md                  # Editor role spec (master.md/memory.md maintainer)
+    │   ├── editor.md                  # Editor role spec (draft.md → final.md / memory.md maintainer)
     │   ├── illustrator.md             # Illustrator role spec (ASCII → SVG coordinator)
     │   └── global-librarian.md        # Global-Librarian role spec (cross-Talk curator of knowledge-library/)
     └── skills/
         ├── ingest/                    # talksmith:ingest — capture a web page into knowledge/web/
         ├── ascii-to-svg/              # talksmith:ascii-to-svg — render one ASCII block to one SVG
-        └── md-to-pptx/                # talksmith:md-to-pptx — render master.md to .pptx (Step 8)
+        └── md-to-pptx/                # talksmith:md-to-pptx — render final.md to .pptx (Step 8)
 ```
 
 ## Key conventions
 
 - **Folder names are kebab-case** (e.g. `gan-networks`, `quantum-computing-intro`).
 - **Cite sources by filename.** Slide `Sources` reference files under `knowledge/corpus/` (e.g. `corpus/transformer-paper.pdf.md`).
-- **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `master.md`.
+- **Never silently drop content.** Anything removed goes to `Cut material` or `Open questions` in `draft.md`.
 - **Chat-prompt is the canonical interaction.** The agent asks every decision in chat with 2–4 numbered prose options derived from current context. Genuinely open questions (e.g. "what's your thesis?") fall back to free-text.
 - **`config/profile.md` is session-wide context.** Once filled, it's loaded automatically and kept in context across all role work.
 - **`memory.md` is append-only.** Updated after every completed step; used to resume an in-progress talk.

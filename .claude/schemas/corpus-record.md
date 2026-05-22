@@ -4,7 +4,7 @@ Specification for the per-source corpus records the Librarian role emits during 
 
 ## Purpose
 
-Lossless restructuring of every raw source under `talks/<Talk>/knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` into a uniform Markdown shape, plus a companion folder of extracted/copied image bytes. The librarian preserves, never compresses — long quotes belong in `Raw / preserved excerpts`, contradictions in `Inconsistencies / open questions`. Downstream consumers cite these records by filename in slide `Sources` fields and reference their companion-folder images directly from `master.md`.
+Lossless restructuring of every raw source under `talks/<Talk>/knowledge/articles/`, `knowledge/llm-chats/`, and `knowledge/web/` into a uniform Markdown shape, plus a companion folder of extracted/copied image bytes. The librarian preserves, never compresses — long quotes belong in `Raw / preserved excerpts`, contradictions in `Inconsistencies / open questions`. Downstream consumers cite these records by filename in slide `Sources` fields and reference their companion-folder images directly from `draft.md` (and from the Step-6-derived `final.md`, which inherits those refs and then consolidates them into the Talk's `images/` folder).
 
 ## Loading semantics
 
@@ -47,7 +47,7 @@ knowledge/corpus/
         └── hero.png
 ```
 
-The Librarian writes the image bytes to `<source-stem>/images/<file>.<ext>` during Phase 1 (always — not deferred). Image filenames inside the corpus record's `## Images / diagrams` section are relative paths of the form `<source-stem>/images/<file>` (resolvable from `knowledge/corpus/`). When `master.md` references one of these images, the path is `knowledge/corpus/<source-stem>/images/<file>` from the Talk root, and Step 6 (b) consolidates it into the Talk's `images/` folder.
+The Librarian writes the image bytes to `<source-stem>/images/<file>.<ext>` during Phase 1 (always — not deferred). Image filenames inside the corpus record's `## Images / diagrams` section are relative paths of the form `<source-stem>/images/<file>` (resolvable from `knowledge/corpus/`). When `draft.md` references one of these images, the path is `knowledge/corpus/<source-stem>/images/<file>` from the Talk root; Step 6 copies the draft to `final.md` and (b) consolidates the reference into the Talk's `images/` folder.
 
 **Sources without images** (pure text articles, transcript-only chat exports) still get a companion folder, but it's empty until images are added. An empty companion folder is valid.
 
@@ -72,7 +72,7 @@ The librarian uses HTML-comment markers when a record is incomplete:
 
 A corpus record is **complete** iff it exists, is non-empty, **and** contains no `<!-- pending: ... -->` markers anywhere. The librarian's idempotency check skips complete records unless the orchestrator passes `force: true`.
 
-The Editor role watches for these markers via its *Pending-stub awareness* rule (in `.claude/roles/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `master.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
+The Editor role watches for these markers via its *Pending-stub awareness* rule (in `.claude/roles/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `draft.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
 
 ## Canonical empty form
 

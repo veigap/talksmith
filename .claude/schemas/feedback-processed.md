@@ -25,7 +25,7 @@ Same per-entry shape as `feedback-backlog.md`, with two added fields linking to 
   date: YYYY-MM-DD
   location: <Thesis | Agenda | Section "<name>" | Slide "<title>">
   feedback: "<verbatim presenter wording>"
-  resolution: <one-line summary of what changed in master.md>
+  resolution: <one-line summary of what changed in draft.md>
   tags: [<tags>]
   promoted_to: <learning title in learnings.md>
   promoted_at: YYYY-MM-DD
