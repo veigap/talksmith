@@ -20,9 +20,36 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
    Leave `documentation_only: true` blocks with `render: null` — `polish-ascii extract` / `cleanup` skip them automatically.
 3. **(Optional) Collect style directives.** If the presenter has issued visual instructions for this Talk (e.g. *"keep the palette muted"*, *"highlight the input panel in coral"*), capture them as a single freeform string to pass as `style_directives` on every render. If the presenter hasn't said anything, skip this step — the skill uses defaults + the standing rules in `config/diagram-style.md`.
 4. **Extract sidecars.** Invoke `polish-ascii extract --final <final.md> --plan <annotated-plan.json>` → writes `talks/<Talk>/images/<basename>.ascii` for every annotated render-driving block. `final.md` is **not** modified at this step.
-5. **Render per sidecar — the core dispatch loop.** For each sidecar, invoke [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) in **Mode B** (`ascii_file: <abs path>`) with: the plan block's `context` bundle (passed straight through — no extraction); `repo_root` (so the skill can locate `config/diagram-style.md`); and `style_directives` (if any, from step 3). The skill reads ASCII source + note from the sidecar, applies the standing rules + directives, writes the sibling `.svg`. One sidecar → one invocation → one SVG. Trivially parallelizable: dispatch to subagents without further parsing.
+5. **Render per sidecar — the dispatch + critique loop.** For each sidecar, run the sub-loop below. Cap at **3 iterations per block** (initial + up to 2 revisions). One sidecar → up to 3 invocations → one SVG.
+
+   a. **Render.** Invoke [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) in **Mode B** (`ascii_file: <abs path>`) with: the plan block's `context` bundle (passed straight through — no extraction); `repo_root` (so the skill can locate `config/diagram-style.md`); and `style_directives` (if any, from step 3 plus any critique-driven revisions from a prior iteration).
+   b. **Critique the result.** Open the rendered SVG and review it with a critical eye — see *Per-render critique* below for the checklist. If clean, record as `rendered` and exit the sub-loop.
+   c. **Iterate.** If defects are found, compose a short, targeted `style_directives` string that names the specific defects and how to fix them (e.g. *"label 'baseline' overlaps the centerline; move it 12px above the baseline line"*; *"arrow from panel A to panel B doesn't reach panel B's left edge — extend it"*). Add this to any pre-existing style directives from step 3 and re-render via step 5a. The skill will overwrite the SVG.
+   d. **Cap.** If the third iteration still has defects, record the block as `unresolved` with the surviving defect list. Move on — do not loop forever. The presenter can review unresolved blocks and decide whether to accept, edit by hand, or re-run Step 6 after editing the ASCII.
+
+   The sub-loop is per-sidecar, so parallel dispatch across blocks is still fine — each subagent runs its own critique/iterate loop on its assigned block.
 6. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <annotated-plan.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
 7. Aggregate per-block render results for the final report.
+
+## Per-render critique
+
+After every render, before recording the block as done, inspect the SVG output for these defects. The list is rank-ordered — fix earlier items before later ones, since later defects are often consequences of the earlier ones.
+
+| # | Defect | What to look for |
+|---|---|---|
+| 1 | **Text over lines / arrows / shapes** | Any `<text>` element whose bounding box overlaps a `<path>`, `<line>`, or `<polyline>` that isn't its own panel rect. The most common SVG layout bug. Includes labels colliding with arrowheads. |
+| 2 | **Text bleeding past a panel** | A `<text>` element whose x-extent exceeds its panel's right edge, or whose y-extent exceeds the panel's bottom. Includes text running off the SVG viewBox. |
+| 3 | **Disconnected geometry** | Arrows that don't terminate at the visual edge of their target panel; lines that stop short of where the eye expects them. Often shows up when an arrow's `x2` doesn't match the next panel's `x`. |
+| 4 | **Inside-wrong-panel labels** | A label visually associated with panel B but rendered inside (or anchored to) panel A. Check that label coordinates correspond to the panel they describe. |
+| 5 | **Text not centered in boxes (when it should be)** | For text rendered **inside** a box / panel / callout — i.e. the `<text>`'s bounding box sits fully inside a `<rect>` — verify both axes. **Horizontal:** `text-anchor="middle"` with the `x` attribute set to the rect's center-x. **Vertical:** either `dominant-baseline="central"` with `y` at the rect's center-y, or an explicit baseline offset (`y ≈ rect.center_y + font_size * 0.35`). Applies to: box labels, pipeline-stage names, in-panel callouts, badge / pill text. **Does NOT apply to:** body prose / multi-line paragraphs (left-aligned is correct), list items, panel headings that sit *above* a panel, axis labels, bottom captions. When it should apply but doesn't, the text reads as off-balance — even when nothing overlaps. |
+| 6 | **Standing-rule violations** | Background isn't pure white, any 3D effect (gradient, drop shadow, perspective skew), inverted dark-mode palette. Cross-check against `config/diagram-style.md`. |
+| 7 | **Color contrast / legibility** | Dark text on dark-tinted panel, light text on light-tinted panel, two adjacent panels with hues too close to distinguish. The eye should be able to separate panels at a glance. |
+| 8 | **Crowded panel** | More than ~6 distinct elements (labels, arrows, callouts) in one panel — the diagram is doing too much. Surface as `unresolved` for the presenter to consider splitting the slide rather than papering over with style directives. |
+| 9 | **Visual hierarchy is wrong** | The most important element (the one the `ascii-note → intent:` line emphasizes) isn't the most prominent. Quietest defect; most subjective; flag only when the misorder is obvious. |
+
+**Critique tone.** Be specific and surgical, not vague. "*The label is misaligned*" is unactionable; "*the 'output' label sits at x=290 but should be at x=310 to align with the arrowhead*" is actionable. The next render invocation acts on the directive verbatim, so it has to point at the specific defect.
+
+**When to declare clean.** If you've completed a pass of the checklist and found nothing actionable, declare the block clean and move on. Do not invent defects to fill the iteration budget — wasted iterations cost time and risk regression. A clean first-pass render is the goal.
 
 Do not modify `final.md` — `polish-ascii cleanup` does (driven by the editor). Do not modify `draft.md` — it is read-only from Step 6 onward. Do not emit SVG XML — `ascii-to-svg` does that. Do not parse `final.md` by hand for ASCII blocks or for slide context — `polish-ascii scan` is the single source of both.
 
@@ -66,9 +93,10 @@ Create `images/` if it doesn't exist.
 
 ## Report
 
-- **Rendered**: count + list of new SVGs.
+- **Rendered**: count + list of new SVGs. Annotate each with the iteration count: `s1-2-1 (clean on first pass)`, `s2-7-1 (clean after 1 revision)`, etc.
 - **Unchanged**: count + list of skipped SVGs (matched byte-for-byte).
 - **Skipped (non-diagram fences)**: count.
 - **Sparse-context**: slide ids where `### Content` and/or `### Speaker notes` were empty.
-- **Failed**: slide id + reason for any block that couldn't be processed.
+- **Unresolved**: slide ids that still had defects after the 3-iteration cap, plus the surviving defect list per block. The presenter reviews these and decides whether to accept, hand-edit the SVG, or re-run Step 6 after editing the ASCII.
+- **Failed**: slide id + reason for any block that couldn't be processed at all (skill returned `failed:`, file I/O error, etc.) — distinct from `Unresolved` which means it rendered but didn't pass critique.
 - **Style-directive deviations**: any case where a per-render directive forced an override of a standing rule in `config/diagram-style.md` (surfaced from the skill's report).
