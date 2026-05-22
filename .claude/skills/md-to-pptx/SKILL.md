@@ -78,9 +78,18 @@ talks/<Talk>/
    The skill must inherit the template's theme, fonts, colors, and master slide layouts — it must **not** author the deck from scratch using its own default theme. Use the inherit-wholesale mode if the skill offers a choice between modes.
 4. Verify `talks/<Talk>/output/final.pptx` exists and is non-empty.
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
-6. Report: slide count, image references resolved, any warnings surfaced by `skill://antropic-skills:/pptx`.
+6. **Render per-slide critique PNGs.** Rasterize every slide to `talks/<Talk>/output/.critique/slide-NN.png` (zero-padded 2-digit slide number, `01` … `NN`). These PNGs are critique-only — not referenced from `final.pptx`, not part of the deliverable — and exist so the orchestrator's post-render visual review can perform visual analysis on actual pixels rather than slide-XML inspection (see [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Post-render visual review*).
 
-The **post-render visual review** — the 10-point check for type hierarchy / overflow / bullet density / balance / focal point / theme consistency / etc. — is performed by the **orchestrator** after this skill returns, not by the skill itself. The orchestrator inspects the deck via Cowork's `pptx` skill and dispatches targeted edits back to the skill (capped at 2 iterations beyond the initial render). See [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Render PPTX* → *Post-render visual review* for the full checklist. The skill stays focused on rendering; the orchestrator stays focused on judgement.
+   Path priority (use the first that works):
+
+   1. If [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx) exposes a slide-to-image render endpoint, call it. The native skill is the most faithful source — it knows the deck's true layout post-render.
+   2. Fallback: `libreoffice --headless --convert-to pdf <output_dir> talks/<Talk>/output/final.pptx`, then `pdftoppm -r 150 -png talks/<Talk>/output/final.pdf talks/<Talk>/output/.critique/slide` to produce one PNG per slide. Rename / pad to `slide-NN.png`. Requires `libreoffice` (`brew install --cask libreoffice`) and `poppler` (`brew install poppler`); document the dependency.
+
+   If both paths fail, the deck is still valid — report `slide_previews: failed: <reason>` and continue. The orchestrator will surface this as `unresolved: slide_previews_failed` for the post-render review (visual critique can't run without pixels), but the `.pptx` itself is unaffected.
+
+7. Report: slide count, image references resolved, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
+
+The **post-render visual review** — the 10-point check for type hierarchy / overflow / bullet density / balance / focal point / theme consistency / etc. — is performed by the **orchestrator** after this skill returns, not by the skill itself. The orchestrator reads each `slide-NN.png` via the `Read` tool (visual analysis on rasterized pixels — XML inspection is forbidden) and dispatches targeted edits back to the skill (capped at 2 iterations beyond the initial render). See [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Render PPTX* → *Post-render visual review* for the full checklist. The skill stays focused on rendering; the orchestrator stays focused on judgement.
 
 ## Rules
 
