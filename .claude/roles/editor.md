@@ -61,7 +61,6 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 intent: <one line — what this diagram is trying to show>
 emphasize: <which boxes/arrows/labels matter most; what should pop visually>
 labels: <if axes/legend/units exist, list them>
-template-hint: <optional — name a config/image-styles/*.txt template the illustrator should try first>
 -->
 ```
 
@@ -175,7 +174,6 @@ For each rendered `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (
 intent: ...
 emphasize: ...
 labels: ...
-template-hint: ...
 -->
 ```
 

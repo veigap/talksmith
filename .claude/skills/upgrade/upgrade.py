@@ -17,10 +17,10 @@ Two rules, no flags:
    strictly preserved.
 
 2. **Master-owned paths are strict mirrors of master.** Under `.claude/`,
-   `CLAUDE.md`, `README.md`, `config/principles.md`,
-   `config/image-styles/`: files are created, modified, OR deleted as needed
-   so the fork matches master exactly. Renames upstream propagate
-   automatically — the old path disappears, the new path appears.
+   `CLAUDE.md`, `README.md`, and `config/principles.md`: files are created,
+   modified, OR deleted as needed so the fork matches master exactly.
+   Renames upstream propagate automatically — the old path disappears, the
+   new path appears.
 
 If structural changes in master also affect user-owned content (e.g. a per-
 Talk file naming convention changes), the orchestrator infers the required
@@ -50,7 +50,7 @@ CORE_PATHS: list[tuple[str, str]] = [
     ("CLAUDE.md", "file"),
     ("README.md", "file"),
     ("config/principles.md", "file"),
-    ("config/image-styles", "dir"),
+    ("config/diagram-style.md", "file"),
 ]
 
 # Files that live inside master-owned paths but are nonetheless user-local

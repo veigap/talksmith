@@ -1,6 +1,6 @@
 ---
 name: talksmith:upgrade
-description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, or deleted in the target fork. `apply` mirrors master into the fork — **user-owned content** (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, plus `.claude/settings.local.json`) is never touched; **master-owned content** (`.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/image-styles/`) is strict-mirrored, so renames and removals upstream propagate automatically. When structural changes affect user-owned paths too (e.g. per-Talk file naming conventions), the orchestrator infers the required adjustment from the upgrade diff and applies it by hand when next resuming the Talk — the skill never auto-edits user-owned content. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
+description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, or deleted in the target fork. `apply` mirrors master into the fork — **user-owned content** (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, plus `.claude/settings.local.json`) is never touched; **master-owned content** (`.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/diagram-style.md`) is strict-mirrored, so renames and removals upstream propagate automatically. When structural changes affect user-owned paths too (e.g. per-Talk file naming conventions), the orchestrator infers the required adjustment from the upgrade diff and applies it by hand when next resuming the Talk — the skill never auto-edits user-owned content. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:upgrade — Mirror master into a downstream fork
@@ -14,7 +14,7 @@ Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *O
 | Tree | Policy on `apply` |
 |---|---|
 | **User-owned** — `talks/` (every byte under it), `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, `.claude/settings.local.json` | **Never touched.** Full stop. |
-| **Master-owned** — `.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/image-styles/` | **Strict mirror.** Files missing in fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted** from the fork. |
+| **Master-owned** — `.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/diagram-style.md` | **Strict mirror.** Files missing in fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted** from the fork. |
 
 A rename in master is naturally just "old path gone + new path appears" under strict mirror — both halves happen in one `apply`.
 
@@ -109,7 +109,6 @@ Created (new in master, missing in fork):
 Modified (differ between master and fork):
   ~ CLAUDE.md  (+1234 bytes)
   ~ .claude/roles/editor.md  (+512 bytes)
-  ~ config/image-styles/style.md  (-87 bytes)
 
 Deleted (in fork but no longer in master — usually a rename or removal upstream):
   - .claude/schemas/master.md

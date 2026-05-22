@@ -18,7 +18,7 @@ Five roles:
 | **Librarian** | Step 3 — restructure raw sources losslessly into `knowledge/corpus/`; one record per source + companion `<source-stem>/images/`. | [`librarian.md`](.claude/roles/librarian.md) |
 | **Composer** | Batch reviewer at each Step-4 drafting milestone — punch-list against thesis / audience / principles / learnings. Read-only. | [`composer.md`](.claude/roles/composer.md) |
 | **Editor** | Sole writer of `draft.md` (Steps 1–5), `final.md` (Step 6+), and `memory.md`. | [`editor.md`](.claude/roles/editor.md) |
-| **Illustrator** | Step 6 — walks `final.md`, matches templates from [`config/image-styles/*.txt`](config/image-styles/), dispatches [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) per block. | [`illustrator.md`](.claude/roles/illustrator.md) |
+| **Illustrator** | Step 6 — walks `final.md`, dispatches [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) per block with optional presenter style directives. | [`illustrator.md`](.claude/roles/illustrator.md) |
 | **Global-Librarian** | Step 7 on promotion — curates the corpus + `final.md` into topic folders under `knowledge-library/`. | [`global-librarian.md`](.claude/roles/global-librarian.md) |
 
 ## Philosophy — one fork per subject
@@ -33,8 +33,7 @@ Only [`config/profile.md`](config/profile.md) is loaded eagerly (presenter's glo
 |---|---|---|
 | [`config/learnings.md`](config/learnings.md) | Step 7 entry | Orchestrator (read-only — Editor writes). |
 | [`config/principles.md`](config/principles.md) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/knowledge/corpus/**` | Each Step-4 drafting milestone | Composer role. |
-| [`config/image-styles/*.txt`](config/image-styles/) catalog | Step 6 (Polish) | Illustrator role picks a `template_name` per ASCII block (or `null`). |
-| [`config/image-styles/style.md`](config/image-styles/style.md) | Per `talksmith:ascii-to-svg` invocation | The skill (resolved via `repo_root`); Illustrator does **not** load it. |
+| [`config/diagram-style.md`](config/diagram-style.md) | Per `talksmith:ascii-to-svg` invocation | The skill (standing visual rules applied to every SVG). |
 | [`knowledge-library/`](knowledge-library/) | Step 7 (Learnings) on promotion | Global-Librarian (sole writer). |
 
 The Composer in particular must not carry `principles.md` / `learnings.md` in context outside its review pass — load at review time to keep orchestrator context lean.
@@ -255,7 +254,7 @@ Triggered when the presenter signals ready in Step 5. Runs end-to-end without pr
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). It walks `final.md`, picks templates from [`config/image-styles/*.txt`](config/image-styles/), and dispatches the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md)). It walks `final.md`, optionally collects style directives from the presenter, and dispatches the [`talksmith:ascii-to-svg`](.claude/skills/ascii-to-svg/SKILL.md) skill once per block — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
 
 2. **Clean `final.md`.** Perform the **Editor** role (full spec: [`.claude/roles/editor.md`](.claude/roles/editor.md) → *Step 6 — produce `final.md`*). Four transformations on `final.md`; (a), (b), (c) in any order, (d) **last** (it depends on (c) having read the still-`[open]` bullets):
 

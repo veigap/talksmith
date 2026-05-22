@@ -12,7 +12,7 @@ The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per bloc
 **Canonical Step 6 sequence** (matches the editor + illustrator role specs):
 
 1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
-2. **Illustrator annotation pass** — judgement-only: illustrator adds `render: {svg_basename, alt, template_name}` per block (slug derived from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)). Context fields are already populated by `scan`; the illustrator does not extract them.
+2. **Illustrator annotation pass** — judgement-only: illustrator adds `render: {svg_basename, alt}` per block (slug derived from `ascii-note → intent`, slide title, etc. — see [`.claude/roles/illustrator.md`](../../roles/illustrator.md)). Context fields are already populated by `scan`; the illustrator does not extract them.
 3. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 4. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the plan JSON (no `final.md` re-parse). Easily parallelizable across subagents.
 5. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
@@ -63,8 +63,7 @@ The plan JSON has this shape:
       },
       "render": {
         "svg_basename": "s1-2-1-cuatro-senales.svg",
-        "alt": "Cuatro señales 1D",
-        "template_name": "stack-signals"
+        "alt": "Cuatro señales 1D"
       }
     }
   ]

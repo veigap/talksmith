@@ -35,7 +35,7 @@ This isn't about repo hygiene — it's about compounding value over time:
 
 If you present on three subjects, that's three forks. Mixing subjects in one repo erodes every advantage above.
 
-**Keeping a fork current.** When master ships new skills, role specs, or shared knowledge (`principles.md`, `image-styles/`), the [`talksmith:upgrade`](.claude/skills/upgrade/SKILL.md) skill pulls the latest core from `github.com/veigap/talksmith` (shallow clone of `main`) into your fork without ever touching its accumulated state.
+**Keeping a fork current.** When master ships new skills, role specs, or shared knowledge (`principles.md`, `diagram-style.md`), the [`talksmith:upgrade`](.claude/skills/upgrade/SKILL.md) skill pulls the latest core from `github.com/veigap/talksmith` (shallow clone of `main`) into your fork without ever touching its accumulated state.
 
 The skill exposes two operations:
 

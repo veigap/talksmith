@@ -1,8 +1,0 @@
-   <stage 1 title>            <stage 2 title>           <stage 3 title>
-   <subhead>                  <subhead>                 <subhead>
-+--------------+  +--------------+  +--------------+
-| <ref/target> |  | <ref/target> |  | <ref/target> |
-| (dashed)     |  | (dashed)     |  | (dashed)     |
-| <approx 1>   |[g]| <approx 2>  |[p]| <approx 3>  |[t]
-+--------------+  +--------------+  +--------------+
-                  ---→ <progression axis> →---
