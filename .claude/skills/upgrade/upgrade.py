@@ -3,7 +3,7 @@
 
 Subcommands:
   diff   --fork <path>                       # report what would change
-  apply  --fork <path> [--dry-run] [--yes]   # mirror master into the fork
+  apply  --fork <path> [--dry-run]           # mirror master into the fork
 
 Always pulls master from https://github.com/veigap/talksmith @ main. Shallow
 clones to a tempdir, mirrors the core paths into the fork, cleans up.
@@ -262,23 +262,21 @@ def cmd_apply(args: argparse.Namespace) -> int:
             return err
         c = _classify(master, fork)
 
-        if not args.yes and not args.dry_run:
-            print(f"fork:   {fork}")
-            print(f"master: {UPSTREAM}@{REF}")
-            print(f"plan:   {len(c['created'])} create, {len(c['modified'])} modify, {len(c['deleted'])} delete, {len(c['identical'])} unchanged")
-            print(f"preserved (user-owned, never touched): {', '.join(PRESERVED_PATHS)}")
-            if c["deleted"]:
-                print()
-                print("Files that would be deleted (no longer in master):")
-                for p in c["deleted"]:
-                    print(f"  - {p}")
-            try:
-                resp = input("\nproceed? [y/N] ").strip().lower()
-            except EOFError:
-                resp = ""
-            if resp not in {"y", "yes"}:
-                print("aborted by user.")
-                return 3
+        # Print the plan upfront so the run is auditable, then execute. No
+        # confirmation prompt — fork validation has already gated for the
+        # only real blocker (wrong directory). User-owned content is
+        # structurally unreachable from this script, so an unattended run
+        # cannot lose data.
+        print(f"fork:   {fork}")
+        print(f"master: {UPSTREAM}@{REF}")
+        print(f"plan:   {len(c['created'])} create, {len(c['modified'])} modify, {len(c['deleted'])} delete, {len(c['identical'])} unchanged")
+        print(f"preserved (user-owned, never touched): {', '.join(PRESERVED_PATHS)}")
+        if c["deleted"] and not args.dry_run:
+            print()
+            print("Files being deleted (no longer in master):")
+            for p in c["deleted"]:
+                print(f"  - {p}")
+        print()
 
         created = modified = deleted = 0
         rel = None
@@ -322,10 +320,9 @@ def main(argv: list[str]) -> int:
     pd.add_argument("--fork", required=True)
     pd.set_defaults(func=cmd_diff)
 
-    pa = sub.add_parser("apply", help="mirror master into the fork (create / modify / delete within master-owned paths only)")
+    pa = sub.add_parser("apply", help="mirror master into the fork (create / modify / delete within master-owned paths only). Runs without confirmation — fork validation is the only gate.")
     pa.add_argument("--fork", required=True)
     pa.add_argument("--dry-run", action="store_true")
-    pa.add_argument("--yes", action="store_true")
     pa.set_defaults(func=cmd_apply)
 
     args = p.parse_args(argv)

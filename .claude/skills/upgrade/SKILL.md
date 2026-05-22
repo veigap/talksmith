@@ -62,13 +62,10 @@ This puts inference where it belongs — the LLM has the context to read the dif
 # 1) read-only diff against upstream main
 python3 .claude/skills/upgrade/upgrade.py diff --fork /path/to/your/fork
 
-# 2) apply (interactive y/N)
+# 2) apply — runs unattended (no confirmation prompt)
 python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork
 
-# 3) apply, scripted (no prompt)
-python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --yes
-
-# 4) preview an apply without writing
+# 3) preview an apply without writing
 python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --dry-run
 ```
 
@@ -85,8 +82,9 @@ python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --dry-
 | Input | Required? | Notes |
 |---|---|---|
 | `--fork` | yes | Same sanity check as `diff`. |
-| `--dry-run` | optional | Print actions but don't touch the fork. Useful when reviewing a large delete list before committing. |
-| `--yes` | optional | Skip the interactive confirmation prompt (for scripted runs). Without it, `apply` prints a summary, lists the files that would be deleted, and waits for `y/N` on stdin. |
+| `--dry-run` | optional | Print the plan and what would change, but don't touch the fork. Useful when reviewing a large delete list before committing. |
+
+**No confirmation prompt.** `apply` runs unattended once fork validation passes. The only blockers are (a) the fork doesn't exist or lacks `CLAUDE.md` at root, or (b) the fork path equals the cloned master path. Otherwise the mirror just runs — user-owned content is structurally unreachable from this script, so an unattended run cannot lose data. Use `--dry-run` if you want to preview first.
 
 ## Output
 
@@ -143,5 +141,4 @@ The output is the orchestrator's input for the inference step described above �
 
 - `0` — success or clean diff (no changes needed).
 - `2` — bad input (fork doesn't exist, lacks `CLAUDE.md`, equals master, etc.).
-- `3` — `apply` aborted by the user at the confirmation prompt.
 - `4` — per-file copy or delete failure mid-upgrade (rare; the file that failed is named in stderr).
