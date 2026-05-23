@@ -315,7 +315,13 @@ After the initial deck lands at `output/final.pptx`, run a self-review pass — 
 
 **Critique discipline.** Be surgical and slide-specific, just like the illustrator: *"Slide 7 title 'Why bipedal robots are hard' wraps onto a third line — shorten to 'Why bipedal locomotion is hard' (fits on two)"*. Vague comments produce vague edits.
 
-**When to declare clean.** A first-pass deck that passes all ten practices is the goal. Don't manufacture issues to fill the iteration budget — the cost of unneeded edits is regression risk in adjacent slides.
+**Review every slide, not a sample.** The most common failure mode of this step is spot-checking 4–8 slides and declaring "looks fine." On the first post-render pass, read every `slide-NN.png` with the `Read` tool — one Read per slide, all of them. On any subsequent pass after a fix, re-read every touched slide *plus* the cover, the agenda, every section divider, every code/math slide, every embedded-diagram slide, every slide with a long or wrapping title, and any slide previously flagged as risky. A "smoke test" (cover + agenda + two contents + overflow case + closing) is **not** a review; if that's all that was done, report it as a smoke test, not as a visual review, and do not declare the deck clean.
+
+**Walk the checklist per slide.** Gestalt impressions ("the deck looks fine") are not a substitute for evaluating each slide against each of the twelve practices. For every slide-NN.png, name the practice and assign *pass / concern / fail* — out loud, in the report if necessary. "Clean" means every cell of that slide × practice matrix is a pass. If a wider audit performed after the step closed surfaces defects that should have been caught, the original "clean" was wrong: retroactively reopen the step and spend an iteration slot, do not paper over.
+
+**Iteration budgets are not fungible.** The 2-iteration cap is the *orchestrator's* review-and-edit budget after the subagent delivers the first render. Any build-time fix passes the subagent ran to recover from its own bugs (broken regex, undersized callouts, leaked markdown markers, etc.) do **not** consume the orchestrator's budget — they're internal to the build. When the final report says `clean after N edit pass(es)`, N counts only orchestrator-level review→edit cycles. Conflating the two budgets is what lets shallow reviews ship.
+
+**When to declare clean.** A first-pass deck that passes all twelve practices is the goal. Don't manufacture issues to fill the iteration budget — the cost of unneeded edits is regression risk in adjacent slides.
 
 **Report at the end:** `clean on first pass` | `clean after N edit pass(es)` | `unresolved: <slide N — defect>` (presenter reviews unresolved slides and decides whether to accept, hand-edit, or restructure `final.md` and re-render).
 

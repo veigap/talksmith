@@ -30,8 +30,13 @@
   - *Reuse images from the corpus knowledge base when relevant* — scan the `Images / diagrams` sections of `research/corpus/*.md` before proposing a new visual. If a corpus image fits, embed it (`![<alt>](research/corpus/<source-stem>/images/<file>.png)`) and cite its source record. If it doesn't fit, don't force it.
   - *ASCII diagrams as the drafting form for any new visual* — flowcharts, sequence/state, bar charts, simple architecture, before/after. Keep them tight (~≤ 60 cols), labeled, and load-bearing. They are the working form during Draft and Review; the `illustrator` renders them to SVG in Step 6 (Polish), or they're replaced with a corpus image when one becomes available.
 - **Avoid walls of bullets.** Three short bullets beats six long ones. Six long bullets means the slide is doing too much; split it.
+- **Slide-density budget — hard ceiling, not guideline.** Each slide gets **at most one callout, one table-or-diagram, and one supporting block** (≤5 bullets or one short paragraph). The 5.625-in slide canvas does not accommodate a callout *plus* a table *plus* three or more additional blocks — slides that exceed the budget reliably overflow, with the overflow either clipped at the canvas edge or silently shoved into the speaker-notes pane where the audience cannot see it. When the Composer's Step-4 review finds a slide above budget, it is flagged for split (one concept becomes two slides) rather than shrunk to fit; "one idea per slide" is the natural splitting axis.
+- **Title-length budget for the deck's monospace title face.** Section H1s ≤ **25 characters**; slide H2s ≤ **40 characters**. The deck's title typeface (Roboto Mono Medium) has wide glyphs — titles beyond these lengths wrap to multiple lines and push the body start far down the canvas even at the adaptive-size floor, eating room the content needs. Longer titles are abbreviated, restructured, or moved to the body / section pill. This is a **content-authoring constraint** the Editor and Composer enforce during Step 4, not a rendering hack to patch up after Polish — by the time the renderer runs, the title shape is already over budget. Compound titles (`A: B`) collapse to the right-hand clause; explanatory subordinate clauses move to the slide body.
 - **Words should not duplicate the spoken narration.** If the speaker is going to read the slide aloud, the slide is the wrong format — turn it into a visual or speaker note. (Mayer's *redundancy principle* — see citations.)
-- **Speaker notes are the talk; the slide is the punctuation.** Write the slide to be glanced at; write the notes to be delivered.
+- **Speaker notes are the talk; the slide is the punctuation.** Write the slide to be glanced at; write the notes to be delivered. The contract is sharper than the aphorism: the speaker-notes pane carries the *prose the slide replaces*. Three diagnostic corollaries that should be enforced at Step-4 review:
+  - **Empty notes = nothing to say.** A content slide whose notes pane is blank means the speaker has no line of thought attached to it. Either write the notes or cut the slide; do not ship a glance-able slide with no speech attached.
+  - **Notes duplicating the slide = the slide is wrong.** If the notes would read aloud what is already on the slide, the slide is doing the speaker's job (and triggers Mayer's redundancy principle). Convert the slide to a visual / fewer words, or move the content entirely into notes.
+  - **Notes longer than ~120 words for a 1–2 minute slide = the slide is two slides.** A notes block the speaker can't deliver in the slide's pacing budget signals an over-packed slide that should be split.
 
 ## Visual design — how slides look
 
@@ -40,6 +45,33 @@
 - **Pick contrast over decoration.** Bold + regular weight on the same line directs the eye better than three colors and a drop shadow.
 - **Type hierarchy: title > emphasized phrase > body > footnote.** Three levels max. If you find yourself reaching for a fourth, the slide is too dense.
 - **Spatially co-locate words and the visuals they describe.** Don't put a caption on the opposite side of the chart it labels. (Mayer's *spatial contiguity principle*.)
+
+## Pipeline discipline — where each kind of fix belongs
+
+The Talksmith pipeline has stages for a reason: each stage is the cheapest place to fix a class of defect, and the most expensive place to fix the others. A fix applied at the wrong stage either bloats the wrong artifact (a content fix in `images/`, a wording fix in the PPTX renderer) or papers over a problem that will recur on every re-render.
+
+- **Shape defects belong at Step 4 (Draft).** A section that doesn't fit the arc, a slide that carries two ideas, a missing transition, a topic with no thesis hook — these are shape problems. They are cheap to fix in `draft.md` (rewrite a heading, reorder two slides, split or cut) and ruinous to fix later. The Composer's job at each Step-4 milestone is to surface shape defects *before* the section fills in.
+- **Wording defects belong at Step 5 (Review).** Rephrasing, tightening, replacing a term, fixing a typo, adjusting tone — these are wording problems. They are cheap to fix as `Presenter feedback` bullets in `draft.md`; the Editor applies them via the feedback-cycle skill. Wording fixes at Step 8 (renderer) are forbidden — they leak into `final.md` without an audit trail.
+- **Rendering defects belong at Step 6 (Polish) or Step 8 (PPTX).** An ASCII diagram that needs SVG promotion, an image that needs consolidation into `images/`, an emoji that needs an icon swap, a callout color, an overflow — these are rendering problems. They are fixed inside the renderer (illustrator skill, md-to-pptx skill) and never leak back into `draft.md`.
+- **The renderer never fixes content.** When the post-render visual review (Step 8) flags a slide because the *title is too long*, the *body has too many bullets*, the *content is two ideas*, or the *speaker notes are empty* — those are Step-4 defects surfacing late. The fix is to re-open `final.md`'s source rules (or `draft.md` if the contract allowed), not to shrink-fit the title at render time or hand-edit the deck. Renderer compensation = next Talk re-introduces the same defect, because the authoring stage never learned.
+- **When a Step-4 defect is caught at Step 8.** Stop the iteration budget, surface to the presenter, and offer either: (a) accept the defect for this ship (with a `feedback-backlog.md` entry tagged `late-catch`), or (b) re-open Step 4/5 to fix at source. Do not silently hack the render.
+
+## Composer reviews — what "challenge" means
+
+The Composer is the only role licensed to push back. *Challenge* doesn't mean "tone-police prose" and it doesn't mean "approve everything that looks plausible." It means producing a punch-list of specific, actionable defects scored by severity, against the thesis, the audience, the corpus, the principles, and the learnings. Each round must distinguish three severities:
+
+- **`[blocker]`** — the slide / section is structurally broken and the deck *cannot ship as-is*. Examples: thesis is internally contradictory; section has no goal; slide makes a claim the corpus contradicts; section is unreachable from the previous section's arc; a key audience question is never addressed; the agenda promises a section the deck doesn't deliver. Composer must list these explicitly. The orchestrator does not advance to the next Step-4 milestone until every `[blocker]` is resolved (perform Editor to fix) or explicitly waived by the presenter on the record.
+- **`[major]`** — the slide / section *will ship and embarrass the speaker* if unfixed. Examples: a claim is unsourced; a section's slides are out of pedagogical order; a slide is two ideas; a callout uses the wrong variant for its content; the audience can't follow the jump from slide N to slide N+1; a quantified result is stated without the comparison baseline. Surfaced to the presenter with the option to defer to Step 5; never silently absorbed.
+- **`[minor]`** — the slide / section *works but could be sharper*. Examples: a heading could be one word shorter; a card body has a passive-voice construction; an image is fine but a corpus image would be better; a section name and its subtitle restate each other. Collected silently across the section reviews and surfaced as a single batched list at the final `scope=full` pass — do not interrupt drafting with minor items.
+
+Counter-rules — what a Composer review is **not**:
+
+- Not a stylistic preference engine. "I would have phrased it differently" is not a defect; "the phrasing contradicts the thesis" is.
+- Not exhaustive. A review that flags 47 items is not more rigorous than one that flags 7 well-chosen ones — it's noise. Pick the load-bearing defects; trust the presenter for taste.
+- Not a sycophancy carrier. "Looks great overall, here are some thoughts" is not a review opening. Lead with the worst defect.
+- Not a rewrite. The Composer punches list, the Editor writes. A Composer that drafts replacement prose has stopped reviewing and started editing — that's a role boundary violation.
+
+The Composer reads `principles.md` + `learnings.md` + the slice of the corpus relevant to the section under review on entry, and discards them on exit. Do not carry these in context outside the review pass.
 
 ## Feedback discipline — how the deck improves
 

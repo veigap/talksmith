@@ -12,11 +12,10 @@ Visual specification distilled from [`config/template.pptx`](template.pptx) (53 
 |---|---|
 | Aspect ratio | **16:9** |
 | Slide size | `9144000 × 5143500` EMU (`10.00 × 5.625` inches; `720 × 405` pt) |
-| Apparent background | `#F2F2F2` (light warm grey, **not** pure white) |
-| Background recipe | Every slide layout (53 of them — all except the unused `slideLayout1.xml`) sets `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="000000"/></...></p:bg>` (black) **plus** a layer-0 full-canvas `<p:sp>` of size 9144000×5143500 filled `#FFFFFF` with `<a:alpha val="95000"/>` (95%). Black × 5% + White × 95% = `#F2F2F2`. **A generator must emit both elements** — a plain `#F2F2F2` solid fill on the slide looks the same to the eye but will fail an XML-level template comparison. |
+| Slide background | **Pure white `#FFFFFF`** on every slide. No tints, no off-whites, no warm greys. Emit as a single `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg>` on every layout. (Historical note: the source 53-slide reference deck used a black `<p:bg>` + 95%-alpha white overlay producing apparent `#F2F2F2`; this fork has standardized on pure white. Generators must emit `#FFFFFF` solid — do not reproduce the legacy two-layer recipe.) |
 | Master chrome | **None** — `slideMaster1.xml` has an empty `<p:spTree>`. No footer, page number, or logo on master. Every visible mark lives on individual slides or layouts. |
 | Theme | `theme1.xml` declares Calibri Light / Calibri and the standard Office accent palette. **Zero slides use them** — every run overrides theme defaults at the `<a:rPr>` level. Treat the theme as residual scaffolding; never inherit from it. |
-| Speaker-notes pane | Effectively unused (mean ~2 chars/slide). The notes pane is decorative; downstream agents should not rely on it. |
+| Speaker-notes pane | **Load-bearing, not decorative.** The reference 53-slide template happened to leave the pane sparse (mean ~2 chars/slide); that is a property of *that one* source deck, **not** the contract for generated decks. Per [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk; the slide is the punctuation*, the notes pane carries the prose the slide replaces. A generated deck with empty notes panes signals an over-authored deck where the slide is doing the speaker's job. The renderer emits every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim — no truncation, no dropping. |
 
 ---
 
@@ -43,7 +42,7 @@ The deck uses a tight palette. Office theme colors (`#4472C4`, `#ED7D31`, etc.) 
 | Hex | Role |
 |---|---|
 | `#FFFFFF` | Card body fill (the rounded-rect card itself) |
-| `#F2F2F2` | Code-block surface (and the apparent slide background — see §1) |
+| `#F2F2F2` | Code-block surface fill (slide background is pure white `#FFFFFF` per §1 — do not reuse `#F2F2F2` as a slide bg in generated decks) |
 | `#F2EEEE` | Card left-strip accent, **inactive agenda dot** |
 | `#F9D2D6` | Section-label pill (top-left of every content slide) |
 | `#F7BBC1` | Callout / "analogy" / "tip" rounded rectangle |
@@ -133,11 +132,7 @@ A renderer should measure the title text width in Roboto Mono Medium and pick th
 
 ### 4.1 Background
 
-Layout `slideLayout2.xml` ("Slide 1 master") provides:
-- `<p:bg>` black `#000000`
-- A full-canvas `<p:sp>` rect at `(0,0)` size `(9144000, 5143500)` filled `#FFFFFF` with `<a:alpha val="95000"/>`
-
-Apparent background: `#F2F2F2`. Same recipe as every other slide.
+Pure white `#FFFFFF` per §1. Same on every slide in the deck.
 
 ### 4.2 Shapes (z-order: as listed; later items paint on top)
 
@@ -174,7 +169,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 
 ### 5.1 Background
 
-Same recipe as §1 (layout `slideLayout3.xml`: black `<p:bg>` + 95% white full-canvas rect).
+Pure white `#FFFFFF` per §1.
 
 ### 5.2 The fixed chrome (title + spine)
 
@@ -290,6 +285,10 @@ Smaller, no left strip, no number. Used for sibling cards in a flat grid.
 
 The card's inner padding is **~0.18 in** on the left (`5.37 − 5.19 = 0.18`) and **~0.18 in** on the top (`2.21 − 2.03 = 0.18`).
 
+### 7.3 Labeled enumerations render as cards, never as paragraph leads
+
+When a slide body contains a named sequence — `Paso 1` / `Paso 2` / `Paso 3`, `Step 1` / `Step 2`, `Etapa A` / `Etapa B`, `Phase 1` / `Phase 2`, `Case A` / `Case B`, `Fase I` / `Fase II`, and equivalents in any presentation language — **each named unit is a structural element**: a §7.1 numbered card (when the label carries an integer), a §7.2 plain card heading, or a `sz="1350"` Roboto Mono Medium subheading on its own line. The label **must not** render as an inline paragraph prefix (e.g. `**Paso 1.** Lorem ipsum…` followed by an indented sub-bullet list), because the resulting layout reads as a single flat paragraph block — the named hierarchy collapses visually and the reader cannot scan the steps. The numeric or ordinal portion of the label becomes the card's number / heading; the descriptive portion becomes the card body. Integer-labeled sequences map cleanly to §7.1; non-numeric labels (`Case A`, `Phase X`) use §7.2 with the label as `Card heading`. Cross-reference: §15 layout-selection table — any H2 whose body matches the labeled-enumeration shape selects **card-grid** or **content+cards+image**, never **content-text**.
+
 ---
 
 ## 8. Callout patterns — two variants
@@ -388,6 +387,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 - Image counts per slide: most 1–4; max 11 (slide 44).
 - No captions exist as separate text — image meaning is carried by the adjacent title or card.
 - The cover logo (`image-1-1.png`, 616×510 px) is the only **branded** image and is preserved verbatim across decks unless the presenter explicitly swaps institutions.
+- **Aspect ratio is fixed at the source and must not be changed.** When sizing an image into a slot, scale **uniformly** — the rendered `cx:cy` ratio of every `<p:pic>` must equal the source asset's intrinsic `width:height`. Stretching, squishing, anamorphic crops, or "fit to box" non-uniform scaling are forbidden; they distort diagrams, logos, and rasterized SVGs. If a slot's box doesn't match the image's aspect, leave the unfilled gap (whitespace) rather than distort. The cover logo's `noChangeAspect="1"` flag (§4.2 shape #4) makes this explicit in XML; **every other `<p:pic>` should carry the same flag** so downstream editors can't accidentally re-fit the image. The SVG `<a:stretch><a:fillRect/></a:stretch>` pattern in §17.4 is uniform scaling — never use `<a:srcRect>` cropping or `<a:stretch>` with non-zero `fillRect` insets to "stretch to fit".
 
 ---
 
@@ -497,9 +497,10 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 
 6. **Title sizing per content slide.** Apply §3.3 — pick the largest size from the discrete ladder `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` pt that fits the title on one line.
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.
-8. **Background.** Emit on every layout the §1 recipe (`<p:bg>` black + 95%-alpha white full-canvas rect). Do not substitute a flat `#F2F2F2` solid fill.
+8. **Background.** Pure white `#FFFFFF` `<p:bg>` solid fill on every layout (§1). No overlays, no tints.
 9. **Fonts are always set at run level.** Never inherit from theme. Roboto Mono Medium for titles/labels/headings; Roboto for body; Consolas for code. No fallbacks.
-10. **Speaker notes pane is ignored** by default. If the Markdown has speaker notes (`> Notes:` blocks or similar), emit them into the notes pane but do not rely on them visually.
+10. **Emit speaker notes verbatim into the notes pane.** Every `### Notes` block in `final.md` becomes the notes content of the corresponding slide — no truncation, no dropping. The pane is load-bearing per §1 and [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk*; do not treat it as decorative.
+11. **The renderer never fixes content defects.** If the post-render visual review surfaces a slide whose title overflows because the title is too long, whose body crowds because it carries two ideas, whose section pill is missing because the H1 has no number, or whose notes pane is empty — those are **Step-4 / Step-5 / Step-6 authoring defects** surfacing late. The renderer's job is to apply the spec faithfully, not to shrink-fit a 60-character title into the H2 ladder's 17pt floor, drop a card to fit a budget, or invent a section pill text. When a content defect is detected at render time, stop the iteration budget, surface to the presenter with the exact rule violated (e.g. "Slide 14 H2 = 62 chars, exceeds the 40-char budget in `principles.md` → *Title-length budget*"), and offer either: (a) accept the defect for this ship and log to `feedback-backlog.md` with the `late-catch` tag, or (b) re-open the authoring stage that owns the defect. **Never silently compensate.** Renderer compensation is what causes the next Talk to re-introduce the same defect — the authoring stage never learned.
 
 ---
 
@@ -509,7 +510,7 @@ When you only need a one-line cheat-sheet:
 
 | Concern | Answer |
 |---|---|
-| Background | Black `<p:bg>` + 95%-alpha-white full-canvas rect → apparent `#F2F2F2` |
+| Background | Pure white `#FFFFFF` `<p:bg>` solid fill on every slide |
 | Title font | Roboto Mono Medium, `#1F1E1E`, adaptive 17–31pt (40.5pt for cover) |
 | Body font | Roboto, `#3B3535`, 10.5–12.5pt |
 | Code font | Consolas, `#000000` with GitHub-light syntax colors |
@@ -750,8 +751,8 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 | **3. Discard zones B and C** | Delete slides 3 through 13 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
 | **5. Section dividers** | Between section k-1's last slide and section k's first slide (k = 2..N), emit an agenda re-emit with active dot at k. Total dividers = N − 1. | §5 + §5.6 |
-| **6. Backgrounds** | Every layout you emit must carry the §1 recipe — black `<p:bg>` plus a full-canvas `#FFFFFF` rect with `<a:alpha val="95000"/>`. Apparent `#F2F2F2`. **Never** emit a flat `#F2F2F2` solid fill. | §1 |
-| **7. Speaker notes** | If `final.md` has `Speaker notes:` blocks per slide, emit them into the notes pane. The template barely uses it; do not rely on it for content. | (none — decorative) |
+| **6. Backgrounds** | Pure white `#FFFFFF` `<p:bg>` solid fill on every layout. No overlays, no tints, no grey. | §1 |
+| **7. Speaker notes** | Emit every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim. The notes pane is **load-bearing**, not decorative — it carries the prose the slide replaces (per [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk*). No truncation, no dropping; never spill notes content into the slide body. | §1 (Speaker-notes pane row) + [`principles.md`](principles.md) |
 
 ### 19.4 Output contract
 
@@ -787,7 +788,8 @@ Things that look reasonable but break the template. The §-section in each row i
 | Mix icon styles in one deck | Library is line-art only — no filled silhouettes | §17.2 |
 | Stroke an icon in any color other than `#DA1B2E` | Brand red is the only icon ink | §17.2 |
 | Emit native `<a:tbl>` tables | Template has zero — convert pipe-tables to card grids | §11 |
-| Emit a flat `#F2F2F2` background | Use the black + 95%-white-overlay recipe | §1 |
+| Emit any background other than pure white `#FFFFFF` (grey tints, the legacy black+overlay recipe, off-whites) | All slides are pure white solid fill | §1 |
+| Resize an image without preserving aspect ratio (stretch/squish/anamorphic crop) | Aspect ratio is fixed at the source; scale uniformly only | §12 |
 | Use a non-5760 EMU corner radius on roundRects | Constant across all pills/cards/callouts/code/dots | §2.3 |
 | Fudge agenda row count to match the placeholder's 7 (pad with blanks, or truncate sections) | Agenda row count = N (section count); clone/delete rows to match. Warn only when N > 8 (tight) or > 10 (out of room). | §5.3 + §5.5 |
 | Include base-template slides 3–13 (separator + examples) in output | They are reference, not content | §18 zone C |
@@ -804,7 +806,8 @@ Things that look reasonable but break the template. The §-section in each row i
 | "What icon for 'patient privacy'?" | §17.1 → `shield` |
 | "How do I emit a section divider?" | §5 + §5.6 |
 | "Can I use a native PPTX table?" | §11 — no, convert to cards |
-| "Why does the background look grey if it's `#FFFFFF`?" | §1 — 95% alpha over black master |
+| "What's the slide background color?" | §1 — pure white `#FFFFFF` solid fill on every slide |
+| "Can I resize an image to fit a slot exactly?" | §12 — scale uniformly only; aspect ratio is fixed |
 | "What font for code blocks?" | §3.1 — Consolas (not Roboto Mono) |
 | "How many lines can a slide title span?" | §3.3 — adaptive sz to fit one line |
 | "Where is the brand logo?" | `ppt/media/image-1-1.png` in template.pptx / base-template.pptx |
