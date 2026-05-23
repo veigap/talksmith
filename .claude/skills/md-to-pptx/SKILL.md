@@ -88,7 +88,15 @@ talks/<Talk>/
    Acceptance bar: open the rendered `final.pptx` next to `base-template.pptx` — slides 1–2 must be pixel-equivalent modulo placeholder text. Author-from-scratch with the native skill's default theme = render failure.
 4. Verify `talks/<Talk>/output/final.pptx` exists and is non-empty.
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
-6. **Render per-slide critique PNGs.** Rasterize every slide to `talks/<Talk>/output/.critique/slide-NN.png` (zero-padded 2-digit slide number, `01` … `NN`). These PNGs are critique-only — not referenced from `final.pptx`, not part of the deliverable — and exist so the orchestrator's post-render visual review can perform visual analysis on actual pixels rather than slide-XML inspection (see [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Post-render visual review*).
+6. **Audit `<p:pic>` aspect ratios.** Run [`audit_aspect_ratios.py`](audit_aspect_ratios.py) against the rendered deck:
+
+   ```bash
+   python3 .claude/skills/md-to-pptx/audit_aspect_ratios.py \
+     talks/<Talk>/output/final.pptx
+   ```
+
+   The script walks every `<p:pic>` in every slide, resolves the source asset via the slide's rels file, reads its intrinsic aspect ratio (SVG `viewBox`, PNG/JPG header), and compares to the rendered `cx:cy`. Default tolerance: 1%. Non-zero exit = render failure — surface the FAIL lines verbatim and re-render. This catches the class of bug where a placeholder's slot is wider/taller than the asset and the renderer fills it by non-uniform scaling (the §12 rule in prose; this is its enforcement). The audit also surfaces missing `<a:picLocks noChangeAspect="1"/>` as warnings; warnings do not fail the render. Audit failures are not a §19.6 visual-spec violation per se — they are a structural picture-sizing bug — but they are surfaced and treated identically (stop, repair, re-verify).
+7. **Render per-slide critique PNGs.** Rasterize every slide to `talks/<Talk>/output/.critique/slide-NN.png` (zero-padded 2-digit slide number, `01` … `NN`). These PNGs are critique-only — not referenced from `final.pptx`, not part of the deliverable — and exist so the orchestrator's post-render visual review can perform visual analysis on actual pixels rather than slide-XML inspection (see [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Post-render visual review*).
 
    Path priority (use the first that works):
 
@@ -97,7 +105,7 @@ talks/<Talk>/
 
    If both paths fail, the deck is still valid — report `slide_previews: failed: <reason>` and continue. The orchestrator will surface this as `unresolved: slide_previews_failed` for the post-render review (visual critique can't run without pixels), but the `.pptx` itself is unaffected.
 
-7. Report: slide count, image references resolved, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
+8. Report: slide count, image references resolved, `aspect_audit: <ok|N fail>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
 ### Progress reporting — what the presenter sees during render
 
@@ -114,6 +122,7 @@ Emit a chat-visible line at each of the following moments. Lines are plain prose
 | Native skill invocation (per stage of §19.3) | `[pptx 3/8] Stage 1 Cover — substituting 4 placeholders…` `[pptx 3/8] Stage 2 Agenda — substituting 2×N placeholders, N rows…` `[pptx 3/8] Stage 3 — deleting template slides 3–13…` `[pptx 3/8] Stage 4 — building M content slides…` `[pptx 3/8] Stage 5 — emitting (N−1) section dividers…` `[pptx 3/8] Stage 6 — white backgrounds, run-level fonts…` `[pptx 3/8] Stage 7 — emitting speaker notes…` (one line each; collapse Stages 6 and 7 into a single line if the native skill does not separate them) |
 | Output file written | `[pptx 4/8] final.pptx written, S slides, U bytes.` |
 | OOXML integrity check | `[pptx 5/8] OOXML invariants verified (per §19.4).` |
+| Aspect-ratio audit | `[pptx 5/8] Aspect-ratio audit: <p:pic> N shapes, all within 1% tolerance — or — FAILED: M distorted (slide K: <src> rendered A:B vs intrinsic C:D).` |
 | Visual fidelity spot-check | `[pptx 6/8] Visual spot-check vs base-template slides 1–2: OK.` |
 | Slide-preview rasterization start | `[pptx 7/8] Rasterizing S slides to output/.critique/slide-NN.png…` |
 | Slide-preview rasterization done | `[pptx 7/8] Slide previews ready (S PNGs) — or — slide_previews: failed: <reason>.` |
@@ -148,6 +157,7 @@ Operational / IO failures only. **Visual-spec violations** (emoji survived, non-
 - Base template was loaded but not honored — slides 1–2 in the rendered deck are not pixel-equivalent to base-template slides 1–2 (placeholders aside), or slides 3–13 leaked into the output, or theme/fonts/layouts don't match → surface loudly; offer to rerun.
 - **Agenda capacity exceeded.** `final.md` has N H1 sections; the agenda emits one row per section per §5.3 / §5.5 (no fixed count). N ≤ 8 fits cleanly; for 9 ≤ N ≤ 10 emit with a tightness warning; for N > 10 stop and ask the presenter — the agenda chrome is out of vertical room and an alternate layout is needed. Never pad the agenda to 7 rows with blanks, and never truncate sections to fit.
 - **OOXML integrity broken** per §19.4 invariants (dangling overrides / rels, `[Content_Types].xml` not first in zip, `sldIdLst` / `sldLayoutIdLst` without matching rels). Most often after Stage-3 deletion. Stop, repair, re-verify before declaring success.
+- **Aspect-ratio audit failed** ([`audit_aspect_ratios.py`](audit_aspect_ratios.py) exit 1). One or more `<p:pic>` shapes are rendered at a `cx:cy` ratio that diverges from the source asset's intrinsic ratio by more than the tolerance (default 1%). The renderer picked a slot rectangle and wrote it as `<a:ext cx=… cy=…/>` without uniform-scaling the asset to fit, so the asset is stretched or squished. Stop. Per §12: shrink the larger dimension to match the source ratio (leaving whitespace) rather than distort. Never resolve by widening the tolerance or by emitting `<a:srcRect>` / non-zero `<a:stretch fillRect>` insets to "fit". Re-render and re-audit.
 - `final.md` not yet produced (Step 6 Polish hasn't run) or still contains `Presenter feedback` fields or unrendered ASCII fenced blocks → stop; return to Step 6.
 - The path passed in points at `draft.md` instead of `final.md` → stop and ask. `draft.md` is never a valid input to this skill.
 - An image ref points at a missing SVG → stop; orchestrator performs Illustrator role to render it.
