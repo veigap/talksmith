@@ -99,6 +99,32 @@ talks/<Talk>/
 
 7. Report: slide count, image references resolved, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
+### Progress reporting — what the presenter sees during render
+
+PPTX render is a long-running multi-stage operation (typically 30s–3 min depending on slide count). The presenter must see **one short progress line per stage** as work moves through the pipeline so they know the run is alive, where it is, and what's coming next. Silence is a defect: a stalled `pptx` skill, a hung subagent, or a misconfigured Cowork session all look identical to "still working" if the orchestrator emits nothing. The rule is **announce before, summarize after** for every stage in the workflow.
+
+Emit a chat-visible line at each of the following moments. Lines are plain prose, no fences, one line per moment unless a stage genuinely produces a sub-list (e.g. failed checks). Prefix each with a small bracketed stage tag so the presenter can grep their scrollback.
+
+| Moment | Example line |
+|---|---|
+| Skill entry | `[pptx] Starting render for talks/<Talk>/final.md → output/final.pptx` |
+| Prereqs verified | `[pptx 1/8] Prereqs OK — base-template loaded, N H1 sections found, K local image refs to resolve.` |
+| Pre-processing start | `[pptx 2/8] Pre-processing final.md → final.intermediate.md via convert.py…` |
+| Pre-processing done | `[pptx 2/8] Pre-processing done — M slides, P speaker-notes blocks, Q image refs.` |
+| Native skill invocation (per stage of §19.3) | `[pptx 3/8] Stage 1 Cover — substituting 4 placeholders…` `[pptx 3/8] Stage 2 Agenda — substituting 2×N placeholders, N rows…` `[pptx 3/8] Stage 3 — deleting template slides 3–13…` `[pptx 3/8] Stage 4 — building M content slides…` `[pptx 3/8] Stage 5 — emitting (N−1) section dividers…` `[pptx 3/8] Stage 6 — white backgrounds, run-level fonts…` `[pptx 3/8] Stage 7 — emitting speaker notes…` (one line each; collapse Stages 6 and 7 into a single line if the native skill does not separate them) |
+| Output file written | `[pptx 4/8] final.pptx written, S slides, U bytes.` |
+| OOXML integrity check | `[pptx 5/8] OOXML invariants verified (per §19.4).` |
+| Visual fidelity spot-check | `[pptx 6/8] Visual spot-check vs base-template slides 1–2: OK.` |
+| Slide-preview rasterization start | `[pptx 7/8] Rasterizing S slides to output/.critique/slide-NN.png…` |
+| Slide-preview rasterization done | `[pptx 7/8] Slide previews ready (S PNGs) — or — slide_previews: failed: <reason>.` |
+| Final report | `[pptx 8/8] Done. S slides, K images, slide_previews: <count|failed>, warnings: <count>.` |
+
+**Pacing.** Do not batch the lines — emit each one *at the moment that stage begins or ends*. The presenter is watching for forward motion, not a digest. **Pacing budget.** If any single stage takes >30 seconds without emitting, emit a `[pptx 3/8] Stage 4 — still building (Nth of M slides)…` heartbeat. A gap of >2 minutes with no heartbeat is itself a defect — surface as "stage <N> may be stalled" and ask the presenter whether to wait or abort.
+
+**Failure surfacing.** When a stage fails, emit the same prefixed line but suffix with `FAILED: <one-line reason>`, e.g. `[pptx 3/8] Stage 3 FAILED: dangling Override for slide5.xml after deletion`. Do not continue to the next stage; surface and stop per the failure-mode table.
+
+**Iteration passes.** When the orchestrator re-invokes the skill for an edit pass (post-render review), prefix the new run with the pass index: `[pptx pass 2/3] Starting edit pass for slide 14 title…`. This makes the iteration budget visible in scrollback.
+
 The **post-render visual review** — the 10-point check for type hierarchy / overflow / bullet density / balance / focal point / theme consistency / etc. — is performed by the **orchestrator** after this skill returns, not by the skill itself. The orchestrator reads each `slide-NN.png` via the `Read` tool (visual analysis on rasterized pixels — XML inspection is forbidden) and dispatches targeted edits back to the skill (capped at 2 iterations beyond the initial render). See [CLAUDE.md](../../../CLAUDE.md) → *Step 8 — Render PPTX* → *Post-render visual review* for the full checklist. The skill stays focused on rendering; the orchestrator stays focused on judgement.
 
 ## Rules
@@ -111,6 +137,7 @@ This skill is an orchestrator. Visual rules (palette, fonts, icons, emoji swap, 
 - **Never read or modify `draft.md`.** It is the working file from Steps 1–5 and is read-only from Step 6 onward.
 - **Never re-render SVGs.** If an image ref points at a missing SVG, stop and tell the orchestrator to perform the Illustrator role rather than improvising.
 - **Speaker notes go into the notes pane**, never on the slide body.
+- **Progress visible at every stage.** The render is long enough that silence is a defect — emit one prefixed line per stage (see *Progress reporting* above), heartbeat every 30s inside long stages, and surface failures with the same prefix + `FAILED:` suffix. The presenter must never have to ask "is it still running?"
 
 ## Failure modes to surface
 
