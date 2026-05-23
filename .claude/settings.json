@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Edit(/.claude/skills/polish-ascii/**)",
-      "Edit(/.claude/skills/upgrade-fork/**)"
+      "Edit(/.claude/skills/upgrade-fork/**)",
+      "Bash(mkdir -p /tmp/base_extract)",
+      "Bash(unzip -o -q /Users/pveiga/Documents/Austral/talksmith/config/base-template.pptx)",
+      "Edit(/.claude/skills/md-to-pptx/**)"
     ]
   }
 }
