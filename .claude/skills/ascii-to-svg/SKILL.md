@@ -69,6 +69,19 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
 
+   **Then validate it against the aspect-ratio contract** by running [`validate_svg.py`](validate_svg.py) on the file you just wrote:
+
+   ```bash
+   python3 .claude/skills/ascii-to-svg/validate_svg.py <output_path>
+   ```
+
+   The validator checks the same contract spelled out in step 5 and rewrites the file in place when it can auto-repair:
+   - **viewBox present + parseable** with positive W, H → unfixable; exit 2 if missing or malformed.
+   - **No `preserveAspectRatio="none"`** on the root `<svg>` or any nested `<svg>`/`<image>` → auto-fixed by dropping the attribute (default `xMidYMid meet` restored).
+   - **Root `width`/`height` either absent or agree with the viewBox W:H ratio within 1%** → auto-fixed by dropping both attributes (viewBox is authoritative).
+
+   A non-zero exit means the SVG is broken in a way this skill can't mechanically repair (no viewBox, malformed XML, root element isn't `<svg>`). When that happens, **do not return success** — return `failed: svg_validation: <error>` per step 8. A broken SVG must not reach disk: the downstream PPTX renderer trusts the viewBox to size its placement slot, and a faulty viewBox poisons the [`audit_aspect_ratios.py`](../md-to-pptx/audit_aspect_ratios.py) gate at PPTX-build time (one full render cycle wasted). Catching it here is cheap; catching it there is expensive. If repair happened, note the fix count in the step-8 report under `svg_validation:`.
+
 7. **Rasterize a critique-companion PNG.** Render the SVG to a PNG sibling at `<output_path parent>/.critique/<basename>.png` (create `.critique/` if missing). This PNG is **not** referenced from `final.md` and is **not** consumed by Step 8 — it exists solely so the illustrator role can perform visual analysis on rasterized pixels in step 5b of its loop (XML inspection of an SVG is not a substitute for visual critique).
 
    Use `qlmanage` (built into macOS, zero install):
@@ -81,9 +94,9 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    `qlmanage` writes the thumbnail as `<input-filename>.png` (it appends `.png` rather than replacing `.svg`), so the `mv` normalizes the basename. If `qlmanage` exits non-zero or the resulting PNG is missing / 0-byte, still report the SVG as `rendered` but add `png_companion: failed` to the report — a missing PNG degrades critique fidelity but doesn't invalidate the render. Never delete the SVG because the PNG step failed.
 
 8. **Return** a one-line report:
-   - On success: `rendered: <output_path> · png_companion: <path|failed> · directives_applied: <count> · deviations: <none|description>`
+   - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_companion: <path|failed> · directives_applied: <count> · deviations: <none|description>`
    - On skip: `skipped: <reason>`
-   - On failure: `failed: <reason>` — and do **not** write a broken SVG.
+   - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file.
 
 ## You cannot ask questions
 
