@@ -150,7 +150,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 | Slot | Source in `final.md` frontmatter | Example |
 |---|---|---|
 | Shape #1 text | `presentation:` (the Subject from `profile.md`) | `Inteligencia Artificial Generativa Aplicada en Biomedicina` |
-| Shape #2 text | `subtitle:` (Talk-specific; if absent, omit shape #2 entirely — do **not** leave the placeholder text) | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
+| Shape #2 text | `subtitle:` (Talk-specific, **required** — collected in Step 4 per CLAUDE.md). The Subject in shape #1 is fork-level and identical across every Talk; this subtitle is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
 | Shape #3 paragraph 1 | `Autor: <presenter>` — `<presenter>` from `profile.md` Presenter section | `Autor: Paulo Veiga/Marcos Sanchez Sorondo` |
 | Shape #3 paragraph 2 | `Última Modificación: <Month, YYYY>` from `final.md` frontmatter `date:` | `Última Modificación: Marzo, 2026` |
 | Shape #4 image | `ppt/media/image-1-1.png` (institution logo, never replaced unless presenter explicitly swaps brands) | (binary preserved verbatim) |
@@ -285,7 +285,54 @@ Smaller, no left strip, no number. Used for sibling cards in a flat grid.
 
 The card's inner padding is **~0.18 in** on the left (`5.37 − 5.19 = 0.18`) and **~0.18 in** on the top (`2.21 − 2.03 = 0.18`).
 
-### 7.3 Labeled enumerations render as cards, never as paragraph leads
+### 7.3 Lead + N items — choose card-row (§7.4) or icon-bullet list (§7.5)
+
+A very common slide shape is: **section pill, large title, lead paragraph, then 3–5 parallel items each with a heading + body**. The deck has two distinct renderings for this shape; pick by the per-item body length, not by author preference.
+
+| Per-item body length | Layout | Why |
+|---|---|---|
+| ≤ ~80 chars (1–2 short sentences, parallel concept summaries) | **§7.4 card-row** (horizontal) | Visual parallelism reads at a glance; equal-width cards make the items feel like siblings. |
+| > ~80 chars (2–4 sentences each, prose explanations) | **§7.5 icon-bullet list** (vertical) | Each item gets real horizontal room for prose; the stack scans top-to-bottom like a reading order. |
+
+The shape signal in Markdown is the same for both — a lead paragraph followed by 3–5 H4 / bolded-label items, or 3–5 `- **Label** body…` bullets. The renderer counts per-item body chars (post-Markdown-stripping) and picks. When item lengths are mixed (one short, two long), pick by the **longest** item — the row layout would underuse cards for the long item, the list layout handles both gracefully. Never split a single lead+N group across both layouts.
+
+### 7.4 Card-row (lead + 3–5 short cards) — horizontal
+
+Section pill + title + lead paragraph (full width) + a row of N equal-width cards (N ∈ {3, 4, 5}) + optional source/citation line at the bottom. Each card carries an **icon chip** (filled `#DA1B2E` circle with the catalog line-art glyph in `#FFFFFF` — see §17.2 *chip variant*) above a short heading and a 1–2-sentence body. Used for parallel concept summaries: "three innovations of StyleGAN", "four pillars of X", "five steps".
+
+| Element | Spec (approximate — tighten against the base-template reference slide when emitted) |
+|---|---|
+| Section pill | §6 geometry, unchanged |
+| Title | §3.3 adaptive sizing; same anchor as other content slides (~`(0.54, 0.85)`) |
+| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.85)`, `sz="1200"` (12pt) Roboto, `#3B3535`, body insets `0` |
+| Card row baseline | y ≈ 3.20 in; gutter between cards ≈ 0.22 in; row height ≈ 1.85 in |
+| Per-card width | `(8.91 − (N−1) × 0.22) / N` — at N=3: ~2.82 in; N=4: ~2.06 in; N=5: ~1.60 in |
+| Card outer | `roundRect`, fill `#F2EEEE`, no stroke, corner radius 5760 EMU |
+| Icon chip | `ellipse` (perfect circle), fill `#DA1B2E`, no stroke, diameter ~0.42 in, anchored ~`(card_x + 0.20, 3.40)`. The line-art glyph (from §17.1) is overlaid on the chip in `#FFFFFF` stroke at ~70% of the chip's diameter. **This is the only place the chip variant is permitted — see §17.2.** Each card's glyph is **picked per §17.5 from the heading/body of *that card*** — never reuse the same glyph across cards in the same row, never default to a single house glyph for the whole layout. Three cards = three different §17.1 entries chosen to match each card's concept. The base-template slide 14 ships a hollow-ellipse stand-in inside the chip purely as a structural marker for the slot; the real render swaps it for the content-matched §17.1 glyph. |
+| Card heading | anchor ~`(card_x + 0.20, 3.95)`, `sz="1350"` (13.5pt) Roboto Mono Medium, `#1F1E1E`, single line preferred |
+| Card body | anchor ~`(card_x + 0.20, 4.30)`, width = card_width − 0.40, `sz="1100"` (11pt) Roboto, `#3B3535`, 2–3 lines max |
+| Source line (optional) | anchor `(0.54, 5.30)`, ext `(8.91, 0.20)`, `sz="900"` (9pt) Roboto Italic, `#6A737D`. Emit when the slide cites a single source; omit when content is synthesized across the corpus. Format: `Fuente: <source title>` (localize "Fuente:" per `Presentation language`; English: `Source:`). |
+
+**Capacity:** N=3 is the visual sweet spot; N=4 still reads cleanly; N=5 is the floor — at N=5 the per-card width drops to 1.60 in and bodies must be ≤ 60 chars (~1 short sentence). If 5 cards don't comfortably fit short bodies, fall back to §7.5 icon-bullet list instead of shrinking the body font.
+
+### 7.5 Icon-bullet list (lead + 3–5 prose items) — vertical
+
+Section pill + title + lead paragraph (full width) + a vertical stack of N rows (N ∈ {3, 4, 5}), each with a line-art icon at the left and a heading + multi-sentence body to the right. Used for prose explanations: "three strengths of GANs", "four limitations of X", "five reasons Y matters".
+
+| Element | Spec (approximate — tighten against the base-template reference slide when emitted) |
+|---|---|
+| Section pill | §6 geometry, unchanged |
+| Title | §3.3 adaptive sizing; may wrap to 2 lines (the lead paragraph + row stack accommodate a taller title than §7.4) |
+| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.90)`, `sz="1200"` (12pt) Roboto, `#3B3535` — inline bold (`**…**`) preserved with `b="1"` |
+| Row stack baseline | y ≈ 3.10 in; vertical stride per row = `(slide_h − 3.10 − 0.30 bottom margin) / N` (at N=3 → ~0.74 in; N=4 → ~0.56 in; N=5 → ~0.44 in) |
+| Per-row icon | anchor `(0.54, row_y + 0.04)`, ext `(0.42, 0.42)`, line-art `#DA1B2E` per §17.2 (**no chip background** — §17.2 default treatment). Each row's icon is **picked per §17.5 from the heading/body of *that row*** — never reuse the same icon across rows in the same stack. Three rows = three different §17.1 entries chosen to match each row's concept. The base-template slide 15 ships a hollow-ellipse stand-in purely as a structural marker; the real render swaps it for a content-matched `<p:pic>` of the chosen §17.1 icon per §17.4. |
+| Per-row heading | anchor `(1.16, row_y + 0.05)`, ext `(7.75, 0.30)`, `sz="1350"` (13.5pt) Roboto Mono Medium, `#1F1E1E`, single line |
+| Per-row body | anchor `(1.16, row_y + 0.40)`, ext `(7.75, stride − 0.45)`, `sz="1100"` (11pt) Roboto, `#3B3535`, 2–3 sentences. Inline bold preserved. |
+| Source line (optional) | same as §7.4 |
+
+**Capacity:** N=3 with 3-sentence bodies fits comfortably. N=4 with 2-sentence bodies is the upper bound; N=5 only with 1–2-sentence bodies. Beyond that the slide is overstuffed — split into two slides rather than shrink body font below 11pt.
+
+### 7.6 Labeled enumerations render as cards, never as paragraph leads
 
 When a slide body contains a named sequence — `Paso 1` / `Paso 2` / `Paso 3`, `Step 1` / `Step 2`, `Etapa A` / `Etapa B`, `Phase 1` / `Phase 2`, `Case A` / `Case B`, `Fase I` / `Fase II`, and equivalents in any presentation language — **each named unit is a structural element**: a §7.1 numbered card (when the label carries an integer), a §7.2 plain card heading, or a `sz="1350"` Roboto Mono Medium subheading on its own line. The label **must not** render as an inline paragraph prefix (e.g. `**Paso 1.** Lorem ipsum…` followed by an indented sub-bullet list), because the resulting layout reads as a single flat paragraph block — the named hierarchy collapses visually and the reader cannot scan the steps. The numeric or ordinal portion of the label becomes the card's number / heading; the descriptive portion becomes the card body. Integer-labeled sequences map cleanly to §7.1; non-numeric labels (`Case A`, `Phase X`) use §7.2 with the label as `Card heading`. Cross-reference: §15 layout-selection table — any H2 whose body matches the labeled-enumeration shape selects **card-grid** or **content+cards+image**, never **content-text**.
 
@@ -496,6 +543,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
    | H2 + ≥4 `![]()` images | **image-grid** |
    | H2 + fenced ``` ``` code block as primary content | **code-example** (§9) |
    | H2 + sequence of `### Subhead` + paragraph repeats | **card-grid** (no image) or **content+cards+image** (image present) |
+   | H2 + lead paragraph + 3–5 `- **Label** body…` bullets (or 3–5 `#### Label` + paragraph groups) | **§7.4 card-row** when every per-item body ≤ ~80 chars; **§7.5 icon-bullet list** otherwise. Pick by the **longest** item, never split a single group across both. See §7.3 decision rule. |
    | H2 + pipe-table | **card-grid** via §11 conversion |
    | Final slide with H2 + list of links | **closing-cta** |
    | H2 + paragraphs only, no images, no code | **content-text** (use sparingly — template avoids this) |
@@ -572,6 +620,8 @@ The icon **must be visually related to its content**. This table maps each icon 
 | Canvas | 64×64 SVG viewBox; rasterized to 200×200 PNG for fallback |
 | Background | transparent — never a coloured backdrop |
 
+**Chip variant (one permitted exception).** The §7.4 card-row layout renders its per-card icon as a **chip**: a filled `#DA1B2E` perfect circle (`ellipse`) acting as the background, with the same catalog line-art glyph overlaid in `#FFFFFF` stroke (color inverted; everything else — viewBox, stroke-width ratio, line caps, line joins — unchanged). The glyph fills ~70% of the chip's diameter and is centered. This treatment is **only** permitted as the card-head decoration in §7.4 — never in §7.5 icon-bullet lists (which use the default line-art-on-white), never in §8 callout markers, never as a standalone icon elsewhere. The chip is a layout-specific decoration, not a permitted theme variant.
+
 **Anti-patterns** (do not):
 - Stroke any color other than `#DA1B2E`. No grey icons, no off-red, no dark navy.
 - Mix line-art and filled-silhouette styles in the same deck — pick one (this deck = line-art).
@@ -630,6 +680,7 @@ When a content slide is being assembled and an icon slot needs to be filled:
 2. **Match the dominant noun/concept** to the catalog in §17.1. Most clinical/AI presentations resolve cleanly to 1 of the 15 catalog icons.
 3. **If two icons fit, prefer the more specific** (`medical` over `people` for a patient context; `coins` over `chart` for cost data).
 4. **If nothing fits**, fall back to `star` (neutral "this matters") rather than inventing a new icon.
+5. **In a multi-item layout (e.g. §7.4 card-row, §7.5 icon-bullet list, slide 9's content+image 3-section list, slide 11's 5-row mitigation list), pick a *different* §17.1 icon per item.** Repeating one icon across cards/rows in the same group destroys the visual differentiation the icons exist to provide — the reader scans by glyph shape, not by reading every heading. If two items genuinely share the same dominant concept (rare — usually a sign the items should be merged), fall through to the next-most-specific catalog entry for one of them rather than duplicating. `star` may appear once per group as a neutral fallback; it should never fill more than one slot in the same multi-item layout.
 
 ### 17.6 Where to find the assets
 
@@ -668,13 +719,13 @@ Codepoint detection ranges to scan: `U+1F300`–`U+1FAFF`, `U+2600`–`U+27BF`, 
 
 ## 18. Base-template walkthrough ([`base-template.pptx`](base-template.pptx))
 
-`base-template.pptx` is a 13-slide foundation derived from this spec. It splits into three zones:
+`base-template.pptx` is a 15-slide foundation derived from this spec. It splits into three zones:
 
 | Zone | Slides | Treatment when generating a new deck |
 |---|---|---|
 | **A. Emit-as-is with substitution** | 1 – 2 | Copy verbatim; substitute the `{{...}}` placeholders. |
 | **B. Separator banner** | 3 | **Discard** — never appears in a generated deck. Its only job is to mark the boundary in the template. |
-| **C. Layout reference (do not copy content)** | 4 – 13 | **Discard the slides themselves.** Use them only as visual recipes; build your own slides from the matching `§` recipe and your real content. |
+| **C. Layout reference (do not copy content)** | 4 – 15 | **Discard the slides themselves.** Use them only as visual recipes; build your own slides from the matching `§` recipe and your real content. |
 
 Rendered previews live in [`template-previews/base-template/slide-NN.png`](template-previews/base-template/) — one per slide.
 
@@ -695,13 +746,15 @@ Rendered previews live in [`template-previews/base-template/slide-NN.png`](templ
 | 11 | C | **image-grid + card-grid** (mitigation pattern) | §13 image-grid + §7.1 cards | Section pill `TEMPLATE — IMAGE-GRID + CARD-GRID`, H2, left: 5-row icon+heading+body list; right: dark panel with 4 sub-cards + footer "rule of thumb". | Use for "strategies + implementation" slides — paired action list with concrete tactics. |
 | 12 | C | **card-grid compare** | §7.1 numbered cards | Section pill `TEMPLATE — CARD-GRID (COMPARE)`, H2, four side-by-side card stacks comparing "before/after" or "weak/strong" approaches. | Use when content is essentially a comparison table. The "vs." pattern of the deck. |
 | 13 | C | **Agenda re-emit (section divider, item 2 active)** | §5 + §5.6 | Identical to slide 2 but with the **active dot at position 2** instead of 1, and the previously-active dot 1 now inactive. | Template for section dividers between content sections. Generate one per section transition, incrementing the active index (positions 2, 12, 17, 21, 40, 45, 52 in the source deck). |
+| 14 | C | **card-row (lead + 3 short cards)** | §7.3 + §7.4 + §17.2 chip variant | Section pill `TEMPLATE — CARD-ROW (LEAD + 3 CARDS)`, H2, lead paragraph, 3-column row of `#F2EEEE` cards. Each card carries a `#DA1B2E` filled-circle **icon chip** (with a white inner glyph stand-in — the real layout uses a `#FFFFFF` line-art glyph from §17.1), heading, body, and an optional source line at the bottom. | Use when the slide has 3–5 parallel concept summaries each ≤ ~80 chars of body. Pick by the §7.3 decision rule — for longer prose, use slide 15's pattern instead. |
+| 15 | C | **icon-bullet list (lead + 3 prose items)** | §7.3 + §7.5 + §17.2 default | Section pill `TEMPLATE — ICON-BULLET LIST (LEAD + 3 ITEMS)`, H2, lead paragraph, vertical stack of 3 rows. Each row carries a line-art `#DA1B2E` icon stand-in (the real layout uses a §17.1 catalog icon — no chip background), heading, and a 2–3-sentence body. Optional source line at the bottom. | Use when the slide has 3–5 parallel items each needing 2–3 sentences of prose. Pick by the §7.3 decision rule — for short labels, use slide 14's pattern instead. |
 
 ### 18.2 Generator workflow using base-template
 
 1. **Open** `base-template.pptx` as a working copy.
 2. **Slide 1:** find/replace the four cover placeholders with values from `profile.md` + `final.md` frontmatter. Localize `Autor:` / `Última Modificación:` per `Presentation language`.
 3. **Slide 2:** find/replace agenda placeholders with the N H1s and subtitles from `final.md` (N = section count). Clone or delete placeholder rows so the agenda has exactly N rows. Keep item 1 active.
-4. **Delete slides 3–13** from the working copy — that's the entire layout-reference zone.
+4. **Delete slides 3–15** from the working copy — that's the entire layout-reference zone.
 5. **Insert content slides** built from your `final.md`, choosing layouts per the emit-rules in §15. The recipes in §6 (section pill), §7 (cards), §8 (callouts), §9 (code), and §13 (taxonomy) are the source of truth — use the slide-3-to-13 PNGs in `template-previews/base-template/` as the visual cross-check.
 6. **Insert agenda re-emits** before each new section by duplicating slide 2's structure with the active dot moved to the matching item index.
 
@@ -751,9 +804,9 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 
 | Stage | What you do | Rules in |
 |---|---|---|
-| **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.subtitle`, delete shape if absent), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
+| **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.subtitle` — **required**, never delete the shape; if the field is missing in frontmatter, stop and surface as a render-blocking error so the editor can fill it), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
 | **2. Agenda** | Substitute the placeholders on slide 2: `{{SECTION_k_TITLE}}` and `{{SECTION_k_SUBTITLE}}` for k = 1..N (N = section count). Clone/delete placeholder rows to match N. Active dot stays at 1. Warn the presenter if N > 8 (tight) or N > 10 (out of vertical room — §5.3). | §5 + §5.3 + §5.5 |
-| **3. Discard zones B and C** | Delete slides 3 through 13 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
+| **3. Discard zones B and C** | Delete slides 3 through 15 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
 | **5. Section dividers** | Between section k-1's last slide and section k's first slide (k = 2..N), emit an agenda re-emit with active dot at k. Total dividers = N − 1. | §5 + §5.6 |
 | **6. Backgrounds** | Pure white `#FFFFFF` `<p:bg>` solid fill on every layout. No overlays, no tints, no grey. | §1 |

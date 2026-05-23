@@ -202,7 +202,11 @@ Before asking the presenter to pick a mode, run these checks **once**:
 
 1. **Corpus viability for B and C.** Check `talks/<Talk>/research/corpus/`. If it's empty or absent (Step 3 never ran, or no sources were dropped in Step 2), Modes B (Agent Draft) and C (Presenter Outline) are **not offered** — there's nothing to draft from. Only Mode A is viable. Tell the presenter explicitly and offer either: (a) proceed in Mode A, or (b) go back to Step 2/3 to add sources first.
 
-2. **Per-Talk frontmatter.** The frontmatter fields `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, and `duration` all come from `config/profile.md` (collected in Step 0.5). `Presentation language` is *not* a frontmatter field — it drives the prose language of `draft.md` and SVG text, and is also read from the profile. The only frontmatter field Step 4 prompts for is `date` — ask the presenter with 2–4 candidates. Pass-through keys (`research:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
+2. **Per-Talk frontmatter.** The frontmatter fields `presentation` (sourced from the profile's `Subject` — every Talk in this fork shares it), `presenter`, `audience`, and `duration` all come from `config/profile.md` (collected in Step 0.5). `Presentation language` is *not* a frontmatter field — it drives the prose language of `draft.md` and SVG text, and is also read from the profile. Step 4 prompts the presenter for two per-Talk fields:
+   - **`subtitle`** — the per-class topic that renders on the cover slide below the Subject in smaller font (per `config/pptx-prompt.md` §4.3 shape #2). **Required** — every cover carries one. Ask free-text; propose 2–4 candidates derived from the Step-1 briefing (e.g. for Subject *"Inteligencia Artificial Generativa Para Biomedicina"* propose *"Clase 3 — Ingeniería de prompts y técnicas avanzadas"*). Keep it to one short line; do not echo the Subject.
+   - **`date`** — when the Talk is delivered. Ask with 2–4 candidates.
+
+   Pass-through keys (`research:`, `description:`) are bootstrapped by the editor from the schema's canonical empty form and are not editable.
 
 Once 1–2 are resolved, ask the presenter for the mode (free-text only when genuinely open). Question-density varies by mode (see *Question budget* below).
 

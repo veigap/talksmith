@@ -130,7 +130,13 @@ The Editor role bootstraps `talks/<Talk>/draft.md` from this form on its first S
 ```markdown
 ---
 # presentation: one-line subject of the talk (e.g. "Intro to GANs for non-ML engineers")
+# Fork-level — same across every Talk in this fork (sourced from profile.md Subject).
 presentation: <One-line subject of the talk>
+# subtitle: per-class topic — renders on the cover slide below the Subject in smaller font.
+# Required (not optional). One short line; do not duplicate the Subject. Example for a fork
+# whose Subject is "Inteligencia Artificial Generativa Para Biomedicina":
+#   subtitle: "Clase 3 — Ingeniería de prompts y técnicas avanzadas"
+subtitle: <Per-class topic, one line>
 # research: relative path to the corpus research base for this Presentation
 research: research/corpus/
 # description: structural shape downstream tooling expects — do not edit
