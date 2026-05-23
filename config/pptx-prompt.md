@@ -185,9 +185,9 @@ Same recipe as §1 (layout `slideLayout3.xml`: black `<p:bg>` + 95% white full-c
 
 ### 5.3 Per-item geometry (one row per agenda entry)
 
-Items are stacked vertically with a **constant stride of `540693 EMU (0.591 in)`** between row tops.
+Items are stacked vertically with a **constant stride of `540693 EMU (0.591 in)`** between row tops. The agenda emits **one row per section** — there is no fixed row count. Row 1's top is fixed at `994172 EMU (1.087 in)`; row k's top = `994172 + (k - 1) × 540693` EMU.
 
-Row top y-coordinates (EMU and inches):
+The source template happened to have 7 sections, so its measured rows landed at:
 
 | Item | y EMU | y inches |
 |---|---|---|
@@ -198,6 +198,8 @@ Row top y-coordinates (EMU and inches):
 | 5 | 3156942 | 3.452 |
 | 6 | 3697635 | 4.044 |
 | 7 | 4238327 | 4.635 |
+
+For N ≠ 7, recompute via the formula. **Capacity check:** the slide canvas is `5143500 EMU (5.625 in)` tall; row N's bottom shape (subtitle) extends ~`400198 EMU` below `y_dot`. The last fully-contained row N satisfies `994172 + (N − 1) × 540693 + 400198 ≤ 5143500`, i.e. **N ≤ 8 fits cleanly**. For 9 ≤ N ≤ 10, the renderer should still emit rows (with a warning that the bottom row crowds the slide edge); for N > 10, surface to the presenter — the agenda layout's vertical room is genuinely exhausted and a different chrome is needed.
 
 Each row consists of 5 shapes (positions relative to `y_dot = row top`):
 
@@ -220,25 +222,17 @@ Each row consists of 5 shapes (positions relative to `y_dot = row top`):
 
 | Slot | Source |
 |---|---|
-| Item title (1..7) | The H1 of section N in `final.md` (the numbered section header, e.g. `# 3. In-Context Learning`). Strip the leading `N. `. |
-| Item subtitle (1..7) | Section N's `Subtitle:` field if present; else a single-line summary of the section's Goal. |
-| Active item index | The agenda instance's position in the deck — slide 2 = active 1; slide 12 = active 2; etc. The mapping is **invariant**: agenda instance N highlights item N. |
+| Item title (1..N) | The H1 of section k in `final.md` (the numbered section header, e.g. `# 3. In-Context Learning`). Strip the leading `k. `. |
+| Item subtitle (1..N) | Section k's `Subtitle:` field if present; else a single-line summary of the section's Goal. |
+| Active item index | The agenda instance's position in the deck — the first agenda (after the cover) highlights item 1; the agenda before section k highlights item k. The mapping is **invariant**: agenda instance k highlights item k. |
 
-**The deck always has exactly 7 sections.** If a Talk's `final.md` has fewer, the agenda recipe still emits 7 rows — empty rows must not collapse, since the geometry depends on a 7-row stride. A generator should warn rather than silently truncate.
+**The agenda emits exactly N rows, where N = number of H1 sections in `final.md`.** N is not fixed — the source template happened to have 7, but `base-template.pptx` contains 7 placeholder rows and the renderer is expected to clone or delete rows to match N. Capacity per §5.3: N ≤ 8 fits cleanly; 9–10 emits with a tightness warning; N > 10 surfaces to the presenter (the agenda chrome is out of vertical room and an alternate layout is needed).
 
 ### 5.6 Agenda instance positions
 
-| Slide # | Active item |
-|---|---|
-| 2 | 1 |
-| 12 | 2 |
-| 17 | 3 |
-| 21 | 4 |
-| 40 | 5 |
-| 45 | 6 |
-| 52 | 7 |
+The agenda appears at slide 2 (active = 1, doubles as section 1's divider) and is re-emitted before each subsequent section's first content slide (active = 2, 3, …, N). With N sections the deck contains **N agenda instances total: 1 after the cover + (N − 1) re-emits between sections.** There is no separate "section title" layout.
 
-The agenda appears between Cover and content (slide 2), then again as a divider before each new section (12, 17, 21, 40, 45, 52). There is no separate "section title" layout.
+For reference, the source template (53 slides, 7 sections) placed its agenda re-emits at slide positions 2, 12, 17, 21, 40, 45, 52 — those positions are descriptive of that one deck, not prescriptive. Generators key off section transitions in `final.md`, not absolute slide numbers.
 
 ---
 
@@ -484,8 +478,8 @@ The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) nam
 When rendering `final.md` to `.pptx`, follow these rules in order:
 
 1. **Slide 1 = Cover.** No matter what the Markdown contains for slide 1, emit the §4 recipe. Pull text from frontmatter (`presentation`, `subtitle`, `presenter`, `date`, `Presentation language`). Preserve `ppt/media/image-1-1.png` verbatim. Do **not** apply the section pill (§6).
-2. **Slide 2 = Agenda with active item 1.** Emit the §5 recipe. Pull the 7 item titles from the 7 H1s in `final.md`; pull subtitles from per-section `Subtitle:` fields. If `final.md` has ≠7 sections, **warn the presenter** rather than truncating or padding silently.
-3. **Section dividers.** Before every new section N (N ∈ {2..7}), re-emit the §5 agenda with active item set to N. Place these at the deck positions listed in §5.6 (12, 17, 21, 40, 45, 52) only when the section's content slide count matches the template's; otherwise place each divider immediately before its section's first content slide.
+2. **Slide 2 = Agenda with active item 1.** Emit the §5 recipe. Pull the N item titles from the N H1s in `final.md` (N = section count, not fixed); pull subtitles from per-section `Subtitle:` fields. Clone or delete placeholder rows in `base-template.pptx` to match N. Surface a warning to the presenter when N > 8 (tight) or N > 10 (out of room — see §5.3 capacity).
+3. **Section dividers.** Before every new section k (k ∈ {2..N}), re-emit the §5 agenda with active item set to k. Place each divider immediately before its section's first content slide — there are no absolute slide-number positions to honor.
 4. **Every content slide carries a §6 section pill** at top-left, with text = the active section's H1 verbatim, uppercased.
 5. **Layout selection per content slide** — pick from §13 based on Markdown signal:
 
@@ -683,7 +677,7 @@ Rendered previews live in [`template-previews/base-template/slide-NN.png`](templ
 | # | Zone | Demonstrates | Spec § | What's on the slide | When generating |
 |---|---|---|---|---|---|
 | 1 | A | **Cover** | §4 | 4 text shapes (`{{PRESENTATION_TITLE}}`, `{{TALK_SUBTITLE}}`, `Autor: {{PRESENTER}}`, `Última Modificación: {{DATE}}`) + the Universidad Austral logo at (7.86, 3.55) in. | Substitute the four placeholders from `profile.md` (`Subject`, `Presenter`, `Presentation language`) and the Talk's frontmatter (`subtitle`, `date`). Logo stays. |
-| 2 | A | **Agenda (item 1 active)** | §5 | Title "Agenda" + 7 item rows with `{{SECTION_N_TITLE}}` / `{{SECTION_N_SUBTITLE}}` placeholders. Dot 1 is `#DA1B2E` (active), dots 2–7 are `#F2EEEE` (inactive). | Replace 14 placeholders with the seven H1s and `Subtitle:` fields from `final.md`. Keep active dot at 1. Always emit immediately after the cover. |
+| 2 | A | **Agenda (item 1 active)** | §5 | Title "Agenda" + 7 placeholder item rows with `{{SECTION_k_TITLE}}` / `{{SECTION_k_SUBTITLE}}` slots. Dot 1 is `#DA1B2E` (active), dots 2–7 are `#F2EEEE` (inactive). | Replace `2 × N` placeholders with the N H1s and `Subtitle:` fields from `final.md` (N = section count). Clone or delete rows so the agenda has exactly N rows. Keep active dot at 1. Always emit immediately after the cover. |
 | 3 | B | **Separator banner** | — | Red `#DA1B2E` band across the middle with the text "TEMPLATE — LAYOUT EXAMPLES BELOW", flanked by guidance above/below. | **Drop this slide entirely.** It's a marker for the human/agent reading the template. |
 | 4 | C | **image-grid + callout** (was source slide 3) | §7.1 (cards) + §8 (callout) | Section pill `TEMPLATE — IMAGE-GRID + CALLOUT`, large H2, lead paragraph, 3-column image-headed cards, full-width `#F7BBC1` callout at bottom with 💡 emoji. | Use when a slide has 3 supporting concepts each with a small icon, plus a tip/analogy at the bottom. |
 | 5 | C | **image-grid** (dense, 2-column components) | §13 image-grid | Section pill `TEMPLATE — IMAGE-GRID`, H2, then a 2×4 grid of icon-headed cards followed by a "what to know" bullet list. | Use for catalog-style listings — N parallel concepts that each fit in a single line of body text. |
@@ -700,7 +694,7 @@ Rendered previews live in [`template-previews/base-template/slide-NN.png`](templ
 
 1. **Open** `base-template.pptx` as a working copy.
 2. **Slide 1:** find/replace the four cover placeholders with values from `profile.md` + `final.md` frontmatter. Localize `Autor:` / `Última Modificación:` per `Presentation language`.
-3. **Slide 2:** find/replace 14 agenda placeholders with the seven H1s and subtitles from `final.md`. Keep item 1 active.
+3. **Slide 2:** find/replace agenda placeholders with the N H1s and subtitles from `final.md` (N = section count). Clone or delete placeholder rows so the agenda has exactly N rows. Keep item 1 active.
 4. **Delete slides 3–13** from the working copy — that's the entire layout-reference zone.
 5. **Insert content slides** built from your `final.md`, choosing layouts per the emit-rules in §15. The recipes in §6 (section pill), §7 (cards), §8 (callouts), §9 (code), and §13 (taxonomy) are the source of truth — use the slide-3-to-13 PNGs in `template-previews/base-template/` as the visual cross-check.
 6. **Insert agenda re-emits** before each new section by duplicating slide 2's structure with the active dot moved to the matching item index.
@@ -742,7 +736,7 @@ Skipping any of these produces a deck that drifts from the spec.
 
 1. Read **this file** (`pptx-prompt.md`) end-to-end. Particularly: §1 (canvas), §3 (typography), §4 (cover), §5 (agenda), §6 (pill), §7 (cards), §8 (callouts), §9 (code), §13 (taxonomy), §15 (emit-rules), §17 (icons), §18 (base-template walkthrough).
 2. Read `config/profile.md`. Cache: `Subject`, `Presenter`, `Presentation language`, `Default duration`.
-3. Read `talks/<Talk>/final.md`. Cache frontmatter + the 7 sections.
+3. Read `talks/<Talk>/final.md`. Cache frontmatter + all N H1 sections (N is variable).
 4. Open `config/base-template.pptx` as a working copy. **Never edit the source file.**
 
 ### 19.3 Workflow — 7 stages
@@ -752,17 +746,17 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 | Stage | What you do | Rules in |
 |---|---|---|
 | **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.subtitle`, delete shape if absent), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
-| **2. Agenda** | Substitute the 14 placeholders on slide 2: `{{SECTION_N_TITLE}}` and `{{SECTION_N_SUBTITLE}}` for N=1..7. Active dot stays at 1. **Hard fail** if `final.md` has ≠7 sections — do not pad or truncate. | §5 + §5.5 |
+| **2. Agenda** | Substitute the placeholders on slide 2: `{{SECTION_k_TITLE}}` and `{{SECTION_k_SUBTITLE}}` for k = 1..N (N = section count). Clone/delete placeholder rows to match N. Active dot stays at 1. Warn the presenter if N > 8 (tight) or N > 10 (out of vertical room — §5.3). | §5 + §5.3 + §5.5 |
 | **3. Discard zones B and C** | Delete slides 3 through 13 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
-| **5. Section dividers** | Between section N-1's last slide and section N's first slide (N=2..7), emit an agenda re-emit with active dot at N. | §5 + §5.6 |
+| **5. Section dividers** | Between section k-1's last slide and section k's first slide (k = 2..N), emit an agenda re-emit with active dot at k. Total dividers = N − 1. | §5 + §5.6 |
 | **6. Backgrounds** | Every layout you emit must carry the §1 recipe — black `<p:bg>` plus a full-canvas `#FFFFFF` rect with `<a:alpha val="95000"/>`. Apparent `#F2F2F2`. **Never** emit a flat `#F2F2F2` solid fill. | §1 |
 | **7. Speaker notes** | If `final.md` has `Speaker notes:` blocks per slide, emit them into the notes pane. The template barely uses it; do not rely on it for content. | (none — decorative) |
 
 ### 19.4 Output contract
 
 - **File path:** `talks/<Talk>/output/final.pptx`.
-- **Slide count:** `2 (cover + agenda) + Σ(content slides per section) + 6 (section dividers between sections 1→2, 2→3, …, 6→7)`. The deck alternates content blocks and dividers after slide 2.
+- **Slide count:** `2 (cover + agenda active=1) + Σ(content slides per section) + (N − 1) (section-divider agenda re-emits between sections 1→2, 2→3, …, (N−1)→N)`, where N = section count in `final.md`. The deck alternates content blocks and dividers after slide 2.
 - **Zip structure:**
   - `[Content_Types].xml` is the **first entry**, stored uncompressed.
   - All other entries deflated.
@@ -795,7 +789,7 @@ Things that look reasonable but break the template. The §-section in each row i
 | Emit native `<a:tbl>` tables | Template has zero — convert pipe-tables to card grids | §11 |
 | Emit a flat `#F2F2F2` background | Use the black + 95%-white-overlay recipe | §1 |
 | Use a non-5760 EMU corner radius on roundRects | Constant across all pills/cards/callouts/code/dots | §2.3 |
-| Pad fewer or more than 7 agenda items | Geometry depends on the 7-row stride; warn instead | §5.5 |
+| Fudge agenda row count to match the placeholder's 7 (pad with blanks, or truncate sections) | Agenda row count = N (section count); clone/delete rows to match. Warn only when N > 8 (tight) or > 10 (out of room). | §5.3 + §5.5 |
 | Include base-template slides 3–13 (separator + examples) in output | They are reference, not content | §18 zone C |
 | Reuse the pink callout for declarative claims, or the blue for analogies | Variants are not interchangeable | §8 decision table |
 | Invent a new icon when the §17.1 catalog has one that fits | Defeats the visual consistency of the library | §17.5 |

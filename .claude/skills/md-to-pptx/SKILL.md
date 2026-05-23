@@ -119,7 +119,7 @@ Operational / IO failures only. **Visual-spec violations** (emoji survived, non-
 - Native `pptx` skill not available → stop, instruct presenter to run inside Cowork.
 - Base template missing or unreadable → stop and ask.
 - Base template was loaded but not honored — slides 1–2 in the rendered deck are not pixel-equivalent to base-template slides 1–2 (placeholders aside), or slides 3–13 leaked into the output, or theme/fonts/layouts don't match → surface loudly; offer to rerun.
-- **Section count mismatch.** `final.md` has ≠7 H1 sections; the agenda has exactly 7 slots (§5.5). Stop, surface the count, ask the presenter: (a) restructure `final.md` to 7 sections, (b) supply a custom agenda layout, or (c) accept a deck without the agenda chrome. Never truncate, pad, or fudge silently.
+- **Agenda capacity exceeded.** `final.md` has N H1 sections; the agenda emits one row per section per §5.3 / §5.5 (no fixed count). N ≤ 8 fits cleanly; for 9 ≤ N ≤ 10 emit with a tightness warning; for N > 10 stop and ask the presenter — the agenda chrome is out of vertical room and an alternate layout is needed. Never pad the agenda to 7 rows with blanks, and never truncate sections to fit.
 - **OOXML integrity broken** per §19.4 invariants (dangling overrides / rels, `[Content_Types].xml` not first in zip, `sldIdLst` / `sldLayoutIdLst` without matching rels). Most often after Stage-3 deletion. Stop, repair, re-verify before declaring success.
 - `final.md` not yet produced (Step 6 Polish hasn't run) or still contains `Presenter feedback` fields or unrendered ASCII fenced blocks → stop; return to Step 6.
 - The path passed in points at `draft.md` instead of `final.md` → stop and ask. `draft.md` is never a valid input to this skill.
