@@ -299,12 +299,58 @@ Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) on `final.md`. The s
 - Reuses images at `talks/<Talk>/images/` (rendered + consolidated in Step 6); does not regenerate. ASCII source in HTML comments is ignored.
 - Output: `talks/<Talk>/output/final.pptx`. **Base template (mandatory starting deck):** [`config/base-template.pptx`](config/base-template.pptx) — opened as a working copy, cover + agenda placeholders substituted, layout-reference slides 3–13 deleted, generated content inserted per the recipes and 7-stage workflow in [`config/pptx-prompt.md`](config/pptx-prompt.md) (§19 is the renderer's operating guide; §1–§18 are the visual spec). The legacy [`config/template.pptx`](config/template.pptx) is the 53-slide source the spec was distilled from — not a rendering input. Icons are sourced from the base-template's branded line-art library; emojis (💡 📚 🏥 ⚠️ …) must never reach the rendered deck — they are swapped to the matching catalog icon (`lightbulb`, `book`, `medical`, `warning`, …) per [`config/pptx-prompt.md`](config/pptx-prompt.md) §17 + §17.7. Override the base template only on explicit presenter request.
 
+### Render cycle — generate → control → feedback → regenerate
+
+Step 8 is a **cycle**, not a single pass. Each iteration runs four named phases in fixed order, and the presenter sees each phase as a prefixed line in chat so they can follow the loop without asking "is it still running?" or "what changed?". The cycle is capped at **3 cycles total** (cycle 1 = the initial build; cycles 2 and 3 are the orchestrator's review-and-edit budget per `md-to-pptx/SKILL.md` Progress reporting). After cycle 3, surviving defects surface to the presenter as `unresolved: …` rather than looping further.
+
+| Phase | Tag emitted | What runs | Exit condition |
+|---|---|---|---|
+| **GENERATE** | `[cycle N/3] GENERATE` | Cycle 1: full pipeline per [`md-to-pptx/SKILL.md`](.claude/skills/md-to-pptx/SKILL.md) (preprocess → native skill → write). Cycles 2–3: re-render only the slides the previous FEEDBACK phase asked to fix; touched-slide list is part of the cycle's REGENERATE handoff. | `final.pptx` written, slide previews rasterized. |
+| **CONTROL** | `[cycle N/3] CONTROL` | Build-time gates: [`audit_aspect_ratios.py`](.claude/skills/md-to-pptx/audit_aspect_ratios.py), [`audit_block_coverage.py`](.claude/skills/md-to-pptx/audit_block_coverage.py), OOXML invariants per `pptx-prompt.md` §19.4. Failures here end the cycle immediately — no FEEDBACK phase runs on a deck that failed structural checks. | All audits exit 0 → proceed to FEEDBACK. Any non-zero → loop straight to REGENERATE (orchestrator dispatches a fix, no visual review on a broken render). |
+| **FEEDBACK** | `[cycle N/3] FEEDBACK` | Orchestrator walks the visual-review rubric below (practice #0 through #12 + aesthetic note) on every slide PNG. Each finding emits one line:  `slide N · practice K · <one-line description> → <fix in this iteration \| defer because <reason> \| surface to presenter for editorial choice>`. Right-hand resolution required for every flagged cell per the *Minor-as-defer is a known anti-pattern* discipline below; `defer` requires the reason; silent *minor → ignore* is the prohibited pattern. | Feedback list is empty OR every entry is `defer because <reason>` / `surface to presenter` → cycle done. Any `fix in this iteration` entries → proceed to REGENERATE. |
+| **REGENERATE** | `[cycle N/3] REGENERATE` | Compose the per-slide edit instructions from the FEEDBACK list (slide IDs + practice + concrete change), dispatch back to `md-to-pptx`. The skill re-renders the touched slides only; cycle counter increments; flow returns to GENERATE for cycle N+1. | Cycle N+1 starts. |
+
+The cycle's bookkeeping is **not** the build's internal fix passes. The subagent that runs cycle 1's GENERATE phase may have its own build-time recovery (broken regex, undersized callout, leaked markdown marker) — those don't consume orchestrator iteration budget because they're internal to a single GENERATE. The orchestrator's 3-cycle cap counts only orchestrator-level GENERATE → CONTROL → FEEDBACK → REGENERATE rotations. Conflating the two is what lets shallow reviews ship.
+
+The four-phase cycle replaces the previous ad-hoc `[pptx pass N/3]` tagging; emit the new tags consistently so the presenter can grep for `[cycle 2/3] FEEDBACK` and see what was flagged in iteration 2 specifically.
+
+**What the presenter sees in chat (example).** A 2-cycle render that ships clean on cycle 2:
+
+```
+[cycle 1/3] GENERATE — starting full build of talks/<Talk>/final.md → output/final.pptx
+[pptx 1/8] Prereqs OK — base-template loaded, 5 H1 sections found, 12 local image refs.
+[pptx 2/8] Pre-processing done — 22 slides, 22 speaker-notes blocks, 12 image refs.
+[pptx 3/8] Stage 1 Cover — substituting 4 placeholders…
+[pptx 3/8] Stage 4 — building 22 content slides…
+[pptx 4/8] final.pptx written, 22 slides, 412183 bytes.
+[cycle 1/3] CONTROL — running build-time audits
+[pptx 5/8] OOXML invariants verified.
+[pptx 5/8] Aspect-ratio audit: <p:pic> 14 shapes, all within 1% tolerance.
+[pptx 5/8] Block-coverage audit: 22 slides, 31 blocks total, 0 dropped.
+[pptx 7/8] Slide previews ready (22 PNGs).
+[cycle 1/3] FEEDBACK — walking rubric on 22 slides
+  slide 7 · practice 7 · CNN diagram horizontally compressed 12% (source 2.1:1 in 1.4:1 slot) → fix in this iteration
+  slide 8 · practice 1 · title sized 17pt while sibling slides use 24pt+ → fix in this iteration
+  slide 12 · aesthetic · the three cards drift vertically because heading line counts differ → defer because this is the source headings' natural variance; surface to presenter for editorial choice
+[cycle 1/3] REGENERATE — applying 2 fixes (slides 7, 12)
+[cycle 2/3] GENERATE — re-rendering slides 7, 8
+[cycle 2/3] CONTROL — audits ok
+[cycle 2/3] FEEDBACK — clean
+[pptx 8/8] Done. 22 slides, 14 images, aspect_audit: ok, block_coverage: ok, slide_previews: 22, warnings: 0.
+Report: clean after 1 cycle (1 deferred-with-reason: slide 12 aesthetic, awaits presenter).
+```
+
+Cycle 1's GENERATE phase keeps the existing `[pptx N/8]` per-stage detail (it's the initial build with 8 distinct stages worth naming); cycles 2+ collapse to one line per phase (GENERATE re-renders a subset, no need to repeat the 8 stages). The FEEDBACK lines are the *required* output per the minor-as-defer discipline below — every flagged cell of the slide × practice matrix gets a one-line resolution; silence is enforcement failure on the critic.
+
 ### Post-render visual review
 
-After the initial deck lands at `output/final.pptx`, run a self-review pass — analogous to the illustrator's per-render critique (see [`.claude/roles/illustrator.md`](.claude/roles/illustrator.md) → *Per-render critique*). **The critique is visual analysis on rasterized slide images, not slide-XML / placeholder-metadata inspection.** [`talksmith:md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) emits a critique companion at `talks/<Talk>/output/.critique/slide-NN.png` for every slide alongside `final.pptx`; read each PNG via the `Read` tool so the multimodal model receives actual pixels, then walk the ten practices below. Defects like text overflow, off-balance layout, image clashes, and theme drift are visual properties the eye catches but XML inspection routinely misses (the placeholder coordinates can be arithmetically correct yet visually wrong). Dispatch targeted edits back to the skill where defects are found. **Cap at 2 iterations** of review + edit beyond the initial render. After the cap, surface unresolved defects to the presenter rather than looping further. If the slide PNGs are missing (the skill reported `slide_previews: failed`), surface as `unresolved: slide_previews_failed` rather than falling back to XML — without pixels the critique has no signal.
+This subsection details the **FEEDBACK phase** of each cycle defined above. After GENERATE writes `final.pptx` and CONTROL runs its audits, the orchestrator walks the 0–12 practice rubric below on every slide and emits one prefixed line per defect with a resolution disposition (see the *Render cycle* phase table for the line format). **The critique is visual analysis on rasterized slide images, not slide-XML / placeholder-metadata inspection.** [`talksmith:md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) emits a critique companion at `talks/<Talk>/output/.critique/slide-NN.png` for every slide alongside `final.pptx`; read each PNG via the `Read` tool so the multimodal model receives actual pixels, then walk the practices below. Defects like text overflow, off-balance layout, image clashes, and theme drift are visual properties the eye catches but XML inspection routinely misses (the placeholder coordinates can be arithmetically correct yet visually wrong). If the slide PNGs are missing (the skill reported `slide_previews: failed`), surface as `unresolved: slide_previews_failed` rather than falling back to XML — without pixels the FEEDBACK phase has no signal.
+
+**Block-coverage precondition (CONTROL phase, not FEEDBACK).** [`audit_block_coverage.py`](.claude/skills/md-to-pptx/audit_block_coverage.py) runs in the cycle's CONTROL phase per `md-to-pptx/SKILL.md` Process step 6. If it surfaces any `[block-drop]` line, the cycle ends CONTROL immediately and goes to REGENERATE — **FEEDBACK does not run on a deck with missing blocks**, because the rubric below has no practice that catches a *missing* shape (no shape on the slide → no rubric hit), so a silent drop sails through. The audit is the deterministic guard against renderer top-to-bottom layout silently skipping a trailing block when the slide runs out of vertical room.
 
 | # | Practice | What to look for |
 |---|---|---|
+| 0 | **Block-coverage precondition** | Every block in `final.md` appears as a shape in the rendered slide. Enforced by [`audit_block_coverage.py`](.claude/skills/md-to-pptx/audit_block_coverage.py) before the visual review starts — see the precondition paragraph above. If the audit reports `[block-drop]` lines, **stop and re-render — do not proceed to practices 1–12**. A silent drop is invisible to the visual rubric (no shape on the slide → no rubric hit), which is why the audit is a hard gate, not a checklist item. Do not bypass. |
 | 1 | **Consistent type hierarchy across slides** | Title / subtitle / body / caption sizes uniform deck-wide. No one-off oversized titles, no shrunken bodies. The template's master styles are the source of truth — every slide should inherit them, not override locally. |
 | 2 | **No text overflow or truncation** | Titles fit on 1–2 lines without orphan words; body text stays inside placeholders; nothing bleeds off-slide or gets ellipsized. If a slide can't fit, the slide needs a split (surface as unresolved). |
 | 3 | **≤ 5–7 bullets per slide** | More bullets = audience reads instead of listens. If a slide has 8+ bullets, flag for split rather than shrink-fitting. |
@@ -324,6 +370,8 @@ After the initial deck lands at `output/final.pptx`, run a self-review pass — 
 
 **Walk the checklist per slide — the critic is responsible for enforcing every declared practice on every slide.** Gestalt impressions ("the deck looks fine") are not a substitute for evaluating each slide against each of the twelve practices. For every slide-NN.png, name the practice and assign *pass / concern / fail* — out loud, in the report if necessary. "Clean" means every cell of that slide × practice matrix is a pass. The matrix is non-negotiable: a slide that visibly violates practice 7 (image scale) is a fail for slide N × practice 7 even if the eleven other cells pass and the slide looks "mostly OK." Skipping a cell, or declaring it pass on a vibes basis, is enforcement failure on the critic — not a property of the slide. If a wider audit performed after the step closed surfaces defects that should have been caught, the original "clean" was wrong: retroactively reopen the step and spend an iteration slot, do not paper over.
 
+**Minor-as-defer is a known anti-pattern.** Every defect surfaced by the rubric gets a one-line resolution in the orchestrator's report: *fix in this iteration*, *defer with documented reason*, or *surface to presenter for editorial choice*. `[minor]` is **not** a synonym for *defer*. A slide whose only defect is one minor — title-to-body gap, slightly oversized supporting image, unused right column — gets the minor investigated and root-caused exactly the same way a blocker would. The discipline is: if the rubric flagged it, the rubric expects an answer. *Defer* is a permitted answer, but it requires a sentence saying why and a follow-up in `memory.md` *Pending open questions*. The Step-8 spec already says "name the practice and assign pass / concern / fail — out loud, in the report" and "skipping a cell … is enforcement failure on the critic"; that discipline applies to minors with the same weight as blockers. Felt default is to skim minors; the spec's required default is the opposite. Silent classification as *minor → ignore* is what lets the presenter open the rendered deck and immediately spot a defect both iterations of the review missed.
+
 **The critic's job is bigger than the rubric — aesthetic judgement is also required.** The twelve practices are the **floor**, not the ceiling. They catch mechanical defects (overflow, missing pill, wrong colors, emoji glyphs) that have crisp pass/fail criteria. They do **not** catch slide-level aesthetics — the kind of defect a designer notices and a checklist doesn't:
 - A slide whose elements are technically aligned but visually wonky (a card row whose three cards drift in vertical centerline because their heading line counts differ).
 - A focal point that is technically present (practice 9 passes) but is the *wrong* element (the eye lands on a supporting image while the load-bearing claim is buried in body text).
@@ -335,11 +383,9 @@ After the initial deck lands at `output/final.pptx`, run a self-review pass — 
 
 For each slide, after walking the twelve-cell matrix, the critic adds a free-form **aesthetic note** — one sentence at most — naming whatever the eye catches that the rubric does not. If nothing catches the eye, write `aesthetic: clean`. This is not optional padding; it is the part of the review only the critic can do.
 
-**Iteration budgets are not fungible.** The 2-iteration cap is the *orchestrator's* review-and-edit budget after the subagent delivers the first render. Any build-time fix passes the subagent ran to recover from its own bugs (broken regex, undersized callouts, leaked markdown markers, etc.) do **not** consume the orchestrator's budget — they're internal to the build. When the final report says `clean after N edit pass(es)`, N counts only orchestrator-level review→edit cycles. Conflating the two budgets is what lets shallow reviews ship.
+**When to declare clean.** A first-cycle deck that passes practices #0 through #12 is the goal. Don't manufacture issues to fill the cycle budget — the cost of unneeded REGENERATE rotations is regression risk in adjacent slides.
 
-**When to declare clean.** A first-pass deck that passes all twelve practices is the goal. Don't manufacture issues to fill the iteration budget — the cost of unneeded edits is regression risk in adjacent slides.
-
-**Report at the end:** `clean on first pass` | `clean after N edit pass(es)` | `unresolved: <slide N — defect>` (presenter reviews unresolved slides and decides whether to accept, hand-edit, or restructure `final.md` and re-render).
+**Report at the end:** `clean on cycle 1` | `clean after N cycle(s)` | `unresolved: <slide N — defect>` (presenter reviews unresolved slides and decides whether to accept, hand-edit, or restructure `final.md` and re-render). The cycle-vs-build-fix distinction is in the *Render cycle* section above — N counts only orchestrator-level cycles, not the subagent's internal build-time recoveries.
 
 ---
 

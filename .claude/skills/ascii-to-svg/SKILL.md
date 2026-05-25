@@ -82,7 +82,17 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    A non-zero exit means the SVG is broken in a way this skill can't mechanically repair (no viewBox, malformed XML, root element isn't `<svg>`). When that happens, **do not return success** — return `failed: svg_validation: <error>` per step 8. A broken SVG must not reach disk: the downstream PPTX renderer trusts the viewBox to size its placement slot, and a faulty viewBox poisons the [`audit_aspect_ratios.py`](../md-to-pptx/audit_aspect_ratios.py) gate at PPTX-build time (one full render cycle wasted). Catching it here is cheap; catching it there is expensive. If repair happened, note the fix count in the step-8 report under `svg_validation:`.
 
-7. **Rasterize a critique-companion PNG.** Render the SVG to a PNG sibling at `<output_path parent>/.critique/<basename>.png` (create `.critique/` if missing). This PNG is **not** referenced from `final.md` and is **not** consumed by Step 8 — it exists solely so the illustrator role can perform visual analysis on rasterized pixels in step 5b of its loop (XML inspection of an SVG is not a substitute for visual critique).
+7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory as the SVG, same basename, `.png` extension). This is the **build deliverable** that the Step-8 PPTX renderer consumes — the native `pptx` skill and any python-pptx fallback load via PIL, which cannot decode SVG, so the .pptx references the PNG bytes. Per [`.claude/roles/illustrator.md`](../../roles/illustrator.md) → *Output contract — SVG + PNG companion*, every illustrator run produces both files; the [`md-to-pptx`](../md-to-pptx/SKILL.md) skill's *PNG companion for every SVG* prereq stops the build if the PNG is missing.
+
+   Preferred tool: `cairosvg` (`pip install cairosvg --break-system-packages` in Cowork sandboxes; pure-Python, fast):
+
+   ```bash
+   python3 -c "import cairosvg; cairosvg.svg2png(url='<output_path>', write_to='<output_path with .png>', output_width=<viewBox_w * 2>)"
+   ```
+
+   Width = SVG `viewBox` width × 2 (e.g. `viewBox="0 0 680 318"` → `output_width=1360`); height auto-derived to preserve aspect ratio per §12. If `cairosvg` isn't available, fall back to `qlmanage -t -s <viewBox_w*2> -o <parent>/ <output_path>` on macOS (then `mv <parent>/<basename>.svg.png <parent>/<basename>.png` to normalize the basename — `qlmanage` appends `.png` rather than replacing). If both fail, return `failed: png_companion: <reason>` per step 8 — the SVG alone is not a successful render.
+
+8. **Rasterize a critique-companion PNG.** Render the SVG to a PNG sibling at `<output_path parent>/.critique/<basename>.png` (create `.critique/` if missing). This PNG is **not** referenced from `final.md`, **not** consumed by the Step-8 PPTX renderer, and **distinct from the deliverable PNG written in step 7** — it exists solely so the illustrator role can perform visual analysis on rasterized pixels in step 5b of its loop (XML inspection of an SVG is not a substitute for visual critique).
 
    Use `qlmanage` (built into macOS, zero install):
 
@@ -93,10 +103,10 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    `qlmanage` writes the thumbnail as `<input-filename>.png` (it appends `.png` rather than replacing `.svg`), so the `mv` normalizes the basename. If `qlmanage` exits non-zero or the resulting PNG is missing / 0-byte, still report the SVG as `rendered` but add `png_companion: failed` to the report — a missing PNG degrades critique fidelity but doesn't invalidate the render. Never delete the SVG because the PNG step failed.
 
-8. **Return** a one-line report:
-   - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_companion: <path|failed> · directives_applied: <count> · deviations: <none|description>`
+9. **Return** a one-line report:
+   - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_deliverable: <path> · png_critique: <path|failed> · directives_applied: <count> · deviations: <none|description>`
    - On skip: `skipped: <reason>`
-   - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file.
+   - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_companion: <reason>` — without the PNG the Step-8 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
 
 ## You cannot ask questions
 

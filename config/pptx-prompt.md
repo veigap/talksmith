@@ -122,6 +122,8 @@ A renderer should measure the title text width in Roboto Mono Medium and pick th
 | Color | `#1F1E1E` |
 | Font | Roboto Mono Medium |
 
+**`body_y_start` depends on the title's actual wrap state, not on a defensive margin.** Renderers commonly compute `body_y_start = title_y + max_title_height` using the *maximum* height the title could occupy under any wrap (a defensive constant baked into the chars-per-line picker). That's wrong: a 14-char title that fits one line at 31pt has a *measured* `title_height` of roughly one line-height (~0.50 in), and `body_y_start` should land just below that — not below the 2- or 3-line maximum the worst-case title would have produced. When the defensive margin wins, every short-title slide ships with a visible title-to-body gap. The contract: after sizing the title via the §3.3 ladder, **measure the resulting wrapped text height** (number of wrap lines × `line_height_for(sz)`) and set `body_y_start = title_y + actual_title_height + body_gap` where `body_gap ≈ 0.20 in`. The picker's job is to choose `sz`; the layout's job is to read the resulting height — not to reserve room the title turned out not to need.
+
 ---
 
 ## 4. Slide 1 (Cover) — contractually fixed recipe
@@ -408,6 +410,22 @@ For a load-bearing claim about what becomes possible, a quantified result, or th
 
 The pink callout is **conversational**; the blue callout is **declarative**. Choose accordingly.
 
+### 8.3 Callout line-count estimate — load-bearing for body fit
+
+Renderers must reserve vertical space for the callout **before** placing the preceding body content, not after — otherwise the callout's height is computed against a body region that has already consumed the slot, and the callout's bottom edge slides past the slide's `effective_bottom`. When that happens, the renderer either clips the callout or — worse — silently drops the trailing block from emission. Typical trigger: a slide whose primary body is a table or dense paragraph; the table sizes as if the trailing callout weren't there, and the callout falls off.
+
+Estimate callout line count by character count at the callout's render width:
+
+```
+callout_lines = max(1, ceil(text_len / chars_per_line))
+chars_per_line ≈ 110     # 11pt Roboto at BODY_W − 0.7 in (icon column + insets)
+callout_height = callout_lines × line_h_11pt + 2 × callout_v_padding
+                 line_h_11pt ≈ 0.20 in
+                 callout_v_padding ≈ 0.08 in
+```
+
+Reserve `callout_height` at the bottom of the body region first; lay out the preceding blocks against `effective_bottom = slide_bottom − callout_height − callout_top_margin`. This is the inverse of the naive "lay out top-to-bottom, callout last" pattern that ships the drop. For 12pt callouts use `chars_per_line ≈ 100`; for 11.5pt use `≈ 105`. Long callouts (≥3 estimated lines) are a content-authoring signal — surface as `[over-budget]` and flag for re-authoring before render, do not silently shrink-fit.
+
 ---
 
 ## 9. Code-block pattern (the dominant slide type — 17 of 53)
@@ -575,6 +593,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
    | H2 + pipe-table | **card-grid** via §11 conversion | **Use when:** the content is structurally label/value pairs — model specs, parameter comparisons, "before vs after" rows, dosage tables. The template never emits native `<a:tbl>`; pipe-tables convert to a card-per-row visual. **NOT for:** 3–5 parallel concepts where the "table" is just a layout convenience (→ §7.4 or §7.5, more visually appropriate); narrative rows that read as prose (→ content-text or split into multiple slides). |
    | Final slide with H2 + list of links | **closing-cta** | **Use when:** the talk's last slide — a call to action, a "where to next" list, contact + repo links, references the audience will photograph. **NOT for:** any non-terminal slide; an inline references section (those belong in speaker notes or an appendix slide, not in a CTA layout). |
    | H2 + paragraphs only, no images, no code | **content-text** | **Last-resort use when:** a slide genuinely carries only prose — a definition, a quote, an opening framing. Template avoids this; appears 1× in 53 source slides. **NOT for:** anything that could be restructured — most "wall of paragraphs" slides are draft defects where parallel structure (→ §7.4 / §7.5) or a diagram (→ content+image) would serve better. Flag in review as a candidate to restructure before accepting. |
+   | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink (§8.1) for analogy/tip/warning, blue (§8.2) for declarative claim/key takeaway | **Use when:** a slide's content includes a single emphasized claim or aside that markdown-authored as a one-item bullet with emoji + bold lead. The shape is **not a bullet list** — a 1-bullet "list" never reads as enumeration; it reads as emphasis. Promote to the §8 callout layout, picking pink vs. blue per the §8 decision table by the bullet's intent (`🎯`, `💡`, `📚`, `⚠` → pink; `📊`, `ℹ️`, declarative claim → blue). Per [`audit_block_coverage.py`](../.claude/skills/md-to-pptx/audit_block_coverage.py), the renderer is audited for this — emitting the bullet as a plain `<a:buChar>` paragraph instead of a callout shape registers as a `[block-drop]` because the audit looks for the matching `#F7BBC1`/`#B8E6F5` roundRect. **NOT for:** multi-bullet emoji-prefixed lists (those are §10 bullet lists with the emoji-to-icon swap per §17.7); inline bold within a paragraph (not a callout signal — just emphasis). |
 
 6. **Title sizing per content slide.** Apply §3.3 — pick the largest size from the discrete ladder `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` pt that fits the title on one line.
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.

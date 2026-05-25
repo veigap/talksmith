@@ -3,12 +3,13 @@
 Why this exists:
     `config/pptx-prompt.md` §12 forbids non-uniform image scaling — the
     rendered `cx:cy` of every `<p:pic>` must equal the source asset's
-    intrinsic `width:height`. Prose alone has not been enough: a render
-    of `talks/senales-1d-biomedicina` shipped a 2.143:1 SVG inside a
-    1.400:1 placeholder (35% horizontal compression). The defect is
-    invisible during build (no error raised) and easy to miss during
-    visual review when the diagram is "the same shape, just compressed."
-    This script is the automated catch.
+    intrinsic `width:height`. Prose alone is not enough: renderers can
+    place a wide-aspect SVG (e.g. 2.143:1) into a narrower placeholder
+    (e.g. 1.400:1) and fill by non-uniform stretch, producing ~35%
+    horizontal compression. The defect is invisible during build
+    (no error raised) and easy to miss during visual review when
+    the diagram is "the same shape, just compressed." This script is
+    the automated catch.
 
 What it does:
     Walks every slide in a .pptx, finds every `<p:pic>`, resolves the

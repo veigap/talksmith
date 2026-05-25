@@ -111,10 +111,26 @@ ASCII diagrams in `final.md` use a **deterministic predefined block** — the fe
 
 Skip fenced blocks with real language tags (`python`, `bash`, `javascript`, `yaml`, `json`, `sh`, etc.) under all rules — the canonical tag is the only one that triggers detection without payload inspection.
 
+## Output contract — SVG + PNG companion
+
+Every render produces **two** files under `talks/<Talk>/images/`, same stem:
+
+```
+talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg
+talks/<Talk>/images/<slide-id>-<n>-<short-description>.png
+```
+
+The PNG is **not** the `.critique/` rasterization (that one is critique-only scratch under `images/.critique/<basename>.png`). This PNG is a **deliverable** sibling next to the SVG, generated at the end of every successful render and consumed by the Step-8 PPTX renderer. The native `pptx` skill and any python-pptx CLI fallback load images via PIL, which cannot decode SVG — the PNG is the actual byte source the .pptx will reference. A render that produces only the SVG is incomplete; the [`md-to-pptx`](../skills/md-to-pptx/SKILL.md) prerequisite check will stop the build (see its *Prerequisites* table → *PNG companion for every SVG*).
+
+PNG width: the SVG's intrinsic `viewBox` width × 2 (so a `viewBox="0 0 900 420"` SVG → 1800-wide PNG). Aspect ratio preserved per [`config/pptx-prompt.md`](../../config/pptx-prompt.md) §12; the [`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) skill handles both files in a single invocation. Preferred tool: `cairosvg` (`pip install cairosvg --break-system-packages` in Cowork sandboxes). Fallback: `qlmanage -t -s <width> -o <parent>` on macOS.
+
+When the illustrator detects a legacy file (SVG present, PNG missing) during a re-run, it re-rasterizes the PNG without re-rendering the SVG — the rasterization step is idempotent on the SVG bytes and cheap. Failures to produce the PNG surface as `failed: png_companion: <reason>` per the per-block report (distinct from the `.critique/` PNG companion failure, which only degrades visual critique and does not block the build).
+
 ## Output filename convention
 
 ```
 talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg
+talks/<Talk>/images/<slide-id>-<n>-<short-description>.png
 ```
 
 - `<slide-id>`: dots in the numeric path replaced by `-`. Section `# 1.` + Slide `## 2.` → `s1-2`. `# Agenda` → `s0`. Conclusions Slide N → `sc-N`.
