@@ -77,6 +77,8 @@ talks/<Talk>/
 
    Output Markdown shape — one H1 per section divider, one H2 per content slide, `### Notes` for speaker notes, inline image refs. This is what `skill://antropic-skills:/pptx` receives.
 
+2.5. **Pre-emit decision audit** per [`pptx-prompt.md`](../../../config/pptx-prompt.md) §15.6. Walk each H2 in the intermediate file; for each, compute the §15.5 *predicted* layout from the source's surface signals + §15.6.1 discriminator. Emit one `[pptx audit N/M]` line per slide showing the chosen layout and the inputs that led there. Stop and surface to the presenter per §15.6.4 if any slide hits an unresolved ambiguity, an unmapped emoji at a slot the chosen layout has, or detectable bullet-shape drift in the renderer. The pre-emit audit is the cheap front-door check; the post-emit [`audit_layout_fit.py`](audit_layout_fit.py) in step 6 is the back-door verification.
+
 3. **Render** by invoking [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx). The invocation follows the **base-template workflow** described in [`pptx-prompt.md`](../../../config/pptx-prompt.md) §18.2 — the native skill is the executor, this skill is the recipe-bearer. Pass:
    - the intermediate file at `output/final.intermediate.md`,
    - the image paths under `talks/<Talk>/images/` (the intermediate already references them — resolved relative to the intermediate's parent),
@@ -98,6 +100,16 @@ talks/<Talk>/
 
    The script walks every `<p:pic>` in every slide, resolves the source asset via the slide's rels file, reads its intrinsic aspect ratio (SVG `viewBox`, PNG/JPG header), and compares to the rendered `cx:cy`. Default tolerance: 1%. Non-zero exit = render failure — surface the FAIL lines verbatim and re-render. This catches the class of bug where a placeholder's slot is wider/taller than the asset and the renderer fills it by non-uniform scaling (the §12 rule in prose; this is its enforcement). The audit also surfaces missing `<a:picLocks noChangeAspect="1"/>` as warnings; warnings do not fail the render. Audit failures are not a §19.6 visual-spec violation per se — they are a structural picture-sizing bug — but they are surfaced and treated identically (stop, repair, re-verify).
 
+   Then run [`audit_layout_fit.py`](audit_layout_fit.py) to confirm every content slide's emitted layout matches the layout predicted from the source markdown's §15.5 surface signals + §15.6.1 discriminator:
+
+   ```bash
+   python3 .claude/skills/md-to-pptx/audit_layout_fit.py \
+     talks/<Talk>/final.md \
+     talks/<Talk>/output/final.pptx
+   ```
+
+   The script reparses `final.md` per H2 (image count, code blocks, pipe-tables, labeled-bullet count, per-item body length, H3 group count, emoji prefixes) and applies the §15.5 + §15.6.1 decision tree to compute the **predicted** layout. It then parses `final.pptx` per slide and infers the **emitted** layout from shape composition (per-row icon count in column-1, content `<p:pic>` count + geometry, native `<a:tbl>`, bullet shape inventory via `<a:buChar>` vs literal `•`, code-surface presence, pink/blue callout roundRects). When predicted ≠ emitted, the audit fails with the source evidence, the emitted evidence, and a likely root cause (typically a §15.6.1 discriminator skip — §10 plain bullets shipped when §7.5 was selected, or content+image shipped when image-grid was selected). Catches the class of regression where the §19.6 anti-pattern check passes (no emojis, no native tables, no theme drift) but the substantive spec was bypassed by picking the plainer layout. Non-zero exit = render failure.
+
    Then run [`audit_block_coverage.py`](audit_block_coverage.py) to confirm every load-bearing block from `final.md` survived into the rendered deck:
 
    ```bash
@@ -116,7 +128,7 @@ talks/<Talk>/
 
    If both paths fail, the deck is still valid — report `slide_previews: failed: <reason>` and continue. The orchestrator will surface this as `unresolved: slide_previews_failed` for the post-render review (visual critique can't run without pixels), but the `.pptx` itself is unaffected.
 
-8. Report: slide count, image references resolved, `aspect_audit: <ok|N fail>`, `block_coverage: <ok|N drop>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
+8. Report: slide count, image references resolved, `aspect_audit: <ok|N fail>`, `layout_fit: <ok|N mismatch>`, `block_coverage: <ok|N drop>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
 ### Progress reporting — what the presenter sees during render
 
@@ -136,6 +148,7 @@ Emit a chat-visible line at each of the following moments. Lines are plain prose
 | Output file written | `[pptx 4/8] final.pptx written, S slides, U bytes.` |
 | OOXML integrity check | `[pptx 5/8] OOXML invariants verified (per §19.4).` |
 | Aspect-ratio audit | `[pptx 5/8] Aspect-ratio audit: <p:pic> N shapes, all within 1% tolerance — or — FAILED: M distorted (slide K: <src> rendered A:B vs intrinsic C:D).` |
+| Layout-fit audit | `[pptx 5/8] Layout-fit audit: K content slides, all predicted layouts match emitted layouts — or — FAILED: slide N "<H2>" predicted <layout> vs. emitted <layout> (likely cause: …).` |
 | Block-coverage audit | `[pptx 5/8] Block-coverage audit: K slides, M blocks total, 0 dropped — or — FAILED: slide N "<H2>" drops {block_type} (source line L).` |
 | Visual fidelity spot-check | `[pptx 6/8] Visual spot-check vs base-template slides 1–2: OK.` |
 | Slide-preview rasterization start | `[pptx 7/8] Rasterizing S slides to output/.critique/slide-NN.png…` |
@@ -171,6 +184,7 @@ Operational / IO failures only. **Visual-spec violations** (emoji survived, non-
 - Base template was loaded but not honored — slides 1–2 in the rendered deck are not pixel-equivalent to base-template slides 1–2 (placeholders aside), or slides 3–13 leaked into the output, or theme/fonts/layouts don't match → surface loudly; offer to rerun.
 - **Agenda capacity exceeded.** `final.md` has N H1 sections; the agenda emits one row per section per §5.3 / §5.5 (no fixed count). N ≤ 8 fits cleanly; for 9 ≤ N ≤ 10 emit with a tightness warning; for N > 10 stop and ask the presenter — the agenda chrome is out of vertical room and an alternate layout is needed. Never pad the agenda to 7 rows with blanks, and never truncate sections to fit.
 - **OOXML integrity broken** per §19.4 invariants (dangling overrides / rels, `[Content_Types].xml` not first in zip, `sldIdLst` / `sldLayoutIdLst` without matching rels). Most often after Stage-3 deletion. Stop, repair, re-verify before declaring success.
+- **Layout-fit audit failed** ([`audit_layout_fit.py`](audit_layout_fit.py) exit 1). One or more content slides emitted a layout that does not match the layout predicted from the source markdown's §15.5 surface signals + §15.6.1 discriminator. Typical pattern: the renderer fell through to §10 plain bullets when source has 3–5 labeled bullets (the spec mandates §7.4 card-row when bodies ≤ 80c, §7.5 icon-bullet list otherwise); or it picked content+image when source has ≥4 images (image-grid was selected); or content-text where a fenced code block mandates code-example. **Stop.** Re-route the offending slide through the discriminator-correct layout per §15.6.1; do not absorb the ambiguity by shipping the plainer layout. The audit's *likely cause* line names the discriminator that was skipped and the correct layout to emit. Re-render and re-audit.
 - **Block-coverage audit failed** ([`audit_block_coverage.py`](audit_block_coverage.py) exit 1). One or more H2 slides in `final.md` carry a callout or image block that did not survive into `final.pptx`. Typical pattern: a trailing block on a slide whose preceding content (table, dense paragraphs) consumed the body area; the renderer's `effective_bottom` overflowed and the trailing block was silently skipped. **Stop. Do not start the orchestrator visual review** — the visual rubric does not catch silent drops (no shape on the slide → no rubric hit). Surface the offending `[block-drop]` lines verbatim. The fix is renderer-side (correct the body-fit calculation per §3.5 and the §8.3 line-count estimate) or content-side (split the slide if it's genuinely overstuffed) — never compensate by deleting the dropped block from `final.md`. Re-render and re-audit.
 - **Cover `subtitle:` missing from `final.md` frontmatter.** Per [`pptx-prompt.md`](../../../config/pptx-prompt.md) §4.3 + §19.3 stage 1, the subtitle is required — the cover's shape #2 must carry the per-class topic in smaller font below the Subject. Stop and tell the orchestrator to dispatch the Editor to add it (the Editor should propose 2–4 candidates from the Step-1 briefing per CLAUDE.md Step 4); do not render with a blank or placeholder subtitle.
 - **Aspect-ratio audit failed** ([`audit_aspect_ratios.py`](audit_aspect_ratios.py) exit 1). One or more `<p:pic>` shapes are rendered at a `cx:cy` ratio that diverges from the source asset's intrinsic ratio by more than the tolerance (default 1%). The renderer picked a slot rectangle and wrote it as `<a:ext cx=… cy=…/>` without uniform-scaling the asset to fit, so the asset is stretched or squished. Stop. Per §12: shrink the larger dimension to match the source ratio (leaving whitespace) rather than distort. Never resolve by widening the tolerance or by emitting `<a:srcRect>` / non-zero `<a:stretch fillRect>` insets to "fit". Re-render and re-audit.

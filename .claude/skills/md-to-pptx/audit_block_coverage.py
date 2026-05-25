@@ -107,8 +107,9 @@ def _is_callout_line(line: str) -> bool:
     # 1. single-bullet `- <emoji> **<bold>** …` (a 1-item bullet with
     #    emoji + bold lead reads as emphasis, not enumeration —
     #    renderer must promote to callout per §15; colon may be inside
-    #    the bold or absent)
-    if re.match(rf"-\s+{EMOJI_CLASS}\s+\*\*[^*]+\*\*", s):
+    #    the bold or absent; handles VS16 selector after combined emoji
+    #    glyphs like `⚙️` = U+2699 U+FE0F)
+    if re.match(rf"-\s+{EMOJI_CLASS}️?\s+\*\*[^*]+\*\*", s):
         return True
     # 2. blockquote `> **<bold>** …`
     if re.match(r">\s+\*\*[^*]+\*\*", s):
