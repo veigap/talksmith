@@ -229,6 +229,17 @@ The agenda appears at slide 2 (active = 1, doubles as section 1's divider) and i
 
 For reference, the source template (53 slides, 7 sections) placed its agenda re-emits at slide positions 2, 12, 17, 21, 40, 45, 52 — those positions are descriptive of that one deck, not prescriptive. Generators key off section transitions in `final.md`, not absolute slide numbers.
 
+### 5.7 Agenda title-length guidance
+
+Section H1s authored in `final.md` become both the agenda row text (§5.5) **and** the section pill text (§6) on every subsequent content slide in that section. Two consumers, two different visual envelopes — short titles serve both well; long titles strain both. Authoring guidance, not a render gate:
+
+- **Target ≤ 25 characters** per [`principles.md`](principles.md) line 34 → *Title-length budget*. At this length the agenda row renders at full type-scale and the §6 pill renders as a clean single-line chip at `sz="800"` without entering the downsize/wrap ladder.
+- **Acceptable up to ~50 characters.** The agenda still fits its row; the §6 pill renders single-line at `sz="800"` (up to ~3.1 in width). No quality loss.
+- **Long but renderable, ~50–80 characters.** The pill enters the downsize ladder (`sz="800" → "700" → "650"`) to stay single-line, or wraps to 2 lines at the smallest size. Renders cleanly — the renderer's §6 sizing algorithm is designed to never break — but the pill becomes visually heavier than ideal, and the agenda row may need a smaller subtitle to balance.
+- **Beyond ~80 characters.** Still renders without breaking, but the pill occupies enough horizontal space that the slide title below loses its visual primacy. Strong signal to abbreviate the H1 at authoring time. Common reshape: drop the descriptive subordinate clause and move it to the section subtitle (which renders in the agenda row but not in the per-slide pill).
+
+The renderer never fails on length — see §6 *Sizing algorithm* steps 4–6, which always produce a non-broken pill regardless of how long the label is. This subsection exists so the Editor / Composer can author with both consumers in mind during Step 4, not so the renderer has a reason to reject a long H1.
+
 ---
 
 ## 6. Section-label pill (universal chrome)
@@ -239,7 +250,7 @@ Every content slide (49 of 53 — excluding cover, the 53 closing-CTA, and 3 unu
 |---|---|
 | Geometry | `roundRect`, `prstGeom prst="roundRect"` |
 | Position | `(0.53, 0.55)` inches median; range `(0.39 – 0.54, 0.41 – 0.84)` |
-| Size | `(1.88, 0.21)` inches median; width adapts to label text (range `1.11 – 3.06` × `0.14 – 0.33`) |
+| Size | **Computed per-slide from the pill text** — never hardcoded. See *Sizing algorithm* below. Source-deck observed range `1.11 – 3.06` × `0.14 – 0.33` in. |
 | Fill | `#F9D2D6` |
 | Corner radius | ~5760 EMU (4.6 pt), constant — see §2.3 |
 | Stroke | None |
@@ -247,9 +258,24 @@ Every content slide (49 of 53 — excluding cover, the 53 closing-CTA, and 3 unu
 | Text | ALL CAPS, `sz="550" – "900"` (5.5pt – 9pt) typical, Roboto Mono Medium, `#3B3535` |
 | Alignment | Left |
 
-The pill text mirrors the active **agenda section name verbatim, uppercased**. Examples:
-- Agenda item 1 "Fundamentos de Foundational Models" → pill text `FUNDAMENTOS DE FOUNDATIONAL MODELS`
-- Agenda item 2 "Ingeniería de Prompts Estructurada" → pill text `INGENIERÍA DE PROMPTS ESTRUCTURADA`
+**Sizing algorithm — pill geometry is a function of pill text, not a fixed default.** The single most common §6 failure mode is a renderer emitting a hardcoded pill width (e.g., inherited from a base-template reference slide whose label happened to be shorter), so a real section name overflows the pill background and wraps below it with no fill — the pink chip covers line 1, line 2 hangs unstyled below the chip. Avoid by computing geometry from the text every time:
+
+1. **Measure the pill text** in Roboto Mono Medium at the chosen `sz` (default `sz="800"` = 8pt). Use `monospace_glyph_w ≈ 0.0535 in × (sz/800)` and `line_h ≈ 0.115 in × (sz/800)` as the renderer's measurement constants for Roboto Mono Medium — they match the source deck's observed pill widths to within ~3% (e.g. 24-char label at 8pt → `24 × 0.0535 = 1.28 in` text width, matches the 1.11–3.06 in observed range).
+2. **Padding:** `horizontal_padding = 0.15 in` per side, `vertical_padding = 0.04 in` per side. Constant; do not scale with text length.
+3. **Single-line preferred — pill stays one line whenever possible.** `pill_cx = text_w + 2 × horizontal_padding`, `pill_cy = line_h + 2 × vertical_padding`.
+4. **Single-line cap:** if `pill_cx > 4.00 in`, try downsizing the text to `sz="700"` (7pt) then `sz="650"` (6.5pt) and recomputing; if any single-line width fits the 4.00-in cap, ship that single-line pill at that smaller `sz`.
+5. **Multi-line fallback** (when single-line at `sz="650"` still exceeds the cap): the pill grows downward, never rightward, wrapping at the nearest whitespace before `pill_cx_max = 4.00 in`. `pill_cy = N_lines × line_h + 2 × vertical_padding` where `N_lines` is whatever the text requires (typically 2; rarely 3). The slide title's `y` offset (§3.5) shifts down by `(pill_cy − single_line_cy)` to preserve the gap between pill and title. The pill fill always covers the full text — no line ever hangs unstyled below the chip.
+6. **Floor — `sz="550"` (5.5pt).** Do not shrink below this; if a label at 5.5pt still requires multi-line wrap, accept the wrap. The renderer's contract is *always produce a non-broken pill*, regardless of label length — there is no length at which the renderer is permitted to fail, truncate, ellipsize, or let text overflow the background.
+
+**Authoring-side budget (cross-reference).** [`principles.md`](principles.md) line 34 recommends section H1s ≤ 25 characters as a deck-quality guideline — short pills read cleaner and leave more room for the slide title below. The renderer does **not** enforce this — long H1s render correctly via the downsize-then-wrap ladder above. The 25-char target is editorial guidance for the Editor / Composer in Step 4; the renderer's job is to make any length look clean. See §5.7 for the same guidance applied at agenda-authoring time.
+
+**Anti-patterns.** Do not: emit a fixed-width pill independent of text (e.g. always 1.88 in because that was the median in the source deck); shrink the text below `sz="550"` to fit; silently truncate the label with an ellipsis (changes meaning; an audience reading "ECG — EL ELECTRO…" cannot recover the rest); let text overflow the pill background visually (the chip covers part of the text, the rest hangs in white).
+
+The pill text mirrors the active **agenda section name verbatim, uppercased**. Examples (all of these render cleanly via the sizing ladder above — the renderer never fails on length):
+- Agenda item 1 "ECG" → pill text `ECG` (3 chars — single-line at default `sz="800"`)
+- Agenda item 2 "ECG — el electrocardiograma" → pill text `ECG — EL ELECTROCARDIOGRAMA` (27 chars — single-line at `sz="800"`, width ~1.74 in well under cap)
+- Agenda item 3 "Fundamentos de Foundational Models" → pill text `FUNDAMENTOS DE FOUNDATIONAL MODELS` (34 chars — single-line at `sz="800"`, width ~2.12 in, still under cap)
+- Agenda item 4 (extreme) "Ingeniería de prompts estructurada y técnicas avanzadas" → 55 chars — single-line at 8pt would be ~3.24 in (under cap), so still single-line; only at 70+ chars does the ladder enter downsize/wrap territory.
 
 Every content slide under a section must carry this pill — it is the only thing tying a content slide back to its parent agenda entry.
 
