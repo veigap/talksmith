@@ -75,10 +75,10 @@ NS = {
     "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
 }
 
-# Emoji ranges from config/pptx-prompt.md §17.7 detection ranges.
+# Emoji ranges from config/pptx-styles/strict/pptx-prompt.md §17.7 detection ranges.
 EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
 
-# Callout colors (case-insensitive); see config/pptx-prompt.md §8.
+# Callout colors (case-insensitive); see config/pptx-styles/strict/pptx-prompt.md §8.
 CALLOUT_FILLS = {"F7BBC1", "B8E6F5"}
 
 # Known non-content image paths to exclude from the per-slide <p:pic> count:

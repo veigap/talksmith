@@ -18,6 +18,6 @@ file CLAUDE.md
 file README.md
 file config/principles.md
 file config/diagram-style.md
-file config/pptx-prompt.md
-file config/base-template.pptx
-dir  config/template-previews
+file config/pptx-styles/strict/pptx-prompt.md
+file config/pptx-styles/strict/base-template.pptx
+dir  config/pptx-styles/strict/template-previews

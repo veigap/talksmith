@@ -6,59 +6,6 @@ Visual specification distilled from [`config/template.pptx`](template.pptx) (53 
 
 ---
 
-## 0. Style modes — strict vs. free-form
-
-Talksmith renders PPTX in one of two modes, declared per-Talk via `draft.md` frontmatter `style: strict | free-form` (default `strict` when absent; Editor asks at Step 1 (Frame) per [CLAUDE.md](../CLAUDE.md) → *Step 1*).
-
-| | **Option 1 — strict** | **Option 2 — free-form** |
-|---|---|---|
-| Source of truth for layout | §15.5 emit-rules table + §15.6.1 discriminator | Renderer's judgment per slide content |
-| Layout vocabulary | §4 (cover), §5 (agenda + dividers), §6 (section pill), §7 (cards), §8 (callouts), §9 (code), §13 (taxonomy) | Free-form within the **floor** below |
-| Starting deck | [`base-template.pptx`](base-template.pptx) as working copy (§18) | [`base-template.pptx`](base-template.pptx) for **slide 1 cover only**; rest is built fresh |
-| Pre-emit decision audit | §15.6 (mandatory) | N/A — renderer logs layout choice per slide for traceability, no discriminator to walk |
-| Post-emit layout-fit audit | §19.5 [`audit_layout_fit.py`](../.claude/skills/md-to-pptx/audit_layout_fit.py) | N/A — no spec-predicted layout to compare against |
-| FEEDBACK rubric (CLAUDE.md Step 8 cycle) | 12-practice rubric ([CLAUDE.md](../CLAUDE.md) → *Post-render visual review*) | Free-form design rubric — see §15.7 below |
-| Branded icons (§17) required | Yes — emojis swap to catalog icons per §17.7 | No — free-form renders may use icons from §17.1 *or* any visually consistent source (photographs, hand-drawn marks, abstract glyphs); the §17.2 line-art style is recommended but not enforced |
-| Native `<a:tbl>` tables (§11) | Forbidden — converted to card-grid | Allowed when content warrants — a real data table reads better as a table than as cards |
-| Section pill (§6) on content slides | Required | Free — emit if it aids navigation; omit if the deck's section structure is implicit |
-
-### 0.1 The Option 2 floor (non-negotiable in both modes)
-
-Free-form does not mean "anything goes." Four rules hold for **both** modes; an Option 2 render that violates any of these is a render failure exactly as in Option 1:
-
-1. **Cover slide (§4)** — slide 1 is byte-equivalent to the cover-recipe with substituted placeholders. The cover is the deck's identity slide; both modes ship the same one. Audited at §19.5 *cover-fidelity check* — slide 1 must come from `base-template.pptx` with only the four §4.3 placeholder substitutions applied.
-2. **Color palette (§2)** — every `<a:srgbClr val="…"/>` in the rendered deck resolves to a hex in the §2 palette (text inks, fills, accents). Off-palette colors are forbidden in both modes. Audited at §19.5 by [`audit_palette_fonts.py`](../.claude/skills/md-to-pptx/audit_palette_fonts.py).
-3. **Font palette (§3.1)** — every `<a:latin typeface="…"/>` resolves to Roboto Mono Medium (titles/labels/headings), Roboto (body), or Consolas (code). No theme fonts (`+mj-lt`, `+mn-lt`); no system fallback fonts. Audited by the same script.
-4. **White background (§1)** — every slide carries a pure-white `<p:bg>` solid fill. No tints, no overlays, no legacy black+overlay recipe. Same rule in both modes.
-
-Other Option-1 rules — section pill, agenda as slide 2, no native tables, line-art icons, §15.5 emit-rules, §15.6 discriminator audit — are **Option-1-only**. The renderer for an Option-2 Talk treats them as recommendations, not requirements; the §19.5 layout-fit audit does not run.
-
-### 0.2 When to pick which
-
-| Pick **strict** when | Pick **free-form** when |
-|---|---|
-| The Talk is a class in a course series and visual consistency across classes matters | The Talk is a one-off, a keynote, a hand-crafted pitch |
-| The deck will be skimmed asynchronously (recorded video, PDF distribution) — predictable layout helps scanning | The deck will be presented live and the speaker drives every transition |
-| The presenter wants the workflow to do the visual decisions | The presenter has design instincts they want the renderer to follow |
-| Most of the content fits cleanly into §13's taxonomy (cards, image-grid, code-example, content+image) | A meaningful fraction of slides have content that doesn't fit the taxonomy — manifestos, hero quotes, dense data visualizations, full-bleed imagery |
-
-The two modes are not better/worse — they trade *predictability* for *expressive range*. The same fork can carry Talks in both modes; the `style:` field on each Talk's `draft.md` is the switch.
-
-### 0.3 The cycle applies to both modes
-
-The CLAUDE.md *Render cycle* (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) runs identically in both modes. What differs is the **content** of CONTROL (which audits fire) and the **content** of FEEDBACK (which rubric the orchestrator walks):
-
-| Phase | Strict | Free-form |
-|---|---|---|
-| GENERATE | per §19.3 7-stage workflow + §15.5 emit-rules | per §15.7 free-form layout dispatch (no fixed stages beyond cover + slide-by-slide judgment) |
-| CONTROL | aspect-ratio + layout-fit + block-coverage + palette/fonts + OOXML | aspect-ratio + block-coverage + palette/fonts + cover-fidelity + OOXML (layout-fit skipped) |
-| FEEDBACK | 12-practice rubric ([CLAUDE.md](../CLAUDE.md)) | 8-practice free-form design rubric (§15.7) |
-| REGENERATE | re-render touched slides | same |
-
-The generate-control-feedback-improve loop is **the constant**; the rules it loops against are what the `style:` mode switches.
-
----
-
 ## 1. Canvas
 
 | Property | Value |
@@ -705,30 +652,6 @@ When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and 
 The presenter picks one. The renderer records the resolution in [`config/feedback-backlog.md`](feedback-backlog.md) with the tag `pre-emit-audit` so the next Talk in the fork can carry the rule forward via the Step-7 learnings promotion.
 
 **Never silently compensate.** A renderer that absorbs an ambiguity by picking the plainer layout, dropping the emoji, or shrinking the font is exactly the renderer that ships the regression this audit exists to prevent.
-
-### 15.7 Free-form design rubric (Option 2 FEEDBACK phase)
-
-When the Talk's `style: free-form` and the CLAUDE.md *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG instead of the 12-practice strict rubric. Same per-defect line format (`slide N · practice K · <description> → <fix | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
-
-Eight practices, plus precondition #0 (block-coverage, identical to strict practice #0 — every source block must appear as a shape on the rendered slide; the only Option-1 practice that survives because it catches structural drops in both modes).
-
-| # | Practice | What to look for |
-|---|---|---|
-| 0 | **Block-coverage precondition** | Same as strict practice #0 — see [CLAUDE.md](../CLAUDE.md) Step 8. Enforced by [`audit_block_coverage.py`](../.claude/skills/md-to-pptx/audit_block_coverage.py) in the CONTROL phase before FEEDBACK runs. |
-| 1 | **Composition rhythm** | Across the deck, layout variety reads as *paced*, not random and not monotonous. Three consecutive identical card grids bore. Eight consecutive radically-different layouts read as chaos. The rhythm is what carries the audience between ideas; check that consecutive slides feel like *steps in a sequence*, not *unrelated objects*. |
-| 2 | **Focal hierarchy** | One element on each slide draws the eye first; supporting content recedes. The first element ≠ the most decorative; it should be the most *load-bearing* (the claim, the chart, the diagram). Ambiguity ("which thing am I supposed to look at?") is a fail; intentional rejection of a single focal point (e.g. a tiled gallery slide where variety *is* the message) is allowed but the critic must call it out as deliberate. |
-| 3 | **Color use within palette** | Every color is in the §2 palette (enforced by [`audit_palette_fonts.py`](../.claude/skills/md-to-pptx/audit_palette_fonts.py) in CONTROL), AND the chosen color is emotionally apt to the slide's content. A `#DA1B2E` bright-red callout on a slide about a privacy breach reads wrong even though red is in-palette. Color is a semantic choice; in-palette is a floor, not a pass. |
-| 4 | **Type intent** | Each typographic choice (size, weight, case, family) has a job. Sizes drawn from a clear scale (no 17.3pt body next to 17pt body across slides); ALL-CAPS reserved for labels/section names; bold reserved for emphasis within prose, not decoration; italics reserved for citations / titles of works / non-English terms. Decorative variation ("make this line bigger because it looks empty") is a fail. |
-| 5 | **Image scale + placement** | Aspect ratio preserved (enforced by [`audit_aspect_ratios.py`](../.claude/skills/md-to-pptx/audit_aspect_ratios.py) in CONTROL). Hero images dominate; supporting images supplement. No load-bearing detail cropped to fit a slot. Image-text gutters consistent; images don't crash into adjacent text. Photographs and diagrams may coexist in free-form, but their treatment (size relative to slide, framing, padding) is internally consistent. |
-| 6 | **Typography quality (micro)** | No widows (single word on the last line of a paragraph). No orphans (heading at the bottom of a column, body on the next). Numbers in a column use tabular figures (aligned decimals). Headings don't break awkwardly across the right-margin gutter. Em-dashes are em-dashes (`—`), not double-hyphens (`--`). These are the marks that distinguish a designed deck from a wireframed one. |
-| 7 | **Density — slide breathes** | Generous safe margins; no wall of text; no claustrophobic packed grid. The audience should be able to absorb the slide's primary content in 3–5 seconds, then turn attention to the speaker. A slide that takes 30 seconds to *read* is the speaker's competitor, not their support. Density limits are softer than strict's "≤5–7 bullets" rule — the test is *can the eye land and rest within a beat*, not a bullet count. |
-| 8 | **Coherence across slides** | Type sizes don't drift (what reads as "title" on slide 5 reads as "title" on slide 25); color palette use stays internally consistent (an accent that meant "warning" on slide 4 doesn't mean "highlight" on slide 12); image treatment stays internally consistent (if photographs are 4:3 inset with 0.3-in padding on slide 8, they are 4:3 inset with 0.3-in padding on slide 18). Free-form is not "different every slide"; it is "the right layout for each slide, with consistent treatment of recurring elements." |
-
-**Plus the aesthetic note.** After walking practices 0–8, the critic adds a one-sentence free-form aesthetic note per slide naming whatever the eye catches that the rubric does not — same discipline as strict. The rubric is the floor; the aesthetic note is where the critic's judgment shows. `aesthetic: clean` is a valid note when nothing catches the eye.
-
-**Critique discipline carries forward.** Same as strict: every flagged cell of the slide × practice matrix gets *fix in this iteration* / *defer because <reason>* / *surface to presenter*. Silent `[minor] → ignore` is the same prohibited pattern. Free-form does not lower the bar on per-defect resolution; if anything it raises it, because there is no spec-side recipe to fall back on.
-
----
 
 ## 16. Recipes summary
 

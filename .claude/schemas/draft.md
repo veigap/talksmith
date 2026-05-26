@@ -149,6 +149,14 @@ audience:
 duration:
 # date: when the talk is delivered (ISO format YYYY-MM-DD)
 date:
+# style: PPTX render style — see config/pptx-styles/README.md.
+# Allowed: strict (spec-driven, base-template + emit-rules + 12-practice rubric)
+#        | free-form (LLM picks layout per slide; floor = cover + palette + fonts + white bg; 8-practice design rubric)
+# REQUIRED — Editor asks at Step 1 (Frame) with 2 candidates derived from the briefing.
+# If absent at Step-8 render time, md-to-pptx defaults to `strict` and surfaces a [late-catch]
+# warning naming the missing field (per md-to-pptx/SKILL.md Process step 0 + Failure modes) —
+# the silent default is a defense-in-depth fallback, NOT a permitted authoring shortcut.
+style: <strict | free-form>
 ---
 
 # Thesis
