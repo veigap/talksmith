@@ -21,6 +21,6 @@ file config/diagram-style.md
 file config/pptx-styles/README.md
 file config/pptx-styles/strict/pptx-prompt.md
 file config/pptx-styles/strict/base-template.pptx
+file config/pptx-styles/strict/template.pptx
 dir  config/pptx-styles/strict/template-previews
-file config/pptx-styles/free-form/pptx-prompt.md
-file config/pptx-styles/free-form/base-template.pptx
+dir  config/pptx-styles/free-form
