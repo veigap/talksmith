@@ -293,7 +293,20 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 ## Step 8 — Render PPTX *(optional, Cowork only)*
 
-Dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) on `final.md`. The skill pre-processes via [`convert.py`](.claude/skills/md-to-pptx/convert.py) and delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).
+**Always confirm the style at every Step-8 entry — never assume the value in `final.md` frontmatter.** Whenever the presenter triggers a render ("render the deck", "regenerate the presentation", "re-render", "generate pptx", any equivalent), the orchestrator's first action is to ask which style to use for *this* render — even if `final.md` already carries a `style:` field from a prior pass. The question carries the current value as one of the candidates so the presenter can confirm or switch:
+
+> Render this Talk as which style?
+> 1. **<current-from-frontmatter, or "strict" if absent>** *(current)* — \<one-line summary of what that style does, derived from `config/pptx-styles/<style>/pptx-prompt.md`\>
+> 2. **<the other style>** — \<one-line summary\>
+
+The presenter's answer is **persisted back into `final.md` frontmatter** before dispatching to the skill — that way the cycle's CONTROL audits and FEEDBACK rubric all read the same value. Confirmed-same-as-before is also persisted (idempotent write). A switch from `strict` ↔ `free-form` is treated identically to any other render — the cycle starts fresh at cycle 1, audits run against the new style's `<spec_path>` + `<base_template_path>`, and the FEEDBACK rubric loads the matching style's practices.
+
+This rule exists because per-render style intent is *not* the same as authoring-time style intent. A Talk drafted as strict for course consistency may still warrant a one-off free-form render for a guest-lecture variant; a free-form keynote may need a strict re-render for the printed handout. The renderer-level confirmation makes the per-render choice explicit, prevents the previous render's mode from silently dictating this one, and surfaces the question at the moment it's actually relevant. Never skip this ask, even when:
+- the presenter "obviously" wants the same style as last render (still ask — the cost is one line of chat, the value is the explicit confirmation);
+- the cycle's REGENERATE phase fires within a single Step-8 invocation (those internal re-renders inherit the cycle's style; the ask is only at Step-8 *entry*, not between cycles);
+- the presenter signals impatience (the ask is two numbered options, not a free-text prompt — answering is one keystroke).
+
+After the confirmation lands, dispatch [`md-to-pptx`](.claude/skills/md-to-pptx/SKILL.md) on `final.md`. The skill pre-processes via [`convert.py`](.claude/skills/md-to-pptx/convert.py) and delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill in the registry). If missing, stop and tell the presenter. **No CLI fallback.**
 - **Progress is visible.** Render is long-running (30s – 3 min). The skill emits one `[pptx N/8] …` line per stage of its workflow (prereqs → preprocess → 7 sub-stages of the §19.3 native invocation → output written → OOXML check → spot-check → preview rasterization → final report) plus a 30-second heartbeat inside any stage that exceeds the budget. Failures surface as `[pptx N/8] Stage X FAILED: <reason>`. The presenter should never have to ask "is it still running?" — see [`SKILL.md`](.claude/skills/md-to-pptx/SKILL.md) → *Progress reporting*.
