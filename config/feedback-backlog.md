@@ -1,6 +1,6 @@
 # Feedback backlog
 
-> Format spec, tagging vocabulary, and pattern-detection rules live in [`.claude/schemas/feedback-backlog.md`](../.claude/schemas/feedback-backlog.md).
+> Format spec, tagging vocabulary, and pattern-detection rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md).
 
 ## Entries
 

@@ -1,6 +1,6 @@
 # Presentation Principles
 
-> Loading semantics, who reads this file, and interpretation rules live in [`.claude/schemas/principles.md`](../.claude/schemas/principles.md). The principles below are the file's data — read when performing the Composer role at every Step 4 drafting milestone.
+> Loading semantics, who reads this file, and interpretation rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/principles.md`](${CLAUDE_PLUGIN_ROOT}/schemas/principles.md). The principles below are the file's data — read when performing the Composer role at every Step 4 drafting milestone.
 
 ---
 

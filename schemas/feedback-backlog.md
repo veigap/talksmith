@@ -1,10 +1,10 @@
 # Schema — `config/feedback-backlog.md`
 
-Specification for [`config/feedback-backlog.md`](../../config/feedback-backlog.md): the cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review).
+Specification for [`config/feedback-backlog.md`](config/feedback-backlog.md): the cross-presentation log of every `Presenter feedback` bullet captured during Step 5 (Review).
 
 ## Purpose
 
-Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 7) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`config/learnings.md`](../../config/learnings.md).
+Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 7) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`config/learnings.md`](config/learnings.md).
 
 ## Loading semantics
 
@@ -48,7 +48,7 @@ When the presenter declares `draft.md` final and Step 7 begins, the orchestrator
    - **Promote** — append a new entry to `learnings.md`.
    - **Move** — relocate the contributing backlog rows here into `feedback-processed.md`, stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes either file directly. See *Step 7* in [CLAUDE.md](../../CLAUDE.md) for the full protocol.
+The orchestrator never writes either file directly. See *Step 7* in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) for the full protocol.
 
 ## Direct-edit rule
 
@@ -59,7 +59,7 @@ The orchestrator never writes either file directly. See *Step 7* in [CLAUDE.md](
 ```markdown
 # Feedback backlog
 
-> Format spec, tagging vocabulary, and pattern-detection rules live in [`.claude/schemas/feedback-backlog.md`](../.claude/schemas/feedback-backlog.md).
+> Format spec, tagging vocabulary, and pattern-detection rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md).
 
 ## Entries
 

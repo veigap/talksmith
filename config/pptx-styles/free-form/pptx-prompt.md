@@ -22,7 +22,7 @@ Visual specification for Talksmith's **free-form** PPTX style. The renderer judg
 
 ## 2. Color system — the palette floor
 
-Free-form does not relax the palette. Every `<a:srgbClr val="…"/>` in the rendered deck resolves to a hex below. Off-palette colors are a render failure, audited at CONTROL by [`audit_palette_fonts.py`](../../../.claude/skills/md-to-pptx/audit_palette_fonts.py).
+Free-form does not relax the palette. Every `<a:srgbClr val="…"/>` in the rendered deck resolves to a hex below. Off-palette colors are a render failure, audited at CONTROL by [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py).
 
 ### 2.1 Text inks
 
@@ -62,7 +62,7 @@ Roundrect shapes use a **~5760 EMU (≈4.6 pt) constant corner radius** for visu
 
 ## 3. Typography — the font floor
 
-Free-form does not relax the font palette. Every `<a:latin typeface="…"/>` resolves to one of the three faces below. No theme fonts (`+mj-lt`, `+mn-lt`); no system fallbacks. Audited at CONTROL by [`audit_palette_fonts.py`](../../../.claude/skills/md-to-pptx/audit_palette_fonts.py).
+Free-form does not relax the font palette. Every `<a:latin typeface="…"/>` resolves to one of the three faces below. No theme fonts (`+mj-lt`, `+mn-lt`); no system fallbacks. Audited at CONTROL by [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py).
 
 | Role | Typeface | Used for |
 |---|---|---|
@@ -131,7 +131,7 @@ For each `## <H2>` in `final.md` (after the cover):
 
 ### 5.2 What the renderer must NOT do
 
-- **Drop content to make a layout fit.** Every block in `final.md` appears on the rendered slide. Audited at CONTROL by [`audit_block_coverage.py`](../../../.claude/skills/md-to-pptx/audit_block_coverage.py) — same rule, same audit, same exit code as strict.
+- **Drop content to make a layout fit.** Every block in `final.md` appears on the rendered slide. Audited at CONTROL by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) — same rule, same audit, same exit code as strict.
 - **Pick a layout for a single slide that breaks deck-wide coherence.** If slides 3–12 establish a generous-margins convention, slide 13 doesn't suddenly hug the edges. Coherence is rubric practice 8 below.
 - **Treat the floor as a recommendation.** §1 (white bg) + §2 (palette) + §3 (fonts) + §4 (cover) are non-negotiable. A render that violates them fails CONTROL regardless of how good the slide looks.
 
@@ -149,18 +149,18 @@ Strict converts pipe-tables to card-grid because the source 53-slide reference d
 
 ## 6. FEEDBACK rubric — 8 practices
 
-When the [CLAUDE.md](../../../CLAUDE.md) *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG. Same per-defect line format as strict (`slide N · practice K · <description> → <fix in this iteration | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
+When the [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG. Same per-defect line format as strict (`slide N · practice K · <description> → <fix in this iteration | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
 
-Practice #0 is the block-coverage precondition (same as strict practice #0 — every source block must appear as a shape on the rendered slide; enforced by [`audit_block_coverage.py`](../../../.claude/skills/md-to-pptx/audit_block_coverage.py) in CONTROL before FEEDBACK runs). The remaining 8 practices are free-form-specific.
+Practice #0 is the block-coverage precondition (same as strict practice #0 — every source block must appear as a shape on the rendered slide; enforced by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) in CONTROL before FEEDBACK runs). The remaining 8 practices are free-form-specific.
 
 | # | Practice | What to look for |
 |---|---|---|
-| 0 | **Block-coverage precondition** | Same as strict — see [CLAUDE.md](../../../CLAUDE.md) Step 8 → *Post-render visual review*. Enforced by audit in CONTROL; if `[block-drop]`, do not enter FEEDBACK. |
+| 0 | **Block-coverage precondition** | Same as strict — see [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) Step 8 → *Post-render visual review*. Enforced by audit in CONTROL; if `[block-drop]`, do not enter FEEDBACK. |
 | 1 | **Composition rhythm** | Across the deck, layout variety reads as *paced*, not random and not monotonous. Three consecutive identical card grids bore. Eight consecutive radically-different layouts read as chaos. The rhythm carries the audience between ideas; consecutive slides should feel like *steps in a sequence*, not *unrelated objects*. Read the per-slide `.layout-log.md` entries alongside the PNGs to judge whether sibling choices were made deliberately. |
 | 2 | **Focal hierarchy** | One element on each slide draws the eye first; supporting content recedes. The first element ≠ the most decorative; it should be the most *load-bearing* (the claim, the chart, the diagram). Ambiguity is a fail; intentional rejection of a single focal point (e.g. a tiled gallery where variety *is* the message) is allowed but the critic must call it out as deliberate. |
 | 3 | **Color use within palette** | §2 palette membership is enforced by `audit_palette_fonts.py` in CONTROL — every color is in-palette by the time FEEDBACK starts. This practice judges whether the chosen color is **emotionally apt** to the slide's content. A `#DA1B2E` bright-red callout on a slide about a privacy breach reads wrong even though red is in-palette. In-palette is a floor, not a pass. |
 | 4 | **Type intent** | Each typographic choice (size, weight, case, family) has a job. Sizes drawn from a clear scale (no 17.3pt body next to 17pt body across slides); ALL-CAPS reserved for labels/section names; bold reserved for emphasis within prose, not decoration; italics reserved for citations / titles of works / non-English terms. Decorative variation ("make this line bigger because it looks empty") is a fail. |
-| 5 | **Image scale + placement** | Aspect ratio preserved (enforced by [`audit_aspect_ratios.py`](../../../.claude/skills/md-to-pptx/audit_aspect_ratios.py) in CONTROL). Hero images dominate; supporting images supplement. No load-bearing detail cropped to fit a slot. Image-text gutters consistent; images don't crash into adjacent text. Photographs and diagrams may coexist, but their treatment (size relative to slide, framing, padding) is internally consistent. |
+| 5 | **Image scale + placement** | Aspect ratio preserved (enforced by [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py) in CONTROL). Hero images dominate; supporting images supplement. No load-bearing detail cropped to fit a slot. Image-text gutters consistent; images don't crash into adjacent text. Photographs and diagrams may coexist, but their treatment (size relative to slide, framing, padding) is internally consistent. |
 | 6 | **Typography quality (micro)** | No widows (single word on the last line of a paragraph). No orphans (heading at the bottom of a column, body on the next). Numbers in a column use tabular figures (aligned decimals). Headings don't break awkwardly across the right-margin gutter. Em-dashes are em-dashes (`—`), not double-hyphens (`--`). The marks that distinguish a designed deck from a wireframed one. |
 | 7 | **Density — slide breathes** | Generous safe margins; no wall of text; no claustrophobic packed grid. The audience should absorb the slide's primary content in 3–5 seconds, then turn attention to the speaker. A slide that takes 30 seconds to *read* is the speaker's competitor, not their support. Test: *can the eye land and rest within a beat*. |
 | 8 | **Coherence across slides** | Type sizes don't drift (what reads as "title" on slide 5 reads as "title" on slide 25); palette use stays internally consistent (an accent that meant "warning" on slide 4 doesn't mean "highlight" on slide 12); image and icon treatment stays internally consistent (if photographs are 4:3 inset with 0.3-in padding on slide 8, they are 4:3 inset with 0.3-in padding on slide 18; if icons are line-art on slide 3, they are line-art on slide 14). Free-form is not "different every slide"; it is "the right layout for each slide, with consistent treatment of recurring elements." Read with `.layout-log.md` to verify the renderer's choices form a system, not a sequence of one-offs. |
@@ -173,12 +173,12 @@ Practice #0 is the block-coverage precondition (same as strict practice #0 — e
 
 ## 7. Render cycle integration
 
-The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [CLAUDE.md](../../../CLAUDE.md) → *Render cycle*. This section names the free-form-specific content of each phase.
+The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) → *Render cycle*. This section names the free-form-specific content of each phase.
 
 | Phase | What runs in free-form |
 |---|---|
 | **GENERATE** | Cover (§4) byte-equivalent from `base-template.pptx`; every other slide built fresh per §5 layout dispatch. The renderer writes `.layout-log.md` alongside `final.pptx` as a sibling artifact (one entry per emitted slide; format in §5.1). |
-| **CONTROL** | 5 audits — OOXML invariants per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules), [`audit_aspect_ratios.py`](../../../.claude/skills/md-to-pptx/audit_aspect_ratios.py), [`audit_block_coverage.py`](../../../.claude/skills/md-to-pptx/audit_block_coverage.py), [`audit_palette_fonts.py`](../../../.claude/skills/md-to-pptx/audit_palette_fonts.py), and the cover-fidelity check (slide 1 of `final.pptx` byte-equivalent to slide 1 of `base-template.pptx` modulo the 4 placeholder substitutions). The layout-fit audit is **skipped** — free-form has no spec-predicted layout to compare against, and the per-slide `.layout-log.md` is what the FEEDBACK critic reads instead. |
+| **CONTROL** | 5 audits — OOXML invariants per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py), and the cover-fidelity check (slide 1 of `final.pptx` byte-equivalent to slide 1 of `base-template.pptx` modulo the 4 placeholder substitutions). The layout-fit audit is **skipped** — free-form has no spec-predicted layout to compare against, and the per-slide `.layout-log.md` is what the FEEDBACK critic reads instead. |
 | **FEEDBACK** | Walk §6's 8-practice rubric per slide; emit one `slide N · practice K · …` line per defect with resolution disposition. |
 | **REGENERATE** | Re-render only the touched slides; cycle counter increments; flow returns to GENERATE for cycle N+1. The `.layout-log.md` is updated in place — re-emitted slides overwrite their previous entries, untouched slides retain theirs. |
 

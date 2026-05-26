@@ -1,6 +1,6 @@
-# Schema — `config/principles.md`
+# Schema — `${CLAUDE_PLUGIN_ROOT}/config/principles.md`
 
-Specification for [`config/principles.md`](../../config/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used when performing the Composer role to critique a draft.
+Specification for [`${CLAUDE_PLUGIN_ROOT}/config/principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md): Talksmith's design defaults (Mayer / Tufte / Reynolds / Duarte house rules) used when performing the Composer role to critique a draft.
 
 ## Purpose
 
@@ -27,4 +27,4 @@ No other role and no orchestrator step loads this file. **No writer** — there 
 
 ## Maintenance
 
-Principles change rarely. To add or modify: edit `config/principles.md` directly. There is no automated path. Persistent presenter feedback that warrants a new default is captured via the `feedback-backlog.md` → `learnings.md` promotion pipeline, not as a principles edit.
+Principles change rarely. To add or modify: edit `${CLAUDE_PLUGIN_ROOT}/config/principles.md` directly. There is no automated path. Persistent presenter feedback that warrants a new default is captured via the `feedback-backlog.md` → `learnings.md` promotion pipeline, not as a principles edit.

@@ -1,10 +1,10 @@
 # Schema — `config/profile.md`
 
-Specification for [`config/profile.md`](../../config/profile.md): the presenter's global profile that applies across every Talk in this repository.
+Specification for [`config/profile.md`](config/profile.md): the presenter's global profile that applies across every Talk in this working directory.
 
 ## Purpose
 
-Captures per-presenter defaults that apply across every Talk in this fork: the **subject** the fork is dedicated to (one fork per subject — see [`README.md`](../../README.md) → *One fork per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `draft.md` frontmatter — it does **not** re-prompt for any field listed here.
+Captures per-presenter defaults that apply across every Talk in this working directory: the **subject** the working directory is dedicated to (one working directory per subject — see [`README.md`](${CLAUDE_PLUGIN_ROOT}/README.md) → *One working directory per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `draft.md` frontmatter — it does **not** re-prompt for any field listed here.
 
 ## Loading semantics
 
@@ -15,13 +15,13 @@ Captures per-presenter defaults that apply across every Talk in this fork: the *
 
 The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
-**One-time, session-load settings.** Three sections in particular — `How my presentations are consumed`, `Audience defaults`, and `Presentation language` — are **initialized once** during Step 0.5 and **never re-prompted per-Talk**. They are fork-level defaults read silently at session start; per-Talk calibration (e.g. a one-off audience tweak for a specific class) happens by editing `draft.md` frontmatter directly in Step 5 Review.
+**One-time, session-load settings.** Three sections in particular — `How my presentations are consumed`, `Audience defaults`, and `Presentation language` — are **initialized once** during Step 0.5 and **never re-prompted per-Talk**. They are subject-level defaults read silently at session start; per-Talk calibration (e.g. a one-off audience tweak for a specific class) happens by editing `draft.md` frontmatter directly in Step 5 Review.
 
 ## Canonical sections (exactly six)
 
 | Section | Required? | Purpose |
 |---|---|---|
-| `Subject` | **Required** | The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers", "Quantum computing seminar"). One fork per subject. Copied into every Talk's `draft.md` frontmatter as the `presentation` field — every Talk in this fork shares it. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. |
+| `Subject` | **Required** | The overarching subject this working directory is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers", "Quantum computing seminar"). One working directory per subject. Copied into every Talk's `draft.md` frontmatter as the `presentation` field — every Talk in this working directory shares it. The Step-1 briefing captures only what's specific to *this class*; the subject is subject-level and never re-prompted per-Talk. |
 | `Presenter` | **Required** | One-line identity record — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). The Editor copies this verbatim into every Talk's `draft.md` frontmatter as the default `presenter`. Per-Talk override: edit the `draft.md` frontmatter directly in Step 5 Review. |
 | `How my presentations are consumed` | **Required** | Live vs. recorded vs. async, default consumption mode. Drives slide density and speaker-note weight. Set once in Step 0.5 and never re-prompted per-Talk. |
 | `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `draft.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `draft.md` directly — never re-prompted in Step 4. |
@@ -46,7 +46,7 @@ Step 0.5's behavior depends on the state of `config/profile.md`. The driving rul
 
 - Per-section content is free-form prose (not a structured key/value).
 - For required sections, the orchestrator must walk them in Step 0.5 by asking the presenter. Concrete candidates the orchestrator should offer:
-  - `Subject`: free-text prompt (no candidates make sense — it's the unique overarching subject of this fork).
+  - `Subject`: free-text prompt (no candidates make sense — it's the unique overarching subject of this working directory).
   - `Presenter`: free-text prompt (no candidates make sense — it's a personal identity record).
   - `How my presentations are consumed`: 2–4 candidates such as "Live in-person talks", "Recorded video (async viewers)", "Hybrid — live with recording", "Async deck read-through (no narration)".
   - `Audience defaults`: 2–4 candidates such as "Technical peers / engineers", "Mixed technical + business", "University students (undergraduate)", "Domain practitioners (non-engineering)".
@@ -80,13 +80,13 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 ```markdown
 # Presenter Profile
 
-> Schema, loading semantics, and filling rules live in [`.claude/schemas/profile.md`](../.claude/schemas/profile.md).
+> Schema, loading semantics, and filling rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/profile.md`](${CLAUDE_PLUGIN_ROOT}/schemas/profile.md).
 
 ---
 
 ## Subject
 
-<!-- Required. The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One fork per subject. Copied into every Talk's draft.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. -->
+<!-- Required. The overarching subject this working directory is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One working directory per subject. Copied into every Talk's draft.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is subject-level and never re-prompted per-Talk. -->
 
 ## Presenter
 
@@ -94,7 +94,7 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 
 ## How my presentations are consumed
 
-<!-- Required. Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? Set once in Step 0.5 and never re-prompted per-Talk. Drives slide density and speaker-note weight across every Talk in this fork. -->
+<!-- Required. Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? Set once in Step 0.5 and never re-prompted per-Talk. Drives slide density and speaker-note weight across every Talk in this working directory. -->
 
 ## Audience defaults
 

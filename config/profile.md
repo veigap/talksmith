@@ -1,12 +1,12 @@
 # Presenter Profile
 
-> Schema, loading semantics, and filling rules live in [`.claude/schemas/profile.md`](../.claude/schemas/profile.md).
+> Schema, loading semantics, and filling rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/profile.md`](${CLAUDE_PLUGIN_ROOT}/schemas/profile.md).
 
 ---
 
 ## Subject
 
-<!-- Required. The overarching subject this fork is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One fork per subject. Copied into every Talk's draft.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is fork-level and never re-prompted per-Talk. -->
+<!-- Required. The overarching subject this working directory is dedicated to — a course title, workshop series, or research area (e.g. "AI in Biomedicine — undergraduate course", "Intro to GANs for engineers"). One working directory per subject. Copied into every Talk's draft.md frontmatter as the `presentation` field. The Step-1 briefing captures only what's specific to *this class*; the subject is subject-level and never re-prompted per-Talk. -->
 
 ## Presenter
 
@@ -14,7 +14,7 @@
 
 ## How my presentations are consumed
 
-<!-- Required. Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? Set once in Step 0.5 and never re-prompted per-Talk. Drives slide density and speaker-note weight across every Talk in this fork. -->
+<!-- Required. Live talks? Recorded? Async read-through of the deck? Classroom lecture? Conference keynote? Internal status update? Mix — and which is the most common default? Set once in Step 0.5 and never re-prompted per-Talk. Drives slide density and speaker-note weight across every Talk in this working directory. -->
 
 ## Audience defaults
 

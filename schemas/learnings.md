@@ -1,10 +1,10 @@
 # Schema — `config/learnings.md`
 
-Specification for [`config/learnings.md`](../../config/learnings.md): the durable, cross-presentation rule store. Entries are promoted from [`config/feedback-backlog.md`](../../config/feedback-backlog.md) when a pattern repeats 3+ times across Talks.
+Specification for [`config/learnings.md`](config/learnings.md): the durable, cross-presentation rule store. Entries are promoted from [`config/feedback-backlog.md`](config/feedback-backlog.md) when a pattern repeats 3+ times across Talks.
 
 ## Purpose
 
-Holds the rules that future Talks should inherit as soft defaults — earned through repeated correction. Treat entries as **stronger defaults than `config/principles.md`**: principles are seeded; learnings are evidence-backed by recurring presenter feedback.
+Holds the rules that future Talks should inherit as soft defaults — earned through repeated correction. Treat entries as **stronger defaults than `${CLAUDE_PLUGIN_ROOT}/config/principles.md`**: principles are seeded; learnings are evidence-backed by recurring presenter feedback.
 
 ## Loading semantics
 
@@ -43,16 +43,16 @@ The Editor role generates a stable `entry id` per promotion (incrementing intege
 3. For any pattern recurring 3+ times across Talks, asks the presenter whether to promote (options: *Promote* / *Skip* / *Promote with edits*).
 4. For each approved pattern, performs the Editor role twice:
    - **Promote** — append a new entry here.
-   - **Move** — relocate the contributing backlog rows from `feedback-backlog.md` to [`config/feedback-processed.md`](../../config/feedback-processed.md), stamping each with `promoted_to:` and `promoted_at:`.
+   - **Move** — relocate the contributing backlog rows from `feedback-backlog.md` to [`config/feedback-processed.md`](config/feedback-processed.md), stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes this file directly. See *Step 7* in [CLAUDE.md](../../CLAUDE.md) for the full protocol.
+The orchestrator never writes this file directly. See *Step 7* in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) for the full protocol.
 
 ## Canonical empty form
 
 ```markdown
 # Learnings
 
-> Format spec, loading semantics, and promotion rules live in [`.claude/schemas/learnings.md`](../.claude/schemas/learnings.md).
+> Format spec, loading semantics, and promotion rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/learnings.md`](${CLAUDE_PLUGIN_ROOT}/schemas/learnings.md).
 
 ## Entries
 

@@ -1,11 +1,11 @@
 ---
 name: talksmith:upgrade
-description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, or deleted in the target fork. `apply` mirrors master into the fork — **user-owned content** (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, plus `.claude/settings.local.json`) is never touched; **master-owned content** (`.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/diagram-style.md`) is strict-mirrored, so renames and removals upstream propagate automatically. When structural changes affect user-owned paths too (e.g. per-Talk file naming conventions), the orchestrator infers the required adjustment from the upgrade diff and applies it by hand when next resuming the Talk — the skill never auto-edits user-owned content. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
+description: Sync a downstream Talksmith fork with `https://github.com/veigap/talksmith` @ `main`. Two subcommands. `diff` reports every file that would be created, modified, or deleted in the target fork. `apply` mirrors master into the fork — **user-owned content** (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, plus `.claude/settings.local.json`) is never touched; **master-owned content** (`.claude/`, `CLAUDE.md`, `README.md`, `${CLAUDE_PLUGIN_ROOT}/config/principles.md`, `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`) is strict-mirrored, so renames and removals upstream propagate automatically. When structural changes affect user-owned paths too (e.g. per-Talk file naming conventions), the orchestrator infers the required adjustment from the upgrade diff and applies it by hand when next resuming the Talk — the skill never auto-edits user-owned content. Requires `git` on `PATH`. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:upgrade — Mirror master into a downstream fork
 
-Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *One fork per subject*). Every fork accumulates per-subject state — talks, profile, learnings, feedback log — that **must survive** across upgrades. The **core machinery** (orchestrator spec, role specs, skills, schemas, design principles, image-style catalog) lives in master and improves over time. This skill keeps a fork's master-owned tree in lockstep with master without touching the fork's accumulated state.
+Talksmith is forked-once-per-subject (see [README.md](${CLAUDE_PLUGIN_ROOT}/README.md) → *One fork per subject*). Every fork accumulates per-subject state — talks, profile, learnings, feedback log — that **must survive** across upgrades. The **core machinery** (orchestrator spec, role specs, skills, schemas, design principles, image-style catalog) lives in master and improves over time. This skill keeps a fork's master-owned tree in lockstep with master without touching the fork's accumulated state.
 
 **Single source of master.** Always `https://github.com/veigap/talksmith` @ `main`. No flags to override.
 
@@ -16,7 +16,7 @@ Talksmith is forked-once-per-subject (see [README.md](../../../README.md) → *O
 | Tree | Policy on `apply` |
 |---|---|
 | **User-owned** — `talks/` (every byte under it), `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, `.claude/settings.local.json` | **Never touched.** Full stop. |
-| **Master-owned** — `.claude/`, `CLAUDE.md`, `README.md`, `config/principles.md`, `config/diagram-style.md` | **Strict mirror.** Files missing in fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted** from the fork. |
+| **Master-owned** — `.claude/`, `CLAUDE.md`, `README.md`, `${CLAUDE_PLUGIN_ROOT}/config/principles.md`, `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` | **Strict mirror.** Files missing in fork → created. Files in both that differ → fork's copy overwritten. Files in the fork's master-owned tree that no longer exist in master → **deleted** from the fork. |
 
 A rename in master is naturally just "old path gone + new path appears" under strict mirror — both halves happen in one `apply`.
 
@@ -24,10 +24,10 @@ A rename in master is naturally just "old path gone + new path appears" under st
 
 | Master change | What `apply` does in the fork |
 |---|---|
-| New file added under `.claude/skills/foo/SKILL.md` | Creates it. |
+| New file added under `${CLAUDE_PLUGIN_ROOT}/skills/foo/SKILL.md` | Creates it. |
 | Existing file edited (e.g. `CLAUDE.md`) | Overwrites the fork's copy. |
-| File renamed (e.g. `.claude/schemas/master.md` → `.claude/schemas/draft.md`) | Deletes `master.md` from the fork, creates `draft.md` from master. |
-| Skill directory renamed (e.g. `.claude/skills/upgrade-fork/` → `.claude/skills/upgrade/`) | Deletes every file under the old dir, creates every file under the new dir. Empty parent directories get cleaned up. |
+| File renamed (e.g. `${CLAUDE_PLUGIN_ROOT}/schemas/master.md` → `${CLAUDE_PLUGIN_ROOT}/schemas/draft.md`) | Deletes `master.md` from the fork, creates `draft.md` from master. |
+| Skill directory renamed (e.g. `${CLAUDE_PLUGIN_ROOT}/skills/upgrade-fork/` → `${CLAUDE_PLUGIN_ROOT}/skills/upgrade/`) | Deletes every file under the old dir, creates every file under the new dir. Empty parent directories get cleaned up. |
 | File removed (e.g. an obsolete style template) | Deletes it from the fork. |
 
 ## What strict-mirror does NOT do
@@ -44,7 +44,7 @@ When master ships a structural change, the strict-mirror step updates the spec (
 **The rule for handling this is on the orchestrator, not the skill.** After `upgrade apply` reports its diff, the orchestrator (the LLM operating the fork) is expected to:
 
 1. **Read the upgrade diff** — the list of files that were created, modified, or deleted in the master-owned tree gives a complete picture of what restructured upstream.
-2. **Infer the corresponding adjustment for user-owned content.** A schema rename like `.claude/schemas/master.md` → `draft.md` strongly implies a matching per-Talk rename `talks/*/master.md` → `talks/*/draft.md`. A renamed output file (e.g. `output/master.pptx` → `output/final.pptx` documented in the new CLAUDE.md spec for Step 8) implies the existing rendered output in any Talk should be renamed similarly.
+2. **Infer the corresponding adjustment for user-owned content.** A schema rename like `${CLAUDE_PLUGIN_ROOT}/schemas/master.md` → `draft.md` strongly implies a matching per-Talk rename `talks/*/master.md` → `talks/*/draft.md`. A renamed output file (e.g. `output/master.pptx` → `output/final.pptx` documented in the new CLAUDE.md spec for Step 8) implies the existing rendered output in any Talk should be renamed similarly.
 3. **Apply the inferred adjustment when next opening the affected Talk** — typically at the Step-0 Resume hand-off, before reading `memory.md` and continuing the workflow. A rename preserves the file's bytes; only the path changes. If a path conflict exists (both old and new already present), stop and ask the presenter which to keep.
 4. **Never touch user content** beyond renaming paths. If the new spec implies a *semantic* change (e.g. "re-run Step 6 to produce `final.md` from `draft.md`"), surface it to the presenter and let them decide whether to re-run; don't silently re-execute workflow steps.
 
@@ -60,13 +60,13 @@ This puts inference where it belongs — the LLM has the context to read the dif
 
 ```bash
 # 1) read-only diff against upstream main
-python3 .claude/skills/upgrade/upgrade.py diff --fork /path/to/your/fork
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrade/upgrade.py diff --fork /path/to/your/fork
 
 # 2) apply — runs unattended (no confirmation prompt)
-python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrade/upgrade.py apply --fork /path/to/your/fork
 
 # 3) preview an apply without writing
-python3 .claude/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --dry-run
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrade/upgrade.py apply --fork /path/to/your/fork --dry-run
 ```
 
 ## Inputs
@@ -101,19 +101,19 @@ Summary:
    18 file(s) already up-to-date
 
 Created (new in master, missing in fork):
-  + .claude/skills/upgrade/SKILL.md
-  + .claude/skills/upgrade/upgrade.py
-  + .claude/schemas/draft.md
-  + .claude/roles/global-librarian.md
+  + ${CLAUDE_PLUGIN_ROOT}/skills/upgrade/SKILL.md
+  + ${CLAUDE_PLUGIN_ROOT}/skills/upgrade/upgrade.py
+  + ${CLAUDE_PLUGIN_ROOT}/schemas/draft.md
+  + ${CLAUDE_PLUGIN_ROOT}/agents/global-librarian.md
 
 Modified (differ between master and fork):
   ~ CLAUDE.md  (+1234 bytes)
-  ~ .claude/roles/editor.md  (+512 bytes)
+  ~ ${CLAUDE_PLUGIN_ROOT}/agents/editor.md  (+512 bytes)
 
 Deleted (in fork but no longer in master — usually a rename or removal upstream):
-  - .claude/schemas/master.md
-  - .claude/skills/upgrade-fork/SKILL.md
-  - .claude/skills/upgrade-fork/upgrade_fork.py
+  - ${CLAUDE_PLUGIN_ROOT}/schemas/master.md
+  - ${CLAUDE_PLUGIN_ROOT}/skills/upgrade-fork/SKILL.md
+  - ${CLAUDE_PLUGIN_ROOT}/skills/upgrade-fork/upgrade_fork.py
 ```
 
 ### `apply` — summary
@@ -135,7 +135,7 @@ The output is the orchestrator's input for the inference step described above �
 - **Deletions are scoped to master-owned paths only.** The `_collect()` walk only ever returns paths listed in `.claude/upgrade-paths.txt` (or the hardcoded fallback), so the `f_files - m_files` set difference can never reach user-owned content. `talks/` and the user-owned config files are structurally unreachable by the delete step.
 - **`.claude/settings.local.json` is explicitly excluded.** The skill subtracts it from the delete set unconditionally.
 - Every write is atomic per file (`.tmp + os.replace`). On per-file failure the partial state is the original file; the rest of the upgrade aborts.
-- Empty directories left behind after deletions (e.g. an emptied `.claude/skills/upgrade-fork/`) are removed bottom-up so the fork tree stays clean.
+- Empty directories left behind after deletions (e.g. an emptied `${CLAUDE_PLUGIN_ROOT}/skills/upgrade-fork/`) are removed bottom-up so the fork tree stays clean.
 
 ## Exit codes
 

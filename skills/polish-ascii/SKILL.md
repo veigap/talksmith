@@ -13,7 +13,7 @@ The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per bloc
 
 1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
 2. **`inspect-intents`** *(optional)* — eyeball the scan as a 3-column table (`slide_id | slide_title | intent`) before authoring slugs. Pure read; no mutation.
-3. **Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`.claude/roles/illustrator.md`](../../roles/illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
+3. **Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
 4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr.
 5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each.
@@ -87,25 +87,25 @@ A block with `"documentation_only": true` is **also skipped automatically** — 
 
 ```bash
 # Phase 1 — scan
-python3 .claude/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     scan talks/<Talk>/final.md --language Spanish > /tmp/plan.json
 
 # Phase 2 — eyeball (optional) and author a renders map
-python3 .claude/skills/polish-ascii/polish_ascii.py inspect-intents --plan /tmp/plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py inspect-intents --plan /tmp/plan.json
 #   illustrator writes /tmp/renders.json:
 #     {"s1-2-1": {"svg_basename": "s1-2-1-cuatro-senales.svg", "alt": "Cuatro señales"}, ...}
 
 # Phase 3 — annotate the plan, write sidecars, fan args out for parallel rendering
-python3 .claude/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     annotate-renders --plan /tmp/plan.json --renders /tmp/renders.json -o /tmp/plan.annotated.json
-python3 .claude/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     extract --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
-python3 .claude/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     prepare-render-args --plan /tmp/plan.annotated.json \
         --out-dir /tmp/ts-args --repo-root "$(pwd)"
 
 # Phase 4 — parallel renders (one Agent per /tmp/ts-args/<slide_id>.json), then cleanup
-python3 .claude/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 
@@ -158,7 +158,7 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 ## Detection rules (used by `scan`)
 
-- **ASCII block** — detection runs in two tiers, mirroring [illustrator.md](../../roles/illustrator.md) → *Detection rule*:
+- **ASCII block** — detection runs in two tiers, mirroring [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Detection rule*:
   1. **Canonical (deterministic):** fence opens with exactly ` ```ascii ` (lowercase). Payload is trusted as a diagram, no glyph inspection. Scan emits `detection_mode: "canonical"`. This is the form the editor must use for all new ASCII.
   2. **Legacy heuristic (fallback):** fence opens with an empty / `text` / `diagram` language tag AND payload contains box / arrow glyphs (`─│┌┐└┘├┤┬┴┼+|→←↑↓` or `->`, `==>`, `─`, `│`) or spans ≥3 lines with spatially arranged characters. Scan emits `detection_mode: "legacy-heuristic"` and the `human` formatter prints a migration warning per legacy block.
 
@@ -171,7 +171,7 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 For each block with `render` non-null:
 
-**`svg_basename` is accepted with or without the `.svg` extension.** The canonical form (per the illustrator's filename convention in [`.claude/roles/illustrator.md`](../../roles/illustrator.md)) includes `.svg` — e.g. `s1-2-1-cuatro-senales.svg`. If a stem-only form is passed (`s1-2-1-cuatro-senales`), both `extract` and `cleanup` normalize it: the sidecar lands at `<stem>.ascii` and the `final.md` image reference resolves to `images/<stem>.svg`. Mismatched leniency between the two subcommands was a real bug — an extension-less annotation used to land a correct sidecar but a 404-ing image reference. Both paths are now symmetric.
+**`svg_basename` is accepted with or without the `.svg` extension.** The canonical form (per the illustrator's filename convention in [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)) includes `.svg` — e.g. `s1-2-1-cuatro-senales.svg`. If a stem-only form is passed (`s1-2-1-cuatro-senales`), both `extract` and `cleanup` normalize it: the sidecar lands at `<stem>.ascii` and the `final.md` image reference resolves to `images/<stem>.svg`. Mismatched leniency between the two subcommands was a real bug — an extension-less annotation used to land a correct sidecar but a 404-ing image reference. Both paths are now symmetric.
 
 1. **Sidecar.** Write `talks/<Talk>/images/<stem>.ascii` where `<stem>` is `svg_basename` minus `.svg`. Content layout:
    - ASCII payload verbatim (no fence, no leading/trailing blank-line manipulation).
@@ -195,7 +195,7 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 - Writes only under `talks/<Talk>/images/` (sidecars) and to `final.md` itself.
 - Never reads or writes `draft.md`.
 - Does **not** render SVGs — that's `talksmith:ascii-to-svg`.
-- Does **not** assign `svg_basename` — the illustrator does (filename convention spec in `.claude/roles/illustrator.md`).
+- Does **not** assign `svg_basename` — the illustrator does (filename convention spec in `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`).
 - Does **not** strip `Presenter feedback` (Step 6 (d)) or consolidate non-ASCII image refs (Step 6 (b)) — those remain editor responsibilities.
 
 ## Exit codes

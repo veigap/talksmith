@@ -1,7 +1,7 @@
 """Audit every `<p:pic>` in a rendered .pptx for aspect-ratio preservation.
 
 Why this exists:
-    `config/pptx-styles/strict/pptx-prompt.md` §12 forbids non-uniform image scaling — the
+    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md` §12 forbids non-uniform image scaling — the
     rendered `cx:cy` of every `<p:pic>` must equal the source asset's
     intrinsic `width:height`. Prose alone is not enough: renderers can
     place a wide-aspect SVG (e.g. 2.143:1) into a narrower placeholder

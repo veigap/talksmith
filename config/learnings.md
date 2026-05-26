@@ -1,6 +1,6 @@
 # Learnings
 
-> Format spec, loading semantics, and promotion rules live in [`.claude/schemas/learnings.md`](../.claude/schemas/learnings.md).
+> Format spec, loading semantics, and promotion rules live in [`${CLAUDE_PLUGIN_ROOT}/schemas/learnings.md`](${CLAUDE_PLUGIN_ROOT}/schemas/learnings.md).
 
 ## Entries
 
@@ -12,7 +12,7 @@
 
 **Why:** A renderer that strips emojis instead of swapping them to §17 catalog icons, or picks §10 plain bullets when §15.5's discriminator selects §7.5, ships a §19.6-clean deck that still violates the substantive spec. The defect is invisible to the §19.6 anti-pattern scan and surfaces only at visual review — by which point the iteration budget is consumed on cosmetic re-renders that don't address the root cause (a renderer matching on surface signals rather than driving from the discriminator).
 
-**Where it applies:** Every PPTX render (Step 8). Applies to all future Talks in this fork, not just to the originating incident. Especially load-bearing for slides whose source has 3+ labeled bullets, ≥4 images, ≥4 `### Subhead` groups, fenced code blocks, or emoji prefixes on bullets.
+**Where it applies:** Every PPTX render (Step 8). Applies to all future Talks in this working directory, not just to the originating incident. Especially load-bearing for slides whose source has 3+ labeled bullets, ≥4 images, ≥4 `### Subhead` groups, fenced code blocks, or emoji prefixes on bullets.
 
 **Evidence:** senales-1d-biomedicina:2026-05-25 — first render shipped §10 plain bullets on two slides where the §15.5 discriminator mandated §7.5 (longest body > 80 chars), stripped emojis on multiple bullets where §17.7 mandated catalog-icon swap, and emitted inconsistent bullet shapes (one code path used `<a:buChar>`, another used a literal `•` glyph in text runs). Root-caused to surface-match rendering rather than discriminator-driven layout selection.
 

@@ -2,7 +2,7 @@
 the §2 palette + §3.1 font set.
 
 Why this exists:
-    `config/pptx-styles/{strict,free-form}/pptx-prompt.md` §2 declares
+    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/{strict,free-form}/pptx-prompt.md` §2 declares
     a tight color palette and §3.1 declares three permitted typefaces.
     Both rules are part of the **floor** that holds in every render
     style — strict and free-form alike. Off-palette colors (e.g. an

@@ -5,7 +5,7 @@ description: Fetch a web page (HTML + best-effort Markdown extraction + referenc
 
 # talksmith:ingest — Capture a web page as Talk research
 
-This skill downloads one web page and stores it under the active Talk's `research/web/<folder-name>/` so the [`librarian`](../../roles/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
+This skill downloads one web page and stores it under the active Talk's `research/web/<folder-name>/` so the [`librarian`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
 
 The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python script (no `requests`, no `beautifulsoup4`, no external deps). The skill is the orchestration wrapper: it locates the active Talk, runs the script, surfaces errors back to the orchestrator.
 
@@ -41,7 +41,7 @@ The folder is **never overwritten by default** — if it already exists and is n
 2. **Run the fetcher:**
 
    ```bash
-   python3 .claude/skills/ingest/fetch.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ingest/fetch.py \
      <url> \
      --talk-path talks/<Talk>/ \
      [--folder-name <slug>] \

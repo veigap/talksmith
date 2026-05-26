@@ -6,7 +6,7 @@ Why this exists:
     ratio (viewBox) when sizing its placement slot. If the SVG arrives
     with a missing viewBox, a `preserveAspectRatio="none"` hint, or
     root width/height attrs that disagree with the viewBox, every
-    downstream guarantee — including `.claude/skills/md-to-pptx/
+    downstream guarantee — including `${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/
     audit_aspect_ratios.py` — silently breaks. The PPTX audit is a
     backstop; this script is the upstream gate so a broken SVG never
     reaches disk.

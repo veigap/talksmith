@@ -1,10 +1,10 @@
 # Schema — `config/feedback-processed.md`
 
-Specification for [`config/feedback-processed.md`](../../config/feedback-processed.md): the archive of feedback-backlog entries that have been promoted to learnings.
+Specification for [`config/feedback-processed.md`](config/feedback-processed.md): the archive of feedback-backlog entries that have been promoted to learnings.
 
 ## Purpose
 
-Moves promoted entries out of [`config/feedback-backlog.md`](../../config/feedback-backlog.md) so the backlog stays lean and only holds patterns that haven't yet crossed the 3-occurrence promotion threshold. Preserves the full audit trail behind each `learnings.md` entry — the chain from a learning back to the originating feedback bullets is recoverable by scanning this file for the matching `promoted_to:` value.
+Moves promoted entries out of [`config/feedback-backlog.md`](config/feedback-backlog.md) so the backlog stays lean and only holds patterns that haven't yet crossed the 3-occurrence promotion threshold. Preserves the full audit trail behind each `learnings.md` entry — the chain from a learning back to the originating feedback bullets is recoverable by scanning this file for the matching `promoted_to:` value.
 
 ## Loading semantics
 
@@ -40,7 +40,7 @@ Every row in this file corresponds to a `learnings.md` entry referenced by `prom
 ```markdown
 # Feedback — processed
 
-> Format spec and audit-trail invariant live in [`.claude/schemas/feedback-processed.md`](../.claude/schemas/feedback-processed.md).
+> Format spec and audit-trail invariant live in [`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-processed.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-processed.md).
 
 ## Entries
 

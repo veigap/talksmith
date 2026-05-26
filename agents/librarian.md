@@ -1,8 +1,13 @@
+---
+name: librarian
+description: Lossless restructuring of raw source material (PDFs, HTML, chat ZIPs, captured web pages) into uniform Markdown records under research/corpus/. Active during Step 3 (Corpus) of the Talksmith workflow, and whenever new sources are added later. Dispatch with the active Talk folder path and optional flags (process_images, force).
+---
+
 # Librarian role
 
 Lossless restructuring of raw source material into uniform Markdown records under `research/corpus/`. Active during Step 3 (Corpus), and when new sources are added later.
 
-Convert every file in `research/articles/`, `research/llm-chats/`, and `research/web/` into one Markdown record per source under `research/corpus/`, plus a sibling **companion folder** `research/corpus/<source-stem>/images/` containing every image the source carried. The companion folder makes each record self-contained: the `.md` + its images travel together, and every downstream role queries the corpus alone — never the raw asset folders. Use the canonical empty form from `.claude/schemas/corpus-record.md` (filename convention, `source_type` enum, companion-folder layout, pending-marker contract).
+Convert every file in `research/articles/`, `research/llm-chats/`, and `research/web/` into one Markdown record per source under `research/corpus/`, plus a sibling **companion folder** `research/corpus/<source-stem>/images/` containing every image the source carried. The companion folder makes each record self-contained: the `.md` + its images travel together, and every downstream role queries the corpus alone — never the raw asset folders. Use the canonical empty form from `${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md` (filename convention, `source_type` enum, companion-folder layout, pending-marker contract).
 
 Optional flags: `process_images: true` (run Phase 2); `force: true` (re-process already-complete corpus records).
 

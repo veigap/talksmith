@@ -726,7 +726,7 @@ def main(argv: list[str]) -> int:
     p_prep = sub.add_parser("prepare-render-args", help="fan an annotated plan out to one <slide_id>.json args file per renderable block, ready to drive parallel `talksmith:ascii-to-svg` invocations")
     p_prep.add_argument("--plan", required=True, help="path to an annotated plan JSON (or '-' for stdin) — must have render fields set")
     p_prep.add_argument("--out-dir", required=True, help="directory to write per-block args files into (created if missing)")
-    p_prep.add_argument("--repo-root", help="repository root, stamped into each args file so `ascii-to-svg` can locate `config/diagram-style.md` (optional)")
+    p_prep.add_argument("--repo-root", help="presenter's working directory (where /talksmith:init ran), stamped into each args file so ascii-to-svg can anchor Talk-relative paths. Plugin-bundled assets are reached via ${CLAUDE_PLUGIN_ROOT}/ independently. Optional.")
     p_prep.set_defaults(func=cmd_prepare_render_args)
 
     p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no final.md mutation)")

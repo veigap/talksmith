@@ -48,7 +48,7 @@ at Step 6 (c):  feedback-cycle:rescue-open      (reads + writes final.md)
 List `[closed]` bullets in `draft.md` whose verbatim text is **not** already an entry in `feedback-backlog.md` for the current Talk. Used to catch closed-but-not-mirrored bullets — e.g. when a previous session closed a bullet but crashed before the mirror step.
 
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
     --draft talks/<Talk>/draft.md \
     --backlog config/feedback-backlog.md \
     [--format json|human]
@@ -73,7 +73,7 @@ JSON (one object per bullet): `{line, location, text, resolution, date}`.
 Rewrite a single **unstamped** bullet in `draft.md` to `[open]` form. Atomic per call.
 
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py stamp \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
     --draft talks/<Talk>/draft.md \
     --line 523 \
     [--date 2026-05-15]
@@ -90,7 +90,7 @@ Behaviour:
 Flip a single `[open]` bullet in `draft.md` to `[closed]` and write the `Resolution:` continuation line.
 
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py close \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
     --draft talks/<Talk>/draft.md \
     --line 523 \
     --resolution "<one-line summary of what changed in the slide>"
@@ -107,7 +107,7 @@ Behaviour:
 Append one closed-bullet entry to `feedback-backlog.md`. Reads from `draft.md`.
 
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py mirror-row \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
     --draft talks/<Talk>/draft.md \
     --backlog config/feedback-backlog.md \
     --line 523 \
@@ -119,14 +119,14 @@ Behaviour:
 - Auto-derives `location` by walking backwards from N to the nearest `## ` (slide) and `# ` (section). Special-cases `# Thesis`, `# Agenda`, `# Conclusion(es)`.
 - Auto-derives `talk` folder from the draft path (`talks/<folder>/draft.md` → `<folder>`).
 - Auto-uses the date already stamped on the `[closed]` line.
-- Appends to `## Entries` in the backlog using the schema row format (see [`.claude/schemas/feedback-backlog.md`](../../schemas/feedback-backlog.md)). The skill never invents tags — the editor picks them; if `--tags` is omitted, the row is appended with `tags: []` and a warning is printed.
+- Appends to `## Entries` in the backlog using the schema row format (see [`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md)). The skill never invents tags — the editor picks them; if `--tags` is omitted, the row is appended with `tags: []` and a warning is printed.
 
 ### `rescue-open`
 
 Walk `final.md` for every still-`[open]` bullet and append entries under `# Open questions`. Used by Step 6 (c) Polish to preserve un-applied feedback before the `Presenter feedback` strip. **Operates on `final.md` only** — `draft.md` retains the full unredacted feedback log; this rescue exists so the deliverable file (`final.md`) doesn't silently drop un-applied work when the strip pass removes the `Presenter feedback` blocks.
 
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py rescue-open \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-open \
     --final talks/<Talk>/final.md \
     [--dry-run]
 ```

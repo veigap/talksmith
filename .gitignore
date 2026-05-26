@@ -4,3 +4,4 @@ talks/*/output/
 talks/*/images/.critique/
 __pycache__/
 *.pyc
+.claude/settings.local.json

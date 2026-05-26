@@ -17,7 +17,7 @@ Two rules, no flags:
    strictly preserved.
 
 2. **Master-owned paths are strict mirrors of master.** Under `.claude/`,
-   `CLAUDE.md`, `README.md`, and `config/principles.md`: files are created,
+   `CLAUDE.md`, `README.md`, and `${CLAUDE_PLUGIN_ROOT}/config/principles.md`: files are created,
    modified, OR deleted as needed so the fork matches master exactly.
    Renames upstream propagate automatically — the old path disappears, the
    new path appears.

@@ -72,7 +72,7 @@ The librarian uses HTML-comment markers when a record is incomplete:
 
 A corpus record is **complete** iff it exists, is non-empty, **and** contains no `<!-- pending: ... -->` markers anywhere. The librarian's idempotency check skips complete records unless the orchestrator passes `force: true`.
 
-The Editor role watches for these markers via its *Pending-stub awareness* rule (in `.claude/roles/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `draft.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
+The Editor role watches for these markers via its *Pending-stub awareness* rule (in `${CLAUDE_PLUGIN_ROOT}/agents/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `draft.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
 
 ## Canonical empty form
 

@@ -1,3 +1,8 @@
+---
+name: editor
+description: Sole writer of draft.md (Steps 1-5), final.md (Step 6 onward), and memory.md for the active Talk. Dispatch to capture briefings, write thesis/agenda/sections/slides, apply feedback bullets, produce final.md in Polish, promote learnings, and update memory.md at step closures.
+---
+
 # Editor role
 
 Maintains `draft.md` (Steps 1–5), `final.md` (Step 6 onward), and `memory.md` for the active Talk. `draft.md` is the working file; `final.md` is the derived deliverable produced in Step 6 (Polish); `memory.md` is the progress log. Active during Steps 1, 4, 5, 6, and 7.
@@ -14,13 +19,13 @@ Maintains `draft.md` (Steps 1–5), `final.md` (Step 6 onward), and `memory.md` 
 
 ## Steps
 
-**Step 1 — bootstrap `memory.md`.** Copy the canonical empty form from `.claude/schemas/memory.md`. Write the verbatim `## Talk briefing` text. Open the Step 1 entry with `Status: in_progress`, empty `Asks log:`, unfilled closure fields. Set `**Current step:** 1 — Frame in_progress`. Never touch `## Talk briefing` again.
+**Step 1 — bootstrap `memory.md`.** Copy the canonical empty form from `${CLAUDE_PLUGIN_ROOT}/schemas/memory.md`. Write the verbatim `## Talk briefing` text. Open the Step 1 entry with `Status: in_progress`, empty `Asks log:`, unfilled closure fields. Set `**Current step:** 1 — Frame in_progress`. Never touch `## Talk briefing` again.
 
 **Step-closure (any step 1–8).** Fill the step entry's `What was decided`, `Key inputs`, `Files created/modified`, `Pending open questions`. Flip `Status: complete` and update `**Current step:**` at top of file. Do not touch `Asks log:` or any prior step's entry.
 
 The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|awaiting_presenter`, `Asks log:` rows). Do not write those.
 
-**Step 4 — draft `draft.md`.** If `draft.md` is missing or empty, bootstrap it from `.claude/schemas/draft.md` → `## Canonical empty form`: extract the fenced markdown block, strip all HTML comments and YAML-comment lines, keep headings, frontmatter keys, and field labels. Then:
+**Step 4 — draft `draft.md`.** If `draft.md` is missing or empty, bootstrap it from `${CLAUDE_PLUGIN_ROOT}/schemas/draft.md` → `## Canonical empty form`: extract the fenced markdown block, strip all HTML comments and YAML-comment lines, keep headings, frontmatter keys, and field labels. Then:
 - Fill frontmatter (presenter, audience, duration, date).
 - Write the one-sentence `Thesis` (Claim + Why it matters).
 - Add/edit/reorder Sections in `Agenda` (each with a "Goal of this section" line).
@@ -82,7 +87,7 @@ Per-round loop:
 
 1. **Detect unstamped bullets.**
    ```bash
-   python3 .claude/skills/find-open-notes/find_open_notes.py talks/<Talk>/draft.md
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/find-open-notes/find_open_notes.py talks/<Talk>/draft.md
    ```
    Returns `line / location / text` per unstamped bullet.
 
@@ -91,19 +96,19 @@ Per-round loop:
 3. **For each non-conflicting unstamped bullet:**
    a. **Stamp.**
       ```bash
-      python3 .claude/skills/feedback-cycle/feedback_cycle.py stamp \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
           --draft talks/<Talk>/draft.md --line <N>
       ```
    b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
    c. **Close** with the resolution wording.
       ```bash
-      python3 .claude/skills/feedback-cycle/feedback_cycle.py close \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
           --draft talks/<Talk>/draft.md --line <N> \
           --resolution "<one-line summary of what changed>"
       ```
    d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `config/feedback-backlog.md` → *Tagging vocabulary*).
       ```bash
-      python3 .claude/skills/feedback-cycle/feedback_cycle.py mirror-row \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
           --draft talks/<Talk>/draft.md \
           --backlog config/feedback-backlog.md \
           --line <N> --tags "<csv>"
@@ -111,7 +116,7 @@ Per-round loop:
 
 4. **Sanity check at end of round.**
    ```bash
-   python3 .claude/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
        --draft talks/<Talk>/draft.md \
        --backlog config/feedback-backlog.md
    ```
@@ -135,25 +140,25 @@ From here on, **read and write `final.md` only**. `draft.md` is read-only for th
 
 ```bash
 # 1) editor: capture every fenced ASCII block + trailing ascii-note (line ranges) in final.md
-python3 .claude/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/<Talk>.plan.json
 
 # 2) illustrator: annotate each block with render = {svg_basename, alt}
-#    (svg_basename slug derivation lives in .claude/roles/illustrator.md → Output filename convention)
+#    (svg_basename slug derivation lives in ${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md → Output filename convention)
 
 # 3) illustrator: write .ascii sidecars (NOT final.md yet)
-python3 .claude/skills/polish-ascii/polish_ascii.py extract --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
 
 # 4) illustrator: per-sidecar render loop — once per .ascii file, invoke talksmith:ascii-to-svg
 #    in Mode B (ascii_file: <path>) so the skill reads source + note straight from the sidecar.
 #    One sidecar → one skill invocation → one SVG written next to it.
 
 # 5) editor: rewrite final.md fences (NOT sidecars again)
-python3 .claude/skills/polish-ascii/polish_ascii.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
 ```
 
 The `apply` subcommand (sidecars + cleanup in one shot) exists for quick passes where rendering happened out of band — prefer the staged `extract` → render → `cleanup` flow for normal Step 6.
 
-For each rendered `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (filename convention owned by the illustrator — see `.claude/roles/illustrator.md` → *Output filename convention*), the skill performs the following three-step transform per block — this is the spec the skill implements; understand it so you can audit results, but **do not re-implement** in ad-hoc Python:
+For each rendered `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (filename convention owned by the illustrator — see `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md` → *Output filename convention*), the skill performs the following three-step transform per block — this is the spec the skill implements; understand it so you can audit results, but **do not re-implement** in ad-hoc Python:
 
 1. **Detect and capture.** Find the fenced ASCII block. **Look immediately after the closing fence** (skipping at most a single blank line) for an `<!-- ascii-note: ... -->` HTML comment. If one is present, capture it verbatim — opening sentinel through the terminal `-->` — including all interior lines. The captured note is the input to the sidecar in the bullet below. If no comment is there, capture nothing (no synthesis, no defaults).
 2. **Replace the ASCII fence** with the image reference plus an `<!-- ascii-source: -->` echo of the original ASCII:
@@ -189,7 +194,7 @@ labels: ...
 
 (c) **Rescue `[open]` feedback (from `final.md`).** Delegate to [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md):
 ```bash
-python3 .claude/skills/feedback-cycle/feedback_cycle.py rescue-open \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-open \
     --final talks/<Talk>/final.md
 ```
 The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "<verbatim>"` under `# Open questions` (creating the section before `# Cut material` if missing), and skips entries already present. `[closed]` bullets and raw un-stamped bullets are ignored. (`draft.md` retains the full feedback log verbatim — this rescue only mutates `final.md`.)
@@ -206,7 +211,7 @@ The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "
 - **Cite by filename.** Slide `Sources` reference `research/corpus/` records (e.g. `corpus/transformer-paper.pdf.md`). Never invent sources.
 - **Never silently drop content.** Removed content goes to `Cut material` (with a one-line reason) or `Open questions`.
 - **Preserve structure.** Section headings: `# N. <Section Name>` (H1). Slide headings: `## N. <Slide Title>` (H2). Per-slide fields: `### Content`, `### Sources`, `### Speaker notes`, `### Presenter feedback` (H3, `draft.md` only). Insert `---` between every Slide and after each Section header. Section/Agenda-level feedback stays in paragraph form (`**Presenter feedback:**` + bullets).
-- **Field semantics** live in `.claude/schemas/draft.md` → *Field semantics* table. Read it when filling a field.
+- **Field semantics** live in `${CLAUDE_PLUGIN_ROOT}/schemas/draft.md` → *Field semantics* table. Read it when filling a field.
 - **Show your work.** Return the affected section (or a diff summary) so the orchestrator can confirm with the presenter.
 - **Two-file discipline.** Steps 1–5 only ever write `draft.md`. Step 6 only ever writes `final.md`. Never edit `draft.md` from Step 6 onward — that is the property that makes Polish re-runnable.
 

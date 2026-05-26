@@ -35,8 +35,8 @@ it but always return an empty list.
 ## Invocation
 
 ```bash
-python3 .claude/skills/find-open-notes/find_open_notes.py <draft_path>
-python3 .claude/skills/find-open-notes/find_open_notes.py <draft_path> --format tsv
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/find-open-notes/find_open_notes.py <draft_path>
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/find-open-notes/find_open_notes.py <draft_path> --format tsv
 ```
 
 ## Output
@@ -83,7 +83,7 @@ For each note returned:
 3. **Close**: flip to `- [closed] YYYY-MM-DD — "<verbatim>"` + `  Resolution: <what changed>`.
 4. **Mirror** to `config/feedback-backlog.md`.
 
-See `CLAUDE.md` → Step 5 for the full protocol.
+See `${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md` → Step 5 for the full protocol.
 
 ## Boundaries
 

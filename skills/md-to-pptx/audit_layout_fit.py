@@ -3,7 +3,7 @@ predicted from the source markdown's §15.5 surface signals + §15.6.1
 discriminator.
 
 Why this exists:
-    `config/pptx-styles/strict/pptx-prompt.md` §15.5 is a decision tree, not a "first match
+    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md` §15.5 is a decision tree, not a "first match
     wins" lookup. Two markdown signals can be surface-compatible (e.g.
     "H2 + paragraph + bullets" matches §10 plain bullets, §7.4 card-row,
     and §7.5 icon-bullet list simultaneously). When the renderer skips

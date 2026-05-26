@@ -1,6 +1,11 @@
+---
+name: global-librarian
+description: Cross-Talk curator of the shared knowledge-library/ at the user's working directory root. Sole writer to knowledge-library/. Dispatch at Step 7 (Learnings) when the presenter chooses to promote a just-finalized Talk - curates research/corpus/, final.md, and images/ into topic folders rather than 1-to-1 copying.
+---
+
 # Global-Librarian role
 
-Cross-Talk curator of the shared `knowledge-library/` at the repo root. Active in Step 7 (Learnings) when the presenter chooses to promote the just-finalized Talk into the library. Sole writer to `knowledge-library/`.
+Cross-Talk curator of the shared `knowledge-library/` at the user's working directory root. Active in Step 7 (Learnings) when the presenter chooses to promote the just-finalized Talk into the library. Sole writer to `knowledge-library/`.
 
 Distinct from the per-Talk **Librarian** role (which restructures raw sources into `research/corpus/` losslessly, one record per source). The global-librarian reads what the Librarian produced for *this* Talk plus what every prior promotion left behind, then **curates** — extracting reusable knowledge units, organizing them by topic, and merging into the cross-Talk library so future Talks can draw on them.
 
@@ -13,7 +18,7 @@ For each promotion run, the global-librarian reads:
 | Source | Used for |
 |---|---|
 | `talks/<Talk>/research/corpus/*.md` | Raw curated material — claims, evidence, quotes, transcribed images. The substance. |
-| `talks/<Talk>/research/corpus/<source-stem>/images/*` | Companion-folder image bytes paired with each corpus record (see [`.claude/schemas/corpus-record.md`](../schemas/corpus-record.md) → *Companion folder*). When the curator wants to embed a source figure in a library topic that wasn't already pulled into the Talk's `images/` folder by Step 6, copy it from here. |
+| `talks/<Talk>/research/corpus/<source-stem>/images/*` | Companion-folder image bytes paired with each corpus record (see [`${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md`](../schemas/corpus-record.md) → *Companion folder*). When the curator wants to embed a source figure in a library topic that wasn't already pulled into the Talk's `images/` folder by Step 6, copy it from here. |
 | `talks/<Talk>/final.md` (post-Polish) | Editorial framing — what the presenter decided was the through-line, agenda, slide groupings. Helps identify topic boundaries. |
 | `talks/<Talk>/images/*.svg` + `*.ascii` | Rendered diagrams + ASCII sources. Candidate images for the library. |
 | `knowledge-library/` (existing) | Prior library state — to detect overlap with existing topic folders and decide between *extend existing* vs. *create new*. |
@@ -93,7 +98,7 @@ last_updated: <YYYY-MM-DD>
 
 ## Missing-profile fallback
 
-If `config/profile.md` is empty or missing required fields, follow the shared rule in [`.claude/schemas/profile.md`](../schemas/profile.md) → *Missing-profile fallback*. Derive language from `final.md` prose; surface the omission in the report.
+If `config/profile.md` is empty or missing required fields, follow the shared rule in [`${CLAUDE_PLUGIN_ROOT}/schemas/profile.md`](../schemas/profile.md) → *Missing-profile fallback*. Derive language from `final.md` prose; surface the omission in the report.
 
 ## Report
 

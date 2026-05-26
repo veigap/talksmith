@@ -13,7 +13,7 @@ Each Talk has at most one of each. The shape defined here is parsed downstream b
 | Frontmatter, Thesis claim, Agenda arc, Section goals, Slide Content / Sources / Speaker notes, Conclusions, Cut material | Present | Present (verbatim copy from `draft.md`) |
 | `Presenter feedback` blocks (Thesis / Agenda / Section / Slide) | Append-only log of `- "..."`, `[open]`, and `[closed]` bullets — the audit trail | **Removed entirely** by Step 6 (d) (the strip targets the field at every level, in all three syntactic forms) |
 | Fenced ` ```ascii ` blocks (render-driving — slide has no Markdown image ref) | Present, with optional trailing `<!-- ascii-note: ... -->` HTML comment | Replaced by `![alt](images/<slide-id>-<n>-<short-description>.svg)` plus a `<!-- ascii-source: ... -->` echo. The `<!-- ascii-note: ... -->` HTML comment stays in place |
-| Fenced ` ```ascii ` blocks (documentation-only — slide already carries a Markdown image ref) | Present | **Left verbatim** — no render, no sidecar, no fence rewrite. The image link wins; the ASCII is inline aid for whoever reads `final.md` source. (See [editor.md](../roles/editor.md) → *Optional ASCII alongside an image link* and [illustrator.md](../roles/illustrator.md) → *Render-driving vs. documentation-only*.) |
+| Fenced ` ```ascii ` blocks (documentation-only — slide already carries a Markdown image ref) | Present | **Left verbatim** — no render, no sidecar, no fence rewrite. The image link wins; the ASCII is inline aid for whoever reads `final.md` source. (See [editor.md](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Optional ASCII alongside an image link* and [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Render-driving vs. documentation-only*.) |
 | `![alt](path)` image refs | Present, may point at corpus-companion paths, external paths, etc. | Present, **all** rewritten to `images/<basename>` (remote URLs are the only exception — left untouched) |
 | `# Open questions` | Present, anything genuinely undecided | Present, also receives any **un-applied `[open]`** bullets rescued from feedback blocks before the strip |
 
@@ -104,7 +104,7 @@ The illustrator derives SVG filenames from the same numbering: `s<section>-<slid
 
 `Presenter feedback` fields at Thesis, Agenda, every Section, and every Slide are append-only logs during Steps 4–5, then **stripped wholesale from `final.md`** during Step 6 (Polish). They remain in `draft.md` verbatim — `draft.md` is the audit trail. The audit trail also survives because:
 
-1. every `[closed]` bullet is mirrored into [`config/feedback-backlog.md`](../../config/feedback-backlog.md) by the editor during Review,
+1. every `[closed]` bullet is mirrored into [`config/feedback-backlog.md`](config/feedback-backlog.md) by the editor during Review,
 2. any `[open]` bullets still un-applied at the moment of Polish are rescued by the editor into `# Open questions` **in `final.md`** (location + verbatim quote) **before** the strip, and
 3. git history preserves prior `draft.md` states.
 
@@ -130,10 +130,10 @@ The Editor role bootstraps `talks/<Talk>/draft.md` from this form on its first S
 ```markdown
 ---
 # presentation: one-line subject of the talk (e.g. "Intro to GANs for non-ML engineers")
-# Fork-level — same across every Talk in this fork (sourced from profile.md Subject).
+# Subject-level — same across every Talk in this working directory (sourced from profile.md Subject).
 presentation: <One-line subject of the talk>
 # subtitle: per-class topic — renders on the cover slide below the Subject in smaller font.
-# Required (not optional). One short line; do not duplicate the Subject. Example for a fork
+# Required (not optional). One short line; do not duplicate the Subject. Example for a working directory
 # whose Subject is "Inteligencia Artificial Generativa Para Biomedicina":
 #   subtitle: "Clase 3 — Ingeniería de prompts y técnicas avanzadas"
 subtitle: <Per-class topic, one line>
@@ -149,7 +149,7 @@ audience:
 duration:
 # date: when the talk is delivered (ISO format YYYY-MM-DD)
 date:
-# style: PPTX render style — see config/pptx-styles/README.md.
+# style: PPTX render style — see ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md.
 # Allowed: strict (spec-driven, base-template + emit-rules + 12-practice rubric)
 #        | free-form (LLM picks layout per slide; floor = cover + palette + fonts + white bg; 8-practice design rubric)
 # REQUIRED — Editor asks at Step 1 (Frame) with 2 candidates derived from the briefing.
