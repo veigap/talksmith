@@ -45,7 +45,7 @@ The Editor role generates a stable `entry id` per promotion (incrementing intege
    - **Promote** — append a new entry here.
    - **Move** — relocate the contributing backlog rows from `feedback-backlog.md` to [`config/feedback-processed.md`](config/feedback-processed.md), stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes this file directly. See *Step 7* in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) for the full protocol.
+The orchestrator never writes this file directly. See *Step 7* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
 
 ## Canonical empty form
 

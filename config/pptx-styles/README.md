@@ -24,7 +24,7 @@ style: strict        # or: free-form
 ---
 ```
 
-Default when absent: `strict` (the safer, more constrained mode). The Editor asks the presenter at Step 1 (Frame) per [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) → *Step 1*, proposing 2 candidates derived from the Step-1 briefing's signals (deck-purpose, audience, delivery context).
+Default when absent: `strict` (the safer, more constrained mode). The Editor asks the presenter at Step 1 (Frame) per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 1*, proposing 2 candidates derived from the Step-1 briefing's signals (deck-purpose, audience, delivery context).
 
 ## What the styles share
 
@@ -35,13 +35,13 @@ Four rules hold in **every** style — the floor. A render that violates any of 
 3. **Font palette (§3 in each spec)** — every `<a:latin typeface="…"/>` is Roboto / Roboto Mono Medium / Consolas. Audited by the same script.
 4. **White background (§1 in each spec)** — every slide carries a pure-white `<p:bg>` solid fill.
 
-The **render cycle itself** (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) → *Render cycle*. What differs per style is the **content** of CONTROL (which audits fire) and the **content** of FEEDBACK (which rubric the orchestrator walks):
+The **render cycle itself** (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Render cycle*. What differs per style is the **content** of CONTROL (which audits fire) and the **content** of FEEDBACK (which rubric the orchestrator walks):
 
 | Phase | strict | free-form |
 |---|---|---|
 | GENERATE | per `strict/pptx-prompt.md` §19.3 7-stage workflow + §15.5 emit-rules | per `free-form/pptx-prompt.md` §5 layout dispatch (slide-by-slide judgment) |
 | CONTROL | aspect-ratio + layout-fit + block-coverage + palette/fonts + cover-fidelity + OOXML | aspect-ratio + block-coverage + palette/fonts + cover-fidelity + OOXML (layout-fit skipped — no spec-predicted layout to compare) |
-| FEEDBACK | 12-practice rubric ([`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) → *Post-render visual review*) | 8-practice free-form design rubric (`free-form/pptx-prompt.md` §6) |
+| FEEDBACK | 12-practice rubric ([`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Post-render visual review*) | 8-practice free-form design rubric (`free-form/pptx-prompt.md` §6) |
 | REGENERATE | re-render touched slides | same |
 
 The generate-control-feedback-improve loop is **the constant**; the rules it loops against are what the `style:` field switches.
@@ -61,4 +61,4 @@ No other style's files need to change. That's the point of the split.
 
 ## Cross-refs from style-agnostic prose
 
-Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (CLAUDE.md, SKILL.md, the audit scripts, the schemas) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the active Talk's `style:` field. The style-agnostic audit scripts (aspect-ratio, block-coverage, palette-fonts) take the active style's `pptx-prompt.md` path as an input where needed; the layout-fit audit is `strict`-only and lives unchanged in the skill.
+Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (`orchestrator.md`, SKILL.md, the audit scripts, the schemas) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the active Talk's `style:` field. The style-agnostic audit scripts (aspect-ratio, block-coverage, palette-fonts) take the active style's `pptx-prompt.md` path as an input where needed; the layout-fit audit is `strict`-only and lives unchanged in the skill.

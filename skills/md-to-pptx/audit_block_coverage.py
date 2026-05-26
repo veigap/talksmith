@@ -6,7 +6,7 @@ Why this exists:
     vertical room on a busy slide and silently skip the trailing
     block from emission (e.g. a callout bullet whose preceding table
     consumed the body area, pushing it past `effective_bottom`).
-    The visual-review rubric in `CLAUDE.md` → Step 8 does not ask
+    The visual-review rubric in `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` → Step 8 does not ask
     "is every source block present in the render," so a silent drop
     produces no rubric hit — the slide ships missing content. This
     audit is the deterministic catch: a build-time gate that fails

@@ -149,13 +149,13 @@ Strict converts pipe-tables to card-grid because the source 53-slide reference d
 
 ## 6. FEEDBACK rubric — 8 practices
 
-When the [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG. Same per-defect line format as strict (`slide N · practice K · <description> → <fix in this iteration | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
+When the [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG. Same per-defect line format as strict (`slide N · practice K · <description> → <fix in this iteration | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
 
 Practice #0 is the block-coverage precondition (same as strict practice #0 — every source block must appear as a shape on the rendered slide; enforced by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) in CONTROL before FEEDBACK runs). The remaining 8 practices are free-form-specific.
 
 | # | Practice | What to look for |
 |---|---|---|
-| 0 | **Block-coverage precondition** | Same as strict — see [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) Step 8 → *Post-render visual review*. Enforced by audit in CONTROL; if `[block-drop]`, do not enter FEEDBACK. |
+| 0 | **Block-coverage precondition** | Same as strict — see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) Step 8 → *Post-render visual review*. Enforced by audit in CONTROL; if `[block-drop]`, do not enter FEEDBACK. |
 | 1 | **Composition rhythm** | Across the deck, layout variety reads as *paced*, not random and not monotonous. Three consecutive identical card grids bore. Eight consecutive radically-different layouts read as chaos. The rhythm carries the audience between ideas; consecutive slides should feel like *steps in a sequence*, not *unrelated objects*. Read the per-slide `.layout-log.md` entries alongside the PNGs to judge whether sibling choices were made deliberately. |
 | 2 | **Focal hierarchy** | One element on each slide draws the eye first; supporting content recedes. The first element ≠ the most decorative; it should be the most *load-bearing* (the claim, the chart, the diagram). Ambiguity is a fail; intentional rejection of a single focal point (e.g. a tiled gallery where variety *is* the message) is allowed but the critic must call it out as deliberate. |
 | 3 | **Color use within palette** | §2 palette membership is enforced by `audit_palette_fonts.py` in CONTROL — every color is in-palette by the time FEEDBACK starts. This practice judges whether the chosen color is **emotionally apt** to the slide's content. A `#DA1B2E` bright-red callout on a slide about a privacy breach reads wrong even though red is in-palette. In-palette is a floor, not a pass. |
@@ -173,7 +173,7 @@ Practice #0 is the block-coverage precondition (same as strict practice #0 — e
 
 ## 7. Render cycle integration
 
-The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) → *Render cycle*. This section names the free-form-specific content of each phase.
+The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Render cycle*. This section names the free-form-specific content of each phase.
 
 | Phase | What runs in free-form |
 |---|---|

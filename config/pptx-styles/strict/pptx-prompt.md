@@ -1,4 +1,4 @@
-Visual specification distilled from [`config/template.pptx`](template.pptx) (53 slides). All measurements are concrete and reproducible: a downstream generator should be able to emit `final.pptx` shapes matching the template by reading the EMU coordinates and color hexes verbatim from this file. For diagram-internal style see [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](diagram-style.md). Visual references for the two contractually-fixed slides are in [`template-previews/`](template-previews/) — they are the source of truth alongside this prose.
+Visual specification distilled from [`config/template.pptx`](template.pptx) (53 slides). All measurements are concrete and reproducible: a downstream generator should be able to emit `final.pptx` shapes matching the template by reading the EMU coordinates and color hexes verbatim from this file. For diagram-internal style see [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md). Visual references for the two contractually-fixed slides are in [`template-previews/`](template-previews/) — they are the source of truth alongside this prose.
 
 > **Starting a new deck?** Open [`config/base-template.pptx`](base-template.pptx) — it's the working foundation derived from this spec: cover + agenda with `{{placeholders}}` to substitute, a red separator banner, and 10 example slides demonstrating every recurring layout pattern. Each example slide carries a `TEMPLATE — <LAYOUT>` pill so it's unambiguous during generation. See **§17** for the branded icon library, **§18** for a slide-by-slide reference of `base-template.pptx`, and **§19** for the operating guide an agent/skill follows when rendering `final.md` into `.pptx` (reading order, workflow stages, output contract, anti-patterns).
 
@@ -15,7 +15,7 @@ Visual specification distilled from [`config/template.pptx`](template.pptx) (53 
 | Slide background | **Pure white `#FFFFFF`** on every slide. No tints, no off-whites, no warm greys. Emit as a single `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg>` on every layout. (Historical note: the source 53-slide reference deck used a black `<p:bg>` + 95%-alpha white overlay producing apparent `#F2F2F2`; this working directory has standardized on pure white. Generators must emit `#FFFFFF` solid — do not reproduce the legacy two-layer recipe.) |
 | Master chrome | **None** — `slideMaster1.xml` has an empty `<p:spTree>`. No footer, page number, or logo on master. Every visible mark lives on individual slides or layouts. |
 | Theme | `theme1.xml` declares Calibri Light / Calibri and the standard Office accent palette. **Zero slides use them** — every run overrides theme defaults at the `<a:rPr>` level. Treat the theme as residual scaffolding; never inherit from it. |
-| Speaker-notes pane | **Load-bearing, not decorative.** The reference 53-slide template happened to leave the pane sparse (mean ~2 chars/slide); that is a property of *that one* source deck, **not** the contract for generated decks. Per [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk; the slide is the punctuation*, the notes pane carries the prose the slide replaces. A generated deck with empty notes panes signals an over-authored deck where the slide is doing the speaker's job. The renderer emits every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim — no truncation, no dropping. |
+| Speaker-notes pane | **Load-bearing, not decorative.** The reference 53-slide template happened to leave the pane sparse (mean ~2 chars/slide); that is a property of *that one* source deck, **not** the contract for generated decks. Per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk; the slide is the punctuation*, the notes pane carries the prose the slide replaces. A generated deck with empty notes panes signals an over-authored deck where the slide is doing the speaker's job. The renderer emits every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim — no truncation, no dropping. |
 
 ---
 
@@ -128,7 +128,7 @@ A renderer should measure the title text width in Roboto Mono Medium and pick th
 
 ## 4. Slide 1 (Cover) — contractually fixed recipe
 
-> **Visual reference:** [`template-previews/slide-01-cover.png`](template-previews/slide-01-cover.png).
+> **Visual reference:** [`template-previews/base-template/slide-01.png`](template-previews/base-template/slide-01.png).
 >
 > **The cover is the deck's identity slide and must be reproduced byte-for-byte structurally.** Only the *content* of the four text/image shapes changes per Talk; positions, sizes, fonts, colors, and z-order are fixed. The institution logo (Universidad Austral) is part of the brand and never moves.
 
@@ -152,7 +152,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 | Slot | Source in `final.md` frontmatter | Example |
 |---|---|---|
 | Shape #1 text | `presentation:` (the Subject from `profile.md`) | `Inteligencia Artificial Generativa Aplicada en Biomedicina` |
-| Shape #2 text | `subtitle:` (Talk-specific, **required** — collected in Step 4 per CLAUDE.md). The Subject in shape #1 is subject-level and identical across every Talk; this subtitle is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
+| Shape #2 text | `subtitle:` (Talk-specific, **required** — collected in Step 4 per `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`). The Subject in shape #1 is subject-level and identical across every Talk; this subtitle is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
 | Shape #3 paragraph 1 | `Autor: <presenter>` — `<presenter>` from `profile.md` Presenter section | `Autor: Paulo Veiga/Marcos Sanchez Sorondo` |
 | Shape #3 paragraph 2 | `Última Modificación: <Month, YYYY>` from `final.md` frontmatter `date:` | `Última Modificación: Marzo, 2026` |
 | Shape #4 image | `ppt/media/image-1-1.png` (institution logo, never replaced unless presenter explicitly swaps brands) | (binary preserved verbatim) |
@@ -165,7 +165,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 
 ## 5. Slide 2 (Agenda) — contractually fixed recipe
 
-> **Visual reference:** [`template-previews/slide-02-agenda.png`](template-previews/slide-02-agenda.png).
+> **Visual reference:** [`template-previews/base-template/slide-02.png`](template-previews/base-template/slide-02.png).
 >
 > **The Agenda follows directly after the Cover and is the only navigation chrome in the deck.** It re-appears as a section divider at positions 12, 17, 21, 40, 45, 52 — each instance is identical except for **which numbered item is highlighted as active**. There are no other "section divider" layouts.
 
@@ -235,7 +235,7 @@ For reference, the source template (53 slides, 7 sections) placed its agenda re-
 
 Section H1s authored in `final.md` become both the agenda row text (§5.5) **and** the section pill text (§6) on every subsequent content slide in that section. Two consumers, two different visual envelopes — short titles serve both well; long titles strain both. Authoring guidance, not a render gate:
 
-- **Target ≤ 25 characters** per [`principles.md`](principles.md) line 34 → *Title-length budget*. At this length the agenda row renders at full type-scale and the §6 pill renders as a clean single-line chip at `sz="800"` without entering the downsize/wrap ladder.
+- **Target ≤ 25 characters** per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) line 34 → *Title-length budget*. At this length the agenda row renders at full type-scale and the §6 pill renders as a clean single-line chip at `sz="800"` without entering the downsize/wrap ladder.
 - **Acceptable up to ~50 characters.** The agenda still fits its row; the §6 pill renders single-line at `sz="800"` (up to ~3.1 in width). No quality loss.
 - **Long but renderable, ~50–80 characters.** The pill enters the downsize ladder (`sz="800" → "700" → "650"`) to stay single-line, or wraps to 2 lines at the smallest size. Renders cleanly — the renderer's §6 sizing algorithm is designed to never break — but the pill becomes visually heavier than ideal, and the agenda row may need a smaller subtitle to balance.
 - **Beyond ~80 characters.** Still renders without breaking, but the pill occupies enough horizontal space that the slide title below loses its visual primacy. Strong signal to abbreviate the H1 at authoring time. Common reshape: drop the descriptive subordinate clause and move it to the section subtitle (which renders in the agenda row but not in the per-slide pill).
@@ -269,7 +269,7 @@ Every content slide (49 of 53 — excluding cover, the 53 closing-CTA, and 3 unu
 5. **Multi-line fallback** (when single-line at `sz="650"` still exceeds the cap): the pill grows downward, never rightward, wrapping at the nearest whitespace before `pill_cx_max = 4.00 in`. `pill_cy = N_lines × line_h + 2 × vertical_padding` where `N_lines` is whatever the text requires (typically 2; rarely 3). The slide title's `y` offset (§3.5) shifts down by `(pill_cy − single_line_cy)` to preserve the gap between pill and title. The pill fill always covers the full text — no line ever hangs unstyled below the chip.
 6. **Floor — `sz="550"` (5.5pt).** Do not shrink below this; if a label at 5.5pt still requires multi-line wrap, accept the wrap. The renderer's contract is *always produce a non-broken pill*, regardless of label length — there is no length at which the renderer is permitted to fail, truncate, ellipsize, or let text overflow the background.
 
-**Authoring-side budget (cross-reference).** [`principles.md`](principles.md) line 34 recommends section H1s ≤ 25 characters as a deck-quality guideline — short pills read cleaner and leave more room for the slide title below. The renderer does **not** enforce this — long H1s render correctly via the downsize-then-wrap ladder above. The 25-char target is editorial guidance for the Editor / Composer in Step 4; the renderer's job is to make any length look clean. See §5.7 for the same guidance applied at agenda-authoring time.
+**Authoring-side budget (cross-reference).** [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) line 34 recommends section H1s ≤ 25 characters as a deck-quality guideline — short pills read cleaner and leave more room for the slide title below. The renderer does **not** enforce this — long H1s render correctly via the downsize-then-wrap ladder above. The 25-char target is editorial guidance for the Editor / Composer in Step 4; the renderer's job is to make any length look clean. See §5.7 for the same guidance applied at agenda-authoring time.
 
 **Anti-patterns.** Do not: emit a fixed-width pill independent of text (e.g. always 1.88 in because that was the median in the source deck); shrink the text below `sz="550"` to fit; silently truncate the label with an ellipsis (changes meaning; an audience reading "ECG — EL ELECTRO…" cannot recover the rest); let text overflow the pill background visually (the chip covers part of the text, the rest hangs in white).
 
@@ -605,7 +605,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.
 8. **Background.** Pure white `#FFFFFF` `<p:bg>` solid fill on every layout (§1). No overlays, no tints.
 9. **Fonts are always set at run level.** Never inherit from theme. Roboto Mono Medium for titles/labels/headings; Roboto for body; Consolas for code. No fallbacks.
-10. **Emit speaker notes verbatim into the notes pane.** Every `### Notes` block in `final.md` becomes the notes content of the corresponding slide — no truncation, no dropping. The pane is load-bearing per §1 and [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk*; do not treat it as decorative.
+10. **Emit speaker notes verbatim into the notes pane.** Every `### Notes` block in `final.md` becomes the notes content of the corresponding slide — no truncation, no dropping. The pane is load-bearing per §1 and [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk*; do not treat it as decorative.
 11. **The renderer never fixes content defects.** If the post-render visual review surfaces a slide whose title overflows because the title is too long, whose body crowds because it carries two ideas, whose section pill is missing because the H1 has no number, or whose notes pane is empty — those are **Step-4 / Step-5 / Step-6 authoring defects** surfacing late. The renderer's job is to apply the spec faithfully, not to shrink-fit a 60-character title into the H2 ladder's 17pt floor, drop a card to fit a budget, or invent a section pill text. When a content defect is detected at render time, stop the iteration budget, surface to the presenter with the exact rule violated (e.g. "Slide 14 H2 = 62 chars, exceeds the 40-char budget in `principles.md` → *Title-length budget*"), and offer either: (a) accept the defect for this ship and log to `feedback-backlog.md` with the `late-catch` tag, or (b) re-open the authoring stage that owns the defect. **Never silently compensate.** Renderer compensation is what causes the next Talk to re-introduce the same defect — the authoring stage never learned.
 
 ### 15.6 Pre-emit decision audit
@@ -638,7 +638,7 @@ This sub-section is the operational form of §10's bullet-glyph contract. The au
 
 #### 15.6.4 Surfacing protocol — what to do when the audit can't resolve
 
-When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the CLAUDE.md *Render cycle* 3-cycle cap) and surfaces a single structured prompt to the presenter:
+When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` *Render cycle* 3-cycle cap) and surfaces a single structured prompt to the presenter:
 
 ```
 [pptx pre-emit audit] Slide N — <H2 title>
@@ -908,7 +908,7 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
 | **5. Section dividers** | Between section k-1's last slide and section k's first slide (k = 2..N), emit an agenda re-emit with active dot at k. Total dividers = N − 1. | §5 + §5.6 |
 | **6. Backgrounds** | Pure white `#FFFFFF` `<p:bg>` solid fill on every layout. No overlays, no tints, no grey. | §1 |
-| **7. Speaker notes** | Emit every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim. The notes pane is **load-bearing**, not decorative — it carries the prose the slide replaces (per [`principles.md`](principles.md) → *Content* → *Speaker notes are the talk*). No truncation, no dropping; never spill notes content into the slide body. | §1 (Speaker-notes pane row) + [`principles.md`](principles.md) |
+| **7. Speaker notes** | Emit every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim. The notes pane is **load-bearing**, not decorative — it carries the prose the slide replaces (per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk*). No truncation, no dropping; never spill notes content into the slide body. | §1 (Speaker-notes pane row) + [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) |
 
 ### 19.4 Output contract
 
@@ -935,9 +935,9 @@ After emit, the renderer runs four checks in order before declaring the build a 
 3. **Block-coverage audit** — [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py): every callout and content image in `final.md` appears as the corresponding shape on the rendered slide.
 4. **Layout-fit audit** — [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py): for every content slide, the layout *predicted* from the §15.5 emit-rules table (recomputed from the source markdown's surface signals + §15.6.1 discriminator) equals the layout *emitted* in the rendered slide (inferred from shape composition — `<p:pic>` count and geometry, native `<a:tbl>` presence, bullet shape inventory, code-block presence, per-row icon presence). When predicted ≠ emitted, the audit fails with a structured report naming the source evidence, the emitted evidence, and the likely root cause (typically a §15.6.1 discriminator skip — §10 plain bullets shipped when §7.5 was selected, or content+image shipped when image-grid was selected). This catches the class of regression where the §19.6 anti-pattern check passes (no emojis, no native tables, no theme drift) but the substantive spec was bypassed.
 
-Only after all four pass: render the deck to PNG via `soffice --headless --convert-to pdf` + `pdftoppm` (or the native skill's slide-to-image endpoint), then walk the **12-practice visual review** in [`CLAUDE-INIT.md` Step 8](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) (Post-render visual review) as the cycle's FEEDBACK phase.
+Only after all four pass: render the deck to PNG via `soffice --headless --convert-to pdf` + `pdftoppm` (or the native skill's slide-to-image endpoint), then walk the **12-practice visual review** in [`orchestrator.md` Step 8](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) (Post-render visual review) as the cycle's FEEDBACK phase.
 
-Edit + re-render up to **3 cycles total** per the CLAUDE.md *Render cycle* cap. After the cap, surface unresolved defects to the presenter rather than looping.
+Edit + re-render up to **3 cycles total** per the `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` *Render cycle* cap. After the cap, surface unresolved defects to the presenter rather than looping.
 
 ### 19.6 Consolidated anti-patterns
 

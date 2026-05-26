@@ -35,7 +35,7 @@ This isn't about disk hygiene — it's about compounding value over time:
 
 If you present on three subjects, that's three working directories. Mixing subjects in one directory erodes every advantage above.
 
-**Keeping the plugin current.** The plugin and your subject working directories are now decoupled: subject directories hold only your data (`talks/`, `config/profile.md`, `config/learnings.md`, `config/feedback-*.md`, and the local copy of `CLAUDE.md` produced by `/talksmith:init`). The plugin itself — orchestrator spec, role specs, skills, schemas, design principles, image-style catalog, PPTX style packs — lives in the Claude Code plugin install and updates through the normal plugin update mechanism (`/plugin update talksmith` in the CLI, or the desktop app's plugin manager). No fork-sync, no `talksmith:upgrade` workflow, no master vs. user-owned path table to memorize.
+**Keeping the plugin current.** The plugin and your subject working directories are now decoupled: subject directories hold only your data plus a **thin `CLAUDE.md` stub** (~30 lines) that points at the plugin install. The operating spec itself — workflow, role contracts, schemas — lives entirely under `${CLAUDE_PLUGIN_ROOT}/` and updates through the normal plugin update mechanism (`/plugin update talksmith` in the CLI, or the desktop app's plugin manager). Because your `CLAUDE.md` is just a stub, **plugin updates flow straight through without re-running `/talksmith:init`** — the agent reads the latest orchestrator spec from the plugin on every session reload. The only time you'd re-init is if a plugin upgrade explicitly changes the session-start contract (new mandatory load, new directive); the upgrade notes will say so. No fork-sync, no `talksmith:upgrade` workflow, no master vs. user-owned path table to memorize.
 
 ## How it works
 
@@ -47,7 +47,7 @@ Five roles, one file as source of truth:
 - **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during the Polish step.
 - **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `final.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
 
-Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`CLAUDE-INIT.md`](CLAUDE-INIT.md), the file `/talksmith:init` copies as `CLAUDE.md` into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
+Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`CLAUDE-INIT.md`](CLAUDE-INIT.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
 
 ## Install
 
@@ -84,8 +84,8 @@ Talksmith ships as a **Claude Code plugin**: install once, then run `/talksmith:
    ```
    /talksmith:init
    ```
-   This copies `CLAUDE.md` into the working directory and scaffolds `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, and an empty `talks/` directory. The command is idempotent — re-running it after a plugin update only writes files that are missing.
-4. Say "Hi Talksmith" (or anything — the agent boots from the freshly-written `CLAUDE.md`). The Presenter Agent introduces itself and walks Step 0 → Step 0.5 → Step 1 from there.
+   This drops a thin `CLAUDE.md` stub into the working directory — that's the only file `/talksmith:init` writes. The stub instructs the agent to load the full operating spec from `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` at session start. Everything else (`config/profile.md`, `config/learnings.md`, the feedback logs, `talks/<folder>/…`) is created on demand by the orchestrator's Editor subagent in Step 0.5 / Step 1, bootstrapping from the *Canonical empty form* sections inside the plugin's [`schemas/`](schemas/). `/talksmith:init` is no-clobber and rarely needs to be re-run — plugin updates flow through automatically without touching this `CLAUDE.md`.
+4. Reload the Claude Code session (or start a new one in this directory). Say "Hi Talksmith" — the stub tells the agent to read the orchestrator spec from the plugin, then the Presenter Agent introduces itself and walks Step 0 → Step 0.5 → Step 1 from there.
 
 Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/research/articles/` and `talks/<folder>/research/llm-chats/`.
 
@@ -110,7 +110,7 @@ In either mode, after `/talksmith:init`, the Presenter Agent will:
 2. Load [`config/profile.md`](config/profile.md) if filled, or offer to fill it (Step 0.5).
 3. Ask in chat (with numbered options) whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
 
-Everything else flows from there. For the full operating spec, see the `CLAUDE.md` written into your working directory by `/talksmith:init` — its source is [CLAUDE-INIT.md](CLAUDE-INIT.md) in this repo.
+Everything else flows from there. The full operating spec lives at [`orchestrator.md`](orchestrator.md) in the plugin install; the small [`CLAUDE-INIT.md`](CLAUDE-INIT.md) stub copied into your working directory by `/talksmith:init` is what loads it at session start.
 
 ## Workflow
 
@@ -138,7 +138,7 @@ Everything else flows from there. For the full operating spec, see the `CLAUDE.m
   [8] Render PPTX  -- md-to-pptx (optional, Cowork only)
 ```
 
-Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [CLAUDE-INIT.md](CLAUDE-INIT.md) (copied into your subject working directory as `CLAUDE.md` by `/talksmith:init`).
+Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [orchestrator.md](orchestrator.md); the small [CLAUDE-INIT.md](CLAUDE-INIT.md) stub copied into your subject working directory by `/talksmith:init` tells the agent to load that spec on every session.
 
 ### Draft has three modes
 
@@ -172,7 +172,8 @@ There are two layouts to know: the **plugin layout** (what's in this repo, insta
 .
 ├── README.md                          # this file
 ├── CLAUDE.md                          # plugin development notes (for contributors editing this repo)
-├── CLAUDE-INIT.md                     # orchestrator spec — copied into user cwd as CLAUDE.md by /talksmith:init
+├── CLAUDE-INIT.md                     # thin stub (~30 lines) — copied into user cwd as CLAUDE.md by /talksmith:init
+├── orchestrator.md                    # full Presenter Agent operating spec — loaded at session start via the stub; stays in the plugin install
 ├── .claude-plugin/
 │   └── plugin.json                    # plugin manifest
 ├── agents/                            # five Claude Code subagents (dispatched by name)
@@ -205,13 +206,13 @@ There are two layouts to know: the **plugin layout** (what's in this repo, insta
     └── pptx-styles/{strict,free-form}/   # PPTX style packs (spec + base template)
 ```
 
-There is no `templates/` folder. `/talksmith:init` copies a single file (`CLAUDE-INIT.md` → cwd `CLAUDE.md`). Everything else — `config/profile.md`, `config/learnings.md`, the feedback logs, and the per-Talk directory tree under `talks/` — is created on demand by the orchestrator once `CLAUDE.md` is loaded, bootstrapping from the *Canonical empty form* sections inside each [`schemas/`](schemas/) spec.
+There is no `templates/` folder. `/talksmith:init` copies a single file (`CLAUDE-INIT.md` → cwd `CLAUDE.md`) — a ~30-line stub that points the agent at [`orchestrator.md`](orchestrator.md). Everything else — `config/profile.md`, `config/learnings.md`, the feedback logs, and the per-Talk directory tree under `talks/` — is created on demand by the orchestrator once the stub loads it, bootstrapping from the *Canonical empty form* sections inside each [`schemas/`](schemas/) spec.
 
 ### Subject working directory layout (after `/talksmith:init`)
 
 ```
 <your-subject-dir>/
-├── CLAUDE.md                          # copy of the plugin's CLAUDE-INIT.md — Claude Code auto-loads this
+├── CLAUDE.md                          # thin stub copied from the plugin's CLAUDE-INIT.md — Claude Code auto-loads this, which in turn loads ${CLAUDE_PLUGIN_ROOT}/orchestrator.md
 ├── config/
 │   ├── profile.md                     # filled in Step 0.5 (Subject, Presenter, audience, …)
 │   ├── learnings.md                   # durable rules promoted from feedback patterns

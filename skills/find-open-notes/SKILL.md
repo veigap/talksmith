@@ -83,7 +83,7 @@ For each note returned:
 3. **Close**: flip to `- [closed] YYYY-MM-DD — "<verbatim>"` + `  Resolution: <what changed>`.
 4. **Mirror** to `config/feedback-backlog.md`.
 
-See `${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md` → Step 5 for the full protocol.
+See `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` → Step 5 for the full protocol.
 
 ## Boundaries
 

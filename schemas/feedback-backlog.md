@@ -48,7 +48,7 @@ When the presenter declares `draft.md` final and Step 7 begins, the orchestrator
    - **Promote** — append a new entry to `learnings.md`.
    - **Move** — relocate the contributing backlog rows here into `feedback-processed.md`, stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes either file directly. See *Step 7* in [CLAUDE.md](${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md) for the full protocol.
+The orchestrator never writes either file directly. See *Step 7* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
 
 ## Direct-edit rule
 
