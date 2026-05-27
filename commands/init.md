@@ -13,22 +13,17 @@ This command does **only** the stub drop. No `config/` files, no `talks/` direct
 ## What to do
 
 1. Resolve the destination as `./CLAUDE.md` (cwd-relative — the user's project root).
-2. If `./CLAUDE.md` **already exists**, stop and emit one line:
-   ```
-   [init] CLAUDE.md already exists in this directory — leaving it untouched. Reload your Claude Code session if you want the orchestrator to take over.
-   ```
-   Do not overwrite. Re-running `/talksmith:init` against a working Talksmith project must be a no-op.
-3. Otherwise, copy the stub byte-for-byte:
+2. Copy the stub byte-for-byte, **always overwriting** any existing `./CLAUDE.md`:
    ```bash
-   cp "${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md" ./CLAUDE.md
+   cp -f "${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md" ./CLAUDE.md
    ```
-   Emit:
+   This is intentional: the stub is the session-start contract, and re-running `/talksmith:init` is the supported way to pick up changes to it. Any user-specific content belongs in `config/profile.md`, `config/learnings.md`, or the `talks/` tree — never in `CLAUDE.md`. Emit:
    ```
-   [init] CLAUDE.md created from ${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md (stub — the orchestrator spec is loaded at session start from ${CLAUDE_PLUGIN_ROOT}/orchestrator.md).
+   [init] CLAUDE.md written from ${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md (stub — the orchestrator spec is loaded at session start from ${CLAUDE_PLUGIN_ROOT}/orchestrator.md). Any prior CLAUDE.md in this directory was overwritten.
    ```
-4. Print the next-step block:
+3. Print the next-step block:
    ```
-   Next: reload this Claude Code session (or start a new one in this directory).
+   Next: run /clear to reload this Claude Code session (or start a new one in this directory).
    The stub will tell the agent to read the orchestrator spec from the plugin install,
    then walk you through Step 0 → Step 0.5 (profile setup) → Step 1 (Frame your first Talk).
 

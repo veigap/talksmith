@@ -4,13 +4,13 @@ This directory is a Talksmith **subject working directory**, initialized via `/t
 
 The split is deliberate. Plugin updates (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically. `/talksmith:init` is no-clobber and never rewrites this file. By keeping `CLAUDE.md` minimal, most plugin updates do **not** require re-running `/talksmith:init` — the orchestrator content the agent loads at session start is always the latest from the plugin.
 
-## MANDATORY — first action of every session
+## Operating spec — auto-loaded
 
-Before answering anything else, read [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) **in full**. That file contains the entire Presenter Agent spec — workflow Steps 0 → 8, the five subagents, role dispatch protocol, session-load contract, mandatory profile load, schema references, and all interaction defaults. Treat its content as if it were inline in this file.
+The full Presenter Agent spec is imported below via Claude Code's `@`-import mechanism. It loads into context at session start alongside this stub — no separate Read call required. Treat its content as if it were inline in this file.
 
-Repeat this read after every context compaction. The orchestrator's behavior is defined there, not here.
+@${CLAUDE_PLUGIN_ROOT}/orchestrator.md
 
-If you cannot read that file (plugin not installed, `${CLAUDE_PLUGIN_ROOT}` unset, file missing after a partial install), stop immediately and tell the user: "The Talksmith plugin's orchestrator spec is unreachable at `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. Re-install the plugin (`/plugin install talksmith@talksmith`) and reload this session." Do not attempt to proceed from this stub alone — it intentionally carries no operational detail.
+If the import above failed to resolve (plugin not installed, `${CLAUDE_PLUGIN_ROOT}` unset, file missing after a partial install), stop immediately and tell the user: "The Talksmith plugin's orchestrator spec is unreachable at `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. Re-install the plugin (`/plugin install talksmith@talksmith`) and reload this session." Do not attempt to proceed from this stub alone — it intentionally carries no operational detail.
 
 ## Working directory layout
 
