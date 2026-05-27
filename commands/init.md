@@ -13,15 +13,20 @@ This command does **only** the stub drop. No `config/` files, no `talks/` direct
 ## What to do
 
 1. Resolve the destination as `./CLAUDE.md` (cwd-relative — the user's project root).
-2. Copy the stub byte-for-byte, **always overwriting** any existing `./CLAUDE.md`:
+2. **Refuse to run inside the plugin source repo.** If `./.claude-plugin/plugin.json` exists in the cwd, stop immediately and emit:
+   ```
+   [init] Refusing to run: this directory is the Talksmith plugin source repo (./.claude-plugin/plugin.json exists). /talksmith:init is for user subject working directories, not the plugin source. The dev CLAUDE.md here is the plugin development notes — overwriting it would clobber documentation. cd into a separate working directory and re-run.
+   ```
+   Do not write anything. This guard exists because `/talksmith:init` always overwrites — without it, running this command in the plugin repo would destroy the dev `CLAUDE.md`.
+3. Copy the stub byte-for-byte, **always overwriting** any existing `./CLAUDE.md`:
    ```bash
-   cp -f "${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md" ./CLAUDE.md
+   cp -f "${CLAUDE_PLUGIN_ROOT}/talksmith-orch.md" ./CLAUDE.md
    ```
    This is intentional: the stub is the session-start contract, and re-running `/talksmith:init` is the supported way to pick up changes to it. Any user-specific content belongs in `config/profile.md`, `config/learnings.md`, or the `talks/` tree — never in `CLAUDE.md`. Emit:
    ```
-   [init] CLAUDE.md written from ${CLAUDE_PLUGIN_ROOT}/CLAUDE-INIT.md (stub — the orchestrator spec is loaded at session start from ${CLAUDE_PLUGIN_ROOT}/orchestrator.md). Any prior CLAUDE.md in this directory was overwritten.
+   [init] CLAUDE.md written from ${CLAUDE_PLUGIN_ROOT}/talksmith-orch.md (stub — the orchestrator spec is loaded at session start from ${CLAUDE_PLUGIN_ROOT}/orchestrator.md). Any prior CLAUDE.md in this directory was overwritten.
    ```
-3. Print the next-step block:
+4. Print the next-step block:
    ```
    Next: run /clear to reload this Claude Code session (or start a new one in this directory).
    The stub will tell the agent to read the orchestrator spec from the plugin install,

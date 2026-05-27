@@ -2,7 +2,7 @@
 
 This directory is a Talksmith **subject working directory**, initialized via `/talksmith:init`. The full Presenter Agent operating spec — workflow Steps 0 through 8, role contracts, schemas, interaction defaults — lives in the plugin install, **not** in this file. This stub exists so Claude Code (which auto-loads `CLAUDE.md` from the current directory) knows where to find everything else.
 
-The split is deliberate. Plugin updates (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically. `/talksmith:init` is no-clobber and never rewrites this file. By keeping `CLAUDE.md` minimal, most plugin updates do **not** require re-running `/talksmith:init` — the orchestrator content the agent loads at session start is always the latest from the plugin.
+The split is deliberate. Plugin updates (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically, and the auto-import at the top of this file pulls the latest `orchestrator.md` on every session start — so most plugin updates do **not** require re-running `/talksmith:init`. Re-run it only when the plugin's release notes say this stub's session-start contract changed; the command always overwrites, so a re-run cleanly replaces this file.
 
 ## Operating spec — auto-loaded
 
@@ -31,4 +31,4 @@ All operational content — the five subagents, the seven skills, the eight file
 ## Updating
 
 - **Plugin updates** (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically. The orchestrator spec, agents, skills, schemas, and bundled config update without touching this directory.
-- **`/talksmith:init` is one-shot.** It refuses to overwrite an existing `CLAUDE.md`. If a future plugin version changes the session-start contract documented above (new mandatory load, new directive), the upgrade notes will say "re-run `/talksmith:init`" — delete this file and re-init then.
+- **`/talksmith:init` always overwrites this file.** If a future plugin version changes the session-start contract documented above (new mandatory load, new auto-import, new directive), the upgrade notes will say "re-run `/talksmith:init`" — just run it again and the new stub replaces this one. User-owned content (profile, learnings, talks, feedback logs) lives in sibling files and directories, never in this stub, so overwriting is safe.

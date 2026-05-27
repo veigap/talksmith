@@ -47,7 +47,7 @@ Five roles, one file as source of truth:
 - **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during the Polish step.
 - **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `final.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
 
-Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`CLAUDE-INIT.md`](CLAUDE-INIT.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
+Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`talksmith-orch.md`](talksmith-orch.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
 
 ## Install
 
@@ -110,7 +110,7 @@ In either mode, after `/talksmith:init`, the Presenter Agent will:
 2. Load [`config/profile.md`](config/profile.md) if filled, or offer to fill it (Step 0.5).
 3. Ask in chat (with numbered options) whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
 
-Everything else flows from there. The full operating spec lives at [`orchestrator.md`](orchestrator.md) in the plugin install; the small [`CLAUDE-INIT.md`](CLAUDE-INIT.md) stub copied into your working directory by `/talksmith:init` is what loads it at session start.
+Everything else flows from there. The full operating spec lives at [`orchestrator.md`](orchestrator.md) in the plugin install; the small [`talksmith-orch.md`](talksmith-orch.md) stub copied into your working directory by `/talksmith:init` is what loads it at session start.
 
 ## Workflow
 
@@ -138,7 +138,7 @@ Everything else flows from there. The full operating spec lives at [`orchestrato
   [8] Render PPTX  -- md-to-pptx (optional, Cowork only)
 ```
 
-Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [orchestrator.md](orchestrator.md); the small [CLAUDE-INIT.md](CLAUDE-INIT.md) stub copied into your subject working directory by `/talksmith:init` tells the agent to load that spec on every session.
+Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [orchestrator.md](orchestrator.md); the small [talksmith-orch.md](talksmith-orch.md) stub copied into your subject working directory by `/talksmith:init` tells the agent to load that spec on every session.
 
 ### Draft has three modes
 
@@ -172,7 +172,7 @@ There are two layouts to know: the **plugin layout** (what's in this repo, insta
 .
 ├── README.md                          # this file
 ├── CLAUDE.md                          # plugin development notes (for contributors editing this repo)
-├── CLAUDE-INIT.md                     # thin stub (~30 lines) — copied into user cwd as CLAUDE.md by /talksmith:init
+├── talksmith-orch.md                     # thin stub (~30 lines) — copied into user cwd as CLAUDE.md by /talksmith:init
 ├── orchestrator.md                    # full Presenter Agent operating spec — loaded at session start via the stub; stays in the plugin install
 ├── .claude-plugin/
 │   └── plugin.json                    # plugin manifest
@@ -206,13 +206,13 @@ There are two layouts to know: the **plugin layout** (what's in this repo, insta
     └── pptx-styles/{strict,free-form}/   # PPTX style packs (spec + base template)
 ```
 
-There is no `templates/` folder. `/talksmith:init` copies a single file (`CLAUDE-INIT.md` → cwd `CLAUDE.md`) — a ~30-line stub that points the agent at [`orchestrator.md`](orchestrator.md). Everything else — `config/profile.md`, `config/learnings.md`, the feedback logs, and the per-Talk directory tree under `talks/` — is created on demand by the orchestrator once the stub loads it, bootstrapping from the *Canonical empty form* sections inside each [`schemas/`](schemas/) spec.
+There is no `templates/` folder. `/talksmith:init` copies a single file (`talksmith-orch.md` → cwd `CLAUDE.md`) — a ~30-line stub that points the agent at [`orchestrator.md`](orchestrator.md). Everything else — `config/profile.md`, `config/learnings.md`, the feedback logs, and the per-Talk directory tree under `talks/` — is created on demand by the orchestrator once the stub loads it, bootstrapping from the *Canonical empty form* sections inside each [`schemas/`](schemas/) spec.
 
 ### Subject working directory layout (after `/talksmith:init`)
 
 ```
 <your-subject-dir>/
-├── CLAUDE.md                          # thin stub copied from the plugin's CLAUDE-INIT.md — Claude Code auto-loads this, which in turn loads ${CLAUDE_PLUGIN_ROOT}/orchestrator.md
+├── CLAUDE.md                          # thin stub copied from the plugin's talksmith-orch.md — Claude Code auto-loads this, which in turn loads ${CLAUDE_PLUGIN_ROOT}/orchestrator.md
 ├── config/
 │   ├── profile.md                     # filled in Step 0.5 (Subject, Presenter, audience, …)
 │   ├── learnings.md                   # durable rules promoted from feedback patterns
