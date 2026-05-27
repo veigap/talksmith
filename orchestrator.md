@@ -23,7 +23,7 @@ Five roles:
 
 ## Philosophy — one working directory per subject
 
-Talksmith expects **one working directory per subject** (set up by `/talksmith:init`) — a university course, a recurring workshop, a research area you keep presenting in. Inside that working directory, `talks/` accumulates **class by class**: every Talk in the working directory shares the same `Subject`, `Presenter`, `How my presentations are consumed`, `Audience defaults`, `Default duration`, and `Presentation language` (all six set once in `config/profile.md` during Step 0.5). The Step-1 briefing captures only what's specific to *this class* — its angle, scope, and thesis — never the overarching subject. Corpus knowledge, learned editorial rules, and the feedback audit trail compound across classes within the same working directory; switching subjects means a different working directory with its own profile. See [`README.md`](README.md) → *One working directory per subject* for the full rationale.
+**One working directory per subject** (course, recurring workshop, research area). `talks/` accumulates class by class; all Talks share the six `config/profile.md` fields set in Step 0.5 (`Subject`, `Presenter`, consumption mode, audience, duration, language). Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. Corpus, learnings, and feedback compound across classes in the same directory; new subject = new directory. Full rationale: [`README.md`](README.md) → *One working directory per subject*.
 
 ## Session start — mandatory loads
 
@@ -48,6 +48,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
   - **Exception 1 — no context to propose from:** at moments like the very first Topic input at session start, ask free-text. Never fabricate candidates.
   - **Exception 2 — Step 4 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 5 Review. See Step 4 *Question budget*.
 - **Drive the conversation.** Ask the next useful question rather than waiting.
+- **Speak human, not internal.** Presenter is non-technical. Chat narration must never expose subagent/skill names (Illustrator, `talksmith:ascii-to-svg`, `polish-ascii`, …), tool-call mechanics (*"dispatching"*, *"args files"*, *"batch N of 5"*), internal IDs (`s1-2-1`, `<basename>`, kebab slugs, `.critique/` paths), or pipeline tags (`[pptx N/8]`, `[cycle N/3] FEEDBACK`, `[block-drop]`). Translate to outcomes. **Don't:** *"21 args files ready. Dispatching Illustrator — batch 1 of 5 (s1-2-1, …)"*. **Do:** *"Rendering diagrams now — this usually takes a minute or two."* **Don't:** *"[cycle 2/3] FEEDBACK — slide 7 · practice 7 …"*. **Do:** *"Reviewing the rendered slides — found 2 small things to fix."* Heartbeats for long-running work are good (*what's happening*, not *how it's wired*). Full technical detail goes into the closing per-step report and `memory.md`, not running chat.
 - **Role dispatch.** When the spec says *"perform the `<Role>` role"*, read its spec from [`${CLAUDE_PLUGIN_ROOT}/agents/`](${CLAUDE_PLUGIN_ROOT}/agents/) and follow it for that work block, then return to the orchestrator. The active Talk folder path is mandatory context.
 - **Presenter signal vocabulary.** When the spec says the presenter signals "ready" / "done" / declares X final, accept any of: *"ready"*, *"done"*, *"looks good"*, *"move on"*, *"move to review"*. Wait for one of these before advancing past a gated step.
 - **Keep `memory.md` live, not just post-hoc** (full spec: [`${CLAUDE_PLUGIN_ROOT}/schemas/memory.md`](${CLAUDE_PLUGIN_ROOT}/schemas/memory.md)). Two writer roles:
@@ -99,7 +100,9 @@ Concise: state you are Talksmith, name the five roles (Librarian, Composer, Edit
   [8] Render PPTX    "Want a .pptx? I'll render it." (optional, Cowork)
 ```
 
-Immediately after, ask the presenter: **new presentation** or **resume existing**? If resume, list folders under `talks/`, let the presenter pick, then **read `talks/<Talk>/memory.md`** and continue from the recorded step.
+Immediately after, ask the presenter: **new presentation** or **resume existing**? If resume, list folders under `talks/` by shelling out with `Bash` (e.g. `ls -1 talks/ 2>/dev/null` or `find talks -maxdepth 1 -mindepth 1 -type d`) — **do not use `Glob`** for this discovery. Then let the presenter pick the folder and **read `talks/<Talk>/memory.md`** to continue from the recorded step.
+
+> **File-tool note (session-wide).** In some Claude Code environments (remote/MCP workspaces with bind-mounted paths), `Glob` can return empty when `ls`/`find` see the files. **Default to `Bash` (`ls`, `find`) for directory discovery and existence checks** under `talks/`, `config/`, `research/`, `images/`, `output/`. `Read`/`Write`/`Edit` on known paths work fine. Only use `Glob` when you need its pattern syntax and verified it returns results.
 
 ---
 
@@ -120,13 +123,15 @@ Runs once per session for new presentations. Skip on resume unless asked.
 
 ## Step 1 — Frame
 
-1. **Free-text prompt — "What's it about?"** Ask one open question and let the presenter run. Example phrasing: *"What's this talk about? The more you can tell me — content, goals, anything else on your mind — the better I can guide the rest of the process."* No bullet checklist, no form. Whatever the presenter writes (one line or several paragraphs) is the brief.
+1. **Free-text prompt — "What's it about?"** One open question, no checklist. Example: *"What's this talk about? The more you can tell me — content, goals, anything on your mind — the better I can guide the rest of the process."* Persist the answer verbatim to `memory.md` under `## Talk briefing` — canonical context for all role work, don't paraphrase it away.
 
-   Persist the answer verbatim to `memory.md` under a `## Talk briefing` section. This brief is the canonical context for all role work throughout the session — do not paraphrase it away.
+2. **Folder name** (kebab-case) — propose 2–3 candidates from the topic.
 
-2. Ask the presenter for a **Folder name** (kebab-case); propose 2–3 candidates derived from the topic.
+3. **PPTX style** — propose 2 candidates from the briefing (catalog: [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md)):
+   - **strict** — spec-driven layouts (`pptx-styles/strict/pptx-prompt.md` §15.5); predictable; 12-practice rubric. Fit for "class in a recurring course".
+   - **free-form** — LLM picks layout per slide; only floor enforced (cover + palette + fonts + white bg); 8-practice rubric. Fit for "one-off keynote with a hand-crafted feel".
 
-3. Ask the presenter for the **PPTX style** — see [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md) for the catalog. Two options: **strict** (spec-driven layouts per `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md` §15.5 emit-rules; predictable; 12-practice review rubric) and **free-form** (LLM picks layout per slide content; only the floor — cover + palette + fonts + white bg — is enforced; 8-practice design rubric). Propose 2 candidates derived from the briefing's signals (deck-purpose, audience, delivery context — e.g. "class in a recurring course" → strict; "one-off keynote with a hand-crafted feel" → free-form). The answer is persisted as `style:` in `draft.md` frontmatter at Step 4; default `strict` when the presenter is unsure.
+   Persisted as `style:` in `draft.md` frontmatter at Step 4. Default `strict` when unsure.
 
 Create exactly:
 
@@ -184,7 +189,7 @@ Do not proceed to Step 3 on your own.
 
 ## Step 3 — Corpus
 
-**Brief the presenter first.** One short paragraph: what Step 3 does (lossless restructuring of every dropped source into uniform Markdown records under `research/corpus/`, each with a companion `<source-stem>/images/` folder), an explicit source breakdown + rough ETA (~15–30s per text source, ~5–10s per web capture; round to a 1-minute-wide range, e.g. *"Processing 12 sources (8 PDFs, 3 chat ZIPs, 1 web capture). ~3–5 min."*), and a coffee-break aside if the volume warrants it. The brief is informational — do not wait for a reply.
+**Brief the presenter first** (plain language per *Speak human, not internal*): what's about to happen (e.g. *"I'm going to read everything you dropped in and structure it into a knowledge base — every paper, chat export, page, with images preserved."*) plus a source breakdown + ETA rounded to a 1-minute range (~15–30s per text source, ~5–10s per web capture; e.g. *"Working through 12 sources (8 PDFs, 3 chat exports, 1 web page). About 3–5 minutes."*). Informational — don't wait for a reply.
 
 Perform the **Librarian** role (spec: [`${CLAUDE_PLUGIN_ROOT}/agents/librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md)) on every file in `research/articles/`, every chat ZIP in `research/llm-chats/`, and every captured-page folder in `research/web/`. Output: one record per source under `research/corpus/` plus a sibling `<source-stem>/images/` companion folder. Per-record format: [`${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md`](${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md).
 
@@ -214,11 +219,11 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 
 | Mode | Trigger | Sequence |
 |---|---|---|
-| **A — Interview** | Agent asks, presenter answers; Editor role transcribes into `draft.md`; Composer role reviews at milestones. | 1. **Thesis** — free-text from presenter; perform **Editor** role to write it to the Thesis block in `draft.md`; perform **Composer** review (scope=`thesis`). 2. **Sections + per-section "Goal"** — prompt the presenter with candidates derived from the thesis; perform **Editor** role to update `draft.md`; perform **Composer** review (scope=`agenda`). 3. **Per section, per slide** — fill `Content` / `Sources` / `Speaker notes`; perform **Editor** role per slide on `draft.md`; perform **Composer** review (scope=`section:N`) when the section is filled. 4. **Conclusions**, then final **Composer** review (scope=`full`). **At every milestone**: surface Composer's `[blocker]` items by asking the presenter and **do not advance** to the next milestone until each `[blocker]` is either resolved (perform **Editor** role with the fix) or explicitly waived by the presenter. `[major]` items are surfaced with the option to defer; `[minor]` items are collected silently and surfaced at the final `scope=full` pass. |
-| **B — Agent Draft** | Editor role drafts; Composer role reviews; presenter refines. | 1. Perform **Editor** role to draft `draft.md` end-to-end from `research/corpus/` + `profile.md`. 2. Perform **Composer** review (scope=`full`). 3. For each `[blocker]` and `[major]` item: perform **Editor** role to apply the fix. 4. Present the revised draft to the presenter. 5. Ask **only critical clarifying questions** for unresolvable gaps not already addressed by the Composer. |
-| **C — Presenter Outline** | Presenter brain-dumps; Editor role structures; Composer role reviews. | 1. Single open invitation: "Brain-dump intent + slides/topics, any order." 2. Perform **Editor** role to group into 3–7 Sections, infer goals, order into a narrative arc, map topics to slides, draft Content / Sources / Speaker notes from the corpus. 3. Perform **Composer** review (scope=`full`). 4. For each `[blocker]` and `[major]` item: perform **Editor** role. 5. Ship the revised draft to the presenter. Everything else is **deferred to async feedback** in Step 5 (Review). |
+| **A — Interview** | Agent asks; Editor transcribes; Composer reviews at milestones. | (1) Thesis — free-text → Editor writes Thesis block → Composer scope=`thesis`. (2) Sections + Goals — candidates from thesis → Editor updates → Composer scope=`agenda`. (3) Per section, per slide — fill `Content`/`Sources`/`Speaker notes` via Editor → Composer scope=`section:N` at section end. (4) Conclusions → final Composer scope=`full`. **At every milestone:** surface Composer's `[blocker]` items to the presenter and do not advance until resolved (Editor fix) or waived. `[major]` surfaced with defer option; `[minor]` silent until final pass. |
+| **B — Agent Draft** | Editor drafts; Composer reviews; presenter refines. | (1) Editor drafts `draft.md` end-to-end from `research/corpus/` + `profile.md`. (2) Composer scope=`full`. (3) Editor applies every `[blocker]` + `[major]`. (4) Show revised draft. (5) Ask only critical clarifying questions on residual gaps. |
+| **C — Presenter Outline** | Presenter brain-dumps; Editor structures; Composer reviews. | (1) Open invite: "Brain-dump intent + slides/topics, any order." (2) Editor groups into 3–7 Sections, infers goals, orders into arc, maps to slides, drafts Content/Sources/Speaker notes from corpus. (3) Composer scope=`full`. (4) Editor applies `[blocker]` + `[major]`. (5) Ship; everything else deferred to Step 5. |
 
-**Question budget per mode.** Mode A is unlimited (the agent drives the Q&A). Modes B and C are **critical-only** — *critical* = the draft can't proceed coherently without the answer (a required field can't be inferred, or two interpretations of the input lead to structurally incompatible drafts, or a slide's thesis hinges on resolving a flat contradiction between corpus records). Everything else — ordering, slide-title wording, keep/cut decisions, tone, visual idiom — is deferred to Step 5 Review where the presenter edits `draft.md` directly. In Mode C the budget is ideally zero: the brain-dump *is* the input.
+**Question budget.** Mode A unlimited. Modes B/C **critical-only** — *critical* = draft can't proceed coherently without it (required field can't be inferred, inputs admit structurally incompatible drafts, slide thesis hinges on a flat corpus contradiction). Ordering, wording, keep/cut, tone, visual idiom → defer to Step 5. Mode C budget ideally zero: the brain-dump *is* the input.
 
 **Common to all modes:**
 
@@ -260,19 +265,19 @@ Triggered when the presenter signals ready in Step 5. Runs end-to-end without pr
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)). It walks `final.md`, passively carries forward any visual directives the presenter mentioned earlier (does **not** actively ask), and dispatches the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill once per block in **fixed parallel batches of 5 subagents** — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Report rendered/unchanged/failed counts.
+1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role (spec: [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)). It walks `final.md`, passively carries forward any visual directives the presenter mentioned earlier (does **not** actively ask), and dispatches the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill once per block in **fixed parallel batches of 5 subagents** — writing SVGs + `.ascii` sidecars under `talks/<Talk>/images/`. Narrate to the presenter in plain language only (opener / progress heartbeat / final count) per *Speak human, not internal*; the rendered / unchanged / failed counts + paths to any unresolved critique logs go into `memory.md` at step closure.
 
 2. **Clean `final.md`.** Perform the **Editor** role (full spec: [`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 6 — produce `final.md`*). Four transformations on `final.md`; (a), (b), (c) in any order, (d) **last** (it depends on (c) having read the still-`[open]` bullets):
 
    - **(a) Inline rendered ASCII blocks as SVG references** — delegated to [`talksmith:polish-ascii`](${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/SKILL.md) (`scan` → illustrator annotates → `extract` sidecars → render → `cleanup` fences). Only ASCII blocks in slides without a Markdown image ref are render-driving; ASCII in slides that already carry an image link is documentation-only and bypassed. The `<!-- ascii-note: ... -->` HTML comment after each fence (if present) is preserved as documentation and copied into the sidecar.
-   - **(b) Consolidate image references into `images/` AND enforce raster-PNG/JPG-only refs** — every `![alt](path)` whose path is not already `images/<file>` gets the source file copied into `talks/<Talk>/images/<basename>` and the reference rewritten. Remote URLs are the only exception (left in place; will fail the Step 8 asset check if not manually downloaded).
+   - **(b) Consolidate image refs into `images/` and enforce raster-PNG/JPG only.** Every `![alt](path)` not already pointing inside `images/<file>` gets its source copied to `talks/<Talk>/images/<basename>` and rewritten. Remote URLs are left in place (will fail Step 8 asset check if not downloaded manually).
 
-     **Image-format enforcement (Keynote-safe).** Downstream consumers of the `.pptx` deliverable (Keynote in particular, but also Google Slides on some imports) **refuse to embed `.webp`/`.avif`/`.heic`** and **refuse to render `.svg` as a media object** — both produce empty placeholder boxes on import. Every `![alt](path)` in `final.md` must therefore point to a `.png` or `.jpg`/`.jpeg`. **Forbidden extensions in `final.md` refs**: `.svg`, `.webp`, `.avif`, `.heic`. Handling per source type:
-     - **Illustrator-produced SVGs** (rendered by `talksmith:ascii-to-svg` in action 1 above) have a deliverable `<stem>.png` companion at `images/<stem>.png` per `ascii-to-svg` SKILL §7. The cleanup step's `images/<stem>.svg` reference is rewritten to `images/<stem>.png` here — the `.svg` stays on disk as source-of-truth for re-runs and the `<!-- ascii-source: ... -->` comment is preserved.
-     - **External SVG / WebP / AVIF / HEIC sources** (typically from the corpus — e.g. a `.webp` downloaded by the librarian, an icon SVG embedded in a chat export) are rasterized to PNG at the same basename (`cairosvg` for SVG; Pillow / `sips` / `cwebp` for raster formats) before the reference is rewritten. The original file remains alongside the PNG for traceability — Step 7 promotion ignores it.
-     - **Refs that already point to `.png`/`.jpg`** pass through unchanged.
+     **Keynote-safe format rule.** `.pptx` consumers (Keynote, some Google Slides imports) refuse `.webp`/`.avif`/`.heic` and refuse to render `.svg` as a media object — both produce empty placeholders. **Forbidden extensions in `final.md` refs:** `.svg`, `.webp`, `.avif`, `.heic`. Per source type:
+     - **Illustrator SVGs** — already have a `<stem>.png` companion (per `ascii-to-svg` SKILL §7). Rewrite `images/<stem>.svg` → `images/<stem>.png`; keep the `.svg` on disk + `<!-- ascii-source: -->` comment.
+     - **External SVG/WebP/AVIF/HEIC** (from corpus) — rasterize to PNG at same basename (`cairosvg` for SVG; Pillow/`sips`/`cwebp` for raster). Keep original alongside.
+     - **`.png`/`.jpg` refs** pass through unchanged.
 
-     Audit the rewritten `final.md` once before handing off to (c) — any surviving forbidden-extension ref is a Step 6 failure (the next stage's render pre-flight will block on it).
+     Audit `final.md` once before (c) — any surviving forbidden ref is a Step 6 failure.
    - **(c) Rescue remaining `[open]` feedback** — run [`${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py`](${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py) `rescue-open --final talks/<Talk>/final.md`. Appends each `[open]` bullet to `# Open questions` in `final.md` (idempotent). Without this, `[open]` bullets would be silently destroyed by (d) — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
    - **(d) Strip every `Presenter feedback` field from `final.md`** at every level (H3, paragraph, legacy bullet). The audit trail survives in `feedback-backlog.md` (Step-5 mirroring), in `final.md`'s `# Open questions` (rescued by (c)), and in `draft.md` (frozen, verbatim).
 
@@ -300,30 +305,25 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 ## Step 8 — Render PPTX *(optional, Cowork only)*
 
-**Always confirm the style at every Step-8 entry — never assume the value in `final.md` frontmatter.** Whenever the presenter triggers a render ("render the deck", "regenerate the presentation", "re-render", "generate pptx", any equivalent), the orchestrator's first action is to ask which style to use for *this* render — even if `final.md` already carries a `style:` field from a prior pass. The question carries the current value as one of the candidates so the presenter can confirm or switch:
+**Always confirm the style at every Step-8 entry** — never assume the value in `final.md` frontmatter. On any render trigger ("render", "regenerate", "re-render", "generate pptx"), the first action is a 2-option ask carrying the current value as candidate 1:
 
 > Render this Talk as which style?
-> 1. **<current-from-frontmatter, or "strict" if absent>** *(current)* — \<one-line summary of what that style does, derived from `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md`\>
+> 1. **<current-from-frontmatter, or "strict" if absent>** *(current)* — \<one-line summary from `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md`\>
 > 2. **<the other style>** — \<one-line summary\>
 
-The presenter's answer is **persisted back into `final.md` frontmatter** before dispatching to the skill — that way the cycle's CONTROL audits and FEEDBACK rubric all read the same value. Confirmed-same-as-before is also persisted (idempotent write). A switch from `strict` ↔ `free-form` is treated identically to any other render — the cycle starts fresh at cycle 1, audits run against the new style's `<spec_path>` + `<base_template_path>`, and the FEEDBACK rubric loads the matching style's practices.
+Persist the answer back into `final.md` frontmatter (idempotent on same-as-before) before dispatch — CONTROL audits and FEEDBACK rubric must read the same value. A style switch starts the cycle fresh at cycle 1 against the new style's spec + base template. The ask runs at Step-8 *entry* only, not between cycles within a single invocation.
 
-This rule exists because per-render style intent is *not* the same as authoring-time style intent. A Talk drafted as strict for course consistency may still warrant a one-off free-form render for a guest-lecture variant; a free-form keynote may need a strict re-render for the printed handout. The renderer-level confirmation makes the per-render choice explicit, prevents the previous render's mode from silently dictating this one, and surfaces the question at the moment it's actually relevant. Never skip this ask, even when:
-- the presenter "obviously" wants the same style as last render (still ask — the cost is one line of chat, the value is the explicit confirmation);
-- the cycle's REGENERATE phase fires within a single Step-8 invocation (those internal re-renders inherit the cycle's style; the ask is only at Step-8 *entry*, not between cycles);
-- the presenter signals impatience (the ask is two numbered options, not a free-text prompt — answering is one keystroke).
-
-After the confirmation lands, dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md`. The skill pre-processes via [`convert.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py) and delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).
+Then dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md`. The skill pre-processes via [`convert.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py) and delegates `.pptx` authoring to [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).
 
 - **Prerequisite:** session must run inside Claude Cowork (native `pptx` skill in the registry). If missing, stop and tell the presenter. **No CLI fallback.**
-- **Progress is visible.** Render is long-running (30s – 3 min). The skill emits one `[pptx N/8] …` line per stage of its workflow (prereqs → preprocess → 7 sub-stages of the §19.3 native invocation → output written → OOXML check → spot-check → preview rasterization → final report) plus a 30-second heartbeat inside any stage that exceeds the budget. Failures surface as `[pptx N/8] Stage X FAILED: <reason>`. The presenter should never have to ask "is it still running?" — see [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Progress reporting*.
+- **Progress is visible.** Render is long-running (30s–3 min). The skill emits `[pptx N/8] …` per stage internally (prereqs → preprocess → 7 sub-stages → write → OOXML → spot-check → previews → final report) plus a 30s heartbeat on over-budget stages; failures as `[pptx N/8] Stage X FAILED: …`. These tags are **internal** (logged to `memory.md` + closing report). Per *Speak human, not internal*, the presenter sees plain language: opener (*"Building the slides — usually 1–3 minutes."*), heartbeats (*"Still building — 14 of 22 done…"*), plain-language failures (*"Hit a snag on slide 9 — I'll retry."*). See [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Progress reporting*.
 - Pre-processing strips `Thesis`, `Open questions`, `Cut material` (`Presenter feedback` is already gone from `final.md`). Numbered H1s → divider slides; H2s → content slides (current `# N.` / `## N.`; legacy `# Section N:` / `## Slide N:` / `# N —` / `## N —` accepted). Speaker notes → notes pane.
 - Reuses images at `talks/<Talk>/images/` (rendered + consolidated in Step 6); does not regenerate. ASCII source in HTML comments is ignored.
 - Output: `talks/<Talk>/output/final.pptx`. **Base template (mandatory starting deck):** [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx) — opened as a working copy, cover + agenda placeholders substituted, layout-reference slides 3–13 deleted, generated content inserted per the recipes and 7-stage workflow in [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) (§19 is the renderer's operating guide; §1–§18 are the visual spec). The legacy [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/template.pptx`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/template.pptx) is the 53-slide source the spec was distilled from — not a rendering input. Icons are sourced from the base-template's branded line-art library; emojis (💡 📚 🏥 ⚠️ …) must never reach the rendered deck — they are swapped to the matching catalog icon (`lightbulb`, `book`, `medical`, `warning`, …) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §17 + §17.7. Override the base template only on explicit presenter request.
 
 ### Render cycle — generate → control → feedback → regenerate
 
-Step 8 is a **cycle**, not a single pass. Each iteration runs four named phases in fixed order, and the presenter sees each phase as a prefixed line in chat so they can follow the loop without asking "is it still running?" or "what changed?". The cycle is capped at **3 cycles total** (cycle 1 = the initial build; cycles 2 and 3 are the orchestrator's review-and-edit budget per `md-to-pptx/SKILL.md` Progress reporting). After cycle 3, surviving defects surface to the presenter as `unresolved: …` rather than looping further.
+Step 8 is a **cycle** of four phases in fixed order. The `[cycle N/3]` and `[pptx N/8]` tags below are **internal bookkeeping** (logged to `memory.md` + closing report); presenter sees plain language only (see example below). Capped at **3 cycles** (cycle 1 = initial build; 2–3 = review-and-edit budget). After cycle 3, surviving defects surface in plain language (*"3 things didn't fully resolve — see the report"*); the `unresolved: …` list stays internal.
 
 | Phase | Tag emitted | What runs | Exit condition |
 |---|---|---|---|
@@ -332,43 +332,26 @@ Step 8 is a **cycle**, not a single pass. Each iteration runs four named phases 
 | **FEEDBACK** | `[cycle N/3] FEEDBACK` | Orchestrator walks the visual-review rubric below (practice #0 through #12 + aesthetic note) on every slide PNG. Each finding emits one line:  `slide N · practice K · <one-line description> → <fix in this iteration \| defer because <reason> \| surface to presenter for editorial choice>`. Right-hand resolution required for every flagged cell per the *Minor-as-defer is a known anti-pattern* discipline below; `defer` requires the reason; silent *minor → ignore* is the prohibited pattern. | Feedback list is empty OR every entry is `defer because <reason>` / `surface to presenter` → cycle done. Any `fix in this iteration` entries → proceed to REGENERATE. |
 | **REGENERATE** | `[cycle N/3] REGENERATE` | Compose the per-slide edit instructions from the FEEDBACK list (slide IDs + practice + concrete change), dispatch back to `md-to-pptx`. The skill re-renders the touched slides only; cycle counter increments; flow returns to GENERATE for cycle N+1. | Cycle N+1 starts. |
 
-The cycle's bookkeeping is **not** the build's internal fix passes. The subagent that runs cycle 1's GENERATE phase may have its own build-time recovery (broken regex, undersized callout, leaked markdown marker) — those don't consume orchestrator iteration budget because they're internal to a single GENERATE. The orchestrator's 3-cycle cap counts only orchestrator-level GENERATE → CONTROL → FEEDBACK → REGENERATE rotations. Conflating the two is what lets shallow reviews ship.
+**Cycle cap counts orchestrator-level rotations only.** A subagent's build-time recoveries inside a single GENERATE (broken regex, leaked marker, undersized callout) don't consume cycle budget. Conflating the two is what lets shallow reviews ship.
 
-The four-phase cycle replaces the previous ad-hoc `[pptx pass N/3]` tagging; emit the new tags consistently so the presenter can grep for `[cycle 2/3] FEEDBACK` and see what was flagged in iteration 2 specifically.
-
-**What the presenter sees in chat (example).** A 2-cycle render that ships clean on cycle 2:
+**Presenter-facing chat example.** A 2-cycle render that ships clean on cycle 2:
 
 ```
-[cycle 1/3] GENERATE — starting full build of talks/<Talk>/final.md → output/final.pptx
-[pptx 1/8] Prereqs OK — base-template loaded, 5 H1 sections found, 12 local image refs.
-[pptx 2/8] Pre-processing done — 22 slides, 22 speaker-notes blocks, 12 image refs.
-[pptx 3/8] Stage 1 Cover — substituting 4 placeholders…
-[pptx 3/8] Stage 4 — building 22 content slides…
-[pptx 4/8] final.pptx written, 22 slides, 412183 bytes.
-[cycle 1/3] CONTROL — running build-time audits
-[pptx 5/8] OOXML invariants verified.
-[pptx 5/8] Aspect-ratio audit: <p:pic> 14 shapes, all within 1% tolerance.
-[pptx 5/8] Block-coverage audit: 22 slides, 31 blocks total, 0 dropped.
-[pptx 7/8] Slide previews ready (22 PNGs).
-[cycle 1/3] FEEDBACK — walking rubric on 22 slides
-  slide 7 · practice 7 · CNN diagram horizontally compressed 12% (source 2.1:1 in 1.4:1 slot) → fix in this iteration
-  slide 8 · practice 1 · title sized 17pt while sibling slides use 24pt+ → fix in this iteration
-  slide 12 · aesthetic · the three cards drift vertically because heading line counts differ → defer because this is the source headings' natural variance; surface to presenter for editorial choice
-[cycle 1/3] REGENERATE — applying 2 fixes (slides 7, 12)
-[cycle 2/3] GENERATE — re-rendering slides 7, 8
-[cycle 2/3] CONTROL — audits ok
-[cycle 2/3] FEEDBACK — clean
-[pptx 8/8] Done. 22 slides, 14 images, aspect_audit: ok, block_coverage: ok, slide_previews: 22, warnings: 0.
-Report: clean after 1 cycle (1 deferred-with-reason: slide 12 aesthetic, awaits presenter).
+Building the slides now — usually 1–3 minutes.
+… 22 slides ready, checking everything's well-formed …
+Reviewing the rendered slides for layout, typography, and balance…
+Found 2 small things to fix on slides 7 and 8, plus one design choice on slide 12.
+Re-rendering slides 7 and 8…
+Done. 22 slides at output/final.pptx. One thing for your eye on slide 12 — see the report.
 ```
 
-Cycle 1's GENERATE phase keeps the existing `[pptx N/8]` per-stage detail (it's the initial build with 8 distinct stages worth naming); cycles 2+ collapse to one line per phase (GENERATE re-renders a subset, no need to repeat the 8 stages). The FEEDBACK lines are the *required* output per the minor-as-defer discipline below — every flagged cell of the slide × practice matrix gets a one-line resolution; silence is enforcement failure on the critic.
+Internally the orchestrator logs every defect with the full `slide N · practice K · <description> → fix | defer because <reason> | surface to presenter` line (required by the phase table — silence is enforcement failure on the critic). Cycle 1 GENERATE keeps full `[pptx N/8]` detail in the internal log; cycles 2+ collapse to one internal line per phase.
 
 ### Post-render visual review
 
-This subsection details the **FEEDBACK phase** of each cycle defined above. After GENERATE writes `final.pptx` and CONTROL runs its audits, the orchestrator walks the 0–12 practice rubric below on every slide and emits one prefixed line per defect with a resolution disposition (see the *Render cycle* phase table for the line format). **The critique is visual analysis on rasterized slide images, not slide-XML / placeholder-metadata inspection.** [`talksmith:md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) emits a critique companion at `talks/<Talk>/output/.critique/slide-NN.png` for every slide alongside `final.pptx`; read each PNG via the `Read` tool so the multimodal model receives actual pixels, then walk the practices below. Defects like text overflow, off-balance layout, image clashes, and theme drift are visual properties the eye catches but XML inspection routinely misses (the placeholder coordinates can be arithmetically correct yet visually wrong). If the slide PNGs are missing (the skill reported `slide_previews: failed`), surface as `unresolved: slide_previews_failed` rather than falling back to XML — without pixels the FEEDBACK phase has no signal.
+Details the **FEEDBACK phase**. Walk the 0–12 practice rubric on every slide and emit one resolution line per defect (format in the phase table above). **Critique is visual analysis on rasterized images, not slide-XML.** [`talksmith:md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) writes `talks/<Talk>/output/.critique/slide-NN.png` per slide; read each via the `Read` tool so the multimodal model gets pixels. Text overflow, off-balance layout, image clashes, and theme drift are visual defects XML routinely misses. If PNGs are missing (`slide_previews: failed`), surface `unresolved: slide_previews_failed` — no XML fallback.
 
-**Block-coverage precondition (CONTROL phase, not FEEDBACK).** [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) runs in the cycle's CONTROL phase per `md-to-pptx/SKILL.md` Process step 6. If it surfaces any `[block-drop]` line, the cycle ends CONTROL immediately and goes to REGENERATE — **FEEDBACK does not run on a deck with missing blocks**, because the rubric below has no practice that catches a *missing* shape (no shape on the slide → no rubric hit), so a silent drop sails through. The audit is the deterministic guard against renderer top-to-bottom layout silently skipping a trailing block when the slide runs out of vertical room.
+**Block-coverage precondition (CONTROL, not FEEDBACK).** [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) runs in CONTROL. Any `[block-drop]` line ends CONTROL immediately → straight to REGENERATE. FEEDBACK never runs on a deck with missing blocks: the rubric has no practice catching a *missing* shape, so a silent drop sails through. This audit is the deterministic guard.
 
 | # | Practice | What to look for |
 |---|---|---|
@@ -386,28 +369,18 @@ This subsection details the **FEEDBACK phase** of each cycle defined above. Afte
 | 11 | **No emoji, branded icons only** | Zero system-emoji glyphs (💡 📚 🏥 ⚠️ ✅ ⚙️ 🔍 ⏰ 💰 👥 🛡️ ⭐ 📊 ℹ️ 📖 …) in any slide body. Every iconographic mark resolves to a `#DA1B2E` line-art icon from the catalog at [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §17. Mixed icon styles (line-art + filled silhouette, or two different stroke colors) is a fail. |
 | 12 | **Section pill present on every content slide** | The `#F9D2D6` rounded-rect pill at top-left naming the active section in ALL CAPS appears on every non-cover, non-agenda slide. Missing pill = generator skipped §6. |
 
-**Critique discipline.** Be surgical and slide-specific, just like the illustrator: *"Slide 7 title 'Why bipedal robots are hard' wraps onto a third line — shorten to 'Why bipedal locomotion is hard' (fits on two)"*. Vague comments produce vague edits.
+**Review discipline (single rule, four parts).**
 
-**Review every slide, not a sample.** The most common failure mode of this step is spot-checking 4–8 slides and declaring "looks fine." On the first post-render pass, read every `slide-NN.png` with the `Read` tool — one Read per slide, all of them. On any subsequent pass after a fix, re-read every touched slide *plus* the cover, the agenda, every section divider, every code/math slide, every embedded-diagram slide, every slide with a long or wrapping title, and any slide previously flagged as risky. A "smoke test" (cover + agenda + two contents + overflow case + closing) is **not** a review; if that's all that was done, report it as a smoke test, not as a visual review, and do not declare the deck clean.
+1. **Every slide, not a sample.** Read every `slide-NN.png` via the `Read` tool — one Read per slide. A smoke test (cover + agenda + a few contents + closing) is **not** a review; report it as a smoke test if that's all that was done.
+2. **Every cell of slide × practice.** For each slide name the practice and assign *pass / concern / fail* — out loud in the report. "Clean" = every cell passes. A visible practice-7 violation is a fail even if the other 11 cells pass and the slide looks "mostly OK." Skipping a cell on a vibes basis is enforcement failure on the critic.
+3. **Be surgical.** *"Slide 7 title wraps onto a third line — shorten 'Why bipedal robots are hard' → 'Why bipedal locomotion is hard'"*. Vague → vague.
+4. **Minor ≠ defer.** Every flagged cell gets *fix this iteration* / *defer because <reason>* / *surface to presenter*. `[minor]` is not a synonym for *defer*; root-cause it like a blocker. Silent *minor → ignore* is the prohibited pattern.
 
-**Walk the checklist per slide — the critic is responsible for enforcing every declared practice on every slide.** Gestalt impressions ("the deck looks fine") are not a substitute for evaluating each slide against each of the twelve practices. For every slide-NN.png, name the practice and assign *pass / concern / fail* — out loud, in the report if necessary. "Clean" means every cell of that slide × practice matrix is a pass. The matrix is non-negotiable: a slide that visibly violates practice 7 (image scale) is a fail for slide N × practice 7 even if the eleven other cells pass and the slide looks "mostly OK." Skipping a cell, or declaring it pass on a vibes basis, is enforcement failure on the critic — not a property of the slide. If a wider audit performed after the step closed surfaces defects that should have been caught, the original "clean" was wrong: retroactively reopen the step and spend an iteration slot, do not paper over.
+**Aesthetic note (required per slide, one sentence max).** The 12 practices are the floor. After the matrix, add a free-form aesthetic note for what the eye catches but the rubric doesn't — wonky alignment (cards drifting because heading line counts differ), wrong focal point (eye lands on supporting image while load-bearing claim is buried), dead/claustrophobic composition, emotionally-mismatched palette use (red callout on somber clinical content), rhythm fatigue (three identical card grids in a row), typographic micro-defects (orphans, widows, awkward gutter breaks), or image-text gestalt (handshake photo next to a privacy-breach slide). If nothing catches the eye, write `aesthetic: clean`. Not optional padding — the part of the review only the critic can do.
 
-**Minor-as-defer is a known anti-pattern.** Every defect surfaced by the rubric gets a one-line resolution in the orchestrator's report: *fix in this iteration*, *defer with documented reason*, or *surface to presenter for editorial choice*. `[minor]` is **not** a synonym for *defer*. A slide whose only defect is one minor — title-to-body gap, slightly oversized supporting image, unused right column — gets the minor investigated and root-caused exactly the same way a blocker would. The discipline is: if the rubric flagged it, the rubric expects an answer. *Defer* is a permitted answer, but it requires a sentence saying why and a follow-up in `memory.md` *Pending open questions*. The Step-8 spec already says "name the practice and assign pass / concern / fail — out loud, in the report" and "skipping a cell … is enforcement failure on the critic"; that discipline applies to minors with the same weight as blockers. Felt default is to skim minors; the spec's required default is the opposite. Silent classification as *minor → ignore* is what lets the presenter open the rendered deck and immediately spot a defect both iterations of the review missed.
+**When to declare clean.** First-cycle pass on #0–#12 + clean aesthetics is the goal. Don't manufacture issues to fill the budget — unneeded REGENERATE risks regression on adjacent slides.
 
-**The critic's job is bigger than the rubric — aesthetic judgement is also required.** The twelve practices are the **floor**, not the ceiling. They catch mechanical defects (overflow, missing pill, wrong colors, emoji glyphs) that have crisp pass/fail criteria. They do **not** catch slide-level aesthetics — the kind of defect a designer notices and a checklist doesn't:
-- A slide whose elements are technically aligned but visually wonky (a card row whose three cards drift in vertical centerline because their heading line counts differ).
-- A focal point that is technically present (practice 9 passes) but is the *wrong* element (the eye lands on a supporting image while the load-bearing claim is buried in body text).
-- Composition that feels static / dead / claustrophobic / cluttered without breaching any specific rule.
-- Color use that is technically in-palette (practice 10 passes) but emotionally mismatched to the content (a bright red `#DA1B2E` callout on a slide whose content is somber clinical results).
-- Rhythm across consecutive slides — three identical card-grid layouts in a row that individually pass but collectively bore.
-- Typographic micro-defects: an orphan word, a widow line, a heading that breaks awkwardly across the right-margin gutter, a number that should be tabular-figures aligned with its row.
-- Image-to-text gestalt: an image that *implies* the wrong thing for the adjacent claim (a stock-photo handshake next to a slide about a privacy breach).
-
-For each slide, after walking the twelve-cell matrix, the critic adds a free-form **aesthetic note** — one sentence at most — naming whatever the eye catches that the rubric does not. If nothing catches the eye, write `aesthetic: clean`. This is not optional padding; it is the part of the review only the critic can do.
-
-**When to declare clean.** A first-cycle deck that passes practices #0 through #12 is the goal. Don't manufacture issues to fill the cycle budget — the cost of unneeded REGENERATE rotations is regression risk in adjacent slides.
-
-**Report at the end:** `clean on cycle 1` | `clean after N cycle(s)` | `unresolved: <slide N — defect>` (presenter reviews unresolved slides and decides whether to accept, hand-edit, or restructure `final.md` and re-render). The cycle-vs-build-fix distinction is in the *Render cycle* section above — N counts only orchestrator-level cycles, not the subagent's internal build-time recoveries.
+**Report at end:** `clean on cycle 1` | `clean after N cycle(s)` | `unresolved: <slide N — defect>`. N counts orchestrator cycles only, not subagent build-time recoveries.
 
 ---
 
