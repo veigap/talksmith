@@ -190,7 +190,15 @@ labels: ...
 
 **Idempotency:** if the `.ascii` file already exists and its bytes match the new content, skip the write (avoid touching the mtime). If it differs, overwrite — the new ASCII + note in `final.md` is authoritative.
 
-(b) **Consolidate image refs (in `final.md`).** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave it. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
+(b) **Consolidate image refs (in `final.md`) AND enforce Keynote-safe raster-only extensions.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave the prefix. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
+
+**After consolidation, audit every ref's extension.** `final.md` must reference only `.png` or `.jpg`/`.jpeg`. Forbidden extensions: **`.svg`, `.webp`, `.avif`, `.heic`** — Keynote refuses to embed WebP and refuses to render embedded SVG as media (both surface as empty placeholder boxes on `.pptx` import); other modern formats are similarly inconsistent across PowerPoint / Google Slides import paths. Fix per source type:
+
+- **Illustrator-produced SVGs** (rendered in stage 4 above) have a deliverable `<stem>.png` companion at `images/<stem>.png` per the ascii-to-svg skill's *PNG companion* contract. Rewrite the `images/<stem>.svg` reference to `images/<stem>.png`. The `.svg` stays on disk as source-of-truth; the `<!-- ascii-source: ... -->` and `<!-- ascii-note: ... -->` comments are preserved.
+- **External SVG / WebP / AVIF / HEIC sources** (typically corpus images — a `.webp` downloaded by the librarian, an icon SVG from a chat export) are rasterized to PNG at the same basename before the reference is rewritten. Recipes: `cairosvg.svg2png(url='<in.svg>', write_to='<out.png>', output_width=<2× viewBox_w>)` for SVG; `Image.open('<in.webp>').save('<out.png>', 'PNG')` (Pillow) or `cwebp`/`sips`/`magick` CLI for the raster formats. Keep the original file alongside the PNG for traceability.
+- **Refs already pointing to `.png`/`.jpg`** pass through unchanged.
+
+Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 8 `md-to-pptx` pre-flight enforces the same rule as a backstop.
 
 (c) **Rescue `[open]` feedback (from `final.md`).** Delegate to [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md):
 ```bash
