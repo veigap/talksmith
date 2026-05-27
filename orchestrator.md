@@ -238,7 +238,7 @@ Loop until presenter declares `draft.md` final. Each round:
 
 1. Hand off: tell presenter to open `talks/<Talk>/draft.md` in their external editor.
 2. Presenter appends plain `- "feedback"` bullets in `Presenter feedback` fields (no status tags, dates, or resolutions).
-3. Presenter signals done. Perform **Editor** role to apply each bullet via the [`talksmith:find-open-notes`](${CLAUDE_PLUGIN_ROOT}/skills/find-open-notes/SKILL.md) + [`talksmith:feedback-cycle`](${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/SKILL.md) skills. The Editor authors only the per-slide content fix, the resolution wording, and the tag list; detection / stamp / close / mirror / sanity-check are skill subcommands. Full loop: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 5 — apply feedback*.
+3. Presenter signals done. Perform **Editor** role to apply each bullet via the [`talksmith:find-open-notes`](${CLAUDE_PLUGIN_ROOT}/skills/find-open-notes/SKILL.md) skill and the [`${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py`](${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py) helper. The Editor authors only the per-slide content fix, the resolution wording, and the tag list; detection / stamp / close / mirror / sanity-check are subcommands of the helper. Full loop: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 5 — apply feedback*.
 4. Report diff to presenter; update `memory.md`.
 
 **Rules:**
@@ -273,7 +273,7 @@ Triggered when the presenter signals ready in Step 5. Runs end-to-end without pr
      - **Refs that already point to `.png`/`.jpg`** pass through unchanged.
 
      Audit the rewritten `final.md` once before handing off to (c) — any surviving forbidden-extension ref is a Step 6 failure (the next stage's render pre-flight will block on it).
-   - **(c) Rescue remaining `[open]` feedback** — delegate to [`talksmith:feedback-cycle`](${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/SKILL.md) → `rescue-open --final talks/<Talk>/final.md`. Appends each `[open]` bullet to `# Open questions` in `final.md` (idempotent). Without this, `[open]` bullets would be silently destroyed by (d) — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
+   - **(c) Rescue remaining `[open]` feedback** — run [`${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py`](${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py) `rescue-open --final talks/<Talk>/final.md`. Appends each `[open]` bullet to `# Open questions` in `final.md` (idempotent). Without this, `[open]` bullets would be silently destroyed by (d) — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
    - **(d) Strip every `Presenter feedback` field from `final.md`** at every level (H3, paragraph, legacy bullet). The audit trail survives in `feedback-backlog.md` (Step-5 mirroring), in `final.md`'s `# Open questions` (rescued by (c)), and in `draft.md` (frozen, verbatim).
 
    Goal: `final.md` reads as the finished deliverable — no working-meta fields visible.

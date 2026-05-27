@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""talksmith:feedback-cycle — Step 5 / Step 6 mechanical bookkeeping.
+"""talksmith feedback_cycle helper — Step 5 / Step 6 mechanical bookkeeping.
 
 Subcommands:
   find-closed-unmirrored  --draft <path> --backlog <path> [--format json|human]   # Step 5

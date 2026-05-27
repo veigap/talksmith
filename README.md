@@ -51,7 +51,7 @@ Role specs live at [agents/](agents/) and are dispatched as Claude Code subagent
 
 ## Install
 
-Talksmith ships as a **Claude Code plugin**: install once, then run `/talksmith:init` inside each subject working directory to scaffold the per-subject files. The plugin contains the orchestrator spec, the five subagents, the seven skills, the schemas, design principles, and the PPTX style packs; your subject directory holds only your own data.
+Talksmith ships as a **Claude Code plugin**: install once, then run `/talksmith:init` inside each subject working directory to scaffold the per-subject files. The plugin contains the orchestrator spec, the five subagents, the five skills, the schemas, design principles, and the PPTX style packs; your subject directory holds only your own data.
 
 ### Claude Code CLI (terminal)
 
@@ -188,9 +188,10 @@ There are two layouts to know: the **plugin layout** (what's in this repo, insta
 │   ├── ingest/                        # talksmith:ingest — capture a web page into research/web/
 │   ├── ascii-to-svg/                  # talksmith:ascii-to-svg — render one ASCII block to one SVG
 │   ├── polish-ascii/                  # talksmith:polish-ascii — Step-6 scan + extract + cleanup
-│   ├── feedback-cycle/                # talksmith:feedback-cycle — Step-5 stamp/close/mirror helper
 │   ├── find-open-notes/               # talksmith:find-open-notes — detect unstamped feedback bullets
 │   └── md-to-pptx/                    # talksmith:md-to-pptx — render final.md to .pptx (Step 8, Cowork only)
+├── scripts/                           # deterministic helper scripts the subagents shell out to
+│   └── feedback_cycle.py              # Step-5 stamp/close/mirror + Step-6 rescue-open bookkeeping (called by Editor)
 ├── schemas/                           # file-format specs (each holds spec + canonical empty form)
 │   ├── draft.md
 │   ├── memory.md

@@ -21,7 +21,7 @@ That is the entire diff between the two files. Step 6 (Polish) is the only produ
 
 ## Purpose
 
-`draft.md` is the **single source of truth for one Talk during authoring**. It captures the thesis, the agenda, every Section and Slide (with Content, Sources, Speaker notes, and an in-place Presenter-feedback log), plus closing material (Conclusions, Open questions, Cut material). The presenter edits it directly in Step 5; the Editor stamps and applies bullets via the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill.
+`draft.md` is the **single source of truth for one Talk during authoring**. It captures the thesis, the agenda, every Section and Slide (with Content, Sources, Speaker notes, and an in-place Presenter-feedback log), plus closing material (Conclusions, Open questions, Cut material). The presenter edits it directly in Step 5; the Editor stamps and applies bullets via the [`scripts/feedback_cycle.py`](../scripts/feedback_cycle.py) helper.
 
 `final.md` is the **single source of truth for one Talk as deliverable**. It carries no working-meta: no `Presenter feedback`, no raw ASCII fences for render-driving diagrams. Step 7 (Global-Librarian) and Step 8 (PPTX render) both read `final.md`. Downstream tooling renders the slides; the shape of these files matters more than their prose polish.
 

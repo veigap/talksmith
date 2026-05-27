@@ -1,6 +1,6 @@
 # Diagram style
 
-Standing rules the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill applies to every SVG it renders. Master-owned (mirrored to forks via [`talksmith:upgrade`](${CLAUDE_PLUGIN_ROOT}/skills/upgrade/SKILL.md)). The presenter can extend this file at any time — new bullets take effect on the next render.
+Standing rules the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill applies to every SVG it renders. Ships with the plugin and updates via `/plugin update talksmith`. The presenter can extend this file at any time — new bullets take effect on the next render.
 
 Keep this file short. One rule per bullet, in plain language. If a rule is genuinely complex, explain it inline; otherwise let the rule speak for itself.
 

@@ -81,7 +81,7 @@ The note is for the **rendering pass**, not the reader of `draft.md`. Keep it te
 
 An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
-**Step 5 — apply feedback (to `draft.md`).** Delegate all mechanical bookkeeping to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill plus its detection partner [`talksmith:find-open-notes`](../skills/find-open-notes/SKILL.md). The editor (LLM) **only** authors three things per bullet: the content fix in the slide, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through the skill — do **not** read `draft.md` end-to-end during a normal Review round.
+**Step 5 — apply feedback (to `draft.md`).** Delegate all mechanical bookkeeping to the [`scripts/feedback_cycle.py`](../scripts/feedback_cycle.py) helper plus its detection partner [`talksmith:find-open-notes`](../skills/find-open-notes/SKILL.md). The editor (LLM) **only** authors three things per bullet: the content fix in the slide, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through the helper — do **not** read `draft.md` end-to-end during a normal Review round.
 
 Per-round loop:
 
@@ -96,19 +96,19 @@ Per-round loop:
 3. **For each non-conflicting unstamped bullet:**
    a. **Stamp.**
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
+      python3 ${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py stamp \
           --draft talks/<Talk>/draft.md --line <N>
       ```
    b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
    c. **Close** with the resolution wording.
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
+      python3 ${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py close \
           --draft talks/<Talk>/draft.md --line <N> \
           --resolution "<one-line summary of what changed>"
       ```
    d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `config/feedback-backlog.md` → *Tagging vocabulary*).
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
+      python3 ${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py mirror-row \
           --draft talks/<Talk>/draft.md \
           --backlog config/feedback-backlog.md \
           --line <N> --tags "<csv>"
@@ -116,13 +116,13 @@ Per-round loop:
 
 4. **Sanity check at end of round.**
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py find-closed-unmirrored \
        --draft talks/<Talk>/draft.md \
        --backlog config/feedback-backlog.md
    ```
    Catches any `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each.
 
-The Step 6 (c) `rescue-open` pass is handled by the same skill (`feedback-cycle rescue-open`) but **runs against `final.md`**, not `draft.md`, and is invoked from Step 6 — not here.
+The Step 6 (c) `rescue-open` pass uses the same helper (`feedback_cycle.py rescue-open`) but **runs against `final.md`**, not `draft.md`, and is invoked from Step 6 — not here.
 
 **Step 6 — produce `final.md`.**
 
@@ -200,9 +200,9 @@ labels: ...
 
 Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 8 `md-to-pptx` pre-flight enforces the same rule as a backstop.
 
-(c) **Rescue `[open]` feedback (from `final.md`).** Delegate to [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md):
+(c) **Rescue `[open]` feedback (from `final.md`).** Run [`scripts/feedback_cycle.py`](../scripts/feedback_cycle.py):
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-open \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/feedback_cycle.py rescue-open \
     --final talks/<Talk>/final.md
 ```
 The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "<verbatim>"` under `# Open questions` (creating the section before `# Cut material` if missing), and skips entries already present. `[closed]` bullets and raw un-stamped bullets are ignored. (`draft.md` retains the full feedback log verbatim — this rescue only mutates `final.md`.)

@@ -26,7 +26,7 @@ This directory holds **user-owned** per-subject state. The Editor subagent (defi
 | `talks/<folder>/` | One folder per Talk (`draft.md`, `final.md`, `memory.md`, `research/`, `images/`, `output/`). | Orchestrator in Step 1 |
 | `knowledge-library/` | Cross-Talk curated knowledge, organized by topic. | Global-Librarian subagent in Step 7 on promotion |
 
-All operational content — the five subagents, the seven skills, the eight file-format schemas, design principles, ASCII-to-SVG style rules, PPTX style packs — lives under `${CLAUDE_PLUGIN_ROOT}/` and is shared across every Talksmith working directory on this machine.
+All operational content — the five subagents, the five skills, the eight file-format schemas, design principles, ASCII-to-SVG style rules, PPTX style packs — lives under `${CLAUDE_PLUGIN_ROOT}/` and is shared across every Talksmith working directory on this machine.
 
 ## Updating
 
