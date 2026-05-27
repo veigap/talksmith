@@ -50,6 +50,10 @@ When developing the plugin in-repo (Claude Code opened at this directory), `${CL
 
 **Two-file split.** `CLAUDE-INIT.md` is a 30-line stub; `orchestrator.md` is the 1000+-line operating spec. Plugin updates carry the new `orchestrator.md` automatically — existing user working directories pick up the change on their next session reload, no re-init needed. The stub is only re-deployed if it itself changed (rare). When you do edit `CLAUDE-INIT.md`, tell affected users to delete their working-directory `CLAUDE.md` and re-run `/talksmith:init`.
 
+## Versioning
+
+The plugin version lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) (`"version"` field). **Bump it on every commit** — even one-line edits. Marketplace clients use this field to decide whether to pull an update, so an unbumped commit ships invisibly. Use semver: patch for fixes and doc tweaks, minor for new agents/skills/commands or workflow changes, major for breaking schema or session-start contract changes.
+
 ## Testing changes
 
 1. Reload the plugin in your Claude Code session (`/plugin reload talksmith` or restart the session).

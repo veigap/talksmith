@@ -1,6 +1,6 @@
 {
   "name": "talksmith",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Presenter Agent — turns raw exploration into a structured talk outline (draft.md) and a polished deliverable (final.md), with optional PPTX render. Five subagents (Librarian, Composer, Editor, Illustrator, Global-Librarian) plus skills for ingestion, ASCII→SVG, polish, feedback bookkeeping, and PPTX rendering.",
   "author": {
     "name": "Paulo Gustavo Veiga"
