@@ -11,20 +11,13 @@ Talksmith renders PPTX in one of several **styles**. Each style is a self-contai
 
 The two styles are not better/worse — they trade *predictability* for *expressive range*. The same subject repo can carry Talks in both styles.
 
-## Per-Talk style selection
+## Per-render style selection
 
-Each Talk declares its style via the `style:` field in `draft.md` frontmatter:
+Style is **not** a Talk attribute — it's a **render-time parameter** chosen fresh on every PPTX generation. `draft.md` and `final.md` carry no `style:` field; the same content can be rendered in either style at any time.
 
-```yaml
----
-presentation: …
-subtitle: …
-style: strict        # or: free-form
-…
----
-```
+The orchestrator asks the presenter at **every Step 8 entry** per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* and passes the answer to `md-to-pptx` as an invocation parameter. The ask is mandatory and there is **no default** — if the presenter is unsure, the orchestrator re-asks with framing of what each style implies for *this* Talk. The skill refuses to run without an explicit `style:` value (see [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Style resolution*).
 
-Default when absent: `strict` (the safer, more constrained mode). The Editor asks the presenter at Step 1 (Frame) per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 1*, proposing 2 candidates derived from the Step-1 briefing's signals (deck-purpose, audience, delivery context).
+A second Step-8 run on the same Talk can pick a different style with no migration; the previous render in `output/final.pptx` is simply overwritten.
 
 ## What the styles share
 
@@ -52,11 +45,11 @@ To add a third style (e.g. `minimal`, `editorial`, `dark-mode`):
 2. Author `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<name>/pptx-prompt.md` — self-contained spec including the four floor sections (canvas, palette, fonts, cover recipe). Copy from `strict/` or `free-form/` and modify.
 3. Ship the starting deck `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<name>/base-template.pptx` honoring the floor (cover slide + palette + fonts + white bg).
 4. Add a row to the *Available styles* table above.
-5. Extend the `style:` enum in [`${CLAUDE_PLUGIN_ROOT}/schemas/draft.md`](${CLAUDE_PLUGIN_ROOT}/schemas/draft.md) to include `<name>`.
+5. Extend the Step-8 ask in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* to offer `<name>` as a candidate, and the allowed-values list in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Style resolution*.
 6. Update [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) to branch on the new value (load the right spec, point at the right base-template, run the right rubric).
 
 No other style's files need to change. That's the point of the split.
 
 ## Cross-refs from style-agnostic prose
 
-Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (`orchestrator.md`, SKILL.md, the audit scripts, the schemas) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the active Talk's `style:` field. The style-agnostic audit scripts (aspect-ratio, block-coverage, palette-fonts) take the active style's `pptx-prompt.md` path as an input where needed; the layout-fit audit is `strict`-only and lives unchanged in the skill.
+Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (`orchestrator.md`, SKILL.md, the audit scripts) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the current render's `style:` invocation parameter. The style-agnostic audit scripts (aspect-ratio, block-coverage, palette-fonts) take the active style's `pptx-prompt.md` path as an input where needed; the layout-fit audit is `strict`-only and lives unchanged in the skill.

@@ -127,7 +127,7 @@ Runs once per session for new presentations. Skip on resume unless asked.
 
 2. **Folder name** (kebab-case) — propose 2–3 candidates from the topic.
 
-3. **PPTX style** — propose 2 candidates derived from the briefing's signals (deck-purpose, audience, delivery context). One-line summaries + the *When to pick* guidance live in the catalog at [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md) → *Available styles* — read them at ask-time and surface verbatim. Persisted as `style:` in `draft.md` frontmatter at Step 4. Default `strict` when unsure.
+PPTX style is **not** asked here — it's a render-time concern, asked fresh at every Step 8 invocation. `draft.md` / `final.md` are style-agnostic; the same content can be rendered in either style at any time.
 
 Create exactly:
 
@@ -270,17 +270,21 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 **Prerequisite:** Claude Cowork (native `pptx` skill in registry). If missing, stop and tell the presenter. No CLI fallback.
 
-1. **Ask the style** (only intervention; render runs end-to-end after):
+1. **Ask the style — mandatory, every entry, no default, no exceptions** (only intervention; render runs end-to-end after):
 
    > Render this Talk as which style?
    > 1. **strict — Style Guided** — spec-driven template, multi-cycle critique. Predictable, polished.
    > 2. **free-form — Free with minimal guidance** — LLM picks layout; only the floor enforced. Single pass.
 
-   Mark candidate 1 *(current)* from existing frontmatter (default `strict` if absent). Persist the answer back to `final.md` frontmatter.
+   **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess.
 
-2. **Dispatch** [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md`. The skill owns everything: pre-processing, the render flow (single-pass vs. multi-cycle is its concern), build-time audits, internal critique iterations, and the stage events that drive the progress checklist.
+   **The style is a render-time parameter, not a content attribute** — it lives only in the Step-8 invocation. Never write it to `draft.md` or `final.md` frontmatter; those files are style-agnostic so the same content can be rendered in either style at any time. A second Step-8 run on the same Talk can pick a different style with no migration.
 
-3. **Render the progress checklist** per the skill's template — see [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Edit it in place as stage events arrive. Plain language only (per *Speak human, not internal*); never surface the skill's internal `[pptx N/8]` / `[cycle N/3]` tags.
+2. **Dispatch** [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (single-pass vs. multi-cycle is its concern), build-time audits, internal critique iterations, and the stage events that drive the progress checklist.
+
+3. **Render the progress checklist** per the skill's template — see [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Edit it in place as stage events arrive.
+
+   **Tag-suppression rule (hard).** Every line the skill emits starting with `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, or any other bracketed tag is **internal log-only**. Consume it as a stage event to advance the checklist; **do not relay it to chat verbatim**. The presenter never sees a bracketed tag, a file path under `talks/<Talk>/…`, a `slide N · practice K …` line, or a phrase like *"final.md frontmatter"*. Any extra prose narration between checklist updates is plain language (e.g. *"Hit a snag on slide 9 — retrying."*), never tag-decoded. If a leak is observed, treat it as a behavior bug to fix in the next session and log the offending line to `memory.md` so it can be diffed against this rule.
 
 4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx`), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
 
