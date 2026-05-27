@@ -98,7 +98,7 @@ Pure white `#FFFFFF` per §1.
 | Slot | Source in `final.md` frontmatter | Example |
 |---|---|---|
 | Shape #1 text | `presentation:` (the Subject from `profile.md`) | `Inteligencia Artificial Generativa Aplicada en Biomedicina` |
-| Shape #2 text | `subtitle:` (Talk-specific, **required** — collected at Step 1 / Step 4) | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
+| Shape #2 text | `class:` (Talk-specific, **required** — collected at Step 4) | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
 | Shape #3 paragraph 1 | `Autor: <presenter>` from `profile.md` Presenter section | `Autor: Paulo Veiga` |
 | Shape #3 paragraph 2 | `Última Modificación: <Month, YYYY>` from frontmatter `date:` | `Última Modificación: Marzo, 2026` |
 | Shape #4 image | `ppt/media/image-1-1.png` — preserved verbatim |  |

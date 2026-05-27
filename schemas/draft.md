@@ -21,7 +21,7 @@ That is the entire diff between the two files. Step 6 (Polish) is the only produ
 
 ## Purpose
 
-`draft.md` is the **single source of truth for one Talk during authoring**. It captures the thesis, the agenda, every Section and Slide (with Content, Sources, Speaker notes, and an in-place Presenter-feedback log), plus closing material (Conclusions, Open questions, Cut material). The presenter edits it directly in Step 5; the Editor stamps and applies bullets via the [`scripts/feedback_cycle.py`](../scripts/feedback_cycle.py) helper.
+`draft.md` is the **single source of truth for one Talk during authoring**. It captures the thesis, the agenda, every Section and Slide (with Content, Sources, Speaker notes, and an in-place Presenter-feedback log), plus closing material (Conclusions, Open questions, Cut material). The presenter edits it directly in Step 5; the Editor stamps and applies bullets via the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill.
 
 `final.md` is the **single source of truth for one Talk as deliverable**. It carries no working-meta: no `Presenter feedback`, no raw ASCII fences for render-driving diagrams. Step 7 (Global-Librarian) and Step 8 (PPTX render) both read `final.md`. Downstream tooling renders the slides; the shape of these files matters more than their prose polish.
 
@@ -132,11 +132,11 @@ The Editor role bootstraps `talks/<Talk>/draft.md` from this form on its first S
 # presentation: one-line subject of the talk (e.g. "Intro to GANs for non-ML engineers")
 # Subject-level — same across every Talk in this working directory (sourced from profile.md Subject).
 presentation: <One-line subject of the talk>
-# subtitle: per-class topic — renders on the cover slide below the Subject in smaller font.
-# Required (not optional). One short line; do not duplicate the Subject. Example for a working directory
+# class: this class's name / topic — renders on the cover slide below the Subject in smaller font.
+# Required (not optional). One short line; do not duplicate the Subject. Example for a subject repo
 # whose Subject is "Inteligencia Artificial Generativa Para Biomedicina":
-#   subtitle: "Clase 3 — Ingeniería de prompts y técnicas avanzadas"
-subtitle: <Per-class topic, one line>
+#   class: "Clase 3 — Ingeniería de prompts y técnicas avanzadas"
+class: <This class's name / topic, one line>
 # research: relative path to the corpus research base for this Presentation
 research: research/corpus/
 # description: structural shape downstream tooling expects — do not edit

@@ -152,7 +152,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 | Slot | Source in `final.md` frontmatter | Example |
 |---|---|---|
 | Shape #1 text | `presentation:` (the Subject from `profile.md`) | `Inteligencia Artificial Generativa Aplicada en Biomedicina` |
-| Shape #2 text | `subtitle:` (Talk-specific, **required** — collected in Step 4 per `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`). The Subject in shape #1 is subject-level and identical across every Talk; this subtitle is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
+| Shape #2 text | `class:` (Talk-specific, **required** — collected in Step 4 per `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`). The Subject in shape #1 is subject-level and identical across every Talk; this class name is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
 | Shape #3 paragraph 1 | `Autor: <presenter>` — `<presenter>` from `profile.md` Presenter section | `Autor: Paulo Veiga/Marcos Sanchez Sorondo` |
 | Shape #3 paragraph 2 | `Última Modificación: <Month, YYYY>` from `final.md` frontmatter `date:` | `Última Modificación: Marzo, 2026` |
 | Shape #4 image | `ppt/media/image-1-1.png` (institution logo, never replaced unless presenter explicitly swaps brands) | (binary preserved verbatim) |
@@ -579,7 +579,7 @@ The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) nam
 
 When rendering `final.md` to `.pptx`, follow these rules in order:
 
-1. **Slide 1 = Cover.** No matter what the Markdown contains for slide 1, emit the §4 recipe. Pull text from frontmatter (`presentation`, `subtitle`, `presenter`, `date`, `Presentation language`). Preserve `ppt/media/image-1-1.png` verbatim. Do **not** apply the section pill (§6).
+1. **Slide 1 = Cover.** No matter what the Markdown contains for slide 1, emit the §4 recipe. Pull text from frontmatter (`presentation`, `class`, `presenter`, `date`, `Presentation language`). Preserve `ppt/media/image-1-1.png` verbatim. Do **not** apply the section pill (§6).
 2. **Slide 2 = Agenda with active item 1.** Emit the §5 recipe. Pull the N item titles from the N H1s in `final.md` (N = section count, not fixed); pull subtitles from per-section `Subtitle:` fields. Clone or delete placeholder rows in `base-template.pptx` to match N. Surface a warning to the presenter when N > 8 (tight) or N > 10 (out of room — see §5.3 capacity).
 3. **Section dividers.** Before every new section k (k ∈ {2..N}), re-emit the §5 agenda with active item set to k. Place each divider immediately before its section's first content slide — there are no absolute slide-number positions to honor.
 4. **Every content slide carries a §6 section pill** at top-left, with text = the active section's H1 verbatim, uppercased.
@@ -831,7 +831,7 @@ Rendered previews live in [`template-previews/base-template/slide-NN.png`](templ
 
 | # | Zone | Demonstrates | Spec § | What's on the slide | When generating |
 |---|---|---|---|---|---|
-| 1 | A | **Cover** | §4 | 4 text shapes (`{{PRESENTATION_TITLE}}`, `{{TALK_SUBTITLE}}`, `Autor: {{PRESENTER}}`, `Última Modificación: {{DATE}}`) + the Universidad Austral logo at (7.86, 3.55) in. | Substitute the four placeholders from `profile.md` (`Subject`, `Presenter`, `Presentation language`) and the Talk's frontmatter (`subtitle`, `date`). Logo stays. |
+| 1 | A | **Cover** | §4 | 4 text shapes (`{{PRESENTATION_TITLE}}`, `{{TALK_SUBTITLE}}`, `Autor: {{PRESENTER}}`, `Última Modificación: {{DATE}}`) + the Universidad Austral logo at (7.86, 3.55) in. | Substitute the four placeholders from `profile.md` (`Subject`, `Presenter`, `Presentation language`) and the Talk's frontmatter (`class`, `date`). Logo stays. |
 | 2 | A | **Agenda (item 1 active)** | §5 | Title "Agenda" + 7 placeholder item rows with `{{SECTION_k_TITLE}}` / `{{SECTION_k_SUBTITLE}}` slots. Dot 1 is `#DA1B2E` (active), dots 2–7 are `#F2EEEE` (inactive). | Replace `2 × N` placeholders with the N H1s and `Subtitle:` fields from `final.md` (N = section count). Clone or delete rows so the agenda has exactly N rows. Keep active dot at 1. Always emit immediately after the cover. |
 | 3 | B | **Separator banner** | — | Red `#DA1B2E` band across the middle with the text "TEMPLATE — LAYOUT EXAMPLES BELOW", flanked by guidance above/below. | **Drop this slide entirely.** It's a marker for the human/agent reading the template. |
 | 4 | C | **image-grid + callout** (was source slide 3) | §7.1 (cards) + §8 (callout) | Section pill `TEMPLATE — IMAGE-GRID + CALLOUT`, large H2, lead paragraph, 3-column image-headed cards, full-width `#F7BBC1` callout at bottom with 💡 emoji. | Use when a slide has 3 supporting concepts each with a small icon, plus a tip/analogy at the bottom. |
@@ -902,7 +902,7 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 
 | Stage | What you do | Rules in |
 |---|---|---|
-| **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.subtitle` — **required**, never delete the shape; if the field is missing in frontmatter, stop and surface as a render-blocking error so the editor can fill it), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
+| **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.class` — **required**, never delete the shape; if the field is missing in frontmatter, stop and surface as a render-blocking error so the editor can fill it), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
 | **2. Agenda** | Substitute the placeholders on slide 2: `{{SECTION_k_TITLE}}` and `{{SECTION_k_SUBTITLE}}` for k = 1..N (N = section count). Clone/delete placeholder rows to match N. Active dot stays at 1. Warn the presenter if N > 8 (tight) or N > 10 (out of vertical room — §5.3). | §5 + §5.3 + §5.5 |
 | **3. Discard zones B and C** | Delete slides 3 through 15 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
