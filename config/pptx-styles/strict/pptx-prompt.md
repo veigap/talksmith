@@ -27,7 +27,7 @@ The deck uses a tight palette. Office theme colors (`#4472C4`, `#ED7D31`, etc.) 
 
 | Hex | Role | Run count |
 |---|---|---|
-| `#3B3535` | Primary body text (warm near-black) — Roboto/Roboto Mono | 837 |
+| `#3B3535` | Primary body text (warm near-black) — Helvetica/Helvetica Bold | 837 |
 | `#1F1E1E` | Titles, emphasis, dark labels | 121 |
 | `#000000` | Code-block default ink + callout body | 92 |
 | `#FFFFFF` | Inverted text (on red active dot, dark surfaces) | 76 |
@@ -60,18 +60,21 @@ Every `roundRect` shape — pills, cards, callouts, agenda dots, code surfaces �
 
 ## 3. Typography
 
-### 3.1 Faces
+### 3.1 Faces *(Keynote-compatibility palette — system fonts only)*
 
-Four typefaces are embedded in `presentation.xml`. Slide bodies use only these — no system fallbacks observed.
+**System fonts only.** Every text run's `<a:latin typeface="…"/>` must resolve to a font preinstalled on the import target. Custom fonts (`Roboto`, `Roboto Mono`, `Roboto Mono Medium`, `Roboto Mono Light`, `Consolas`) trigger Keynote import failures before any content is parsed — even with well-formed OOXML — because the font lookup happens at file-open time and missing custom fonts crash the import. The strict palette therefore uses three system fonts available on macOS, Windows, and Office-on-Linux out of the box:
 
-| Role | Typeface | Frequency in slides | Used for |
-|---|---|---|---|
-| Display / titles / labels | **Roboto Mono Medium** | 443 runs | Cover title, slide titles, section pill, agenda numbers, card headings, sub-headings, callouts |
-| Body prose | **Roboto** | 597 runs | Descriptive paragraphs, bullet text, captions |
-| Code | **Consolas** | 176 runs | All code blocks (Roboto Mono is **not** used in code) |
-| Rare accent | Roboto Mono Light | 8 runs | Negligible — treat as Roboto Mono Medium |
+| Role | Typeface | Used for |
+|---|---|---|
+| Display / titles / labels | **Helvetica Bold** | Cover title, slide titles, section pill, agenda numbers, card headings, sub-headings, callouts |
+| Body prose | **Helvetica** | Descriptive paragraphs, bullet text, captions |
+| Code | **Courier New** | All code blocks |
+
+Arial is accepted as an interchangeable substitute for Helvetica on platforms where Helvetica isn't natively available (some Windows configurations); `audit_palette_fonts.py` whitelists Arial + Arial Bold alongside Helvetica + Helvetica Bold. **Forbidden in slide content**: `Roboto`, `Roboto Mono`, `Roboto Mono Medium`, `Roboto Mono Light`, `Consolas`, `Calibri`, any other non-system face. The audit fails the render with `[off-font]` on any forbidden typeface.
 
 The deck overrides typeface at the run level on every text shape. New slides must do the same — never inherit from `+mj-lt` / `+mn-lt`.
+
+> **Historical note.** Earlier versions of this spec mandated `Roboto` + `Roboto Mono Medium` + `Consolas` (the typefaces of the original 53-slide source deck). That palette shipped well-formed .pptx files that nonetheless failed Keynote import on macOS because the custom fonts weren't installed on the target machine. The system-font palette above is the Keynote-compatibility fix. If brand fidelity to the Roboto family is required for a specific render, the only path is to install the fonts system-wide on every viewing target before opening the deck.
 
 ### 3.2 Type scale (point sizes encoded as `sz="<pt*100>"`)
 
@@ -79,13 +82,13 @@ Sizes range 5pt – 40.5pt in 0.5pt increments. Bucketed by role:
 
 | Role | Range | Typical | Notes |
 |---|---|---|---|
-| Cover title (slide 1 only) | 40.5pt | 40.5pt | Roboto Mono Medium, `#1F1E1E`, line-spacing `lnSpc=104%` |
-| Agenda / divider title (`Agenda`) | 20pt – 21.5pt | **21.5pt** | Roboto Mono Medium, `#1F1E1E` |
-| Slide title (H2 — `## Foo`) | 17pt – 31pt | adaptive, mean ~26pt | Roboto Mono Medium, `#1F1E1E` (see §3.3) |
-| Subsection / card heading | 13pt – 15.5pt | 13.5pt | Roboto Mono Medium, `#3B3535` |
-| Body paragraph | 10.5pt – 12.5pt | 11pt | Roboto, `#3B3535` |
-| Card body / dense text | 8.5pt – 10pt | 9pt | Roboto |
-| Code (Consolas) | 6.5pt – 10pt | 8.5pt | `#000000` with syntax-color spans |
+| Cover title (slide 1 only) | 40.5pt | 40.5pt | Helvetica Bold, `#1F1E1E`, line-spacing `lnSpc=104%` |
+| Agenda / divider title (`Agenda`) | 20pt – 21.5pt | **21.5pt** | Helvetica Bold, `#1F1E1E` |
+| Slide title (H2 — `## Foo`) | 17pt – 31pt | adaptive, mean ~26pt | Helvetica Bold, `#1F1E1E` (see §3.3) |
+| Subsection / card heading | 13pt – 15.5pt | 13.5pt | Helvetica Bold, `#3B3535` |
+| Body paragraph | 10.5pt – 12.5pt | 11pt | Helvetica, `#3B3535` |
+| Card body / dense text | 8.5pt – 10pt | 9pt | Helvetica |
+| Code (Courier New) | 6.5pt – 10pt | 8.5pt | `#000000` with syntax-color spans |
 | Captions, fine print | 5pt – 7pt | 6.5pt | Last resort; used when card density is extreme |
 
 ### 3.3 Title sizing is adaptive
@@ -98,7 +101,7 @@ There is **no single H2 point size**. Titles fit to one line across the availabl
 | 8 | Limitaciones de los Foundational Models | longest | 31pt |
 | 47 | Recorrido del Paciente | medium | ~26pt |
 
-A renderer should measure the title text width in Roboto Mono Medium and pick the largest `sz` in `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` that fits the content area (~9 inches wide, less the section-pill offset of ~0.54 in).
+A renderer should measure the title text width in Helvetica Bold and pick the largest `sz` in `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` that fits the content area (~9 inches wide, less the section-pill offset of ~0.54 in).
 
 ### 3.4 Text alignment
 
@@ -120,7 +123,7 @@ A renderer should measure the title text width in Roboto Mono Medium and pick th
 | Punctuation | Question marks allowed (`¿…?`), colons for subtitle pattern (`Tree of Thought (ToT): Ejemplo`) |
 | Subtitle | No separate subtitle placeholder. When a sub-line is needed, use the colon convention inside the same title |
 | Color | `#1F1E1E` |
-| Font | Roboto Mono Medium |
+| Font | Helvetica Bold |
 
 **`body_y_start` depends on the title's actual wrap state, not on a defensive margin.** Renderers commonly compute `body_y_start = title_y + max_title_height` using the *maximum* height the title could occupy under any wrap (a defensive constant baked into the chars-per-line picker). That's wrong: a 14-char title that fits one line at 31pt has a *measured* `title_height` of roughly one line-height (~0.50 in), and `body_y_start` should land just below that — not below the 2- or 3-line maximum the worst-case title would have produced. When the defensive margin wins, every short-title slide ships with a visible title-to-body gap. The contract: after sizing the title via the §3.3 ladder, **measure the resulting wrapped text height** (number of wrap lines × `line_height_for(sz)`) and set `body_y_start = title_y + actual_title_height + body_gap` where `body_gap ≈ 0.20 in`. The picker's job is to choose `sz`; the layout's job is to read the resulting height — not to reserve room the title turned out not to need.
 
@@ -140,9 +143,9 @@ Pure white `#FFFFFF` per §1. Same on every slide in the deck.
 
 | # | Role | EMU off (x,y) | EMU ext (w,h) | Inches off | Inches ext | Style |
 |---|---|---|---|---|---|---|
-| 1 | **Cover title** (`p:sp`, `rect`, no fill, no border) | `(496119, 536823)` | `(8151763, 1948458)` | `(0.542, 0.587)` | `(8.914, 2.131)` | Body insets `0,0,0,0`. `normAutofit`. One `<a:p>` with `algn="l"`, `lnSpc=104%`. Single run: `sz="4050"` (40.5pt), Roboto Mono Medium, `#1F1E1E`. Wraps to multiple lines as needed. |
-| 2 | **Subtitle** (`p:sp`, `rect`, no fill) | `(496119, 2677269)` | `(6216923, 235297)` | `(0.542, 2.928)` | `(6.800, 0.257)` | `wrap="none"` (single line). Body insets `0`. `algn="l"`, `lnSpc=104%`. Single run: `sz="1450"` (14.5pt), Roboto Mono Medium, `#1F1E1E`. |
-| 3 | **Author + date block** (`p:sp`, `rect`, no fill) | `(496119, 3219748)` | `(3295799, 560933)` | `(0.542, 3.521)` | `(3.603, 0.613)` | Two paragraphs. `algn="l"`, `lnSpc=123%`, `spcAft=900` (9pt) between paragraphs. Each run: `sz="1150"` (11.5pt), **Roboto** (not Mono), `#3B3535`. |
+| 1 | **Cover title** (`p:sp`, `rect`, no fill, no border) | `(496119, 536823)` | `(8151763, 1948458)` | `(0.542, 0.587)` | `(8.914, 2.131)` | Body insets `0,0,0,0`. `normAutofit`. One `<a:p>` with `algn="l"`, `lnSpc=104%`. Single run: `sz="4050"` (40.5pt), Helvetica Bold, `#1F1E1E`. Wraps to multiple lines as needed. |
+| 2 | **Subtitle** (`p:sp`, `rect`, no fill) | `(496119, 2677269)` | `(6216923, 235297)` | `(0.542, 2.928)` | `(6.800, 0.257)` | `wrap="none"` (single line). Body insets `0`. `algn="l"`, `lnSpc=104%`. Single run: `sz="1450"` (14.5pt), Helvetica Bold, `#1F1E1E`. |
+| 3 | **Author + date block** (`p:sp`, `rect`, no fill) | `(496119, 3219748)` | `(3295799, 560933)` | `(0.542, 3.521)` | `(3.603, 0.613)` | Two paragraphs. `algn="l"`, `lnSpc=123%`, `spcAft=900` (9pt) between paragraphs. Each run: `sz="1150"` (11.5pt), **Helvetica** (not Mono), `#3B3535`. |
 | 4 | **Institution logo** (`p:pic`) | `(7183562, 3248546)` | `(1469008, 1214065)` | `(7.856, 3.553)` | `(1.606, 1.328)` | PNG, `ppt/media/image-1-1.png` (Universidad Austral, 616×510 px, RGBA). `noChangeAspect="1"`. `<a:stretch><a:fillRect/></a:stretch>`. |
 
 ### 4.3 Content substitution slots
@@ -177,7 +180,7 @@ Pure white `#FFFFFF` per §1.
 
 | # | Role | EMU off | EMU ext | Inches off | Inches ext | Style |
 |---|---|---|---|---|---|---|
-| 1 | Title `Agenda` | `(480640, 504974)` | `(3246834, 348704)` | `(0.526, 0.552)` | `(3.551, 0.381)` | `algn="l"`, body insets `0`. `sz="2150"` (21.5pt), Roboto Mono Medium, `#1F1E1E`. |
+| 1 | Title `Agenda` | `(480640, 504974)` | `(3246834, 348704)` | `(0.526, 0.552)` | `(3.551, 0.381)` | `algn="l"`, body insets `0`. `sz="2150"` (21.5pt), Helvetica Bold, `#1F1E1E`. |
 | 2 | Vertical spine | `(606103, 994172)` | `(14288, 3644354)` | `(0.663, 1.087)` | `(0.016, 3.986)` | `roundRect`, fill `#D8D4D4`. Spans dot row 1 top (`y=1.087`) to dot row 7 bottom + extra (`y≈5.073`). Width 14288 EMU = 1.15 pt. |
 
 ### 5.3 Per-item geometry (one row per agenda entry)
@@ -203,10 +206,10 @@ Each row consists of 5 shapes (positions relative to `y_dot = row top`):
 | Shape | EMU off | EMU ext | Inches | Active fill | Inactive fill | Notes |
 |---|---|---|---|---|---|---|
 | **Dot** (`roundRect`) | `(480603, y_dot)` | `(250999, 250999)` | `0.274 × 0.274` square | `#DA1B2E` | `#F2EEEE` | Corner radius ~25100 EMU = 0.027 in (softly rounded square, not a circle). |
-| **Number text** (`rect`, inside dot) | `(522387, y_dot + 20873)` | `(167357, 209178)` | `0.183 × 0.229` | text `#FFFFFF` | text `#3B3535` | `sz="1300"` (13pt), Roboto Mono Medium. The number "N" is centered inside the dot via shape padding (x-padding ≈ 41784 EMU each side; y-padding ≈ 20873 EMU top/bottom). |
+| **Number text** (`rect`, inside dot) | `(522387, y_dot + 20873)` | `(167357, 209178)` | `0.183 × 0.229` | text `#FFFFFF` | text `#3B3535` | `sz="1300"` (13pt), Helvetica Bold. The number "N" is centered inside the dot via shape padding (x-padding ≈ 41784 EMU each side; y-padding ≈ 20873 EMU top/bottom). |
 | **Horizontal connector** (`roundRect`) | `(717314, y_dot + 118319)` | `(334714, 14288)` | `0.366 × 0.016` | `#F33447` | `#D8D4D4` | A thin horizontal bar joining the dot to the item title. Y-offset 118319 EMU places it ~vertically centered on the dot. |
-| **Item title** (`rect`, no fill) | `(1164059, y_dot + 38323)` | `(varies, 174278)` | `varies × 0.191` | `#3B3535` | `#3B3535` | `sz="1050"` (10.5pt), Roboto Mono Medium. Width = `min(measured-text-width + 50000, 2843808)` EMU; tight content boxes are observed in the template. |
-| **Item subtitle** (`rect`, no fill) | `(1164059, y_dot + 254719)` | `(7499300, 145479)` | `8.201 × 0.159` | `#3B3535` | `#3B3535` | `sz="850"` (8.5pt), Roboto (not Mono). Single line at full width. |
+| **Item title** (`rect`, no fill) | `(1164059, y_dot + 38323)` | `(varies, 174278)` | `varies × 0.191` | `#3B3535` | `#3B3535` | `sz="1050"` (10.5pt), Helvetica Bold. Width = `min(measured-text-width + 50000, 2843808)` EMU; tight content boxes are observed in the template. |
+| **Item subtitle** (`rect`, no fill) | `(1164059, y_dot + 254719)` | `(7499300, 145479)` | `8.201 × 0.159` | `#3B3535` | `#3B3535` | `sz="850"` (8.5pt), Helvetica (not Mono). Single line at full width. |
 
 ### 5.4 Active-state rules
 
@@ -257,12 +260,12 @@ Every content slide (49 of 53 — excluding cover, the 53 closing-CTA, and 3 unu
 | Corner radius | ~5760 EMU (4.6 pt), constant — see §2.3 |
 | Stroke | None |
 | Text shape | A separate `rect` overlay inside the pill, body insets `0`. The pill itself contains no text. |
-| Text | ALL CAPS, `sz="550" – "900"` (5.5pt – 9pt) typical, Roboto Mono Medium, `#3B3535` |
+| Text | ALL CAPS, `sz="550" – "900"` (5.5pt – 9pt) typical, Helvetica Bold, `#3B3535` |
 | Alignment | Left |
 
 **Sizing algorithm — pill geometry is a function of pill text, not a fixed default.** The single most common §6 failure mode is a renderer emitting a hardcoded pill width (e.g., inherited from a base-template reference slide whose label happened to be shorter), so a real section name overflows the pill background and wraps below it with no fill — the pink chip covers line 1, line 2 hangs unstyled below the chip. Avoid by computing geometry from the text every time:
 
-1. **Measure the pill text** in Roboto Mono Medium at the chosen `sz` (default `sz="800"` = 8pt). Use `monospace_glyph_w ≈ 0.0535 in × (sz/800)` and `line_h ≈ 0.115 in × (sz/800)` as the renderer's measurement constants for Roboto Mono Medium — they match the source deck's observed pill widths to within ~3% (e.g. 24-char label at 8pt → `24 × 0.0535 = 1.28 in` text width, matches the 1.11–3.06 in observed range).
+1. **Measure the pill text** in Helvetica Bold at the chosen `sz` (default `sz="800"` = 8pt). Use `monospace_glyph_w ≈ 0.0535 in × (sz/800)` and `line_h ≈ 0.115 in × (sz/800)` as the renderer's measurement constants for Helvetica Bold — they match the source deck's observed pill widths to within ~3% (e.g. 24-char label at 8pt → `24 × 0.0535 = 1.28 in` text width, matches the 1.11–3.06 in observed range).
 2. **Padding:** `horizontal_padding = 0.15 in` per side, `vertical_padding = 0.04 in` per side. Constant; do not scale with text length.
 3. **Single-line preferred — pill stays one line whenever possible.** `pill_cx = text_w + 2 × horizontal_padding`, `pill_cy = line_h + 2 × vertical_padding`.
 4. **Single-line cap:** if `pill_cx > 4.00 in`, try downsizing the text to `sz="700"` (7pt) then `sz="650"` (6.5pt) and recomputing; if any single-line width fits the 4.00-in cap, ship that single-line pill at that smaller `sz`.
@@ -295,9 +298,9 @@ Each card is a stack of **5 shapes**. Slide-13 measurements (one row):
 |---|---|---|---|---|
 | Outer card | `(384476, 1005842)` | `(4085167, 588086)` | `(0.42, 1.10)` × `(4.47, 0.64)` | `roundRect`, fill `#FFFFFF`, no stroke |
 | Left strip | `(393189, 1015045)` | `(357027, 567039)` | `(0.43, 1.11)` × `(0.39, 0.62)` | `rect` (sharp), fill `#F2EEEE` |
-| Number text | `(494833, 1218812)` | `(127635, 167357)` | `(0.54, 1.33)` × `(0.14, 0.18)` | `sz="1000"` (10pt), Roboto Mono Medium, `#3B3535`, centered |
-| Card heading | `(789055, 1107603)` | `(1107305, 137389)` | `(0.86, 1.21)` × `(1.21, 0.15)` | `sz="850"` (8.5pt), Roboto Mono Medium, `#3B3535` |
-| Card body | `(789055, 1284058)` | `(3589248, 210418)` | `(0.86, 1.40)` × `(3.92, 0.23)` | `sz="650"` (6.5pt), Roboto, `#3B3535` |
+| Number text | `(494833, 1218812)` | `(127635, 167357)` | `(0.54, 1.33)` × `(0.14, 0.18)` | `sz="1000"` (10pt), Helvetica Bold, `#3B3535`, centered |
+| Card heading | `(789055, 1107603)` | `(1107305, 137389)` | `(0.86, 1.21)` × `(1.21, 0.15)` | `sz="850"` (8.5pt), Helvetica Bold, `#3B3535` |
+| Card body | `(789055, 1284058)` | `(3589248, 210418)` | `(0.86, 1.40)` × `(3.92, 0.23)` | `sz="650"` (6.5pt), Helvetica, `#3B3535` |
 
 Vertical stride between rows in slide 13: **0.69 in** (rows at y=1.10, 1.79, 2.48, 3.17, …). Six cards stacked in a 4.47-in-wide column on the left, paired with a worked example or code on the right.
 
@@ -308,8 +311,8 @@ Smaller, no left strip, no number. Used for sibling cards in a flat grid.
 | Shape | Inches off | Inches ext | Style |
 |---|---|---|---|
 | Card | `(5.19, 2.03)` | `(2.07, 1.63)` | `roundRect`, fill `#FFFFFF`, no stroke |
-| Heading | `(5.37, 2.21)` | `(1.72, 0.24)` | `sz="1350"` (13.5pt), Roboto Mono Medium, `#3B3535` |
-| Body | `(5.37, 2.57)` | `(1.72, 0.67)` | `sz="1100"` (11pt), Roboto, `#3B3535` |
+| Heading | `(5.37, 2.21)` | `(1.72, 0.24)` | `sz="1350"` (13.5pt), Helvetica Bold, `#3B3535` |
+| Body | `(5.37, 2.57)` | `(1.72, 0.67)` | `sz="1100"` (11pt), Helvetica, `#3B3535` |
 
 The card's inner padding is **~0.18 in** on the left (`5.37 − 5.19 = 0.18`) and **~0.18 in** on the top (`2.21 − 2.03 = 0.18`).
 
@@ -332,14 +335,14 @@ Section pill + title + lead paragraph (full width) + a row of N equal-width card
 |---|---|
 | Section pill | §6 geometry, unchanged |
 | Title | §3.3 adaptive sizing; same anchor as other content slides (~`(0.54, 0.85)`) |
-| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.85)`, `sz="1200"` (12pt) Roboto, `#3B3535`, body insets `0` |
+| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.85)`, `sz="1200"` (12pt) Helvetica, `#3B3535`, body insets `0` |
 | Card row baseline | y ≈ 3.20 in; gutter between cards ≈ 0.22 in; row height ≈ 1.85 in |
 | Per-card width | `(8.91 − (N−1) × 0.22) / N` — at N=3: ~2.82 in; N=4: ~2.06 in; N=5: ~1.60 in |
 | Card outer | `roundRect`, fill `#F2EEEE`, no stroke, corner radius 5760 EMU |
 | Icon chip | `ellipse` (perfect circle), fill `#DA1B2E`, no stroke, diameter ~0.42 in, anchored ~`(card_x + 0.20, 3.40)`. The line-art glyph (from §17.1) is overlaid on the chip in `#FFFFFF` stroke at ~70% of the chip's diameter. **This is the only place the chip variant is permitted — see §17.2.** Each card's glyph is **picked per §17.5 from the heading/body of *that card*** — never reuse the same glyph across cards in the same row, never default to a single house glyph for the whole layout. Three cards = three different §17.1 entries chosen to match each card's concept. The base-template slide 14 ships a hollow-ellipse stand-in inside the chip purely as a structural marker for the slot; the real render swaps it for the content-matched §17.1 glyph. |
-| Card heading | anchor ~`(card_x + 0.20, 3.95)`, `sz="1350"` (13.5pt) Roboto Mono Medium, `#1F1E1E`, single line preferred |
-| Card body | anchor ~`(card_x + 0.20, 4.30)`, width = card_width − 0.40, `sz="1100"` (11pt) Roboto, `#3B3535`, 2–3 lines max |
-| Source line (optional) | anchor `(0.54, 5.30)`, ext `(8.91, 0.20)`, `sz="900"` (9pt) Roboto Italic, `#6A737D`. Emit when the slide cites a single source; omit when content is synthesized across the corpus. Format: `Fuente: <source title>` (localize "Fuente:" per `Presentation language`; English: `Source:`). |
+| Card heading | anchor ~`(card_x + 0.20, 3.95)`, `sz="1350"` (13.5pt) Helvetica Bold, `#1F1E1E`, single line preferred |
+| Card body | anchor ~`(card_x + 0.20, 4.30)`, width = card_width − 0.40, `sz="1100"` (11pt) Helvetica, `#3B3535`, 2–3 lines max |
+| Source line (optional) | anchor `(0.54, 5.30)`, ext `(8.91, 0.20)`, `sz="900"` (9pt) Helvetica Italic, `#6A737D`. Emit when the slide cites a single source; omit when content is synthesized across the corpus. Format: `Fuente: <source title>` (localize "Fuente:" per `Presentation language`; English: `Source:`). |
 
 **Capacity:** N=3 is the visual sweet spot; N=4 still reads cleanly; N=5 is the floor — at N=5 the per-card width drops to 1.60 in and bodies must be ≤ 60 chars (~1 short sentence). If 5 cards don't comfortably fit short bodies, fall back to §7.5 icon-bullet list instead of shrinking the body font.
 
@@ -351,11 +354,11 @@ Section pill + title + lead paragraph (full width) + a vertical stack of N rows 
 |---|---|
 | Section pill | §6 geometry, unchanged |
 | Title | §3.3 adaptive sizing; may wrap to 2 lines (the lead paragraph + row stack accommodate a taller title than §7.4) |
-| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.90)`, `sz="1200"` (12pt) Roboto, `#3B3535` — inline bold (`**…**`) preserved with `b="1"` |
+| Lead paragraph | full content width, anchor ~`(0.54, 2.05)`, ext ~`(8.91, 0.90)`, `sz="1200"` (12pt) Helvetica, `#3B3535` — inline bold (`**…**`) preserved with `b="1"` |
 | Row stack baseline | y ≈ 3.10 in; vertical stride per row = `(slide_h − 3.10 − 0.30 bottom margin) / N` (at N=3 → ~0.74 in; N=4 → ~0.56 in; N=5 → ~0.44 in) |
 | Per-row icon | anchor `(0.54, row_y + 0.04)`, ext `(0.42, 0.42)`, line-art `#DA1B2E` per §17.2 (**no chip background** — §17.2 default treatment). Each row's icon is **picked per §17.5 from the heading/body of *that row*** — never reuse the same icon across rows in the same stack. Three rows = three different §17.1 entries chosen to match each row's concept. The base-template slide 15 ships a hollow-ellipse stand-in purely as a structural marker; the real render swaps it for a content-matched `<p:pic>` of the chosen §17.1 icon per §17.4. |
-| Per-row heading | anchor `(1.16, row_y + 0.05)`, ext `(7.75, 0.30)`, `sz="1350"` (13.5pt) Roboto Mono Medium, `#1F1E1E`, single line |
-| Per-row body | anchor `(1.16, row_y + 0.40)`, ext `(7.75, stride − 0.45)`, `sz="1100"` (11pt) Roboto, `#3B3535`, 2–3 sentences. Inline bold preserved. |
+| Per-row heading | anchor `(1.16, row_y + 0.05)`, ext `(7.75, 0.30)`, `sz="1350"` (13.5pt) Helvetica Bold, `#1F1E1E`, single line |
+| Per-row body | anchor `(1.16, row_y + 0.40)`, ext `(7.75, stride − 0.45)`, `sz="1100"` (11pt) Helvetica, `#3B3535`, 2–3 sentences. Inline bold preserved. |
 | Source line (optional) | same as §7.4 |
 
 **Capacity:** N=3 with 3-sentence bodies fits comfortably. N=4 with 2-sentence bodies is the upper bound; N=5 only with 1–2-sentence bodies. Beyond that the slide is overstuffed — split into two slides rather than shrink body font below 11pt.
@@ -364,7 +367,7 @@ Section pill + title + lead paragraph (full width) + a vertical stack of N rows 
 
 ### 7.6 Labeled enumerations render as cards, never as paragraph leads
 
-When a slide body contains a named sequence — `Paso 1` / `Paso 2` / `Paso 3`, `Step 1` / `Step 2`, `Etapa A` / `Etapa B`, `Phase 1` / `Phase 2`, `Case A` / `Case B`, `Fase I` / `Fase II`, and equivalents in any presentation language — **each named unit is a structural element**: a §7.1 numbered card (when the label carries an integer), a §7.2 plain card heading, or a `sz="1350"` Roboto Mono Medium subheading on its own line. The label **must not** render as an inline paragraph prefix (e.g. `**Paso 1.** Lorem ipsum…` followed by an indented sub-bullet list), because the resulting layout reads as a single flat paragraph block — the named hierarchy collapses visually and the reader cannot scan the steps. The numeric or ordinal portion of the label becomes the card's number / heading; the descriptive portion becomes the card body. Integer-labeled sequences map cleanly to §7.1; non-numeric labels (`Case A`, `Phase X`) use §7.2 with the label as `Card heading`. Cross-reference: §15 layout-selection table — any H2 whose body matches the labeled-enumeration shape selects **card-grid** or **content+cards+image**, never **content-text**.
+When a slide body contains a named sequence — `Paso 1` / `Paso 2` / `Paso 3`, `Step 1` / `Step 2`, `Etapa A` / `Etapa B`, `Phase 1` / `Phase 2`, `Case A` / `Case B`, `Fase I` / `Fase II`, and equivalents in any presentation language — **each named unit is a structural element**: a §7.1 numbered card (when the label carries an integer), a §7.2 plain card heading, or a `sz="1350"` Helvetica Bold subheading on its own line. The label **must not** render as an inline paragraph prefix (e.g. `**Paso 1.** Lorem ipsum…` followed by an indented sub-bullet list), because the resulting layout reads as a single flat paragraph block — the named hierarchy collapses visually and the reader cannot scan the steps. The numeric or ordinal portion of the label becomes the card's number / heading; the descriptive portion becomes the card body. Integer-labeled sequences map cleanly to §7.1; non-numeric labels (`Case A`, `Phase X`) use §7.2 with the label as `Card heading`. Cross-reference: §15 layout-selection table — any H2 whose body matches the labeled-enumeration shape selects **card-grid** or **content+cards+image**, never **content-text**.
 
 ---
 
@@ -381,7 +384,7 @@ For lateral, evocative content: an analogy, a tip, a warning, a mnemonic. The pi
 | Outer | `roundRect`, fill `#F7BBC1` (peach-pink), corner radius ~5760 EMU |
 | Inner (optional) | Nested `roundRect`, fill `#F2F2F2`, ~0.1 in inset — used when the callout contains code |
 | Marker icon | A small `<p:pic>` image at the left of the body (~0.19 × 0.16 in), positioned ~0.17 in inside the outer's left edge. Use the branded icon library (§17) — `lightbulb` for analogy, `warning` for caution, `book` for reference, etc. |
-| Body text | `rect` overlay, body insets `0`, fill `#000000`, `sz="1100" – "1150"` (11 – 11.5pt), Roboto |
+| Body text | `rect` overlay, body insets `0`, fill `#000000`, `sz="1100" – "1150"` (11 – 11.5pt), Helvetica |
 
 Two examples:
 - **Slide 3, full-width analogy:** outer at `(0.54, 4.18)` × `(8.91, 0.88)`; icon at `(0.71, 4.41)`; text at `(1.08, 4.36)` × `(8.21, 0.49)`.
@@ -395,7 +398,7 @@ For a load-bearing claim about what becomes possible, a quantified result, or th
 |---|---|
 | Outer | `roundRect`, fill `#B8E6F5` (light cyan), corner radius ~5760 EMU |
 | Marker icon | A small `(i)` `info` icon (§17 library — `icon-info.svg`) in `#DA1B2E` at the left of the body, ~0.20 × 0.20 in |
-| Body text | `rect` overlay, body insets `0`, fill `#1F1E1E`, `sz="1100" – "1300"` (11 – 13pt), Roboto. Bold lead-in (e.g. **"Lo que la IA Generativa hace posible:"**) followed by the explanatory body. Quantified figures (Dice scores, dollar amounts, percentages) get inlined in `#DA1B2E` bold — they're the "punch" of the statement. |
+| Body text | `rect` overlay, body insets `0`, fill `#1F1E1E`, `sz="1100" – "1300"` (11 – 13pt), Helvetica. Bold lead-in (e.g. **"Lo que la IA Generativa hace posible:"**) followed by the explanatory body. Quantified figures (Dice scores, dollar amounts, percentages) get inlined in `#DA1B2E` bold — they're the "punch" of the statement. |
 | Typical placement | Below the main content as the closing claim — visually heaviest element on the slide |
 | Width | Full content-area width (~9 in) |
 
@@ -420,7 +423,7 @@ Estimate callout line count by character count at the callout's render width:
 
 ```
 callout_lines = max(1, ceil(text_len / chars_per_line))
-chars_per_line ≈ 110     # 11pt Roboto at BODY_W − 0.7 in (icon column + insets)
+chars_per_line ≈ 110     # 11pt Helvetica at BODY_W − 0.7 in (icon column + insets)
 callout_height = callout_lines × line_h_11pt + 2 × callout_v_padding
                  line_h_11pt ≈ 0.20 in
                  callout_v_padding ≈ 0.08 in
@@ -436,12 +439,12 @@ Reserve `callout_height` at the bottom of the body region first; lay out the pre
 |---|---|
 | Background surface | `roundRect`, fill `#F2F2F2`, corner radius ~5760 EMU |
 | Optional accent border | A `roundRect` `#F7BBC1` 1–2 px larger as outer frame (used to mark "before/after" pairs) |
-| Font | **Consolas** (not Roboto Mono), `sz="650" – "1000"` (6.5 – 10pt), default ink `#000000` |
+| Font | **Courier New** (not Helvetica Bold), `sz="650" – "1000"` (6.5 – 10pt), default ink `#000000` |
 | Body insets | `0` on all four sides (text is positioned via the parent rect, not via the txBody padding) |
 | Syntax highlighting | keyword `#D73A49`, string/identifier `#005CC5`, comment `#6A737D` (GitHub-light theme) |
 | Layout | Code surface typically occupies the right ~45% of the slide; left ~45% is a `card` or `text` column explaining the code |
 
-Code uses **Consolas**, not Roboto Mono. Roboto Mono Medium is reserved for titles, labels, and card headings.
+Code uses **Courier New**, not Helvetica Bold. Helvetica Bold is reserved for titles, labels, and card headings.
 
 ---
 
@@ -604,7 +607,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 6. **Title sizing per content slide.** Apply §3.3 — pick the largest size from the discrete ladder `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` pt that fits the title on one line.
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.
 8. **Background.** Pure white `#FFFFFF` `<p:bg>` solid fill on every layout (§1). No overlays, no tints.
-9. **Fonts are always set at run level.** Never inherit from theme. Roboto Mono Medium for titles/labels/headings; Roboto for body; Consolas for code. No fallbacks.
+9. **Fonts are always set at run level.** Never inherit from theme. Helvetica Bold for titles/labels/headings; Helvetica for body; Courier New for code. No fallbacks.
 10. **Emit speaker notes verbatim into the notes pane.** Every `### Notes` block in `final.md` becomes the notes content of the corresponding slide — no truncation, no dropping. The pane is load-bearing per §1 and [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk*; do not treat it as decorative.
 11. **The renderer never fixes content defects.** If the post-render visual review surfaces a slide whose title overflows because the title is too long, whose body crowds because it carries two ideas, whose section pill is missing because the H1 has no number, or whose notes pane is empty — those are **Step-4 / Step-5 / Step-6 authoring defects** surfacing late. The renderer's job is to apply the spec faithfully, not to shrink-fit a 60-character title into the H2 ladder's 17pt floor, drop a card to fit a budget, or invent a section pill text. When a content defect is detected at render time, stop the iteration budget, surface to the presenter with the exact rule violated (e.g. "Slide 14 H2 = 62 chars, exceeds the 40-char budget in `principles.md` → *Title-length budget*"), and offer either: (a) accept the defect for this ship and log to `feedback-backlog.md` with the `late-catch` tag, or (b) re-open the authoring stage that owns the defect. **Never silently compensate.** Renderer compensation is what causes the next Talk to re-introduce the same defect — the authoring stage never learned.
 
@@ -660,14 +663,14 @@ When you only need a one-line cheat-sheet:
 | Concern | Answer |
 |---|---|
 | Background | Pure white `#FFFFFF` `<p:bg>` solid fill on every slide |
-| Title font | Roboto Mono Medium, `#1F1E1E`, adaptive 17–31pt (40.5pt for cover) |
-| Body font | Roboto, `#3B3535`, 10.5–12.5pt |
-| Code font | Consolas, `#000000` with GitHub-light syntax colors |
-| Section pill | `roundRect` `#F9D2D6` top-left, ALL CAPS Roboto Mono Medium `#3B3535` text overlay |
-| Card (numbered) | `roundRect` `#FFFFFF` + `rect` `#F2EEEE` left strip + Roboto Mono Medium number + heading + Roboto body |
-| Card (plain) | `roundRect` `#FFFFFF` + Roboto Mono Medium heading + Roboto body, 0.18 in inner padding |
-| Callout | `roundRect` `#F7BBC1` + emoji image + Roboto `#000000` text |
-| Code surface | `roundRect` `#F2F2F2` + Consolas + syntax-color spans |
+| Title font | Helvetica Bold, `#1F1E1E`, adaptive 17–31pt (40.5pt for cover) |
+| Body font | Helvetica, `#3B3535`, 10.5–12.5pt |
+| Code font | Courier New, `#000000` with GitHub-light syntax colors |
+| Section pill | `roundRect` `#F9D2D6` top-left, ALL CAPS Helvetica Bold `#3B3535` text overlay |
+| Card (numbered) | `roundRect` `#FFFFFF` + `rect` `#F2EEEE` left strip + Helvetica Bold number + heading + Helvetica body |
+| Card (plain) | `roundRect` `#FFFFFF` + Helvetica Bold heading + Helvetica body, 0.18 in inner padding |
+| Callout | `roundRect` `#F7BBC1` + emoji image + Helvetica `#000000` text |
+| Code surface | `roundRect` `#F2F2F2` + Courier New + syntax-color spans |
 | Agenda dot (active) | `roundRect` `#DA1B2E` + `#FFFFFF` "N" text + `#F33447` connector |
 | Agenda dot (inactive) | `roundRect` `#F2EEEE` + `#3B3535` "N" text + `#D8D4D4` connector |
 | Corner radius | Constant ~5760 EMU (4.6 pt) on every roundRect |
@@ -973,7 +976,7 @@ Things that look reasonable but break the template. The §-section in each row i
 | "Can I use a native PPTX table?" | §11 — no, convert to cards |
 | "What's the slide background color?" | §1 — pure white `#FFFFFF` solid fill on every slide |
 | "Can I resize an image to fit a slot exactly?" | §12 — scale uniformly only; aspect ratio is fixed |
-| "What font for code blocks?" | §3.1 — Consolas (not Roboto Mono) |
+| "What font for code blocks?" | §3.1 — Courier New (not Helvetica Bold) |
 | "How many lines can a slide title span?" | §3.3 — adaptive sz to fit one line |
 | "Where is the brand logo?" | `ppt/media/image-1-1.png` in template.pptx / base-template.pptx |
 | "How do I render a dual-format icon (PNG fallback + SVG primary)?" | §17.4 |

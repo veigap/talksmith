@@ -26,17 +26,18 @@ What it does:
       #F33447 #005CC5 #F2F2F2 #F2EEEE #F9D2D6 #F7BBC1 #B8E6F5
       #D8D4D4
 
-    Allowed fonts (§3.1):
-      Roboto Mono Medium · Roboto · Consolas · Roboto Mono Light
-      (Roboto Mono Light is the 8-run accent face the source deck used;
-       treated as same family as Roboto Mono Medium for floor purposes.)
+    Allowed fonts (§3.1, Keynote-compatibility palette — system fonts only):
+      Helvetica · Helvetica Bold · Arial · Arial Bold · Courier New
+      Custom fonts (Roboto / Roboto Mono / Roboto Mono Medium /
+      Roboto Mono Light / Consolas) fail Keynote import on macOS before
+      any content is parsed, so they're forbidden in slide content.
 
     Scope:
       - Iterates `ppt/slides/slide*.xml` only (not masters / layouts /
         themes — those carry the brand theme's residual colors and
         fonts which slide-level runs override per §3.1 contract).
       - Case-insensitive on hex (`F33447` == `f33447`).
-      - Whitespace-trimmed on typeface ("Roboto " == "Roboto").
+      - Whitespace-trimmed on typeface ("Helvetica " == "Helvetica").
       - Skips `<a:schemeClr>` references — those are theme-bound and
         should not appear in slide-level content per §2, but if they
         do they surface separately as `[scheme-clr]`.
@@ -76,8 +77,9 @@ ALLOWED_COLORS = {
 }
 
 # §3.1 fonts — slide-level run typefaces must be one of these.
-# Treat Roboto Mono Light and Roboto Mono Medium as the same family for floor purposes.
-ALLOWED_FONTS = {"Roboto Mono Medium", "Roboto Mono Light", "Roboto", "Consolas"}
+# Keynote-compatibility palette: system fonts only. Custom fonts (Roboto family,
+# Consolas) fail Keynote import on macOS before any content is parsed.
+ALLOWED_FONTS = {"Helvetica", "Helvetica Bold", "Arial", "Arial Bold", "Courier New"}
 
 
 @dataclass
