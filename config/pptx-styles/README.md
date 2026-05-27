@@ -9,7 +9,7 @@ Talksmith renders PPTX in one of several **styles**. Each style is a self-contai
 | **strict** | [`strict/`](strict/) | [`strict/pptx-prompt.md`](strict/pptx-prompt.md) | [`strict/base-template.pptx`](strict/base-template.pptx) — 15-slide foundation (cover + agenda + 12 layout-reference + agenda-divider example) | Course series where visual consistency across classes matters; deck will be skimmed asynchronously; presenter wants the workflow to make the visual decisions; most content fits §13's taxonomy. |
 | **free-form** | [`free-form/`](free-form/) | [`free-form/pptx-prompt.md`](free-form/pptx-prompt.md) | [`free-form/base-template.pptx`](free-form/base-template.pptx) — 1-slide cover-only foundation | One-off keynote or pitch; live-presented with the speaker driving every transition; presenter has design instincts they want the renderer to follow; meaningful fraction of slides have content that doesn't fit a fixed taxonomy. |
 
-The two styles are not better/worse — they trade *predictability* for *expressive range*. The same working directory can carry Talks in both styles.
+The two styles are not better/worse — they trade *predictability* for *expressive range*. The same subject repo can carry Talks in both styles.
 
 ## Per-Talk style selection
 
@@ -35,16 +35,14 @@ Four rules hold in **every** style — the floor. A render that violates any of 
 3. **Font palette (§3 in each spec)** — every `<a:latin typeface="…"/>` is Roboto / Roboto Mono Medium / Consolas. Audited by the same script.
 4. **White background (§1 in each spec)** — every slide carries a pure-white `<p:bg>` solid fill.
 
-The **render cycle itself** (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Render cycle*. What differs per style is the **content** of CONTROL (which audits fire) and the **content** of FEEDBACK (which rubric the orchestrator walks):
+The render **flow** is owned by [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow* and **branches by style** (strict iterates, free-form is single-pass). What differs per style:
 
 | Phase | strict | free-form |
 |---|---|---|
 | GENERATE | per `strict/pptx-prompt.md` §19.3 7-stage workflow + §15.5 emit-rules | per `free-form/pptx-prompt.md` §5 layout dispatch (slide-by-slide judgment) |
 | CONTROL | aspect-ratio + layout-fit + block-coverage + palette/fonts + cover-fidelity + OOXML | aspect-ratio + block-coverage + palette/fonts + cover-fidelity + OOXML (layout-fit skipped — no spec-predicted layout to compare) |
-| FEEDBACK | 12-practice rubric ([`CLAUDE.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Post-render visual review*) | 8-practice free-form design rubric (`free-form/pptx-prompt.md` §6) |
-| REGENERATE | re-render touched slides | same |
-
-The generate-control-feedback-improve loop is **the constant**; the rules it loops against are what the `style:` field switches.
+| FEEDBACK | 12-practice rubric ([`strict/pptx-prompt.md` §20](strict/pptx-prompt.md)) | *(no FEEDBACK — single-pass; the 8-practice list in `free-form/pptx-prompt.md` §6 is a self-review checklist the presenter uses, not a critique loop)* |
+| REGENERATE | re-render touched slides, up to 3 cycles total | *(no REGENERATE)* |
 
 ## Adding a new style
 

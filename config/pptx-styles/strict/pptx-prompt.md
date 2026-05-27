@@ -989,3 +989,52 @@ The whole spec (§§1–19) is self-contained. Three places it usefully gets ins
 3. **`/render-deck` slash command body** — one-shot CLI invocation.
 
 In all three cases pointing the agent at `config/pptx-prompt.md` is sufficient — this file is the contract. Trust the spec; defer to `base-template.pptx` for geometry; defer to the §17 catalog for visual marks; defer to the §8 decision table for callouts. When the spec and intuition disagree, the spec wins — file an issue if you think the spec is wrong, but do not silently drift.
+
+---
+
+## 20. Post-render visual review
+
+This is the **FEEDBACK phase** of the strict render cycle (cycle contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*). The orchestrator runs it after CONTROL passes, reading `talks/<Talk>/output/.critique/slide-NN.png` via the `Read` tool for each slide (visual analysis on rasterized pixels — XML inspection is forbidden; text overflow, off-balance layout, image clashes, and theme drift are visual properties XML routinely misses).
+
+**Strict runs autonomously.** Never pause mid-cycle to ask the presenter. Findings that need an editorial judgement get the `defer because <reason>` disposition and land in the closing report; the presenter reviews them once the deck is built.
+
+If `slide_previews: failed`, surface `unresolved: slide_previews_failed` — no XML fallback. Without pixels FEEDBACK has no signal.
+
+### 20.1 Block-coverage precondition (CONTROL gate, not FEEDBACK)
+
+[`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) runs in CONTROL. Any `[block-drop]` line ends CONTROL immediately → straight to REGENERATE. **FEEDBACK never runs on a deck with missing blocks** — the rubric below has no practice catching a *missing* shape (no shape on the slide → no rubric hit), so a silent drop sails through. This audit is the deterministic guard.
+
+### 20.2 The 12-practice rubric
+
+| # | Practice | What to look for |
+|---|---|---|
+| 0 | **Block-coverage precondition** | Every block in `final.md` appears as a shape in the rendered slide. Enforced by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) before the visual review starts — see §20.1. If the audit reports `[block-drop]` lines, **stop and re-render — do not proceed to practices 1–12.** Do not bypass. |
+| 1 | **Consistent type hierarchy across slides** | Title / subtitle / body / caption sizes uniform deck-wide. No one-off oversized titles, no shrunken bodies. The template's master styles are the source of truth — every slide should inherit them, not override locally. |
+| 2 | **No text overflow or truncation** | Titles fit on 1–2 lines without orphan words; body text stays inside placeholders; nothing bleeds off-slide or gets ellipsized. If a slide can't fit, the slide needs a split (defer with reason). |
+| 3 | **≤ 5–7 bullets per slide** | More bullets = audience reads instead of listens. 8+ bullets → flag for split rather than shrink-fitting. |
+| 4 | **Body text isn't a wall of paragraphs** | Markdown paragraphs that landed as one long text block on a slide are speaker-notes territory, not slide-body. The slide should be glance-able; the paragraph belongs in the notes pane. |
+| 5 | **Generous safe margins** | Content respects the template's content area; no text or image hugs the slide edges. Whitespace around content makes it breathe. |
+| 6 | **Visual balance** | Slide weight (text + images) distributed — not all stacked on the left, right, or top. Eye should not strain to find the secondary content. |
+| 7 | **Image scale appropriate to role** | Hero images dominate; supporting images supplement. Aspect ratio preserved (no stretching). Image-text gutters consistent. **Per-slide measurement protocol — non-optional, the eye misses sub-50% stretch:** for every slide carrying a diagram or non-photographic image, open the source asset (SVG `viewBox` or PNG/JPG header → `intrinsic_w:intrinsic_h`) and compare to the rendered shape. A 35% horizontal compression looks like a 2.143:1 source in a 1.400:1 placeholder — glyphs and arrowheads visibly squashed but shape still readable; this is the failure mode that previously shipped. Any visible squashing of glyphs, asymmetric arrowheads, or non-circular dots is a fail for slide N × practice 7. [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py) is the build-time gate at 1% tolerance — if the audit passed and the eye still sees stretch, the source asset is wrong (re-render the SVG), not the placement. |
+| 8 | **Section dividers are distinct** | Each numbered H1 must produce a *divider* slide — large title, no body. Section divider rendered as a content slide = convert step or native skill failed the H1-as-divider contract. Re-render. |
+| 9 | **Single focal point per slide** | One element the eye lands on first. Avoid two equally-prominent images, two equally-bold headings. Hierarchy makes the slide readable; ambiguity makes it confusing. |
+| 10 | **Theme consistency** | Template fonts, colors, master layouts honored across every slide. No ad-hoc one-off colors, no system-font fallbacks from copy-paste, no unstyled fragments. Cross-check against [`base-template.pptx`](base-template.pptx) (slides 1–2 must be pixel-equivalent to base-template slides 1–2 modulo placeholder text). |
+| 11 | **No emoji, branded icons only** | Zero system-emoji glyphs (💡 📚 🏥 ⚠️ ✅ ⚙️ 🔍 ⏰ 💰 👥 🛡️ ⭐ 📊 ℹ️ 📖 …) in any slide body. Every iconographic mark resolves to a `#DA1B2E` line-art icon from the §17 catalog. Mixed icon styles is a fail. |
+| 12 | **Section pill present on every content slide** | The `#F9D2D6` rounded-rect pill at top-left naming the active section in ALL CAPS appears on every non-cover, non-agenda slide. Missing pill = generator skipped §6. |
+
+### 20.3 Review discipline (single rule, four parts)
+
+1. **Every slide, not a sample.** Read every `slide-NN.png` via the `Read` tool — one Read per slide. A smoke test (cover + agenda + a few contents + closing) is **not** a review; report it as a smoke test if that's all that was done.
+2. **Every cell of slide × practice.** For each slide name the practice and assign *pass / concern / fail*. "Clean" = every cell passes. A visible practice-7 violation is a fail even if the other 11 cells pass and the slide looks "mostly OK." Skipping a cell on a vibes basis is enforcement failure on the critic.
+3. **Be surgical.** *"Slide 7 title wraps onto a third line — shorten 'Why bipedal robots are hard' → 'Why bipedal locomotion is hard'"*. Vague → vague.
+4. **Minor ≠ defer.** Every flagged cell gets *fix this iteration* / *defer because <reason>*. `[minor]` is not a synonym for *defer*; root-cause it like a blocker. Silent *minor → ignore* is the prohibited pattern.
+
+### 20.4 Aesthetic note (required per slide, one sentence max)
+
+The 12 practices are the floor. After the matrix, add a free-form aesthetic note for what the eye catches but the rubric doesn't — wonky alignment (cards drifting because heading line counts differ), wrong focal point (eye lands on supporting image while load-bearing claim is buried), dead/claustrophobic composition, emotionally-mismatched palette use (red callout on somber clinical content), rhythm fatigue (three identical card grids in a row), typographic micro-defects (orphans, widows, awkward gutter breaks), or image-text gestalt (handshake photo next to a privacy-breach slide). If nothing catches the eye, write `aesthetic: clean`. Not optional padding — the part of the review only the critic can do.
+
+### 20.5 When to declare clean
+
+First-cycle pass on #0–#12 + clean aesthetics is the goal. Don't manufacture issues to fill the cycle budget — unneeded REGENERATE risks regression on adjacent slides.
+
+**Closing report:** `clean on cycle 1` | `clean after N cycle(s)` | `unresolved: <slide N — defect>` | `deferred (presenter to review): <slide N — defect — reason>`. N counts orchestrator cycles only, not subagent build-time recoveries.

@@ -159,6 +159,78 @@ talks/<Talk>/
 
 8. Report: `style: <strict|free-form>`, slide count, image references resolved, `aspect_audit: <ok|N fail>`, `palette_fonts: <ok|N fail>`, `cover_fidelity: <ok|N diff>`, `layout_fit: <ok|N mismatch|skipped:free-form>`, `block_coverage: <ok|N drop>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
+### Render flow — branches by style
+
+The skill is invoked with a `style:` parameter (read from `final.md` frontmatter). **The skill owns the entire render loop end-to-end** — including the visual critique iterations for `strict`. The orchestrator hands off, displays the progress checklist as stage events arrive, and reads the closing report. It does not know whether strict iterates internally or not.
+
+The skill is a Python pipeline + native `pptx` author + (for strict only) an internally-dispatched multimodal sub-agent that reads slide PNGs and walks the rubric. That sub-agent's invocation is an implementation detail of this skill; do not surface it to the orchestrator.
+
+#### `style: strict` — multi-cycle critique loop *(skill-internal)*
+
+Four named phases, up to **3 cycles total** (cycle 1 = initial build; 2–3 = review-and-edit budget). Every phase is owned by the skill; the orchestrator sees only stage events for the progress checklist.
+
+| Phase | Tag | What runs | Exit |
+|---|---|---|---|
+| **GENERATE** | `[cycle N/3] GENERATE` | Cycle 1: full pipeline (preprocess → native `pptx` skill → write → rasterize previews). Cycles 2–3: re-render only the touched slides from the prior REGENERATE handoff. | `final.pptx` written, slide previews in `output/.critique/`. |
+| **CONTROL** | `[cycle N/3] CONTROL` | Build-time audits: aspect ratios, block coverage, palette/fonts, cover fidelity, layout fit, OOXML invariants (§19.4 of `strict/pptx-prompt.md`). | All audits exit 0 → FEEDBACK. Any non-zero → straight to REGENERATE for this cycle (no visual review on a broken render). |
+| **FEEDBACK** | `[cycle N/3] FEEDBACK` | Skill dispatches a multimodal sub-agent (via `Agent` tool) to walk the 12-practice rubric defined in [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) → *Post-render visual review* on every slide PNG (multimodal `Read` of rasterized pixels — XML inspection forbidden). Each finding: `slide N · practice K · <description> → fix this iteration \| defer because <reason>`. **Strict runs autonomously** — no presenter prompts at any point. Editorial-judgement findings get `defer` and surface in the closing report. | List empty OR all entries `defer` → cycle done, exit loop. Any `fix this iteration` → REGENERATE. |
+| **REGENERATE** | `[cycle N/3] REGENERATE` | Skill composes per-slide edit instructions from the FEEDBACK list and re-runs GENERATE on the touched-slide subset. Cycle counter increments. | Cycle N+1 starts. |
+
+**Cycle cap counts only top-level rotations.** Build-time recoveries inside a single GENERATE (broken regex, leaked marker, undersized callout) don't consume cycle budget. After cycle 3, surviving defects surface as `unresolved: …` in the closing report.
+
+#### `style: free-form` — single pass *(skill-internal)*
+
+Two phases, one pass. No FEEDBACK, no REGENERATE.
+
+| Phase | What runs | Exit |
+|---|---|---|
+| **GENERATE** | Full pipeline against [`pptx-styles/free-form/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/). Writes `final.pptx` + `.layout-log.md` + slide previews. | Output written. |
+| **CONTROL** | OOXML invariants, block-coverage, aspect-ratio, palette/fonts, cover-fidelity (5 audits — layout-fit is skipped per `free-form/pptx-prompt.md` §7). | All audits 0 → done. Any non-zero → closing report carries `unresolved: <audit_name>`. No auto-fix; presenter decides whether to re-trigger. |
+
+The 8-practice list in [`free-form/pptx-prompt.md` §6](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md) is a self-review checklist for the presenter (informational), not walked by the skill.
+
+### Presenter-facing progress checklist
+
+The orchestrator displays a checklist on render entry and updates it in place as the skill moves through phases. The orchestrator owns the rendering; the skill owns *which items appear and when each ticks*. State markers: `[ ]` pending, `[⟳]` in progress, `[✓]` done, `[—]` skipped / not-applicable, `[✗]` failed.
+
+**`style: strict` checklist** (5 items; *Reviewing slides* and *Applying fixes* update their cycle counter on each rotation):
+
+```
+Building your deck:
+  [ ] Formatting source
+  [ ] Building draft slides
+  [ ] Reviewing slides (cycle N of 3)
+  [ ] Applying fixes
+  [ ] Final check
+```
+
+Item ↔ phase mapping (strict):
+
+| Item | Ticks when |
+|---|---|
+| Formatting source | Skill emits `[pptx 2/8] Pre-processing done`. |
+| Building draft slides | Skill emits `[pptx 4/8] final.pptx written` for cycle 1. |
+| Reviewing slides (cycle N) | Orchestrator finishes walking the rubric on every slide PNG (FEEDBACK phase). |
+| Applying fixes | Skill returns from REGENERATE-driven re-render, OR `[—] no fixes needed` if the cycle was clean. |
+| Final check | Final cycle exits clean OR cycle 3 ends with surviving `unresolved: …` (marker `[✗]` if any). |
+
+**`style: free-form` checklist** (3 items):
+
+```
+Building your deck:
+  [ ] Formatting source
+  [ ] Building slides
+  [ ] Sanity check
+```
+
+Item ↔ phase mapping (free-form):
+
+| Item | Ticks when |
+|---|---|
+| Formatting source | `[pptx 2/8] Pre-processing done`. |
+| Building slides | `[pptx 4/8] final.pptx written`. |
+| Sanity check | All CONTROL audits exit 0 (or `[✗]` on any non-zero with the audit name in the closing report). |
+
 ### Progress reporting — what the presenter sees during render
 
 PPTX render is a long-running multi-stage operation (typically 30s–3 min depending on slide count). The presenter must see **one short progress line per stage** as work moves through the pipeline so they know the run is alive, where it is, and what's coming next. Silence is a defect: a stalled `pptx` skill, a hung subagent, or a misconfigured Cowork session all look identical to "still working" if the orchestrator emits nothing. The rule is **announce before, summarize after** for every stage in the workflow.

@@ -1,6 +1,6 @@
 # Talksmith
 
-**Talksmith** is a Presenter Agent that helps a human presenter turn raw exploration — articles, papers, LLM chat sessions, screenshots, notes — into a well-structured presentation outline (`draft.md`), then a polished deliverable (`final.md`), and optionally renders it to PowerPoint.
+**Talksmith** is a Claude Code plugin that ships a Presenter Agent — an orchestrator, five role-specific subagents (Librarian, Composer, Editor, Illustrator, Global-Librarian), and a set of skills — to help a human presenter turn raw exploration (articles, papers, LLM chat sessions, screenshots, notes) into a structured presentation outline (`draft.md`), then a polished deliverable (`final.md`), and optionally a rendered PowerPoint. Install it once into Claude Code; run `/talksmith:init` inside each subject repo to scaffold per-subject files.
 
 It is **not** a slide generator. The deliverable is two plain Markdown files — `draft.md` (the working file the presenter edits during Steps 1–5) and `final.md` (the cleaned, Polish-stage derivative produced in Step 6) — describing the deck: thesis, agenda, sections, slides, sources, and speaker notes. Downstream tooling consumes `final.md` to render slides; `draft.md` stays around as the durable working file with the full feedback audit trail, untouched after Step 5.
 
@@ -22,20 +22,85 @@ One substrate underneath all of it: **Markdown.** Corpus records, the outline (`
 
 If that doesn't fit how you work, this is the wrong tool.
 
-## One working directory per subject
+## One shared repo per subject
 
-Talksmith expects **one working directory per subject** — a university course, a recurring workshop, a research area you keep presenting in. The plugin is installed once into Claude Code; you run `/talksmith:init` separately in each subject directory. Inside that directory, `talks/` accumulates class by class: every Talk you give on the subject lives in the same place.
+Talksmith's expected setup is **one repository per subject, shared by all the presenters who teach it** — a university course's lecturer team, a workshop's rotating instructors, a research group that takes turns presenting. The plugin is installed once into each presenter's Claude Code; the **subject directory itself is a Git repo** (or a GitHub-backed Cowork workspace) that the team pushes to and pulls from like any other codebase. `/talksmith:init` is run once at repo creation; from then on every presenter who clones the repo is set up by virtue of having the stub `CLAUDE.md` already in it.
 
-This isn't about disk hygiene — it's about compounding value over time:
+Inside that repo, `talks/` accumulates class by class across the whole team: every Talk anyone gives on the subject lives in the same place. This isn't disk hygiene — it's how the subject's knowledge compounds across presenters and across semesters:
 
-- **Corpus knowledge is reusable across classes.** A paper indexed into the corpus in class 3 is still queryable for class 7. Each subject directory becomes a domain-specific knowledge base.
-- **`profile.md` calibrates to one audience.** "AI students in Biomedicine, undergraduate" is set once and inherited by every class in the directory. Different subject → different directory → different audience defaults. No global state to bleed.
-- **`learnings.md` accumulates per-subject editorial taste.** Recurring feedback ("don't open with the algorithm — open with the dataset") promoted in Step 7 applies to the next class on the same subject, not to unrelated topics.
-- **The audit trail stays scoped.** Feedback backlog, cut material, and open questions live next to the subject they came from. No cross-subject contamination.
+- **Corpus knowledge is reusable across classes and across presenters.** A paper Alice indexed for class 3 is queryable when Bob preps class 7. The subject directory becomes a shared, domain-specific knowledge base owned by the team.
+- **`profile.md` calibrates to the subject's audience, not to any one presenter.** "AI students in Biomedicine, undergraduate" is set once and inherited by every class. The `Presenter:` field can hold one name or several (one per line) — whichever presenter is actually giving a given class overrides it per-Talk in `draft.md` frontmatter, while the audience / consumption-mode / duration / language stay constant.
+- **`learnings.md` accumulates the team's editorial taste.** Recurring feedback ("don't open with the algorithm — open with the dataset") promoted in Step 7 applies to every future class anyone teaches on the subject. New team members inherit the accumulated style automatically.
+- **The audit trail stays scoped and visible to the team.** Feedback backlog, cut material, and open questions live next to the subject they came from, in Git history that everyone on the team can read.
+- **`knowledge-library/`** (built by the Global-Librarian on Step 7 promotion) is the team's curated cross-Talk index of topics, also shared via the repo.
 
-If you present on three subjects, that's three working directories. Mixing subjects in one directory erodes every advantage above.
+### Collaboration mechanics
+
+Treat the subject repo like any code repo: branch per Talk if multiple presenters work simultaneously, merge when each Talk is finalized, resolve conflicts in `learnings.md` / `feedback-backlog.md` as you would in any shared file. Cowork's GitHub-backed cloud workspaces handle this natively; CLI users can use plain Git. The plugin install itself is per-presenter (each laptop) and not part of the repo — so plugin upgrades land independently of subject data.
+
+If the team presents on three subjects, that's three repos. Mixing subjects in one repo erodes every advantage above.
 
 **Keeping the plugin current.** The plugin and your subject working directories are now decoupled: subject directories hold only your data plus a **thin `CLAUDE.md` stub** (~30 lines) that points at the plugin install. The operating spec itself — workflow, role contracts, schemas — lives entirely under `${CLAUDE_PLUGIN_ROOT}/` and updates through the normal plugin update mechanism (`/plugin update talksmith` in the CLI, or the desktop app's plugin manager). Because your `CLAUDE.md` is just a stub, **plugin updates flow straight through without re-running `/talksmith:init`** — the agent reads the latest orchestrator spec from the plugin on every session reload. The only time you'd re-init is if a plugin upgrade explicitly changes the session-start contract (new mandatory load, new directive); the upgrade notes will say so. No fork-sync, no `talksmith:upgrade` workflow, no master vs. user-owned path table to memorize.
+
+## Install
+
+Talksmith ships as a **Claude Code plugin** — each presenter installs it once on their machine; the **subject repo** (a Git repository shared by the team) is set up once and cloned by everyone who teaches the subject.
+
+### Step 1 — Create the subject repo *(strongly recommended: GitHub)*
+
+Before installing anything, create the home for your subject's material: a Git repository that every presenter on the team will clone and push to. **Strongly recommended: a GitHub repository** (private or public, your call) — it gives the team an off-machine source of truth, history, and conflict resolution for the shared files (`config/learnings.md`, `config/feedback-backlog.md`, `knowledge-library/`, and the `talks/` tree). Cowork users can equivalently create a GitHub-backed cloud workspace; CLI users clone the repo locally with `git`. A purely local folder works for a single presenter, but you lose the team sharing the rest of the design is built around — don't pick this if anyone else might teach the subject.
+
+```bash
+# CLI example — create on GitHub first, then:
+git clone git@github.com:<your-team>/ai-in-biomedicine.git
+cd ai-in-biomedicine
+```
+
+One repo per subject. If your team presents on three subjects, create three repos. Don't mix subjects in one repo (see [*One shared repo per subject*](#one-shared-repo-per-subject) for why).
+
+### Step 2 — Install the plugin (each presenter, once)
+
+**Claude Code CLI** — install the CLI, then add Talksmith from the marketplace:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+Then inside any Claude Code session:
+
+```
+/plugin marketplace add veigap/talksmith
+/plugin install talksmith@talksmith
+```
+
+Updates later: `/plugin update talksmith`. (If you want to modify the plugin yourself, clone the repo and `/plugin marketplace add ~/plugins/talksmith` instead — see [`CLAUDE.md`](CLAUDE.md).)
+
+**Cowork (desktop app)** — install from [claude.com/download](https://claude.com/download), sign in, open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. The desktop app and CLI share the install. **Step 8 (Render PPTX) only works in Cowork** — it depends on Anthropic's native `pptx` skill which isn't available in the CLI.
+
+### Step 3 — Initialize the repo (once, by the first presenter)
+
+The first time anyone on the team opens the subject repo in Claude Code, run:
+
+```
+/talksmith:init
+```
+
+This drops a thin `CLAUDE.md` stub into the repo — the only file `/talksmith:init` writes. Commit and push it. Every other presenter who clones the repo afterward will get the stub automatically and does **not** need to run `/talksmith:init` again. The stub auto-loads the plugin's spec on every session, so plugin upgrades flow through without re-init.
+
+### Step 4 — Start a session
+
+CLI:
+
+```bash
+cd ai-in-biomedicine
+claude --model opus
+```
+
+Cowork: open the workspace.
+
+Say *"Hi Talksmith"*. The Presenter Agent introduces itself, loads [`config/profile.md`](config/profile.md) (or walks you through filling it in Step 0.5 if it's the repo's first session), and asks whether you're starting a **new** Talk or **resuming** an existing one under `talks/`. From there, follow the workflow.
+
+---
 
 ## How it works
 
@@ -48,69 +113,6 @@ Five roles, one file as source of truth:
 - **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `final.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
 
 Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`talksmith-orch.md`](talksmith-orch.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
-
-## Install
-
-Talksmith ships as a **Claude Code plugin**: install once, then run `/talksmith:init` inside each subject working directory to scaffold the per-subject files. The plugin contains the orchestrator spec, the five subagents, the five skills, the schemas, design principles, and the PPTX style packs; your subject directory holds only your own data.
-
-### Claude Code CLI (terminal)
-
-1. Install the CLI if you don't already have it:
-   ```bash
-   npm install -g @anthropic-ai/claude-code
-   ```
-2. Install the plugin. Two ways, depending on whether you want a tracked install from GitHub or a local checkout for development:
-   - **From GitHub** (recommended for normal use) — inside any Claude Code session, run:
-     ```
-     /plugin marketplace add veigap/talksmith
-     /plugin install talksmith@talksmith
-     ```
-     Updates later: `/plugin update talksmith`.
-   - **From a local clone** (recommended if you want to modify the plugin) — clone the repo and point Claude Code at it as a local plugin:
-     ```bash
-     git clone https://github.com/veigap/talksmith.git ~/plugins/talksmith
-     ```
-     Then inside Claude Code:
-     ```
-     /plugin marketplace add ~/plugins/talksmith
-     /plugin install talksmith@talksmith
-     ```
-3. Make a subject working directory and initialize it:
-   ```bash
-   mkdir -p ~/talks/ai-in-biomedicine && cd ~/talks/ai-in-biomedicine
-   claude --model opus
-   ```
-   Inside the session:
-   ```
-   /talksmith:init
-   ```
-   This drops a thin `CLAUDE.md` stub into the working directory — that's the only file `/talksmith:init` writes. The stub instructs the agent to load the full operating spec from `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` at session start. Everything else (`config/profile.md`, `config/learnings.md`, the feedback logs, `talks/<folder>/…`) is created on demand by the orchestrator's Editor subagent in Step 0.5 / Step 1, bootstrapping from the *Canonical empty form* sections inside the plugin's [`schemas/`](schemas/). `/talksmith:init` is no-clobber and rarely needs to be re-run — plugin updates flow through automatically without touching this `CLAUDE.md`.
-4. Reload the Claude Code session (or start a new one in this directory). Say "Hi Talksmith" — the stub tells the agent to read the orchestrator spec from the plugin, then the Presenter Agent introduces itself and walks Step 0 → Step 0.5 → Step 1 from there.
-
-Your talk folders live under `talks/` on your local disk, so source uploads in Step 2 are just drag-and-drop (or `cp`) into `talks/<folder>/research/articles/` and `talks/<folder>/research/llm-chats/`.
-
-### Cowork (desktop app)
-
-1. Install the Claude Code desktop app (Mac or Windows) from [claude.com/download](https://claude.com/download) and sign in.
-2. Open the plugin manager in the desktop app and add the marketplace `veigap/talksmith`, then install the **talksmith** plugin. (Same plugin install as the CLI — the desktop app and CLI share the install.)
-3. Create or open a workspace for your subject — either a local folder on disk or a GitHub-backed cloud workspace. The workspace folder is your **subject working directory**; do not point it at the plugin repo.
-4. Start a session in the workspace and run:
-   ```
-   /talksmith:init
-   ```
-   Same scaffolding as the CLI flow. After it finishes, kick off the agent with any message.
-
-The desktop app is the most ergonomic option day-to-day: drag-and-drop source uploads into `research/articles/` and `research/llm-chats/` work natively, and you can keep `draft.md` open in an external editor (VS Code, Obsidian) alongside the Cowork session for the Step 5 Review loop. **Step 8 (Render PPTX) only works in Cowork** — it relies on Anthropic's native `pptx` skill which isn't available in the CLI.
-
-### What happens next
-
-In either mode, after `/talksmith:init`, the Presenter Agent will:
-
-1. Introduce itself and show the workflow chart.
-2. Load [`config/profile.md`](config/profile.md) if filled, or offer to fill it (Step 0.5).
-3. Ask in chat (with numbered options) whether you're starting a **new** talk or **resuming** an existing one under `talks/`.
-
-Everything else flows from there. The full operating spec lives at [`orchestrator.md`](orchestrator.md) in the plugin install; the small [`talksmith-orch.md`](talksmith-orch.md) stub copied into your working directory by `/talksmith:init` is what loads it at session start.
 
 ## Workflow
 
@@ -164,76 +166,34 @@ Review repeats as many times as needed until the presenter declares the document
 
 ## Layout
 
-There are two layouts to know: the **plugin layout** (what's in this repo, installed as `talksmith` in Claude Code) and the **subject working directory layout** (what `/talksmith:init` produces in your cwd).
-
-### Plugin layout (this repo)
+What `/talksmith:init` produces inside your subject repo — the files you and your team actually touch:
 
 ```
-.
-├── README.md                          # this file
-├── CLAUDE.md                          # plugin development notes (for contributors editing this repo)
-├── talksmith-orch.md                     # thin stub (~30 lines) — copied into user cwd as CLAUDE.md by /talksmith:init
-├── orchestrator.md                    # full Presenter Agent operating spec — loaded at session start via the stub; stays in the plugin install
-├── .claude-plugin/
-│   └── plugin.json                    # plugin manifest
-├── agents/                            # five Claude Code subagents (dispatched by name)
-│   ├── librarian.md
-│   ├── composer.md
-│   ├── editor.md
-│   ├── illustrator.md
-│   └── global-librarian.md
-├── commands/
-│   └── init.md                        # /talksmith:init slash command
-├── skills/
-│   ├── ingest/                        # talksmith:ingest — capture a web page into research/web/
-│   ├── ascii-to-svg/                  # talksmith:ascii-to-svg — render one ASCII block to one SVG
-│   ├── polish-ascii/                  # talksmith:polish-ascii — Step-6 scan + extract + cleanup
-│   ├── find-open-notes/               # talksmith:find-open-notes — detect unstamped feedback bullets
-│   └── md-to-pptx/                    # talksmith:md-to-pptx — render final.md to .pptx (Step 8, Cowork only)
-├── scripts/                           # deterministic helper scripts the subagents shell out to
-│   └── feedback_cycle.py              # Step-5 stamp/close/mirror + Step-6 rescue-open bookkeeping (called by Editor)
-├── schemas/                           # file-format specs (each holds spec + canonical empty form)
-│   ├── draft.md
-│   ├── memory.md
-│   ├── profile.md
-│   ├── principles.md
-│   ├── learnings.md
-│   ├── feedback-backlog.md
-│   ├── feedback-processed.md
-│   └── corpus-record.md
-└── config/                            # bundled read-only assets
-    ├── principles.md                  # what makes a good presentation (loaded at composer reviews)
-    ├── diagram-style.md               # standing visual rules the ascii-to-svg skill applies
-    └── pptx-styles/{strict,free-form}/   # PPTX style packs (spec + base template)
-```
-
-There is no `templates/` folder. `/talksmith:init` copies a single file (`talksmith-orch.md` → cwd `CLAUDE.md`) — a ~30-line stub that points the agent at [`orchestrator.md`](orchestrator.md). Everything else — `config/profile.md`, `config/learnings.md`, the feedback logs, and the per-Talk directory tree under `talks/` — is created on demand by the orchestrator once the stub loads it, bootstrapping from the *Canonical empty form* sections inside each [`schemas/`](schemas/) spec.
-
-### Subject working directory layout (after `/talksmith:init`)
-
-```
-<your-subject-dir>/
-├── CLAUDE.md                          # thin stub copied from the plugin's talksmith-orch.md — Claude Code auto-loads this, which in turn loads ${CLAUDE_PLUGIN_ROOT}/orchestrator.md
+<your-subject-repo>/
+├── CLAUDE.md                          # thin stub written by /talksmith:init; auto-loads the plugin's spec each session — leave it alone
 ├── config/
-│   ├── profile.md                     # filled in Step 0.5 (Subject, Presenter, audience, …)
-│   ├── learnings.md                   # durable rules promoted from feedback patterns
-│   ├── feedback-backlog.md            # cross-Talk feedback log
-│   └── feedback-processed.md          # archived feedback promoted to learnings
-└── talks/
-    └── <talk-folder>/                 # one folder per talk
-        ├── draft.md                   # the working outline (Steps 1–5, presenter edits this)
-        ├── final.md                   # the polished deliverable (produced in Step 6 from draft.md)
-        ├── memory.md                  # progress log / restore point
-        ├── research/
-        │   ├── articles/              # PDFs, HTML, papers
-        │   ├── llm-chats/             # ZIP exports of LLM chat sessions
-        │   ├── web/                   # captured pages (one folder per URL, written by talksmith:ingest)
-        │   └── corpus/                # Librarian's structured Markdown output + per-source <stem>/images/ companion folders
-        ├── images/                    # SVGs rendered in Step 6 (Polish) + consolidated images
-        └── output/                    # rendered .pptx (Step 8, optional, Cowork only)
+│   ├── profile.md                     # filled in Step 0.5 (Subject, Presenter(s), audience, duration, language)
+│   ├── learnings.md                   # durable editorial rules promoted from recurring feedback
+│   ├── feedback-backlog.md            # cross-Talk feedback log (mirrored from each Talk's draft.md)
+│   └── feedback-processed.md          # archived feedback that's been promoted to learnings
+├── talks/
+│   └── <talk-folder>/                 # one folder per Talk (one class / session / pitch)
+│       ├── draft.md                   # the working outline (Steps 1–5; presenter edits this directly)
+│       ├── final.md                   # the polished deliverable (produced in Step 6 from draft.md)
+│       ├── memory.md                  # progress log / restore point — used to resume
+│       ├── research/
+│       │   ├── articles/              # drop PDFs, HTML, papers here
+│       │   ├── llm-chats/             # drop chat-session ZIP exports here
+│       │   ├── web/                   # captured pages (created by /talksmith:ingest)
+│       │   └── corpus/                # the structured knowledge base (built in Step 3)
+│       ├── images/                    # rendered diagrams + consolidated images (built in Step 6)
+│       └── output/                    # rendered final.pptx (Step 8, optional, Cowork only)
+└── knowledge-library/                 # team's curated cross-Talk index (built on Step 7 promotion)
 ```
 
-Everything the plugin needs at runtime is reached via `${CLAUDE_PLUGIN_ROOT}/…` from inside the working directory. The plugin and the subject directory never collide.
+`config/` is set up once when the repo is first initialized and then accumulates as the team learns. `talks/<talk-folder>/` is created per Talk; everything else inside it is built by the workflow as you move through the steps. `knowledge-library/` appears the first time a presenter promotes a finalized Talk in Step 7.
+
+> The plugin's own internals (orchestrator spec, subagents, skills, schemas, design assets) live under `${CLAUDE_PLUGIN_ROOT}/` on each presenter's Claude Code install and never land in your repo. Plugin upgrades flow through `/plugin update talksmith` independently of your repo's content. Contributors editing the plugin itself should see [`CLAUDE.md`](CLAUDE.md) in the plugin repo for the developer layout.
 
 ## Key conventions
 

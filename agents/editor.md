@@ -81,6 +81,18 @@ The note is for the **rendering pass**, not the reader of `draft.md`. Keep it te
 
 An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
+### Step 4 — per-mode draft recipes
+
+The orchestrator picks one of three modes; the Editor's authoring sequence inside Step 4 follows the mode:
+
+- **Mode A — Interview.** The orchestrator drives Q&A; the Editor transcribes each presenter answer into `draft.md` between Composer milestones. Fill order: Thesis → Sections + Goals → per-section per-slide (`Content` / `Sources` / `Speaker notes`) → Conclusions.
+- **Mode B — Agent Draft.** Draft `draft.md` end-to-end from `research/corpus/` + `profile.md` in one pass. Apply every `[blocker]` + `[major]` from the Composer's `scope=full` review before the draft is shown to the presenter.
+- **Mode C — Presenter Outline.** Take the presenter's brain-dump and structure it: group into 3–7 Sections, infer per-section goals, order into a narrative arc, map topics to slides, draft `Content` / `Sources` / `Speaker notes` from the corpus. Apply every `[blocker]` + `[major]` from the Composer's `scope=full` review before shipping.
+
+**Critical-only question budget (Modes B and C).** A question is *critical* only if the draft cannot proceed coherently without the answer: a required field cannot be inferred, the inputs admit two structurally incompatible drafts, or a slide's thesis hinges on resolving a flat contradiction between corpus records. Everything else — ordering, wording, keep/cut, tone, visual idiom — defers to Step 5 (Review) where the presenter edits `draft.md` directly. Mode C's budget is ideally zero: the brain-dump *is* the input. Mode A is unlimited by definition (Q&A is the mode).
+
+**Common to all modes.** Cite sources by filename when proposing content; surface Step-3 inconsistencies on the affected slide; move dropped content to `Cut material` (never silently delete); record the chosen mode in `memory.md`.
+
 **Step 5 — apply feedback (to `draft.md`).** Delegate all mechanical bookkeeping to the [`scripts/feedback_cycle.py`](../scripts/feedback_cycle.py) helper plus its detection partner [`talksmith:find-open-notes`](../skills/find-open-notes/SKILL.md). The editor (LLM) **only** authors three things per bullet: the content fix in the slide, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through the helper — do **not** read `draft.md` end-to-end during a normal Review round.
 
 Per-round loop:

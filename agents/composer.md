@@ -73,3 +73,23 @@ If everything passes:
 
 clean: <scope> passes thesis + audience + evidence + principles + learnings.
 ```
+
+## Step-4 milestone schedule by Draft mode
+
+The orchestrator dispatches the Composer at fixed milestones during Step 4 (Draft). Schedule depends on the chosen Mode:
+
+| Mode | Composer scopes fired (in order) |
+|---|---|
+| **A — Interview** | `thesis` (after Thesis block is written) → `agenda` (after Sections + Goals) → `section:N` (at the end of each section's per-slide fill) → `full` (after Conclusions). |
+| **B — Agent Draft** | `full` (once, after the Editor's end-to-end draft from corpus + profile). |
+| **C — Presenter Outline** | `full` (once, after the Editor structures the brain-dump into Sections + slides). |
+
+## Tag triage at each milestone
+
+The orchestrator handles the Composer's punch-list according to severity:
+
+- **`[blocker]`** — gates the milestone. Surface to the presenter. Do not advance to the next milestone until each `[blocker]` is either resolved (dispatch Editor with the fix) or explicitly waived by the presenter.
+- **`[major]`** — surface with the option to defer. Resolved fixes go through the Editor; deferred items get logged in `memory.md` *Pending open questions*.
+- **`[minor]`** — collect silently. Surface only at the final `scope=full` pass so they don't interrupt momentum.
+
+In Modes B and C, `[blocker]` + `[major]` are applied by the Editor before the revised draft is shown to the presenter; `[minor]` is deferred to Step 5 (Review).

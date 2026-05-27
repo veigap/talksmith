@@ -147,11 +147,11 @@ Strict converts pipe-tables to card-grid because the source 53-slide reference d
 
 ---
 
-## 6. FEEDBACK rubric — 8 practices
+## 6. Self-review checklist *(informational — the orchestrator does NOT walk this)*
 
-When the [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) *Render cycle* enters its FEEDBACK phase, the orchestrator walks **this** rubric on every slide PNG. Same per-defect line format as strict (`slide N · practice K · <description> → <fix in this iteration | defer because <reason> | surface to presenter>`), same minor-as-defer discipline, same 3-cycle cap.
+Free-form is **single-pass** by design (see §7). There is no FEEDBACK phase, no REGENERATE phase, no 3-cycle critique loop — the orchestrator builds the deck once and hands it back to the presenter to review. This checklist is a guide for **the presenter's own review** after the deck ships, and a sanity reference for the renderer while it picks layouts. The orchestrator does not walk it, does not emit per-cell pass/fail dispositions, and does not iterate on it.
 
-Practice #0 is the block-coverage precondition (same as strict practice #0 — every source block must appear as a shape on the rendered slide; enforced by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) in CONTROL before FEEDBACK runs). The remaining 8 practices are free-form-specific.
+Practice #0 (block-coverage) is the only one with a hard build-time enforcement — it's an audit in CONTROL, not in this list. Practices 1–8 are free-form-specific aesthetic guidance.
 
 | # | Practice | What to look for |
 |---|---|---|
@@ -165,22 +165,20 @@ Practice #0 is the block-coverage precondition (same as strict practice #0 — e
 | 7 | **Density — slide breathes** | Generous safe margins; no wall of text; no claustrophobic packed grid. The audience should absorb the slide's primary content in 3–5 seconds, then turn attention to the speaker. A slide that takes 30 seconds to *read* is the speaker's competitor, not their support. Test: *can the eye land and rest within a beat*. |
 | 8 | **Coherence across slides** | Type sizes don't drift (what reads as "title" on slide 5 reads as "title" on slide 25); palette use stays internally consistent (an accent that meant "warning" on slide 4 doesn't mean "highlight" on slide 12); image and icon treatment stays internally consistent (if photographs are 4:3 inset with 0.3-in padding on slide 8, they are 4:3 inset with 0.3-in padding on slide 18; if icons are line-art on slide 3, they are line-art on slide 14). Free-form is not "different every slide"; it is "the right layout for each slide, with consistent treatment of recurring elements." Read with `.layout-log.md` to verify the renderer's choices form a system, not a sequence of one-offs. |
 
-**Plus the aesthetic note.** After walking practices 0–8, the critic adds a one-sentence free-form aesthetic note per slide naming whatever the eye catches that the rubric does not — same discipline as strict. The rubric is the floor; the aesthetic note is where the critic's judgment shows. `aesthetic: clean` is a valid note when nothing catches the eye.
-
-**Critique discipline carries forward.** Same as strict: every flagged cell of the slide × practice matrix gets *fix in this iteration* / *defer because <reason>* / *surface to presenter*. Silent `[minor] → ignore` is the same prohibited pattern. Free-form does not lower the bar on per-defect resolution; if anything it raises it, because there is no spec-side recipe to fall back on.
+**Use the checklist as the presenter's review crib-sheet** after the deck ships. The renderer may also consult it as a sanity reference while picking layouts. Neither use involves the orchestrator running a per-slide pass/fail walk.
 
 ---
 
-## 7. Render cycle integration
+## 7. Render flow — single pass
 
-The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap) is style-agnostic and lives in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Render cycle*. This section names the free-form-specific content of each phase.
+Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow — branches by style*.
 
 | Phase | What runs in free-form |
 |---|---|
-| **GENERATE** | Cover (§4) byte-equivalent from `base-template.pptx`; every other slide built fresh per §5 layout dispatch. The renderer writes `.layout-log.md` alongside `final.pptx` as a sibling artifact (one entry per emitted slide; format in §5.1). |
-| **CONTROL** | 5 audits — OOXML invariants per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py), and the cover-fidelity check (slide 1 of `final.pptx` byte-equivalent to slide 1 of `base-template.pptx` modulo the 4 placeholder substitutions). The layout-fit audit is **skipped** — free-form has no spec-predicted layout to compare against, and the per-slide `.layout-log.md` is what the FEEDBACK critic reads instead. |
-| **FEEDBACK** | Walk §6's 8-practice rubric per slide; emit one `slide N · practice K · …` line per defect with resolution disposition. |
-| **REGENERATE** | Re-render only the touched slides; cycle counter increments; flow returns to GENERATE for cycle N+1. The `.layout-log.md` is updated in place — re-emitted slides overwrite their previous entries, untouched slides retain theirs. |
+| **GENERATE** | Cover (§4) byte-equivalent from `base-template.pptx`; every other slide built fresh per §5 layout dispatch. The renderer writes `.layout-log.md` alongside `final.pptx` (one entry per emitted slide; format in §5.1). Slide previews rasterized to `output/.critique/slide-NN.png`. |
+| **CONTROL** | 5 audits — OOXML invariants per `../strict/pptx-prompt.md` §19.4, [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py), and cover-fidelity (slide 1 byte-equivalent to base-template slide 1 modulo placeholder substitutions). The layout-fit audit is **skipped** — free-form has no spec-predicted layout. All audits 0 → done. Any non-zero → surface `unresolved: <audit_name>` and stop; presenter decides whether to re-trigger or accept. |
+
+No FEEDBACK phase, no REGENERATE phase, no `[cycle N/3]` tags. The presenter is the reviewer.
 
 ---
 
@@ -188,12 +186,12 @@ The render cycle (GENERATE → CONTROL → FEEDBACK → REGENERATE, 3-cycle cap)
 
 | Stage | What you do |
 |---|---|
-| 1 | Read this file end-to-end. Particularly: §1 (canvas), §2 (palette), §3 (fonts), §4 (cover recipe), §5 (dispatch + log), §6 (rubric the FEEDBACK phase will use to judge you). |
+| 1 | Read this file end-to-end. Particularly: §1 (canvas), §2 (palette), §3 (fonts), §4 (cover recipe), §5 (dispatch + log), §6 (self-review checklist — informational reference, not a critique loop). |
 | 2 | Read `final.md` end-to-end. Cache the H1 sections, the H2 slides, the per-slide block inventories. |
 | 3 | Open [`base-template.pptx`](base-template.pptx) as a working copy. **Slide 1 only** — copy verbatim, substitute the 4 cover placeholders per §4.3. |
 | 4 | For each H2 in `final.md` after the cover, run the §5.1 dispatch loop: read content, choose layout, emit slide, log to `.layout-log.md`. |
 | 5 | Emit speaker notes (`### Notes` blocks) verbatim into each slide's notes pane. |
 | 6 | Write `final.pptx` to `talks/<Talk>/output/final.pptx` and `.layout-log.md` alongside it. |
-| 7 | Hand back to the orchestrator for CONTROL (the 5 audits in §7) and FEEDBACK (the rubric in §6). |
+| 7 | Hand back to the orchestrator for CONTROL (the 5 audits in §7). No FEEDBACK phase — the deck ships to the presenter once CONTROL passes. |
 
 When in doubt at dispatch time, read `strict/pptx-prompt.md` §13 (layout taxonomy) and §15 (emit-rules) for inspiration — strict's recipes are well-tested layouts that often serve free-form content too. The difference is that free-form picks them by *judgment* rather than by mechanical signal-match, and is free to invent layouts strict's taxonomy doesn't cover.
