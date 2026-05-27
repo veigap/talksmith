@@ -21,9 +21,9 @@ Five roles:
 | **Illustrator** | Step 6 — walks `final.md`, dispatches [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) per block with optional presenter style directives. | [`illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) |
 | **Global-Librarian** | Step 7 on promotion — curates the corpus + `final.md` into topic folders under `knowledge-library/`. | [`global-librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/global-librarian.md) |
 
-## Philosophy — one working directory per subject
+## Philosophy — one shared repo per subject
 
-**One working directory per subject** (course, recurring workshop, research area). `talks/` accumulates class by class; all Talks share the six `config/profile.md` fields set in Step 0.5 (`Subject`, `Presenter`, consumption mode, audience, duration, language). Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. Corpus, learnings, and feedback compound across classes in the same directory; new subject = new directory. Full rationale: [`README.md`](README.md) → *One working directory per subject*.
+**One repo per subject** (course, recurring workshop, research area) — typically a shared GitHub repo the teaching team clones, so corpus / learnings / feedback compound across presenters and across semesters. `talks/` accumulates class by class; all Talks share the six `config/profile.md` fields set in Step 0.5 (`Subject`, `Presenter(s)`, consumption mode, audience, duration, language). Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. New subject = new repo. Full rationale: [`README.md`](README.md) → *One shared repo per subject*.
 
 ## Session start — mandatory loads
 
