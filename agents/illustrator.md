@@ -42,8 +42,16 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
    - **Do:** *"12 of 22 diagrams ready…"* then at the end *"All diagrams done. 1 needs your eye — the report lists it."*
 
    Never name the skill (`talksmith:ascii-to-svg`), the helper (`polish-ascii`), the args files, the sidecars, the batch size, the parallel-agent count, or the slide IDs (`s1-2-1`) in chat. The full detail — block count, per-block status, paths to critique logs for any `unresolved` block — goes into the **final report** the illustrator returns to the editor / orchestrator, which the orchestrator then condenses for the presenter (count rendered, count needing review, where to look) and persists in `memory.md`.
-9. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <plan.annotated.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
-10. Aggregate per-block render results for the final report. Reference critique-log companion paths for any `unresolved` block so the presenter can read the audit trail.
+9. **Rasterize any external SVGs referenced from `final.md`** — the illustrator owns *all* SVG → PNG conversion in the Talk, not just its own ASCII renders. After the ASCII loop completes, walk `final.md` for any `![alt](<path>.svg)` references that point at corpus or external assets (i.e. SVGs the illustrator did **not** produce in steps 1–8 — typically icons embedded in a chat export, or vector graphics downloaded by the librarian). For each, generate a `.png` companion next to the source SVG:
+
+   ```bash
+   python3 -c "import cairosvg; cairosvg.svg2png(url='<in.svg>', write_to='<out.png>', output_width=<2 × intrinsic_w>)"
+   ```
+
+   Fall back to `qlmanage -t -s <2 × intrinsic_w> -o <parent>/ <in.svg>` on macOS if `cairosvg` is unavailable (then `mv <parent>/<basename>.svg.png <parent>/<basename>.png`). Keep the source `.svg` on disk alongside the PNG for traceability. The illustrator does **not** rewrite `final.md` references — that's the editor's Step 6(b) job (now pure ref-rewriting, no rasterization). Non-SVG raster formats (`.webp`, `.avif`, `.heic`) are **not** the illustrator's responsibility — the editor handles those because they are not SVG-generation territory.
+
+10. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <plan.annotated.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The illustrator never writes `final.md` directly.
+11. Aggregate per-block render results for the final report. Include external-SVG rasterization counts (`external SVGs rasterized: N`) alongside the ASCII-render counts. Reference critique-log companion paths for any `unresolved` block so the presenter can read the audit trail.
 
 ## Critique-log companion
 

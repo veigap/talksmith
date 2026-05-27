@@ -284,7 +284,19 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 3. **Render the progress checklist** per the skill's template — see [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Edit it in place as stage events arrive.
 
-   **Tag-suppression rule (hard).** Every line the skill emits starting with `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, or any other bracketed tag is **internal log-only**. Consume it as a stage event to advance the checklist; **do not relay it to chat verbatim**. The presenter never sees a bracketed tag, a file path under `talks/<Talk>/…`, a `slide N · practice K …` line, or a phrase like *"final.md frontmatter"*. Any extra prose narration between checklist updates is plain language (e.g. *"Hit a snag on slide 9 — retrying."*), never tag-decoded. If a leak is observed, treat it as a behavior bug to fix in the next session and log the offending line to `memory.md` so it can be diffed against this rule.
+   **Suppression rule (hard).** Everything the skill emits is **internal log-only** — consume it for the checklist + the closing report, never relay verbatim. Suppression covers two shapes:
+
+   - **Bracketed-tag lines** — `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`, or any other bracketed prefix.
+   - **Prose summaries containing internal vocabulary** — phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audit_palette_fonts.py`, `audit_block_coverage.py`, `audit_aspect_ratios.py`, `audit_cover_fidelity.py`, `audit_layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `image-1-1.png`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · practice K · …`), or the phrase *"final.md frontmatter"* / *"draft.md frontmatter"*.
+
+   Any prose between checklist updates must be plain language. **Concrete don't / do** (this is the leak pattern that prompted the rule):
+
+   - **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."*
+   - **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
+
+   Translation pattern: name the *outcome* (what got fixed, how many things, which slides if user-actionable). Strip the *mechanism* (which audit, which XML element, which library, which phase tag). Slide numbers are presenter-actionable (they can look at the slide) so they stay; tool/audit/XML names are not.
+
+   If a leak is observed, treat it as a behavior bug to fix in the next session and log the offending line to `memory.md` so it can be diffed against this rule.
 
 4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx`), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
 
