@@ -43,7 +43,13 @@ import _pptxlib as L
 STYLE_PALETTE = {
     "strict": {
         "spine_fill": {"D8D4D4"},
-        "dot_active_fill": {"DA1B2E", "F33447"},
+        # Active-dot fills observed across real Cowork-rendered strict decks:
+        #   DA1B2E, F33447 — base-template.pptx (hiperparametros-ai deck)
+        #   E02020, F93939 — seguridad-governance-ai deck
+        # All are variants of the brand red; the exact shade drifts with the
+        # renderer version. Adding both here keeps the "exactly one active dot"
+        # divider signal robust across template revisions.
+        "dot_active_fill": {"DA1B2E", "F33447", "E02020", "F93939"},
         "dot_inactive_fill": {"F2EEEE"},
         "pill_fill": {"F9D2D6"},
         "callout_fill": {"F7BBC1", "B8E6F5"},
@@ -341,7 +347,12 @@ def _extract_grid_tables(slide, palette, title_text: str) -> tuple[list[dict], s
         off, _ext = _shape_geom(shape)
         if not off:
             continue
-        candidates.append((off[1], off[0], text, id(shape)))
+        # `shape.shape_id` — OOXML `<p:cNvPr id="...">`, unique per slide.
+        # NOTE: `id(shape)` is unstable across `slide.shapes` iterations because
+        # python-pptx creates transient wrapper objects that get GC'd and
+        # recycled — 8 shapes on a slide can share only 2 `id()` values,
+        # collapsing the exclude-set and double-emitting table cells as body.
+        candidates.append((off[1], off[0], text, shape.shape_id))
 
     if len(candidates) < MIN_ROWS * 2:  # need at least 3 rows × 2 cols
         return [], set()
@@ -411,15 +422,17 @@ def _extract_grid_tables(slide, palette, title_text: str) -> tuple[list[dict], s
 def _extract_body(slide, palette, title_text: str, exclude_ids: set[int] | None = None) -> list[dict]:
     """Body blocks (non-title, non-pill, non-chrome text shapes) in reading order.
 
-    `exclude_ids` — shape id()s consumed by `_extract_grid_tables` and emitted
-    as table blocks; skipped here so their cell text isn't double-reported.
+    `exclude_ids` — `shape.shape_id`s consumed by `_extract_grid_tables` and
+    emitted as table blocks; skipped here so their cell text isn't double-
+    reported. Uses `shape.shape_id` (stable OOXML identifier) rather than
+    `id(shape)` (unstable Python-object identity — see `_extract_grid_tables`).
     """
     exclude_ids = exclude_ids or set()
     blocks: list[tuple[int, int, dict]] = []
     for shape in slide.shapes:
         if not shape.has_text_frame:
             continue
-        if id(shape) in exclude_ids:
+        if shape.shape_id in exclude_ids:
             continue
         fill = _shape_fill_hex(shape)
         if _is_pill(shape, palette["pill_fill"]):
