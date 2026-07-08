@@ -171,6 +171,11 @@ def _orig_units(body_lines):
         # Image refs are diffed separately (image ops) — don't double-report as prose.
         if L.IMAGE_REF.sub("", s).strip() == "":
             continue
+        # Pipe-table rows are structural markdown, not prose. Skip them so a
+        # deck-side table row doesn't get auto-applied as a `- | col | col |`
+        # bullet on the source side.
+        if s.startswith("|") and s.count("|") >= 2:
+            continue
         nrm = L.normalize_prose(raw)
         if nrm:
             norm.append(nrm)

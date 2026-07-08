@@ -712,7 +712,13 @@ def content_semantically_contained(from_text: str, to_text: str,
 
 
 def content_units(body_lines: Iterable[str]) -> list[str]:
-    """Split a field body into comparable, non-empty, prose-normalized units."""
+    """Split a field body into comparable, non-empty, prose-normalized units.
+
+    Drops blanks, HR rules, HTML comments (multi-line safe), fenced code,
+    image refs (diffed as image ops), and **pipe-table rows** (structural
+    markdown — diffing them at bullet level would flatten cells into loose
+    `- | col | col |` bullets on the merge side).
+    """
     units: list[str] = []
     in_fence = False
     in_comment = False
@@ -736,6 +742,8 @@ def content_units(body_lines: Iterable[str]) -> list[str]:
             continue
         if IMAGE_REF.sub("", stripped).strip() == "":
             continue
+        if stripped.startswith("|") and stripped.count("|") >= 2:
+            continue  # pipe-table row / separator — structural, not prose
         norm = normalize_prose(raw)
         if norm:
             units.append(norm)
