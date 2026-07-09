@@ -181,6 +181,12 @@ talks/<Talk>/
 
 The skill is invoked with a mandatory `style:` parameter (the orchestrator asks the presenter every Step 8 entry — never persisted to `final.md`). **The skill owns the entire render loop end-to-end** — including the visual critique iterations for `strict`. The orchestrator hands off, displays the progress checklist as stage events arrive, and reads the closing report. It does not know whether strict iterates internally or not.
 
+> **Stream the phases — mandatory in every mode (preview, free-form, strict).** The render must surface its **processing phases as they happen** — the presenter sees the phase progress advance, never a multi-minute *"Multitasking…"* with no output. Two hard rules:
+> 1. **Never run the whole render as one opaque, long-lived dispatch.** Structure it so a phase event reaches the presenter's chat at **every phase boundary** — after pre-process, after the deck is built, after CONTROL, after each FEEDBACK pass, after each REGENERATE — and the checklist item flips `[⟳]`→`[✓]` at that moment.
+> 2. **Chunk the slow phases and report between chunks.** The FEEDBACK multimodal walk is the long pole (it reads every slide PNG). Do it in **batches** (e.g. 8–10 slides) and emit a progress line after each batch — *"Reviewing slides 10 of 29…"* — so the item visibly advances. Same for building many slides: emit *"Built 12 of 29…"*. **Any phase quiet for > 30 s must emit a heartbeat.** A silent stretch longer than that is a defect, not normal.
+>
+> This applies identically to preview (per-slide build + per-slide critique of the changed subset), free-form (build → CONTROL → ≤2 critique cycles), and strict (build → CONTROL → ≤3 critique cycles). The critique loop is the slowest and the one most prone to going silent — it is exactly where the batch-level progress matters most.
+
 The skill is a Python pipeline + native `pptx` author + (for strict only) an internally-dispatched multimodal sub-agent that reads slide PNGs and walks the rubric. That sub-agent's invocation is an implementation detail of this skill; do not surface it to the orchestrator.
 
 #### `style: strict` — multi-cycle critique loop *(skill-internal)*
@@ -327,11 +333,11 @@ Step 8's render flow (≤ 2-cycle for free-form, ≤ 3-cycle for strict; both de
 | Slide-preview rasterization done | `[pptx 7/8] Slide previews ready (S PNGs) — or — slide_previews: failed: <reason>.` |
 | Final report | `[pptx 8/8] Done. S slides, K images, slide_previews: <count|failed>, warnings: <count>.` |
 
-**Pacing.** Emit each log-line *at the moment that stage begins or ends* — the orchestrator's checklist depends on this for live updates. If any single stage runs >30s without emitting, emit a `[pptx 3/8] Stage 4 — still building (Nth of M slides)…` heartbeat (also log-only; the orchestrator translates to a plain-language *"Still building — N of M done…"* chat line). >2 minutes with no heartbeat is a defect — emit `[pptx N/8] Stage X may be stalled` and stop.
+**Pacing.** Emit each log-line *at the moment that stage begins or ends* — the orchestrator's checklist depends on this for live updates. If any single stage runs >30s without emitting, emit a `[pptx 3/8] Stage 4 — still building (Nth of M slides)…` heartbeat carrying a count (also log-only; the orchestrator translates to a plain-language *"Built N of M…"* chat line). **The FEEDBACK visual walk must emit per batch** — `[cycle N/M] FEEDBACK — reviewed 10/29 slides` after each 8–10-slide batch — never one silent multi-minute read of the whole deck. **>60s with no emission from any phase is a defect** (a *"Multitasking…"* stall the presenter reads as a hang) — emit `[pptx N/8] Stage X may be stalled` and surface it.
 
 **Failure surfacing.** Stage failures emit `[pptx N/8] Stage X FAILED: <one-line reason>` (log-only). The orchestrator translates to plain language (*"Hit a snag on slide 9 — retrying."*) for chat.
 
-**Iteration passes.** Cycle 2 and 3 (strict only) prefix every emission with `[cycle N/3] <PHASE>`. Same suppression rule — these are stage events for the checklist, not chat content.
+**Iteration passes.** Cycle 2 and 3 (strict) / cycle 2 (free-form, preview) prefix every emission with `[cycle N/M] <PHASE>` and emit **per phase and per batch within FEEDBACK**, so a multi-cycle render shows continuous forward motion (build → review 10/29 → review 20/29 → 4 fixes → re-build → …) rather than one opaque spinner. Same suppression rule — these are stage events for the checklist, not chat content.
 
 **No-default policy on missing `style:`.** The `style:` invocation parameter is mandatory. If it is absent or empty on skill entry, the skill emits `[pptx 0/8] FAILED: style: invocation parameter missing` and stops — it does **not** fall back to `strict` or any other value. The orchestrator's job is to ask the presenter (Step 8 step 1) and pass an explicit answer; if the skill is reached without one, the orchestrator must re-ask. There is no defense-in-depth default — silent fallback was the bug, the loud failure is the fix.
 

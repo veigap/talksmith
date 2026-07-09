@@ -12,6 +12,20 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.6.0] — 2026-07-09
+
+### Changed
+
+- **Live phase progress in every render mode (no more silent "Multitasking…").** PPTX
+  generation must now stream its processing phases as they happen — for preview,
+  free-form, and strict alike. The render may no longer run as one opaque multi-minute
+  dispatch: a phase event must reach the presenter after pre-process, after the build,
+  after CONTROL, and after each critique/fix pass, ticking the checklist in place. The
+  slow visual-review walk is chunked into slide batches with per-batch progress
+  ("reviewed 10 of 29…"), and any phase silent for >60s is treated as a stall to
+  surface. Tightens the earlier checklist contract, which a real multi-cycle strict
+  render showed was too easy to satisfy with a single silent sub-agent call.
+
 ## [0.5.0] — 2026-07-09
 
 ### Added
