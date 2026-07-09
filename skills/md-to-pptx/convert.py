@@ -44,6 +44,11 @@ from pathlib import Path
 _HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
 
+# A line that is a horizontal rule (`---`) or an H1 heading (`# ...`). These
+# delimit slides/sections and are never part of an H3 field's body.
+_RULE_LINE_RE = re.compile(r"^-{3,}\s*$")
+_H1_LINE_RE = re.compile(r"^#(?!#)\s+")
+
 # Sections at H1 that must be stripped wholesale (heading + body until the
 # next H1 or EOF).
 _STRIP_H1 = {"Thesis", "Open questions", "Cut material"}
@@ -149,8 +154,32 @@ def _process_h3_fields(text: str) -> str:
     return "".join(out_parts)
 
 
+def _split_field_tail(body: str) -> tuple[str, str]:
+    """Split an H3 field body into (field_content, structural_tail).
+
+    Because slides are split at H2 only, the last H3 field of a slide owns
+    everything up to the next H2 — including the between-slide `---` rule and
+    the following section's `# N.` divider (+ its goal prose). Those are
+    document structure, never field content, so the tail must survive even when
+    the field itself is stripped. The tail begins at the first line that is a
+    horizontal rule (`---`) or an H1 heading; interior fields end at the next
+    H3 and so have no tail.
+    """
+    lines = body.splitlines(keepends=True)
+    for idx, line in enumerate(lines):
+        if _RULE_LINE_RE.match(line.strip()) or _H1_LINE_RE.match(line):
+            return "".join(lines[:idx]), "".join(lines[idx:])
+    return body, ""
+
+
 def _rewrite_h3_within_slide(slide_body: str) -> str:
-    """Within a single slide's body, drop/rename/unwrap H3 fields."""
+    """Within a single slide's body, drop/rename/unwrap H3 fields.
+
+    The structural tail (between-slide `---` + following `# N.` divider) that a
+    trailing field's body swallows is preserved verbatim regardless of the
+    field's disposition, so stripping `### Sources` / `### Presenter feedback`
+    never eats the next section divider.
+    """
     h3_chunks = _split_by_heading_level(slide_body, 3)
     out: list[str] = []
     for h3_title, h3_body in h3_chunks:
@@ -158,20 +187,22 @@ def _rewrite_h3_within_slide(slide_body: str) -> str:
             out.append(h3_body)
             continue
         field = h3_title.strip()
+        field_body, tail = _split_field_tail(h3_body)
         if field in _STRIP_H3:
-            # Drop the heading and its body.
+            # Drop the heading and its content, but keep the structural tail.
+            out.append(tail)
             continue
         if field in _RENAME_H3:
             new_label = _RENAME_H3[field]
-            out.append(f"### {new_label}\n{h3_body}")
+            out.append(f"### {new_label}\n{field_body}{tail}")
             continue
         if field in _UNWRAP_H3:
             # Drop the label; keep the body.
             # Trim leading blank line if the body starts with one.
-            out.append(h3_body.lstrip("\n"))
+            out.append(field_body.lstrip("\n") + tail)
             continue
         # Unknown H3: keep as-is.
-        out.append(f"### {field}\n{h3_body}")
+        out.append(f"### {field}\n{field_body}{tail}")
     return "".join(out)
 
 
