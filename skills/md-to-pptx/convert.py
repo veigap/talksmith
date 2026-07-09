@@ -6,8 +6,19 @@ Input contract:
     copying `draft.md` → `final.md` then applying Polish transforms a/b/c/d).
     Image refs already point at `images/<file>`; `Presenter feedback` already
     stripped; ASCII source preserved only in `<!-- ascii-source: ... -->`
-    HTML comments. `draft.md` is not a valid input — passing it leaks
-    Presenter feedback bullets into slide bodies.
+    HTML comments. `draft.md` is not a valid input in the default mode — passing
+    it leaks Presenter feedback bullets into slide bodies.
+
+Draft-preview mode (`--draft`):
+    For the optional Step-5.5 draft preview, `draft.md` IS a valid input. The
+    `--draft` flag additionally strips the `**Presenter feedback:**` labeled
+    blocks that `draft.md` carries in its Agenda and section-divider bodies
+    (Polish removes these on the way to `final.md`; in a pre-Polish draft they
+    are still present), and it does NOT require ASCII to have been rendered to
+    SVG — raw ASCII fenced blocks pass through untouched so the renderer can lay
+    them out as monospace text boxes. Everything else is identical to the
+    default pipeline. The preview reads `draft.md` directly and never touches
+    `final.md`, so it is available before Step 6 has run.
 
 Output contract (Markdown):
     - YAML frontmatter is dropped.
@@ -48,6 +59,13 @@ _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
 # delimit slides/sections and are never part of an H3 field's body.
 _RULE_LINE_RE = re.compile(r"^-{3,}\s*$")
 _H1_LINE_RE = re.compile(r"^#(?!#)\s+")
+
+# Any ATX heading (`#`..`######`) and a bold field label line (`**Label:**`).
+# Used by the draft-mode `**Presenter feedback:**` block stripper to find where
+# a labeled block ends.
+_ANY_HEADING_RE = re.compile(r"^#{1,6}\s")
+_BOLD_LABEL_RE = re.compile(r"^\*\*[^*]+:\*\*\s*$")
+_FEEDBACK_LABEL_RE = re.compile(r"^\*\*Presenter feedback:\*\*\s*$")
 
 # Sections at H1 that must be stripped wholesale (heading + body until the
 # next H1 or EOF).
@@ -230,16 +248,54 @@ def _normalize_headings_outside_code(text: str) -> str:
     return "\n".join(out)
 
 
+def _strip_bold_feedback_blocks(text: str) -> str:
+    """Remove `**Presenter feedback:**` labeled blocks (draft-mode only).
+
+    `draft.md` carries these blocks in its Agenda and section-divider bodies;
+    Polish removes them on the way to `final.md`, so the default pipeline never
+    sees them. A block runs from the `**Presenter feedback:**` label line up to
+    (but not including) the next horizontal rule, ATX heading, or other bold
+    field label. The label line and everything under it up to that terminator
+    are dropped.
+    """
+    lines = text.splitlines(keepends=True)
+    out: list[str] = []
+    i, n = 0, len(lines)
+    while i < n:
+        if _FEEDBACK_LABEL_RE.match(lines[i].strip()):
+            i += 1  # drop the label line
+            while i < n:
+                stripped = lines[i].strip()
+                if (
+                    _RULE_LINE_RE.match(stripped)
+                    or _ANY_HEADING_RE.match(lines[i])
+                    or _BOLD_LABEL_RE.match(stripped)
+                ):
+                    break  # terminator — leave it in place
+                i += 1  # drop a body line of the feedback block
+            continue
+        out.append(lines[i])
+        i += 1
+    return "".join(out)
+
+
 def _collapse_blank_lines(text: str) -> str:
     """Replace runs of 3+ blank lines with a single blank line."""
     return re.sub(r"\n{3,}", "\n\n", text)
 
 
-def convert(final_md: str) -> str:
-    """Run the full conversion pipeline on the contents of `final.md`."""
+def convert(final_md: str, draft: bool = False) -> str:
+    """Run the full conversion pipeline on the contents of `final.md`.
+
+    When `draft` is True, the input is a pre-Polish `draft.md`: additionally
+    strip the `**Presenter feedback:**` labeled blocks it still carries, and
+    let raw ASCII fenced blocks pass through unchanged (no SVG required).
+    """
     text = final_md
     text = _strip_frontmatter(text)
     text = _strip_html_comments(text)
+    if draft:
+        text = _strip_bold_feedback_blocks(text)
     text = _strip_h1_sections(text, _STRIP_H1)
     text = _process_h3_fields(text)
     # After H3 processing, re-walk and normalize remaining H1 / H2 prefixes
@@ -254,10 +310,19 @@ def main() -> int:
         description="Convert a cleaned final.md into the Markdown shape "
                     "consumed by skill://antropic-skills:/pptx."
     )
-    parser.add_argument("final_md", type=Path, help="Path to talks/<Talk>/final.md")
+    parser.add_argument(
+        "final_md", type=Path,
+        help="Path to talks/<Talk>/final.md (or draft.md with --draft)"
+    )
     parser.add_argument(
         "-o", "--output", type=Path, default=None,
         help="Output file (default: stdout)."
+    )
+    parser.add_argument(
+        "--draft", action="store_true",
+        help="Draft-preview mode: accept a pre-Polish draft.md — strip its "
+             "**Presenter feedback:** blocks and let raw ASCII fences pass "
+             "through as monospace (no SVG required)."
     )
     args = parser.parse_args()
 
@@ -266,7 +331,7 @@ def main() -> int:
         return 2
 
     source = args.final_md.read_text(encoding="utf-8")
-    converted = convert(source)
+    converted = convert(source, draft=args.draft)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

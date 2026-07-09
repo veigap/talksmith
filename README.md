@@ -130,6 +130,8 @@ Role specs live at [agents/](agents/) and are dispatched as Claude Code subagent
                      editor writes; composer critiques at every milestone
        v
   [5] Review      <-- presenter edits draft.md; loops N times
+       v                (a rough preview deck renders in the background from
+      (5.5) Preview      draft.md — optional, Cowork only; peek before Polish)
        v
   [6] Polish       -- editor: cp draft.md -> final.md (draft.md frozen here);
                      illustrator: ASCII -> SVG; editor: consolidate images,

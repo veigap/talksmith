@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-pptx
-description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`.
+description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`. **Alternate entry — `preview: true`:** the optional Step-5.5 draft preview renders a fast, throwaway deck from a pre-Polish `draft.md` (no `style:` needed — always free-form, single pass, ASCII rendered as monospace instead of SVG); output isolated under `talks/<Talk>/output/draft-preview/preview.pptx`.
 ---
 
 # md-to-pptx — Render `final.md` to PowerPoint
@@ -20,7 +20,7 @@ Both paths are **mandatory inputs** to the render. References below that say "th
 
 **Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the Illustrator role's job, performed in Step 6 (Polish) before this skill ever runs. `final.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
 
-**Reads `final.md`, never `draft.md`.** The working file (`draft.md`) still carries `Presenter feedback` blocks and raw ASCII fences and is not a valid PPTX input. The skill's CLI takes the path to `final.md` as a positional argument; passing `draft.md` produces malformed output (Presenter feedback bullets leaking into slide bodies, ASCII fences rendered as code blocks).
+**Reads `final.md`, never `draft.md` — except in `preview: true` mode.** In a normal render the working file (`draft.md`) still carries `Presenter feedback` blocks and raw ASCII fences and is not a valid PPTX input; the skill's CLI takes the path to `final.md` as a positional argument, and passing `draft.md` produces malformed output (Presenter feedback bullets leaking into slide bodies, ASCII fences rendered as code blocks). The **one exception** is the Step-5.5 draft preview (`preview: true`), which reads `draft.md` *by design* and pre-processes it with `convert.py --draft` — see *`preview: true` — Step-5.5 draft preview* below. Preview output is isolated under `output/draft-preview/` and is never the deliverable.
 
 ## When to use
 
@@ -67,6 +67,8 @@ talks/<Talk>/
 ```
 
 ## Process
+
+0. **Preview branch.** If the invocation carries **`preview: true`**, skip the style ask entirely and follow the *`preview: true` — Step-5.5 draft preview* path in *Render flow* below (input `draft.md` via `convert.py --draft`, free-form spec, single pass, output under `output/draft-preview/`). `preview:` overrides `style:` if both are present. Otherwise continue with normal style resolution:
 
 0. **Resolve style.** Read the `style:` value from the invocation parameters (the orchestrator's Step 8 step 1 asked the presenter and passed it in). **The parameter is mandatory — no default.** If the value is **absent or empty**, fail render-blocking with `[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).` Do not proceed; the orchestrator's job is to re-ask the presenter, not the skill's job to guess. If the value is present but not a directory under `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/`, fail render-blocking per *Style resolution failed* in *Failure modes*. Cache `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` and `<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx`. Verify both files exist; if either is missing, the style enum has drifted from disk — surface as a render-blocking error naming the missing file. Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>, base=<base_template_path>).`
 1. Verify all prerequisites (table above). Stop on any failure.
@@ -189,6 +191,27 @@ Two phases, one pass. No FEEDBACK, no REGENERATE.
 
 The 8-practice list in [`free-form/pptx-prompt.md` §6](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md) is a self-review checklist for the presenter (informational), not walked by the skill.
 
+#### `preview: true` — Step-5.5 draft preview *(skill-internal)*
+
+An optional **fast, throwaway** path that renders a preview deck from a **pre-Polish `draft.md`** so the presenter can eyeball slide shape *before* committing to Step 6 (Polish) + a final render. The orchestrator auto-fires it in the background when `draft.md` first completes and again when the Step-5 review changes it (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 5.5 — Draft preview*); the skill itself is stateless about that scheduling — it just renders when invoked with a `draft.md` path and `preview: true`.
+
+Invoked with **`preview: true`** in place of `style:`. If both arrive, `preview:` wins and `style:` is ignored. The preview is **not the deliverable** — the real deck is always Step 8 from `final.md`.
+
+Differences from a normal render (everything else matches free-form):
+
+| Aspect | Preview behavior |
+|---|---|
+| **Input file** | `talks/<Talk>/draft.md` (not `final.md`). Pre-process with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py --draft talks/<Talk>/draft.md -o talks/<Talk>/output/draft-preview/preview.intermediate.md`. The `--draft` flag strips the `**Presenter feedback:**` blocks a pre-Polish draft still carries and lets raw ASCII fences pass through. |
+| **Prereqs waived** | The `final.md`-only gates do **not** apply: a pre-Polish draft is the *expected* input, `Presenter feedback` fields are fine (stripped by `--draft`), and **raw ASCII fenced blocks are fine** (they are the point — no SVG required). The Keynote-safe image-extension gate still applies to any *image refs* present, but a draft with zero images and only ASCII fences is valid. Do **not** dispatch the Illustrator and do **not** stop on missing SVGs. |
+| **Style / spec** | Always free-form — `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md`, `<base_template_path> = .../free-form/base-template.pptx`. No `style:` ask. |
+| **ASCII fences** | Each fenced block renders as a **Courier New monospace text box** sized to its content (Courier New keeps it inside the palette/fonts font set). No SVG generation — that work is deferred to Step 6 for the final deck. |
+| **Render flow** | Single pass: GENERATE → CONTROL. **No FEEDBACK, no REGENERATE** (same as free-form). |
+| **Output (isolated, git-ignored)** | `talks/<Talk>/output/draft-preview/preview.pptx`, `preview.intermediate.md`, and slide PNGs at `draft-preview/.previews/slide-NN.png`. **Never** writes `output/final.pptx` or `output/.critique/`. Slide PNGs are still produced — the whole point is for the presenter to *see* the preview. |
+| **CONTROL** | The free-form audit set — OOXML invariants, block-coverage (sourced from `preview.intermediate.md`, not `final.md`), aspect-ratio, cover-fidelity. Palette/fonts and layout-fit are strict-only and do not apply. Audit non-zero → surface `unresolved: <audit_name>` but **still deliver the preview** — it is a sanity check, not a gated deliverable; never block the presenter on a preview audit. |
+| **Progress tags** | Same log-only discipline; emissions are prefixed `[preview` (e.g. `[preview 2/4] Pre-processing draft.md…`). Suppressed from chat exactly like `[pptx` tags. |
+
+Everything not listed above is identical to the free-form single-pass path. Cowork-only, same as Step 8 — the native `pptx` skill is required.
+
 ### Presenter-facing progress checklist
 
 The orchestrator displays a checklist on render entry and updates it in place as the skill moves through phases. The orchestrator owns the rendering; the skill owns *which items appear and when each ticks*. State markers: `[ ]` pending, `[⟳]` in progress, `[✓]` done, `[—]` skipped / not-applicable, `[✗]` failed.
@@ -274,7 +297,7 @@ This skill is an orchestrator. Visual rules (palette, fonts, icons, emoji swap, 
 - **System fonts only** *(Keynote-compatibility rule)*. Every text run's `<a:latin typeface="…"/>` must resolve to a font preinstalled on the import target — for the macOS/Keynote happy path that means **Arial / Helvetica / Courier New** (and their bold variants). Custom fonts that aren't on disk at import time — Roboto, Roboto Mono, Roboto Mono Medium, Consolas — trigger Keynote import failures before any content is parsed, even if the OOXML is well-formed. The per-style palette is the contract (`<style>/pptx-prompt.md` §3); `audit_palette_fonts.py` enforces it; any `[off-font]` finding stops the render. Embedding custom fonts inside the .pptx is a future option but not currently supported by this skill — until then, every spec-allowed font must be a system font.
 - **The spec is the contract.** Pass [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) verbatim to the native renderer as instructions context. If the native skill ignores it, that's a render failure — surface and rerun, do not paper over with post-hoc edits.
 - **Never modify `final.md` during render.** All transformation happens in memory or in `output/final.intermediate.md`. The cleaned `final.md` from Polish stays the source of truth for the render.
-- **Never read or modify `draft.md`.** It is the working file from Steps 1–5 and is read-only from Step 6 onward.
+- **Never read or modify `draft.md`** — except read-only in `preview: true` mode. The Step-5.5 draft preview reads `draft.md` (never writes it) to render a throwaway preview before Polish. In every other invocation `draft.md` is untouched. No mode ever *modifies* `draft.md`.
 - **Never re-render SVGs.** If an image ref points at a missing SVG, stop and tell the orchestrator to perform the Illustrator role rather than improvising.
 - **Speaker notes go into the notes pane**, never on the slide body.
 - **Progress visible at every stage.** The render is long enough that silence is a defect — emit one prefixed line per stage (see *Progress reporting* above), heartbeat every 30s inside long stages, and surface failures with the same prefix + `FAILED:` suffix. The presenter must never have to ask "is it still running?"

@@ -67,6 +67,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 | 3 | Corpus | Librarian: raw sources → `research/corpus/`. | Confirms uploads. |
 | 4 | Draft | Fill `draft.md` in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers / decides / redirects. |
 | 5 | Review | Apply `Presenter feedback` bullets in `draft.md`. Loops. | Edits `draft.md`; appends `- "feedback"` bullets. |
+| 5.5 *(opt)* | Draft preview | Auto-fire a fast, throwaway preview deck from `draft.md` in the **background** (non-blocking) so it's ready to eyeball when Review ends. Cowork only. | Optionally looks; keeps reviewing meanwhile. |
 | 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG; clean `final.md`. | Passive. |
 | 7 | Learnings | **Mandatory.** Promote ≥3× recurring feedback to `learnings.md`; ask promotion + render decisions. | Picks options. |
 | 8 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Cowork only. | Confirms. |
@@ -219,6 +220,8 @@ Per-mode authoring sequences + the critical-only question budget live in [`edito
 
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
+**On first complete draft, kick the draft preview.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 draft preview** in the background if the session is in Cowork (see *Step 5.5 — Draft preview*). It runs in parallel and must **not** block the presenter from starting their review.
+
 ---
 
 ## Step 5 — Review (iterative loop)
@@ -230,7 +233,35 @@ Loop until presenter declares `draft.md` final. Each round:
 3. Presenter signals done. Perform **Editor** role to apply each bullet — full loop, invariants, and helper-CLI contract live in [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 5 — apply feedback*. For genuinely ambiguous bullets, the Editor surfaces 2–4 concrete resolutions to the presenter before applying.
 4. Report diff to presenter; update `memory.md`.
 
-When the presenter signals ready, Step 5 ends. **Steps 6 (Polish) and 7 (Learnings) then run automatically in sequence** — no further confirmation between them.
+When the presenter signals ready, Step 5 ends. **If a draft preview is available (or the presenter wants one), offer it now via Step 5.5** — then **Steps 6 (Polish) and 7 (Learnings) run automatically in sequence** with no further confirmation between them.
+
+---
+
+## Step 5.5 — Draft preview *(optional, Cowork only, non-blocking)*
+
+A fast, **throwaway** PowerPoint rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* before committing to Polish + the final render. It is a sanity check, **not the deliverable** — the real deck is always Step 8 from `final.md`. It exists because the full pipeline (SVG rendering in Step 6 + the strict critique loop in Step 8) is slow; the preview skips all of it (raw ASCII shown as monospace instead of rendered to SVG, single pass, no critique).
+
+**Prerequisite: Cowork** (native `pptx` skill in registry). If absent, the preview is simply unavailable — never block on it, and don't mention the machinery; if the presenter explicitly asks for a preview outside Cowork, say previews render inside Cowork and move on.
+
+### How it fires — two moments
+
+1. **Auto-fire on first complete draft (background, parallel).** When Step 4 first produces a structurally complete `draft.md` and hands to Step 5, kick the preview render in the **background** and tell the presenter in one plain line that a quick preview is being put together while they review — e.g. *"I'm putting together a rough preview of the slides in the background — go ahead and start reviewing, it'll be ready when you are."* **This must not block Review.** The presenter starts editing `draft.md` immediately; the render proceeds in parallel.
+2. **Refresh on change.** Each Step-5 round that materially changes `draft.md` makes the last preview stale. Re-fire the background render (superseding any in-flight one) so the newest preview always reflects the current `draft.md`. Don't nag about it — refresh silently; the presenter only hears about the preview when it's offered.
+
+### The checkpoint — when Review ends
+
+When the presenter signals ready at the end of Step 5, **before** advancing to Step 6, offer the preview:
+
+> Want to take a quick look at a rough draft of the slides before I polish and finalize? *(optional — say skip to go straight to finishing)*
+
+- **If they look:** surface the rendered preview — the slide images (and the `.pptx` path under `talks/<Talk>/output/draft-preview/preview.pptx` if they want to open it). Frame it as rough: diagrams show as plain monospace text, layouts are unpolished, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview.
+- **If they skip, or the preview isn't ready / failed to render:** proceed to Step 6 without ceremony. A failed or unavailable preview is never fatal — it's a convenience.
+
+### Dispatch
+
+Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) with **`preview: true`** (in place of `style:`) on `talks/<Talk>/draft.md`. The skill owns everything else — `convert.py --draft` pre-processing, the free-form single-pass render, ASCII-as-monospace, the isolated `output/draft-preview/` outputs, and its `[preview …]` stage events. Those events are **log-only**, suppressed from chat exactly like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). Never write the preview's style, path, or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
+
+**Never let the preview mutate the pipeline.** It reads `draft.md` read-only, writes only under `output/draft-preview/` (git-ignored), and never touches `final.md` or `output/final.pptx`. It does not consume Step-8's style choice — a later Step 8 still asks the style fresh.
 
 ---
 
