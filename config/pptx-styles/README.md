@@ -17,25 +17,30 @@ Style is **not** a Talk attribute — it's a **render-time parameter** chosen fr
 
 The orchestrator asks the presenter at **every Step 8 entry** per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* and passes the answer to `md-to-pptx` as an invocation parameter. The ask is mandatory and there is **no default** — if the presenter is unsure, the orchestrator re-asks with framing of what each style implies for *this* Talk. The skill refuses to run without an explicit `style:` value (see [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Style resolution*).
 
-A second Step-8 run on the same Talk can pick a different style with no migration; the previous render in `output/final.pptx` is simply overwritten.
+A second Step-8 run on the same Talk can pick a different style with no migration. Renders are **isolated by filename suffix** — `output/final.strict.pptx` and `output/final.free-form.pptx` coexist so the two styles can be compared side by side — and the most recent render is also copied to the canonical `output/final.pptx` (what the reverse pipeline reads).
 
 ## What the styles share
 
-Four rules hold in **every** style — the floor. A render that violates any of these is a render failure regardless of which spec is active. The per-style `pptx-prompt.md` files duplicate the floor sections (canvas / palette / fonts / cover recipe) by design — each spec is self-contained so it can evolve without coupling to siblings — but the floor *content* is identical and audited identically:
+**The shared floor — holds in every style** (strict, free-form, preview). A render that violates any of these fails regardless of spec:
 
-1. **Cover slide (§4 in each spec)** — slide 1 is byte-equivalent to the style's `base-template.pptx` slide 1 with only the four placeholder substitutions applied. Audited at CONTROL via cover-fidelity check.
-2. **Color palette (§2 in each spec)** — every `<a:srgbClr val="…"/>` in the rendered deck is in the §2 palette. Audited at CONTROL by [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py).
-3. **Font palette (§3 in each spec)** — every `<a:latin typeface="…"/>` is Roboto / Roboto Mono Medium / Consolas. Audited by the same script.
-4. **White background (§1 in each spec)** — every slide carries a pure-white `<p:bg>` solid fill.
+1. **Cover slide** — slide 1 is byte-equivalent to the style's `base-template.pptx` slide 1 with only the four placeholder substitutions applied. Audited by [`audit_cover_fidelity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_cover_fidelity.py).
+2. **Block coverage** — every source block becomes a shape; no silent drops. Audited by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py).
+3. **Image aspect ratio** — no non-uniform scaling. Audited by [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py).
+4. **OOXML invariants** hold (`strict/pptx-prompt.md` §19.4).
+5. **Keynote-safe system fonts** — every `<a:latin>` resolves to a font on the import target (correctness rule; see SKILL.md → *System fonts only*).
 
-The render **flow** is owned by [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow* and **branches by style** (strict iterates, free-form is single-pass). What differs per style:
+**Strict-only (LAYOUT-CONFORMANCE, not floor):** the strict §2 colour palette + §3 font-set (audited by [`audit_palette_fonts.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py)), white background, section pill, branded icons, and the §15.5 emit-rules layout (audited by [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py)). Free-form and preview render their own layouts from slide 2 on and are **not** judged against these — their slides 2+ have no fixed palette/font/background. (This resolves the earlier three-way inconsistency where palette/fonts was called both a universal floor and strict-only.)
 
-| Phase | strict | free-form |
-|---|---|---|
-| GENERATE | per `strict/pptx-prompt.md` §19.3 7-stage workflow + §15.5 emit-rules | per `free-form/pptx-prompt.md` §5 layout dispatch (slide-by-slide judgment) |
-| CONTROL | aspect-ratio + layout-fit + block-coverage + palette/fonts + cover-fidelity + OOXML | aspect-ratio + block-coverage + palette/fonts + cover-fidelity + OOXML (layout-fit skipped — no spec-predicted layout to compare) |
-| FEEDBACK | 12-practice rubric ([`strict/pptx-prompt.md` §20](strict/pptx-prompt.md)) | *(no FEEDBACK — single-pass; the 8-practice list in `free-form/pptx-prompt.md` §6 is a self-review checklist the presenter uses, not a critique loop)* |
-| REGENERATE | re-render touched slides, up to 3 cycles total | *(no REGENERATE)* |
+**Two things are centralized, not duplicated per spec** — a deliberate exception to the "each spec is self-contained" convention: the deterministic `audit_*.py` scripts, and the **critique rubric** [`critique-rubric.md`](critique-rubric.md). The rubric is the single source of truth for what each mode's FEEDBACK walks; each mode selects categories there rather than carrying its own copy. (Duplicating it per spec is exactly what produced the phantom free-form "§6 8-practice list.")
+
+The render **flow** is owned by [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow* and **branches by mode** — all three now iterate. Categories walked come from [`critique-rubric.md`](critique-rubric.md); what differs:
+
+| Phase | strict | free-form | preview |
+|---|---|---|---|
+| GENERATE | §19.3 7-stage + §15.5 emit-rules | §3 renderer-decides | §3 renderer-decides, **per-slide, changed-only** |
+| CONTROL | aspect + block-coverage + cover-fidelity + **palette/fonts + layout-fit** + OOXML | aspect + block-coverage + cover-fidelity + OOXML | same as free-form (non-blocking) |
+| FEEDBACK | CONTENT + AESTHETIC + DISTRIBUTION + **LAYOUT-CONFORMANCE** | CONTENT + AESTHETIC + DISTRIBUTION | CONTENT + AESTHETIC + DISTRIBUTION |
+| REGENERATE | touched slides, ≤ 3 cycles | touched slides, ≤ 2 cycles | changed slides, ≤ 2 cycles |
 
 ## Adding a new style
 
@@ -46,10 +51,11 @@ To add a third style (e.g. `minimal`, `editorial`, `dark-mode`):
 3. Ship the starting deck `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<name>/base-template.pptx` honoring the floor (cover slide + palette + fonts + white bg).
 4. Add a row to the *Available styles* table above.
 5. Extend the Step-8 ask in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* to offer `<name>` as a candidate, and the allowed-values list in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Style resolution*.
-6. Update [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) to branch on the new value (load the right spec, point at the right base-template, run the right rubric).
+6. Update [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) to branch on the new value (load the right spec, point at the right base-template).
+7. Add a row for the new mode to the **selection matrix** in [`critique-rubric.md`](critique-rubric.md) — its category selection (which of CONTENT / AESTHETIC / DISTRIBUTION / LAYOUT-CONFORMANCE it walks) and cycle cap. Do **not** copy a rubric into the new spec; the mode inherits the shared catalog.
 
 No other style's files need to change. That's the point of the split.
 
 ## Cross-refs from style-agnostic prose
 
-Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (`orchestrator.md`, SKILL.md, the audit scripts) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the current render's `style:` invocation parameter. The style-agnostic audit scripts (aspect-ratio, block-coverage, palette-fonts) take the active style's `pptx-prompt.md` path as an input where needed; the layout-fit audit is `strict`-only and lives unchanged in the skill.
+Documents outside `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/` (`orchestrator.md`, SKILL.md, the audit scripts) reference style-specific spec sections by writing `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md §X` where `<style>` is resolved per the current render's `style:` invocation parameter. The shared-floor audit scripts (aspect-ratio, block-coverage, cover-fidelity) run in every mode; **palette-fonts and layout-fit are `strict`-only** (they enforce the strict template). The critique rubric is the shared [`critique-rubric.md`](critique-rubric.md), referenced by every mode.

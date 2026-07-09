@@ -279,6 +279,45 @@ def _strip_bold_feedback_blocks(text: str) -> str:
     return "".join(out)
 
 
+def _split_into_slide_units(text: str) -> list[str]:
+    """Split converted markdown into per-slide units at top-level `---` rules.
+
+    Fence-aware: a `---` line inside a fenced ASCII/code block is body content,
+    not a slide boundary, so it never splits a diagram. Each returned unit is one
+    renderable slide — a section-divider H1 or a content H2 with its body. Empty
+    units are dropped. Used only by the draft-preview per-slide parallel path
+    (`--split-dir`); the default single-file render never calls it.
+    """
+    units: list[str] = []
+    current: list[str] = []
+    in_fence = False
+    fence_marker: str | None = None
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if not in_fence and (stripped.startswith("```") or stripped.startswith("~~~")):
+            in_fence = True
+            fence_marker = stripped[:3]
+            current.append(line)
+            continue
+        if in_fence:
+            if stripped.startswith(fence_marker or "```"):
+                in_fence = False
+                fence_marker = None
+            current.append(line)
+            continue
+        if _RULE_LINE_RE.match(line.strip()):
+            unit = "\n".join(current).strip()
+            if unit:
+                units.append(unit)
+            current = []
+            continue
+        current.append(line)
+    unit = "\n".join(current).strip()
+    if unit:
+        units.append(unit)
+    return units
+
+
 def _collapse_blank_lines(text: str) -> str:
     """Replace runs of 3+ blank lines with a single blank line."""
     return re.sub(r"\n{3,}", "\n\n", text)
@@ -324,6 +363,12 @@ def main() -> int:
              "**Presenter feedback:** blocks and let raw ASCII fences pass "
              "through as monospace (no SVG required)."
     )
+    parser.add_argument(
+        "--split-dir", type=Path, default=None,
+        help="Draft-preview only: also write one per-slide unit file "
+             "(slide-NN.md) into this directory for the per-slide parallel "
+             "render. Prints the ordered manifest of unit paths to stdout."
+    )
     args = parser.parse_args()
 
     if not args.final_md.is_file():
@@ -336,7 +381,17 @@ def main() -> int:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(converted, encoding="utf-8")
-    else:
+
+    if args.split_dir is not None:
+        units = _split_into_slide_units(converted)
+        args.split_dir.mkdir(parents=True, exist_ok=True)
+        width = max(2, len(str(len(units))))
+        for i, unit in enumerate(units, 1):
+            unit_path = args.split_dir / f"slide-{i:0{width}d}.md"
+            unit_path.write_text(unit + "\n", encoding="utf-8")
+            # Manifest to stdout — one unit path per line, in slide order.
+            print(unit_path)
+    elif not args.output:
         sys.stdout.write(converted)
     return 0
 

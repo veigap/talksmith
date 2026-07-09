@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-pptx
-description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`. **Alternate entry — `preview: true`:** the optional Step-5.5 draft preview renders a fast, throwaway deck from a pre-Polish `draft.md` (no `style:` needed — always free-form, single pass, ASCII rendered as monospace instead of SVG); output isolated under `talks/<Talk>/output/draft-preview/preview.pptx`.
+description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`. **Alternate entry — `preview: true`:** the optional Step-5.5 draft preview renders a fast, throwaway per-slide deck from a pre-Polish `draft.md` (no `style:` needed — free-form spec, ASCII rasterized to PNG by code, per-slide incremental critique loop walking CONTENT + AESTHETIC + DISTRIBUTION); output isolated under `talks/<Talk>/output/draft-preview/`.
 ---
 
 # md-to-pptx — Render `final.md` to PowerPoint
@@ -16,7 +16,7 @@ description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck 
 
 Both paths are **mandatory inputs** to the render. References below that say "the spec" or "the base template" without qualification mean **the style-resolved path** — not strict's by default.
 
-**The base template is mandatory and non-negotiable.** Every render starts from a working copy of `<base_template_path>`, not from a blank deck. For `strict`: this is a 15-slide foundation (cover + agenda + 12 layout-reference slides + 1 section-divider example) and the renderer substitutes placeholders, deletes the layout-reference zone (slides 3–15), and inserts generated content per the recipes in `<spec_path>`. For `free-form`: this is a 1-slide cover-only foundation; the renderer substitutes the cover's four §4.3 placeholders, then builds every other slide fresh per the style's §5 layout dispatch. Decks rendered from scratch — even if they "look similar" — are a render failure in either style.
+**The base template is mandatory and non-negotiable.** Every render starts from a working copy of `<base_template_path>`, not from a blank deck. For `strict`: this is a 15-slide foundation (cover + agenda + 12 layout-reference slides + 1 section-divider example) and the renderer substitutes placeholders, deletes the layout-reference zone (slides 3–15), and inserts generated content per the recipes in `<spec_path>`. For `free-form`: this is a 1-slide cover-only foundation; the renderer substitutes the cover's four §2 placeholders, then builds every other slide fresh per the style's §3 (renderer decides). Decks rendered from scratch — even if they "look similar" — are a render failure in either style.
 
 **Single responsibility.** This skill **only** prepares the inputs and invokes `skill://antropic-skills:/pptx`. ASCII → SVG conversion is the Illustrator role's job, performed in Step 6 (Polish) before this skill ever runs. `final.md` arrives already cleaned (image refs inlined, `Presenter feedback` stripped) and every referenced image already lives under `talks/<Talk>/images/`.
 
@@ -37,8 +37,8 @@ After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint**
 | Keynote-safe image extensions in `final.md` | Every `![alt](path)` reference in `final.md` uses `.png` or `.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote refuses to embed WebP/AVIF/HEIC and refuses to render SVG as embedded media; the .pptx ships but every offending slide loses its image on Keynote import (and behavior is inconsistent across other consumers). This is the Step 6 (b) image-consolidation contract — see [`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *(b) Consolidate image refs*. | Stop. Surface as a render-blocking error and list every offending ref (path + slide). Tell the orchestrator to re-dispatch the appropriate Step-6 role: any `.svg` ref (whether illustrator-produced or external corpus SVG) is **the Illustrator's** responsibility — re-dispatch Illustrator to produce the missing `.png` companion, then re-dispatch the Editor's Step-6 (b) ref-rewrite pass. `.webp`/`.avif`/`.heic` refs are **the Editor's** responsibility — re-dispatch Editor only (it rasterizes those formats inline). Never proceed — Keynote-incompatible refs ship a broken deck. |
 | Remote image refs handled | `final.md` contains no `![...](http(s)://...)` references — they survived Step 6 Polish unchanged, but `skill://antropic-skills:/pptx`'s behavior on remote URLs is implementation-defined and not guaranteed. | Stop and ask the presenter to either (a) download the asset into `images/` and rewrite the ref to `images/<file>`, or (b) explicitly accept the risk that the slide may ship without that image. Never silently ship a deck where a remote image was dropped. |
 | Base template | `<base_template_path>` = `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx` exists (style resolved at Process step 0 from the `style:` invocation parameter; presenter override optional). Mandatory starting deck. | Stop and ask. |
-| Visual spec | `<spec_path>` = `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` exists. Section catalog varies by style — strict §4–§19, free-form §1–§8. | Stop and ask — the spec is the rendering contract. |
-| Icon library *(strict only)* | [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx) `ppt/media/icon-*.svg` (15 branded line-art icons in `#DA1B2E`) — see [`strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §17. Free-form makes icons optional (per `free-form/pptx-prompt.md` §5.3). | Stop and ask — without the icons the strict no-emoji rule cannot be enforced. |
+| Visual spec | `<spec_path>` = `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` exists. Section catalog varies by style — strict §4–§20, free-form §1–§5. The critique rubric both walk is the shared [`critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md). | Stop and ask — the spec is the rendering contract. |
+| Icon library *(strict only)* | [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/base-template.pptx) `ppt/media/icon-*.svg` (15 branded line-art icons in `#DA1B2E`) — see [`strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §17. Free-form makes icons optional (per `free-form/pptx-prompt.md` §3.2). | Stop and ask — without the icons the strict no-emoji rule cannot be enforced. |
 
 ## Inputs
 
@@ -58,17 +58,21 @@ talks/<Talk>/
 │   ├── s1-1.svg
 │   └── ...
 └── output/
-    ├── final.pptx               # this skill writes via skill://antropic-skills:/pptx
-    ├── final.intermediate.md    # transient pre-processed file (produced by convert.py)
-    └── .critique/               # critique-only slide previews (git-ignored)
-        ├── slide-01.png
-        ├── slide-02.png
-        └── ...
+    ├── final.pptx                    # canonical deliverable — a copy of the most recent render
+    ├── final.strict.pptx             # per-mode render, persists for comparison
+    ├── final.free-form.pptx          # per-mode render, persists for comparison
+    ├── final.<style>.intermediate.md # per-mode transient pre-processed file (convert.py)
+    ├── .critique/                    # critique-only slide previews (git-ignored)
+    │   ├── strict/slide-NN.png
+    │   └── free-form/slide-NN.png
+    └── draft-preview/                # preview mode — fully isolated (see preview subsection)
 ```
+
+**Per-mode output isolation (so renders don't overwrite each other).** Each render writes a **suffixed** deck `output/final.<style>.pptx` (and its intermediate `output/final.<style>.intermediate.md`, and critique PNGs under `output/.critique/<style>/`), so a strict and a free-form render of the same Talk coexist and can be compared side by side. After a successful render the skill also **copies** the suffixed deck to the canonical `output/final.pptx` — the single deliverable that the reverse pipeline and the Phase-2 as-generated baseline read. Last render wins the canonical slot; the suffixed files persist. Preview is separate — it never touches any of these, writing only under `output/draft-preview/`.
 
 ## Process
 
-0. **Preview branch.** If the invocation carries **`preview: true`**, skip the style ask entirely and follow the *`preview: true` — Step-5.5 draft preview* path in *Render flow* below (input `draft.md` via `convert.py --draft`, free-form spec, single pass, output under `output/draft-preview/`). `preview:` overrides `style:` if both are present. Otherwise continue with normal style resolution:
+0. **Preview branch.** If the invocation carries **`preview: true`**, skip the style ask entirely and follow the *`preview: true` — Step-5.5 draft preview* path in *Render flow* below (input `draft.md` via `convert.py --draft --split-dir`, free-form spec, ASCII→PNG by code, per-slide incremental critique loop, output under `output/draft-preview/`). `preview:` overrides `style:` if both are present. Otherwise continue with normal style resolution:
 
 0. **Resolve style.** Read the `style:` value from the invocation parameters (the orchestrator's Step 8 step 1 asked the presenter and passed it in). **The parameter is mandatory — no default.** If the value is **absent or empty**, fail render-blocking with `[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).` Do not proceed; the orchestrator's job is to re-ask the presenter, not the skill's job to guess. If the value is present but not a directory under `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/`, fail render-blocking per *Style resolution failed* in *Failure modes*. Cache `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` and `<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx`. Verify both files exist; if either is missing, the style enum has drifted from disk — surface as a render-blocking error naming the missing file. Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>, base=<base_template_path>).`
 1. Verify all prerequisites (table above). Stop on any failure.
@@ -77,8 +81,10 @@ talks/<Talk>/
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py \
      talks/<Talk>/final.md \
-     -o talks/<Talk>/output/final.intermediate.md
+     -o talks/<Talk>/output/final.<style>.intermediate.md
    ```
+
+   **Per-mode paths.** Everywhere below, `output/final.pptx`, `output/final.intermediate.md`, and `output/.critique/` resolve to the **per-style** forms `output/final.<style>.pptx`, `output/final.<style>.intermediate.md`, and `output/.critique/<style>/` (see *Output* → per-mode isolation). The final render step also copies the per-style deck to the canonical `output/final.pptx`.
 
    The script performs these transformations (specified in its docstring; see [`convert.py`](convert.py) for the canonical contract):
    - Drops YAML frontmatter, HTML comments (including `<!-- ascii-source: ... -->` blocks), and the sections `# Thesis`, `# Open questions`, `# Cut material`.
@@ -89,7 +95,7 @@ talks/<Talk>/
 
    Output Markdown shape — one H1 per section divider, one H2 per content slide, `### Notes` for speaker notes, inline image refs. This is what `skill://antropic-skills:/pptx` receives.
 
-2.5. **Pre-emit decision audit (strict only).** When `style == strict`, walk each H2 in the intermediate file and apply the §15.6 pre-emit decision audit per `<spec_path>` §15.6. Compute the §15.5 *predicted* layout from the source's surface signals + §15.6.1 discriminator. Emit one `[pptx audit N/M]` line per slide showing the chosen layout and the inputs that led there. Stop and surface to the presenter per §15.6.4 if any slide hits an unresolved ambiguity, an unmapped emoji at a slot the chosen layout has, or detectable bullet-shape drift. **Skip when `style == free-form`** — free-form has no §15.5 emit-rules table to predict against; the renderer's per-slide layout-log sidecar (see `<spec_path>` §5.1) carries the traceability instead.
+2.5. **Pre-emit decision audit (strict only).** When `style == strict`, walk each H2 in the intermediate file and apply the §15.6 pre-emit decision audit per `<spec_path>` §15.6. Compute the §15.5 *predicted* layout from the source's surface signals + §15.6.1 discriminator. Emit one `[pptx audit N/M]` line per slide showing the chosen layout and the inputs that led there. Stop and surface to the presenter per §15.6.4 if any slide hits an unresolved ambiguity, an unmapped emoji at a slot the chosen layout has, or detectable bullet-shape drift. **Skip when `style == free-form`** — free-form has no §15.5 emit-rules table to predict against; the renderer's per-slide layout-log sidecar (see `<spec_path>` §3.1) carries the traceability instead.
 
 3. **Render** by invoking [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx). The invocation follows the **base-template workflow** described in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §18.2 — the native skill is the executor, this skill is the recipe-bearer. Pass:
    - the intermediate file at `output/final.intermediate.md`,
@@ -101,7 +107,7 @@ talks/<Talk>/
    The invocation follows the **7-stage workflow in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §19.3** verbatim — open base-template as working copy → cover substitution (§4) → agenda substitution (§5) → discard slides 3–13 → build content slides (§15 + §6–§9 + §13) → section dividers (§5.6) → backgrounds (§1) → speaker notes. All substantive rules (placeholder edge cases, slide-count formula, OOXML invariants, callout pink-vs-blue, no native tables, emoji→icon swap, palette, fonts, corner radius) live in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) and are **not duplicated here**. The skill's sole §19 obligation is to **pass the spec to the native renderer** and verify the output against §19.4 + §19.5. When this skill and the spec disagree, the spec wins.
 
    Acceptance bar: open the rendered `final.pptx` next to `base-template.pptx` — slides 1–2 must be pixel-equivalent modulo placeholder text. Author-from-scratch with the native skill's default theme = render failure.
-4. Verify `talks/<Talk>/output/final.pptx` exists and is non-empty.
+4. Verify `talks/<Talk>/output/final.<style>.pptx` exists and is non-empty, then **copy it to the canonical `talks/<Talk>/output/final.pptx`** (the deliverable the reverse pipeline + Phase-2 baseline read). The suffixed per-style deck persists for comparison.
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
 6. **Audit `<p:pic>` aspect ratios.** Run [`audit_aspect_ratios.py`](audit_aspect_ratios.py) against the rendered deck:
 
@@ -112,7 +118,7 @@ talks/<Talk>/
 
    The script walks every `<p:pic>` in every slide, resolves the source asset via the slide's rels file, reads its intrinsic aspect ratio (SVG `viewBox`, PNG/JPG header), and compares to the rendered `cx:cy`. Default tolerance: 1%. Non-zero exit = render failure — surface the FAIL lines verbatim and re-render. This catches the class of bug where a placeholder's slot is wider/taller than the asset and the renderer fills it by non-uniform scaling (the §12 rule in prose; this is its enforcement). The audit also surfaces missing `<a:picLocks noChangeAspect="1"/>` as warnings; warnings do not fail the render. Audit failures are not a §19.6 visual-spec violation per se — they are a structural picture-sizing bug — but they are surfaced and treated identically (stop, repair, re-verify).
 
-   Then run [`audit_palette_fonts.py`](audit_palette_fonts.py) to confirm every color and font in the rendered deck is in the §2 palette + §3.1 font set (the **floor** that applies in every style):
+   **Then run [`audit_palette_fonts.py`](audit_palette_fonts.py) — only when `style == strict`.** This enforces the strict template's §2 palette + §3.1 font set (a LAYOUT-CONFORMANCE concern — see [`critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md)). **Skip for `free-form` and `preview`** — their slides 2+ deliberately have no fixed palette/font, so this audit does not apply (the fixed cover is covered by `audit_cover_fidelity.py`, which runs in all modes). For strict:
 
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py \
@@ -150,7 +156,7 @@ talks/<Talk>/
    ```
 
    The script parses `final.md` per H2 into block inventories (callouts, content images), parses `final.pptx` per slide into shape inventories (pink `#F7BBC1` + blue `#B8E6F5` callout roundRects, content `<p:pic>` excluding cover logo + section-pill icons), matches by H2 title text (ordinal matching breaks because section dividers shift counts), and reports any slide where source count > render count as `[block-drop] slide N "<H2>" — source has X, render has Y`. Non-zero exit = render failure. Catches the class of bug where the renderer's top-to-bottom layout runs out of room on a busy slide and silently skips the trailing block from emission — the visual rubric never asks "is every source block present," so a silent drop sails through. The audit runs **before** the orchestrator's visual review begins; any `[block-drop]` stops the cycle and routes to REGENERATE. Unmatched H2s (`[unmatched] line N "<H2>" — no rendered slide with matching title`) are also surfaced; they usually mean a title was rewritten between Polish and render, not a true drop, but the orchestrator confirms before proceeding.
-7. **Render per-slide critique PNGs.** Rasterize every slide to `talks/<Talk>/output/.critique/slide-NN.png` (zero-padded 2-digit slide number, `01` … `NN`). These PNGs are critique-only — not referenced from `final.pptx`, not part of the deliverable — and exist so the orchestrator's post-render visual review can perform visual analysis on actual pixels rather than slide-XML inspection (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 — Post-render visual review*).
+7. **Render per-slide critique PNGs.** Rasterize every slide to `talks/<Talk>/output/.critique/slide-NN.png` (zero-padded 2-digit slide number, `01` … `NN`). These PNGs are critique-only — not referenced from `final.pptx`, not part of the deliverable — and exist so the FEEDBACK sub-agent can walk the shared critique rubric on actual pixels rather than slide-XML inspection (see [`critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md) and *Render flow* above).
 
    Path priority (use the first that works):
 
@@ -159,7 +165,7 @@ talks/<Talk>/
 
    If both paths fail, the deck is still valid — report `slide_previews: failed: <reason>` and continue. The orchestrator will surface this as `unresolved: slide_previews_failed` for the post-render review (visual critique can't run without pixels), but the `.pptx` itself is unaffected.
 
-8. Report: `style: <strict|free-form>`, slide count, image references resolved, `aspect_audit: <ok|N fail>`, `palette_fonts: <ok|N fail>`, `cover_fidelity: <ok|N diff>`, `layout_fit: <ok|N mismatch|skipped:free-form>`, `block_coverage: <ok|N drop>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
+8. Report: `style: <strict|free-form|preview>`, slide count, image references resolved, `aspect_audit: <ok|N fail>`, `palette_fonts: <ok|N fail|skipped:non-strict>`, `cover_fidelity: <ok|N diff>`, `layout_fit: <ok|N mismatch|skipped:non-strict>`, `block_coverage: <ok|N drop>`, `slide_previews: <count|failed>`, any warnings surfaced by `skill://antropic-skills:/pptx`.
 
 ### Render flow — branches by style
 
@@ -175,21 +181,23 @@ Four named phases, up to **3 cycles total** (cycle 1 = initial build; 2–3 = re
 |---|---|---|---|
 | **GENERATE** | `[cycle N/3] GENERATE` | Cycle 1: full pipeline (preprocess → native `pptx` skill → write → rasterize previews). Cycles 2–3: re-render only the touched slides from the prior REGENERATE handoff. | `final.pptx` written, slide previews in `output/.critique/`. |
 | **CONTROL** | `[cycle N/3] CONTROL` | Build-time audits: aspect ratios, block coverage, palette/fonts, cover fidelity, layout fit, OOXML invariants (§19.4 of `strict/pptx-prompt.md`). | All audits exit 0 → FEEDBACK. Any non-zero → straight to REGENERATE for this cycle (no visual review on a broken render). |
-| **FEEDBACK** | `[cycle N/3] FEEDBACK` | Skill dispatches a multimodal sub-agent (via `Agent` tool) to walk the 12-practice rubric defined in [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) → *Post-render visual review* on every slide PNG (multimodal `Read` of rasterized pixels — XML inspection forbidden). Each finding: `slide N · practice K · <description> → fix this iteration \| defer because <reason>`. **Strict runs autonomously** — no presenter prompts at any point. Editorial-judgement findings get `defer` and surface in the closing report. | List empty OR all entries `defer` → cycle done, exit loop. Any `fix this iteration` → REGENERATE. |
+| **FEEDBACK** | `[cycle N/3] FEEDBACK` | Skill dispatches a multimodal sub-agent (via `Agent` tool) to walk the shared critique rubric [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md) on every slide PNG (multimodal `Read` of rasterized pixels — XML inspection forbidden). **Strict selects all four categories — CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE** — applying the strict elaborations in `strict/pptx-prompt.md` §20. Each finding: `slide N · <catalog-id> · <description> → fix this iteration \| defer because <reason>`. **Strict runs autonomously** — no presenter prompts at any point. Editorial-judgement findings get `defer` and surface in the closing report. | List empty OR all entries `defer` → cycle done, exit loop. Any `fix this iteration` → REGENERATE. |
 | **REGENERATE** | `[cycle N/3] REGENERATE` | Skill composes per-slide edit instructions from the FEEDBACK list and re-runs GENERATE on the touched-slide subset. Cycle counter increments. | Cycle N+1 starts. |
 
 **Cycle cap counts only top-level rotations.** Build-time recoveries inside a single GENERATE (broken regex, leaked marker, undersized callout) don't consume cycle budget. After cycle 3, surviving defects surface as `unresolved: …` in the closing report.
 
-#### `style: free-form` — single pass *(skill-internal)*
+#### `style: free-form` — critique loop, ≤ 2 cycles *(skill-internal)*
 
-Two phases, one pass. No FEEDBACK, no REGENERATE.
+Four phases, up to **2 cycles** (cycle 1 = build; cycle 2 = review-and-edit budget). Same loop shape as strict, but free-form walks **only CONTENT + AESTHETIC + DISTRIBUTION** (never LAYOUT-CONFORMANCE) and runs the shared-floor audits only.
 
-| Phase | What runs | Exit |
-|---|---|---|
-| **GENERATE** | Full pipeline against [`pptx-styles/free-form/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/). Writes `final.pptx` + `.layout-log.md` + slide previews. | Output written. |
-| **CONTROL** | OOXML invariants, block-coverage, aspect-ratio, palette/fonts, cover-fidelity (5 audits — layout-fit is skipped per `free-form/pptx-prompt.md` §7). | All audits 0 → done. Any non-zero → closing report carries `unresolved: <audit_name>`. No auto-fix; presenter decides whether to re-trigger. |
+| Phase | Tag | What runs | Exit |
+|---|---|---|---|
+| **GENERATE** | `[cycle N/2] GENERATE` | Cycle 1: full pipeline against [`pptx-styles/free-form/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/) → `final.pptx` + `.layout-log.md` + slide previews. Cycle 2: re-render only the touched slides. | Output written, previews in `output/.critique/`. |
+| **CONTROL** | `[cycle N/2] CONTROL` | Shared-floor audits: OOXML invariants, block-coverage, aspect-ratio, cover-fidelity. **No palette/fonts, no layout-fit** (strict-only). | All 0 → FEEDBACK. Any non-zero → REGENERATE. |
+| **FEEDBACK** | `[cycle N/2] FEEDBACK` | Multimodal sub-agent walks **CONTENT + AESTHETIC + DISTRIBUTION** from [`critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md) on every slide PNG. Disposition per [`free-form/pptx-prompt.md` §5.1](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md) — auto-fix objective defects, defer taste. | Empty OR all `defer` → done. Any `fix this iteration` → REGENERATE. |
+| **REGENERATE** | `[cycle N/2] REGENERATE` | Compose per-slide edits, re-run GENERATE on the touched subset. Cycle counter increments. | Cycle N+1 starts. |
 
-The 8-practice list in [`free-form/pptx-prompt.md` §6](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md) is a self-review checklist for the presenter (informational), not walked by the skill.
+After cycle 2, surviving items surface as `unresolved:` / `deferred:` in the closing report.
 
 #### `preview: true` — Step-5.5 draft preview *(skill-internal)*
 
@@ -197,24 +205,27 @@ An optional **fast, throwaway** path that renders a preview deck from a **pre-Po
 
 Invoked with **`preview: true`** in place of `style:`. If both arrive, `preview:` wins and `style:` is ignored. The preview is **not the deliverable** — the real deck is always Step 8 from `final.md`.
 
-Differences from a normal render (everything else matches free-form):
+Preview walks the **same critique categories as free-form — CONTENT + AESTHETIC + DISTRIBUTION** (never LAYOUT-CONFORMANCE) — but per-slide and incremental so re-renders after a review edit are cheap. Differences from a free-form render:
 
 | Aspect | Preview behavior |
 |---|---|
-| **Input file** | `talks/<Talk>/draft.md` (not `final.md`). Pre-process with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py --draft talks/<Talk>/draft.md -o talks/<Talk>/output/draft-preview/preview.intermediate.md`. The `--draft` flag strips the `**Presenter feedback:**` blocks a pre-Polish draft still carries and lets raw ASCII fences pass through. |
-| **Prereqs waived** | The `final.md`-only gates do **not** apply: a pre-Polish draft is the *expected* input, `Presenter feedback` fields are fine (stripped by `--draft`), and **raw ASCII fenced blocks are fine** (they are the point — no SVG required). The Keynote-safe image-extension gate still applies to any *image refs* present, but a draft with zero images and only ASCII fences is valid. Do **not** dispatch the Illustrator and do **not** stop on missing SVGs. |
+| **Input file** | `talks/<Talk>/draft.md` (not `final.md`). Pre-process with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py --draft --split-dir talks/<Talk>/output/draft-preview/units talks/<Talk>/draft.md -o talks/<Talk>/output/draft-preview/preview.intermediate.md`. `--draft` strips the `**Presenter feedback:**` blocks a pre-Polish draft carries and lets raw ASCII fences pass through; `--split-dir` emits one `slide-NN.md` unit per slide for the per-slide render. |
+| **Prereqs waived** | The `final.md`-only gates do **not** apply: a pre-Polish draft is the *expected* input, `Presenter feedback` fields are fine (stripped by `--draft`), and **raw ASCII fenced blocks are fine** (no SVG required). The Keynote-safe image-extension gate still applies to any *image refs* present. Do **not** dispatch the Illustrator and do **not** stop on missing SVGs. |
 | **Style / spec** | Always free-form — `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md`, `<base_template_path> = .../free-form/base-template.pptx`. No `style:` ask. |
-| **ASCII fences** | Each fenced block renders as a **Courier New monospace text box** sized to its content (Courier New keeps it inside the palette/fonts font set). No SVG generation — that work is deferred to Step 6 for the final deck. |
-| **Render flow** | Single pass: GENERATE → CONTROL. **No FEEDBACK, no REGENERATE** (same as free-form). |
-| **Output (isolated, git-ignored)** | `talks/<Talk>/output/draft-preview/preview.pptx`, `preview.intermediate.md`, and slide PNGs at `draft-preview/.previews/slide-NN.png`. **Never** writes `output/final.pptx` or `output/.critique/`. Slide PNGs are still produced — the whole point is for the presenter to *see* the preview. |
-| **CONTROL** | The free-form audit set — OOXML invariants, block-coverage (sourced from `preview.intermediate.md`, not `final.md`), aspect-ratio, cover-fidelity. Palette/fonts and layout-fit are strict-only and do not apply. Audit non-zero → surface `unresolved: <audit_name>` but **still deliver the preview** — it is a sanity check, not a gated deliverable; never block the presenter on a preview audit. |
-| **Progress tags** | Same log-only discipline; emissions are prefixed `[preview` (e.g. `[preview 2/4] Pre-processing draft.md…`). Suppressed from chat exactly like `[pptx` tags. |
+| **ASCII fences → PNG by code** | Each fenced block is rasterized to a monospace **PNG by code** via [`render_ascii.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/render_ascii.py) (Courier-family, content-addressed filename) and the fence rewritten to an image ref — a diagram-shaped stand-in for the eventual SVG. No model call, no SVG pipeline. If Pillow/a monospace font is unavailable the script exits non-zero and the renderer falls back to a monospace text box. |
+| **Incremental** | [`preview_plan.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/preview_plan.py) content-addresses each `slide-NN.md` unit (hash + `RENDER_VERSION` salt) against the prior manifest → per slide `reuse | render`. **Only `render` (changed) slides** go through GENERATE → CONTROL → FEEDBACK → REGENERATE; `reuse` slides keep their approved PNG and cached verdict and are never re-authored or re-critiqued. |
+| **Render flow** | Per changed slide: GENERATE → CONTROL → FEEDBACK → REGENERATE, **≤ 2 cycles**, walking CONTENT + AESTHETIC + DISTRIBUTION. Same loop as free-form, scoped to the changed-slide subset. |
+| **Output (isolated, git-ignored)** | `talks/<Talk>/output/draft-preview/` — `units/slide-NN.md`, `preview.intermediate.md`, per-slide `.previews/slide-NN.png`, ASCII PNGs, and the `.preview-cache.json` manifest. **Never** writes `output/final.pptx` or `output/.critique/`. The deliverable is the PNG grid, not a merged deck. |
+| **CONTROL** | Shared-floor audits only — OOXML invariants, block-coverage (from `preview.intermediate.md`), aspect-ratio, cover-fidelity — run per changed slide. Non-zero → surface `unresolved: <audit_name>` but **still deliver the preview**; never block the presenter on a preview audit. |
+| **Progress tags** | Same log-only discipline; emissions prefixed `[preview` (e.g. `[preview 2/4] Rendering 3 changed slides…`). Suppressed from chat exactly like `[pptx` tags. |
 
-Everything not listed above is identical to the free-form single-pass path. Cowork-only, same as Step 8 — the native `pptx` skill is required.
+Everything not listed above matches the free-form path. Cowork-only, same as Step 8 — the native `pptx` skill is required.
 
 ### Presenter-facing progress checklist
 
-The orchestrator displays a checklist on render entry and updates it in place as the skill moves through phases. The orchestrator owns the rendering; the skill owns *which items appear and when each ticks*. State markers: `[ ]` pending, `[⟳]` in progress, `[✓]` done, `[—]` skipped / not-applicable, `[✗]` failed.
+**A live checklist is mandatory in every render mode (strict, free-form, preview).** Rendering runs 30 s – 3 min; silence reads as a hang. The orchestrator **must** show a live, todo-list-style checklist on render entry and **update it in place** — flipping each item to `[⟳]` when its phase starts and `[✓]` the moment it completes — so the presenter always sees what is happening now and what is done. Never run a render with no visible progress. State markers: `[ ]` pending, `[⟳]` in progress, `[✓]` done, `[—]` skipped / not-applicable, `[✗]` failed.
+
+The skill drives the checklist by emitting one bracketed stage line per phase (see *Progress reporting* below); the orchestrator consumes those lines and edits the checklist message in place (it never relays the raw tags — see the suppression rule). For any stage that runs > 30 s without advancing, the skill emits a heartbeat and the orchestrator surfaces a plain-language *"still working — N of M slides…"* line so the checklist item visibly breathes. The orchestrator owns the rendering; the skill owns *which items appear and when each ticks*.
 
 **`style: strict` checklist** (5 items; *Reviewing slides* and *Applying fixes* update their cycle counter on each rotation):
 
@@ -237,13 +248,15 @@ Item ↔ phase mapping (strict):
 | Applying fixes | Skill returns from REGENERATE-driven re-render, OR `[—] no fixes needed` if the cycle was clean. |
 | Final check | Final cycle exits clean OR cycle 3 ends with surviving `unresolved: …` (marker `[✗]` if any). |
 
-**`style: free-form` checklist** (3 items):
+**`style: free-form` checklist** (5 items; free-form now iterates ≤ 2 cycles):
 
 ```
 Building your deck:
   [ ] Formatting source
   [ ] Building slides
-  [ ] Sanity check
+  [ ] Reviewing slides (cycle N of 2)
+  [ ] Applying fixes
+  [ ] Final check
 ```
 
 Item ↔ phase mapping (free-form):
@@ -251,8 +264,31 @@ Item ↔ phase mapping (free-form):
 | Item | Ticks when |
 |---|---|
 | Formatting source | `[pptx 2/8] Pre-processing done`. |
-| Building slides | `[pptx 4/8] final.pptx written`. |
-| Sanity check | All CONTROL audits exit 0 (or `[✗]` on any non-zero with the audit name in the closing report). |
+| Building slides | `[pptx 4/8] final.pptx written` for cycle 1. |
+| Reviewing slides (cycle N) | FEEDBACK sub-agent finishes walking CONTENT + AESTHETIC + DISTRIBUTION on every slide PNG. |
+| Applying fixes | Skill returns from REGENERATE-driven re-render, OR `[—] no fixes needed` if the cycle was clean. |
+| Final check | Final cycle exits clean OR cycle 2 ends with surviving `unresolved: …` / `deferred: …` (marker `[✗]` if any unresolved). |
+
+**`preview: true` checklist** (5 items; the counts personalize to the run — *"Rendering 3 changed slides"*, *"Reviewing 3 slides"*):
+
+```
+Putting together a quick preview:
+  [ ] Formatting draft
+  [ ] Rendering N changed slides (M reused)
+  [ ] Reviewing slides (cycle N of 2)
+  [ ] Applying fixes
+  [ ] Ready to view
+```
+
+Item ↔ phase mapping (preview):
+
+| Item | Ticks when |
+|---|---|
+| Formatting draft | `[preview 1/…]` — `convert.py --draft --split-dir` + `preview_plan.py` done; the split reports how many slides changed vs reused. |
+| Rendering N changed slides | Every changed-slide GENERATE (ASCII→PNG + author + rasterize) written; reused slides are shown as `[—] M reused`. |
+| Reviewing slides (cycle N) | FEEDBACK finishes walking CONTENT + AESTHETIC + DISTRIBUTION on the changed slides. |
+| Applying fixes | REGENERATE re-renders touched slides, OR `[—] no fixes needed`. |
+| Ready to view | Per-slide PNGs assembled into the grid under `output/draft-preview/.previews/`. |
 
 ### Progress reporting — internal log-only
 
@@ -260,7 +296,7 @@ PPTX render is a long-running multi-stage operation (30s–3 min). The skill emi
 
 Every line below is **structured event output** for the orchestrator to consume, not chat content. Tag namespaces the skill owns: `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`. If any of these strings reach chat verbatim it's a leak — see *Tag-suppression rule* in the orchestrator.
 
-Step 8's render flow (single-pass for free-form, multi-cycle for strict) is defined above in *Render flow*. Cycle 1's 8 stages are tabled below; cycles 2+ (strict only) collapse to one log-line per phase prefixed `[cycle N/3] GENERATE/CONTROL/FEEDBACK/REGENERATE`.
+Step 8's render flow (≤ 2-cycle for free-form, ≤ 3-cycle for strict; both defined above in *Render flow*). Cycle 1's 8 stages are tabled below; cycles 2+ collapse to one log-line per phase prefixed `[cycle N/M] GENERATE/CONTROL/FEEDBACK/REGENERATE`.
 
 | Moment | Example line |
 |---|---|

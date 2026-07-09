@@ -239,7 +239,7 @@ When the presenter signals ready, Step 5 ends. **If a draft preview is available
 
 ## Step 5.5 — Draft preview *(optional, Cowork only, non-blocking)*
 
-A fast, **throwaway** PowerPoint rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* before committing to Polish + the final render. It is a sanity check, **not the deliverable** — the real deck is always Step 8 from `final.md`. It exists because the full pipeline (SVG rendering in Step 6 + the strict critique loop in Step 8) is slow; the preview skips all of it (raw ASCII shown as monospace instead of rendered to SVG, single pass, no critique).
+A fast, **throwaway** PowerPoint rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* before committing to Polish + the final render. It is a sanity check, **not the deliverable** — the real deck is always Step 8 from `final.md`. It stays fast by skipping the expensive parts of the full pipeline: ASCII diagrams are rasterized to PNG **by code** (no Illustrator SVG pass), and only **changed slides** are re-rendered on each refresh. It still critiques what it builds — a light content/look/arrangement pass (the same CONTENT + AESTHETIC + DISTRIBUTION bar as free-form), scoped per-slide so it stays cheap.
 
 **Prerequisite: Cowork** (native `pptx` skill in registry). If absent, the preview is simply unavailable — never block on it, and don't mention the machinery; if the presenter explicitly asks for a preview outside Cowork, say previews render inside Cowork and move on.
 
@@ -254,12 +254,12 @@ When the presenter signals ready at the end of Step 5, **before** advancing to S
 
 > Want to take a quick look at a rough draft of the slides before I polish and finalize? *(optional — say skip to go straight to finishing)*
 
-- **If they look:** surface the rendered preview — the slide images (and the `.pptx` path under `talks/<Talk>/output/draft-preview/preview.pptx` if they want to open it). Frame it as rough: diagrams show as plain monospace text, layouts are unpolished, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview.
+- **If they look:** surface the rendered preview — the per-slide images under `talks/<Talk>/output/draft-preview/.previews/` as a grid. Frame it as rough: diagrams show as plain monospace images, styling is provisional, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview (re-rendering only the slides that changed).
 - **If they skip, or the preview isn't ready / failed to render:** proceed to Step 6 without ceremony. A failed or unavailable preview is never fatal — it's a convenience.
 
 ### Dispatch
 
-Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) with **`preview: true`** (in place of `style:`) on `talks/<Talk>/draft.md`. The skill owns everything else — `convert.py --draft` pre-processing, the free-form single-pass render, ASCII-as-monospace, the isolated `output/draft-preview/` outputs, and its `[preview …]` stage events. Those events are **log-only**, suppressed from chat exactly like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). Never write the preview's style, path, or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
+Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) with **`preview: true`** (in place of `style:`) on `talks/<Talk>/draft.md`. The skill owns everything else — `convert.py --draft --split-dir` pre-processing, the per-slide incremental render (only changed slides), ASCII-to-PNG by code, the per-slide critique loop, the isolated `output/draft-preview/` outputs, and its `[preview …]` stage events. Those events are **log-only**, suppressed from chat exactly like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). **Show the live preview checklist** while it runs (see SKILL.md → *Presenter-facing progress checklist*), even though it's a background render — a returning background preview still ticks its checklist so the presenter can see it finish. Never write the preview's style, path, or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
 
 **Never let the preview mutate the pipeline.** It reads `draft.md` read-only, writes only under `output/draft-preview/` (git-ignored), and never touches `final.md` or `output/final.pptx`. It does not consume Step-8's style choice — a later Step 8 still asks the style fresh.
 
@@ -304,21 +304,21 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 1. **Ask the style — mandatory, every entry, no default, no exceptions** (only intervention; render runs end-to-end after):
 
    > Render this Talk as which style?
-   > 1. **strict — Style Guided** — spec-driven template, multi-cycle critique. Predictable, polished.
-   > 2. **free-form — Free with minimal guidance** — LLM picks layout; only the floor enforced. Single pass.
+   > 1. **strict — Style Guided** — spec-driven template, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished.
+   > 2. **free-form — Free with minimal guidance** — the renderer designs its own layout, then critiques it for content, look, and arrangement (up to 2 review passes). Not bound to a template.
 
    **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess.
 
    **The style is a render-time parameter, not a content attribute** — it lives only in the Step-8 invocation. Never write it to `draft.md` or `final.md` frontmatter; those files are style-agnostic so the same content can be rendered in either style at any time. A second Step-8 run on the same Talk can pick a different style with no migration.
 
-2. **Dispatch** [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (single-pass vs. multi-cycle is its concern), build-time audits, internal critique iterations, and the stage events that drive the progress checklist.
+2. **Dispatch** [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (per-mode cycle counts are its concern), build-time audits, internal critique iterations, and the stage events that drive the progress checklist.
 
-3. **Render the progress checklist** per the skill's template — see [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Edit it in place as stage events arrive.
+3. **Show a live progress checklist — mandatory, every mode (strict, free-form, preview).** Renders take 30 s – 3 min; the presenter must never be left staring at silence wondering if it hung. On render entry, post the mode's checklist from [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) and **edit that same message in place** as stage events arrive — flip each item to `[⟳]` when it starts and `[✓]` the instant it finishes, personalizing counts (*"Rendering 3 changed slides"*, *"Reviewing 12 slides — pass 2 of 3"*). If a stage runs quiet > 30 s, surface a plain-language heartbeat (*"still building — 7 of 18 slides…"*) so the active item visibly breathes. A render with no visible, advancing progress is a defect.
 
    **Suppression rule (hard).** Everything the skill emits is **internal log-only** — consume it for the checklist + the closing report, never relay verbatim. Suppression covers two shapes:
 
    - **Bracketed-tag lines** — `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`, or any other bracketed prefix.
-   - **Prose summaries containing internal vocabulary** — phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audit_palette_fonts.py`, `audit_block_coverage.py`, `audit_aspect_ratios.py`, `audit_cover_fidelity.py`, `audit_layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `image-1-1.png`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · practice K · …`), or the phrase *"final.md frontmatter"* / *"draft.md frontmatter"*.
+   - **Prose summaries containing internal vocabulary** — phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audit_palette_fonts.py`, `audit_block_coverage.py`, `audit_aspect_ratios.py`, `audit_cover_fidelity.py`, `audit_layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `image-1-1.png`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`, e.g. `AESTHETIC-06`), or the phrase *"final.md frontmatter"* / *"draft.md frontmatter"*.
 
    Any prose between checklist updates must be plain language. **Concrete don't / do** (this is the leak pattern that prompted the rule):
 
@@ -329,7 +329,7 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
    If a leak is observed, treat it as a behavior bug to fix in the next session and log the offending line to `memory.md` so it can be diffed against this rule.
 
-4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx`), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
+4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx` — plus the mode-tagged `final.<style>.pptx` if they rendered more than one style and want to compare), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
 
 ---
 

@@ -19,7 +19,7 @@ These are not style rules — they are correctness rules. They hold regardless o
 - **Every `### Notes` block lands verbatim in the corresponding slide's notes pane.** Never on the slide body.
 - **Aspect ratio preserved on every image** (no non-uniform scaling). Audited at CONTROL by [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py).
 - **OOXML invariants hold** per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules — dangling rels, `[Content_Types].xml` ordering, etc.).
-- **Single pass, no critique iterations.** Free-form is GENERATE → CONTROL → done. No FEEDBACK, no REGENERATE. The presenter reviews the deck after delivery.
+- **Critique loop for content, look & arrangement.** Free-form runs GENERATE → CONTROL → FEEDBACK → REGENERATE (≤ 2 cycles), critiquing **CONTENT + AESTHETIC + DISTRIBUTION** from the shared [`../critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md). It does **not** walk LAYOUT-CONFORMANCE — the renderer designs freely; the critique judges whether the design *works* (is it legible, balanced, well-distributed?), never whether it matches a template. See §4 (flow) + §5 (selection). This is not a single-pass render.
 
 ---
 
@@ -42,19 +42,37 @@ The cover's specific font choices (Helvetica Bold / Helvetica) are part of the f
 
 ## 3. From slide 2 onward — renderer decides
 
-After the cover, the renderer is the designer. Read each `## <H2>` slide's content, decide what serves it best, emit. The spec does not prescribe layout, fonts, sizes, colors, palette, icon idiom, or table treatment — the renderer judges by its own criteria.
+After the cover, the renderer is the designer. Read each `## <H2>` slide's content, decide what serves it best, emit. The spec does not prescribe layout, fonts, sizes, colors, palette, icon idiom, or table treatment — the renderer judges by its own criteria. What the renderer builds is then judged by the FEEDBACK critique (§5) on **whether it works**, not on template conformance.
 
-Log each choice to `talks/<Talk>/output/.layout-log.md` (one entry per slide, naming what you built + one-line rationale). The log is the audit trail the presenter reads when reviewing the deck.
+### 3.1 Layout log
+
+Log each choice to `talks/<Talk>/output/.layout-log.md` (one entry per slide, naming what you built + one-line rationale). The log is the render's audit trail.
+
+### 3.2 Icons — optional
+
+Free-form has no branded icon catalog and no icon requirement. Use icons or not, as the design warrants. If you do use them, keep **one consistent icon style** across the deck — that is an `AESTHETIC-11` (image/icon treatment consistency) concern the critique walks, not a conformance rule.
 
 ---
 
-## 4. Render flow — single pass
+## 4. Render flow — critique loop (≤ 2 cycles)
 
-Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow — branches by style*.
+Free-form is **GENERATE → CONTROL → FEEDBACK → REGENERATE**, up to **2 cycles**. Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow — branches by style*.
 
 | Phase | What runs |
 |---|---|
 | **GENERATE** | Cover (§2) byte-equivalent from `base-template.pptx`; slides 2+ built fresh per §3. Writes `.layout-log.md` + slide previews to `output/.critique/slide-NN.png`. |
-| **CONTROL** | Core-practice audits: OOXML invariants, [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), cover-fidelity. **No palette audit, no font audit, no layout-fit audit** — those are strict-only. All audits 0 → done. Any non-zero → surface `unresolved: <audit_name>` and stop. No auto-fix; presenter reviews. |
+| **CONTROL** | Shared-floor audits only: OOXML invariants, [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), cover-fidelity. **No palette/font audit, no layout-fit audit** — those enforce the strict template (layout-conformance) and don't apply here. Any non-zero → REGENERATE (no visual review on a broken render). |
+| **FEEDBACK** | Walk **CONTENT + AESTHETIC + DISTRIBUTION** from [`../critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md) on every slide PNG. See §5. |
+| **REGENERATE** | Re-render the touched slides from the FEEDBACK handoff; cycle counter increments. |
 
-No FEEDBACK phase, no REGENERATE phase. The presenter is the reviewer.
+## 5. Post-render review — category selection
+
+Free-form walks **CONTENT + AESTHETIC + DISTRIBUTION** from the shared catalog; it does **not** walk **LAYOUT-CONFORMANCE** (there is no fixed template to conform to). Walk discipline, the aesthetic note, and the declare-clean/closing-report contract are the shared sections of [`../critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md).
+
+### 5.1 Disposition — what auto-fixes vs what defers
+
+Free-form auto-regenerates like strict, but biases toward the presenter for taste (free-form's ethos is that the presenter is the final judge of *style*):
+- **Fix this iteration (REGENERATE):** objective, unambiguous defects — text overflow/off-slide (`AESTHETIC-01`), raw emoji (`CONTENT-01`), distorted image (`AESTHETIC-04`), misaligned columns / uneven gutters (`DISTRIBUTION-01/02`).
+- **Defer because \<reason\> (surface in the closing report):** editorial-judgement calls — which of two balanced compositions reads better, palette tone, rhythm. The presenter decides.
+
+Cap 2 cycles. After the cap, surviving items surface as `unresolved:` / `deferred:` per the catalog's closing-report format.

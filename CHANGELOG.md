@@ -12,6 +12,72 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.4.0] — 2026-07-09
+
+### Added
+
+- **Shared, categorized critique rubric** ([`config/pptx-styles/critique-rubric.md`](config/pptx-styles/critique-rubric.md)).
+  One source of truth for what each render mode's visual review walks, organized into
+  four categories — **CONTENT**, **AESTHETIC**, **DISTRIBUTION** (new), and
+  **LAYOUT-CONFORMANCE** (strict-only). Each mode selects which categories it walks;
+  adding a practice or refining a mode is a one-line edit. Replaces the rubric that was
+  buried inside the strict spec.
+- **Materially richer aesthetic + distribution bar.** Beyond the original checks
+  (overflow, margins, balance, focal point, image scale) the rubric now covers
+  contrast, type-scale, alignment, emphasis restraint, colour harmony, image-treatment
+  consistency, widows/orphans — and a whole **distribution** category (grid alignment,
+  gutters, negative-space balance, column balance, proximity grouping, uniform sizing,
+  reading flow). This is what makes slides stop looking "off."
+- **Free-form now critiques and self-corrects.** Free-form gained a GENERATE → CONTROL
+  → FEEDBACK → REGENERATE loop (≤ 2 cycles) over CONTENT + AESTHETIC + DISTRIBUTION —
+  it no longer ships its first pass unreviewed. It still never imposes the strict
+  template's layout; it judges whether its own design *works*.
+- **Preview upgraded to a per-slide, incremental critique loop.** The Step-5.5 draft
+  preview now renders per slide, rasterizes ASCII diagrams to PNG **by code**
+  ([`render_ascii.py`](skills/md-to-pptx/render_ascii.py)), and re-renders only the
+  slides that changed between review rounds via a content-addressed cache
+  ([`preview_plan.py`](skills/md-to-pptx/preview_plan.py)). It walks the same
+  CONTENT + AESTHETIC + DISTRIBUTION bar as free-form.
+- **Live progress visibility in every render mode.** All modes now drive a live,
+  todo-list-style checklist that ticks each step as it completes, with heartbeats on
+  long stages — no more long silent renders.
+- **Per-mode output isolation.** Each render writes `output/final.<style>.pptx` (and
+  per-style intermediate + critique PNGs) so strict and free-form renders coexist for
+  side-by-side comparison; the most recent render is copied to the canonical
+  `output/final.pptx` the reverse pipeline reads.
+
+### Changed
+
+- Free-form is no longer single-pass. Cycle caps: strict 3, free-form 2, preview 2.
+
+### Fixed
+
+- **Palette/fonts audit membership.** Now consistently **strict-only** (a
+  layout-conformance concern); free-form and preview slides past the cover have no
+  fixed palette/font and are not audited against one. Resolves a three-way
+  contradiction across the specs.
+- Removed dangling references to free-form spec sections (§5–§8) and the phantom
+  "8-practice list" that were never written on disk, and stale cross-refs that named
+  `orchestrator.md` as the home of the visual rubric.
+
+## [0.3.0] — 2026-07-09
+
+### Added
+
+- **Draft preview — optional Step 5.5.** A fast, throwaway PowerPoint rendered straight
+  from `draft.md` so the presenter can eyeball the deck's shape before committing to
+  Polish + the final render. Auto-fires in the background (non-blocking) when the draft
+  first completes and refreshes on change; offered at the review-end checkpoint. Reads
+  `draft.md` read-only via `convert.py --draft`, writes only under
+  `output/draft-preview/`. Cowork-only.
+
+### Fixed
+
+- **md-to-pptx section dividers.** The `final.md` → intermediate converter was letting a
+  trailing stripped field (e.g. `### Sources`) swallow the following `# N.` section
+  divider; every section divider after the first could vanish. Field bodies now
+  terminate at the next `---` rule or heading.
+
 ## [0.2.0] — 2026-07-09
 
 ### Added
