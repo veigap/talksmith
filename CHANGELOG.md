@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.6.1] — 2026-07-09
+
+### Fixed
+
+- **Preview ASCII PNGs can't collide with Polish images.** Pinned `render_ascii.py`'s
+  output to `output/draft-preview/ascii/` so the preview's `ascii-<hash>.png` files never
+  land in `talks/<Talk>/images/` (Polish's SVG→PNG `s<sec>-<slide>-….png` territory). The
+  two already used different name prefixes and directories; this makes the separation
+  explicit in the spec so a preview run can't pollute the real image folder.
+
 ## [0.6.0] — 2026-07-09
 
 ### Changed
