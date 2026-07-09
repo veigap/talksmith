@@ -60,6 +60,12 @@ When developing the plugin in-repo (Claude Code opened at this directory), `${CL
 
 The plugin version lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) (`"version"` field). **Bump it on every commit** — even one-line edits. Marketplace clients use this field to decide whether to pull an update, so an unbumped commit ships invisibly. Use semver: patch for fixes and doc tweaks, minor for new agents/skills/commands or workflow changes, major for breaking schema or session-start contract changes.
 
+## Changelog
+
+Every commit **must** record a **functional description** of what changed and why in [`CHANGELOG.md`](CHANGELOG.md) — user-visible behavior, not the mechanics of the diff. Group entries under the version being shipped (matching the `plugin.json` bump), using the `Added` / `Changed` / `Fixed` / `Removed` headings of [Keep a Changelog](https://keepachangelog.com/).
+
+**Keep the changelog useful, not exhaustive — less is more.** As entries age, run *compaction*: collapse a superseded fix into the feature it fixed, fold a run of tiny commits into one summary line, and drop detail that no longer helps a reader understand the current state. A first-time reader should be able to skim the file and understand what each release actually delivered — not wade through every intermediate patch. When in doubt, compact. The goal is a document someone reads, not an append-only commit log (git already is that).
+
 ## Testing changes
 
 1. Reload the plugin in your Claude Code session (`/plugin reload talksmith` or restart the session).

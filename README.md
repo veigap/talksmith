@@ -164,6 +164,54 @@ The Editor then stamps each bullet with status + date (`[open] 2026-05-12 — ".
 
 Review repeats as many times as needed until the presenter declares the document final.
 
+## Reconciling an externally-edited deck (reverse pipeline)
+
+The forward pipeline is one-directional: `draft.md` → `final.md` → `output/final.pptx`. But presenters routinely open that `.pptx` in Keynote or PowerPoint and tweak it directly — fix a bullet, swap a photo, reword a speaker note. Those edits live only in the deck. The **reverse pipeline** pulls them back into `draft.md`, the editable source of truth, so the next Polish re-derives a `final.md` that reflects them.
+
+It's three skills run in order. All artifacts land under `talks/<Talk>/reconcile/`; nothing touches `final.md` directly.
+
+```
+  final.pptx  --[pptx-extract]-->  finalpptx.md   (deck rebuilt as draft.md-shaped Markdown)
+                                        v
+   final.md   --[pptx-diff]------>  finalpptx.diff.json   (what changed, per slide)
+                                        v
+   draft.md   <--[pptx-merge]----  apply simple changes; route complex ones to the Editor
+                                        v
+              re-run Step 6 (Polish)  ->  final.md refreshed
+```
+
+**Prerequisite:** `pptx-extract` reads the deck via `python-pptx` — `pip install python-pptx`. The other two stages are stdlib-only. None require Cowork; the whole reverse pipeline is CLI-safe.
+
+### 1. `pptx-extract` — deck → `finalpptx.md`
+
+```
+/talksmith:pptx-extract talks/<Talk>/output/final.pptx --talk talks/<Talk> --style <strict|free-form>
+```
+
+Parses the deck in true presentation order, classifies each slide (cover / agenda / section-divider / content), stages every content image into `reconcile/staging/` with slot-anchored names, and writes `reconcile/finalpptx.md` (in `draft.md` shape) plus a `reconcile/finalpptx.inventory.json` sidecar. `--style` is mandatory and must match the style the deck was rendered with. Thesis and Sources can't be recovered from a deck, so they come back as stubs marked with `<!-- reconstruct: … -->` for the Editor to restore.
+
+### 2. `pptx-diff` — explain what changed
+
+```
+/talksmith:pptx-diff --final talks/<Talk>/final.md --pptx talks/<Talk>/reconcile/finalpptx.md \
+  --talk talks/<Talk> --inventory talks/<Talk>/reconcile/finalpptx.inventory.json --human
+```
+
+Aligns the reconstructed slides against the original `final.md` (by section + slide number, with a title-similarity fallback for renumbered/edited slides) and reports every title, content, speaker-note, and image change — bullet-granular, with low-confidence matches flagged. Writes `reconcile/finalpptx.diff.json` for the merge step. Read-only; it never edits anything.
+
+### 3. `pptx-merge` — reincorporate into `draft.md`
+
+```
+# See the accept/reject surface first:
+/talksmith:pptx-merge plan --diff talks/<Talk>/reconcile/finalpptx.diff.json --draft talks/<Talk>/draft.md
+# Then land the simple changes:
+/talksmith:pptx-merge apply-auto --diff talks/<Talk>/reconcile/finalpptx.diff.json --draft talks/<Talk>/draft.md
+```
+
+Re-anchors each change structurally (by section + slide title + pre-change text, since Polish rewrites line numbers) and applies the **simple, high-confidence** ones automatically — bullet/note edits, new-image inserts, diagram overwrites. **Complex or confusing** ones (low-confidence matches, removals, added/deleted slides, ASCII-sourced images) are routed to the Editor with a reason rather than guessed. Every write is atomic and anchor-guarded. Writes only `draft.md` and `images/` — never `final.md`.
+
+When it's done, re-run **Step 6 (Polish)** and the deck edits are back in the source of truth.
+
 ## Layout
 
 What `/talksmith:init` produces inside your subject repo — the files you and your team actually touch:
