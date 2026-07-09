@@ -12,6 +12,40 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.5.0] — 2026-07-09
+
+### Added
+
+- **`pptx-learn` — learn strict patterns from real edits (new skill).** When a presenter
+  hand-corrects a rendered strict deck (positions, sizes, fonts, fills) and reconciles it,
+  this skill mines those corrections into candidate template rules. `learn_patterns.py`
+  (python-pptx) is the *evidence* layer — it diffs the human-edited deck's per-shape
+  geometry against an as-generated baseline snapshotted at strict render
+  (`output/final.generated.geometry.json`) and surfaces the recurring deltas. The **LLM is
+  the analyst**: it examines the before/after slides (multimodal where renders are
+  available), reasons about *why* each change was made, and — crucially — judges whether a
+  delta is a **generalizable template rule** or a **content-specific one-off**, discarding
+  the latter even when it recurred. Survivors, each carrying a design rationale, land in
+  the project file `config/strict-learnings.md`; a human promotes chosen ones at Step 7
+  into the plugin's declarative `config/pptx-styles/strict/conformance-patterns.md`, which
+  future strict renders apply. Runs auto after `pptx-merge` and on-demand. strict-only.
+- **Declarative strict conformance.** `config/pptx-styles/strict/conformance-patterns.md`
+  holds the strict template's layout rules as data (with a `why` on each), so learned
+  patterns can be merged in cleanly rather than the rules living only as prose.
+- **Richer good-practice bar from established design guidance.** Folded in Gamma / 10-20-30
+  / composition principles: one core message per slide, ≤2 type families, ≤~4 colours, a
+  ~30pt readable-from-the-back floor, rule-of-thirds focal placement, and a deck-wide
+  cross-slide-consistency check.
+
+### Changed
+
+- **Cleaner critique taxonomy.** Audited the rubric for repeats/misclassification: the
+  spatial practices that were mis-filed under AESTHETIC (margins, visual balance, focal
+  point) moved into DISTRIBUTION and merged with their overlaps, so every concern is
+  checked in exactly one place. AESTHETIC is now purely visual style; DISTRIBUTION is
+  purely spatial. Text-alignment (AESTHETIC) vs element-grid-alignment (DISTRIBUTION) are
+  disambiguated.
+
 ## [0.4.0] — 2026-07-09
 
 ### Added

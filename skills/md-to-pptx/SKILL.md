@@ -107,7 +107,17 @@ talks/<Talk>/
    The invocation follows the **7-stage workflow in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) §19.3** verbatim — open base-template as working copy → cover substitution (§4) → agenda substitution (§5) → discard slides 3–13 → build content slides (§15 + §6–§9 + §13) → section dividers (§5.6) → backgrounds (§1) → speaker notes. All substantive rules (placeholder edge cases, slide-count formula, OOXML invariants, callout pink-vs-blue, no native tables, emoji→icon swap, palette, fonts, corner radius) live in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md) and are **not duplicated here**. The skill's sole §19 obligation is to **pass the spec to the native renderer** and verify the output against §19.4 + §19.5. When this skill and the spec disagree, the spec wins.
 
    Acceptance bar: open the rendered `final.pptx` next to `base-template.pptx` — slides 1–2 must be pixel-equivalent modulo placeholder text. Author-from-scratch with the native skill's default theme = render failure.
-4. Verify `talks/<Talk>/output/final.<style>.pptx` exists and is non-empty, then **copy it to the canonical `talks/<Talk>/output/final.pptx`** (the deliverable the reverse pipeline + Phase-2 baseline read). The suffixed per-style deck persists for comparison.
+4. Verify `talks/<Talk>/output/final.<style>.pptx` exists and is non-empty, then **copy it to the canonical `talks/<Talk>/output/final.pptx`** (the deliverable the reverse pipeline reads). The suffixed per-style deck persists for comparison.
+
+   **When `style == strict`, snapshot the as-generated geometry baseline** for the learning loop — the deck before any human touches it:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/learn_patterns.py inventory \
+     talks/<Talk>/output/final.strict.pptx \
+     -o talks/<Talk>/output/final.generated.geometry.json
+   ```
+
+   This per-shape geometry snapshot survives in-place editing of the deck and is the baseline [`talksmith:pptx-learn`](${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/SKILL.md) diffs the human-edited deck against. Skip for free-form/preview (nothing to learn against).
 5. **Verify visual fidelity.** Spot-check that the rendered deck matches the reference template's look (theme, fonts, layouts). If it doesn't, treat as a failure — see *Failure modes*.
 6. **Audit `<p:pic>` aspect ratios.** Run [`audit_aspect_ratios.py`](audit_aspect_ratios.py) against the rendered deck:
 

@@ -79,6 +79,8 @@ Edits `talks/<Talk>/draft.md` in place (atomic `.tmp` + `os.replace`). Copies ac
 
 After merging, the presenter re-runs **Step 6 (Polish)** (`cp draft.md final.md` + the Polish transforms) to re-derive `final.md`. The reverse pipeline is then closed: deck edits are back in the source of truth.
 
+**Then, if the reconciled deck was rendered `strict` and an as-generated geometry baseline exists** (`output/final.generated.geometry.json`), auto-invoke [`talksmith:pptx-learn`](${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/SKILL.md) on the edited deck to mine recurring styling/distribution/positioning patterns from the human's corrections into `config/strict-learnings.md`. It **no-ops silently** for free-form/preview or when no baseline exists — never block or delay the merge on it.
+
 ## Boundaries
 
 - **Writes only `draft.md` and `images/`.** Never `final.md`, never a `.pptx`.

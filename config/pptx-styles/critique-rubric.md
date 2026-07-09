@@ -91,59 +91,51 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "Body isn't a wall of paragraphs; long prose belongs in the notes pane, not the slide body. The slide should be glance-able."
+
+- id: CONTENT-04
+  category: CONTENT
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "One core message per slide — the slide makes a single point. If it argues two unrelated things, split it. (Gamma: 'make one single point per slide.')"
 ```
 
 ## AESTHETIC
 
 ```
+# AESTHETIC = how the slide LOOKS (style/polish). Spatial concerns — margins,
+# visual balance, focal point — live in DISTRIBUTION (they used to sit here as
+# AESTHETIC-02/03/05; those ids are retired to keep each concern in one place).
+
 - id: AESTHETIC-01
   category: AESTHETIC
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "No text overflow or truncation — titles fit on 1–2 lines, body stays inside placeholders, nothing bleeds off-slide or ellipsizes. Can't fit → split (defer with reason)."
 
-- id: AESTHETIC-02
-  category: AESTHETIC
-  enforcement: FEEDBACK
-  modes: [strict, free-form, preview]
-  check: "Generous safe margins — no text or image hugs the slide edges; content breathes."
-
-- id: AESTHETIC-03
-  category: AESTHETIC
-  enforcement: FEEDBACK
-  modes: [strict, free-form, preview]
-  check: "Visual balance — slide weight distributed, not all stacked left/right/top."
-
 - id: AESTHETIC-04
   category: AESTHETIC
   enforcement: FEEDBACK
   audit: audit_aspect_ratios.py
   modes: [strict, free-form, preview]
-  check: "Image scale appropriate to role; aspect ratio preserved (no stretching); consistent image-text gutters. (strict adds a per-slide sub-50%-stretch measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
-
-- id: AESTHETIC-05
-  category: AESTHETIC
-  enforcement: FEEDBACK
-  modes: [strict, free-form, preview]
-  check: "Single focal point — one element the eye lands on first; avoid two equally-prominent images or headings."
+  check: "Image scale appropriate to role; aspect ratio preserved (no stretching). Dual-enforced by design: audit_aspect_ratios.py (CONTROL) catches sub-perceptual stretch, this practice catches gross squashing. (strict adds a per-slide measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
 
 - id: AESTHETIC-06
   category: AESTHETIC
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Contrast & legibility — body-to-background contrast readable at distance; text over an image sits on a scrim/overlay."
+  check: "Contrast & legibility — dark-on-light by default, strong text-to-background contrast; body text large enough to read from the back of the room (≈ 30pt floor per the 10/20/30 rule); text over an image sits on a scrim/overlay."
 
 - id: AESTHETIC-07
   category: AESTHETIC
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Type-scale discipline — few, consistent size steps with a clear title→body ratio; not a jumble of sizes/weights."
+  check: "Type discipline — at most ~2 type families (one display/heading, one body) and a few consistent size steps with a clear title→body ratio; not a jumble of families, sizes, or weights."
 
 - id: AESTHETIC-08
   category: AESTHETIC
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Alignment-system consistency — one alignment scheme; no mixed centre/left ragged edges; alignment doesn't change slide to slide."
+  check: "Text-alignment consistency — text runs/blocks use one alignment scheme (e.g. all left), not a mix of centre/left/ragged; the scheme doesn't change slide to slide. (Element-to-grid edge alignment is DISTRIBUTION-01, not this.)"
 
 - id: AESTHETIC-09
   category: AESTHETIC
@@ -155,7 +147,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   category: AESTHETIC
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Colour restraint & harmony — accent colour used purposefully, not decoratively everywhere; no clashing hues."
+  check: "Colour restraint & harmony — a small palette (≈ 4 colours including neutrals) used consistently deck-wide; accent colour used purposefully, not decoratively everywhere; no clashing hues."
 
 - id: AESTHETIC-11
   category: AESTHETIC
@@ -168,6 +160,12 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "No widows/orphans; parallel bullet grammar — no stranded last word, bullets grammatically parallel."
+
+- id: AESTHETIC-13
+  category: AESTHETIC
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "Deck-wide consistency — recurring chrome (headers, footers, page numbers, section markers), the spacing rhythm, and repeated layouts stay consistent slide to slide. Consistency is what separates amateur decks from professional ones. (Distinct from the per-attribute checks: this is the across-slide meta-view.)"
 ```
 
 **AESTHETIC note (category directive, all modes that walk AESTHETIC).** After the
@@ -180,11 +178,16 @@ optional padding — the part only the critic can do.
 ## DISTRIBUTION
 
 ```
+# DISTRIBUTION = WHERE things sit (spatial arrangement). It absorbs the spatial
+# concerns that used to be miscategorized under AESTHETIC — safe margins (→ -03),
+# visual balance (→ -04), and focal point (→ -07) — each merged into its natural
+# home so a concern is checked in exactly one place.
+
 - id: DISTRIBUTION-01
   category: DISTRIBUTION
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Grid alignment — elements share edges/gridlines; nothing sits at an arbitrary offset."
+  check: "Grid alignment — element edges (shapes, images, columns) share gridlines; nothing sits at an arbitrary offset. (This is element-to-grid alignment; text-run alignment is AESTHETIC-08.)"
 
 - id: DISTRIBUTION-02
   category: DISTRIBUTION
@@ -196,13 +199,13 @@ optional padding — the part only the critic can do.
   category: DISTRIBUTION
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Negative-space balance — no dead corners and no crammed region; content fills the frame evenly (unless emptiness is deliberate)."
+  check: "Whitespace & margins — content respects safe margins (nothing hugs the slide edges) AND negative space is balanced: no dead corners, no crammed region; the frame fills evenly unless emptiness is deliberate."
 
 - id: DISTRIBUTION-04
   category: DISTRIBUTION
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Column & section balance — in multi-column/multi-block layouts, columns are roughly equal weight/height; one isn't overflowing while another is half-empty."
+  check: "Weight & column balance — slide weight (text + images) is distributed, not stacked left/right/top; in multi-column layouts columns are roughly equal weight/height (one isn't overflowing while another is half-empty)."
 
 - id: DISTRIBUTION-05
   category: DISTRIBUTION
@@ -220,7 +223,7 @@ optional padding — the part only the critic can do.
   category: DISTRIBUTION
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
-  check: "Reading-flow placement — layout follows a natural eye path (Z/F): entry point top-left, resolution/CTA bottom-right."
+  check: "Focal point & reading flow — one dominant element the eye lands on first (not two equally-prominent images/headings), placed for impact (rule-of-thirds / off-centre rather than dead-centre by default), with the layout following a natural Z/F eye path: entry top-left, resolution/CTA bottom-right."
 ```
 
 ## LAYOUT-CONFORMANCE  *(strict-only)*
@@ -300,3 +303,14 @@ regressing adjacent slides.
 **Closing report:** `clean on cycle 1` | `clean after N cycle(s)` |
 `unresolved: <slide N — defect>` | `deferred (presenter to review): <slide N — defect — reason>`.
 N counts top-level cycles only, not build-time recoveries.
+
+## Provenance
+
+The AESTHETIC + DISTRIBUTION practices distill established slide-design guidance —
+Gamma's design principles (visual hierarchy, one point per slide, restrained type/colour,
+purposeful whitespace), Kawasaki's 10/20/30 rule (≈30pt floor), and standard composition
+guidance (alignment/grid, contrast, rule-of-thirds, cross-slide consistency). Sources:
+[Gamma — visual hierarchy](https://gamma.app/explore/content/guides/how-gamma-builds-clean-modern-presentations-with-visual-hierarchy),
+[Gamma — 10/20/30 method](https://gamma.app/insights/the-10-20-30-method),
+[BrightCarbon — whitespace](https://www.brightcarbon.com/blog/presentation-whitespace/),
+[Flashdocs — 10 design principles](https://www.flashdocs.com/post/10-design-principles-every-slide-creator-should-know).
