@@ -12,6 +12,23 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.9.2] — 2026-07-09
+
+### Fixed
+
+- **Section goals (and narrative arc) no longer leak onto slides.** `**Goal of this
+  section:**` is the author's note about a section's purpose — it belongs in the editable
+  source + audit trail, never on the divider slide. `final.md` keeps it (by design), but
+  `convert.py` was only stripping the working-meta bold labels (`Goal of this section` /
+  `Narrative arc` / `Presenter feedback`) in draft/preview mode, so a real strict/free-form
+  render spilled the goal text into the divider body. Now stripped in **every** mode.
+- **Hard rule: the render authors from the `convert.py` intermediate, never re-parses
+  `final.md`.** The root cause of both this and the "Sources + speaker notes in the slide
+  body" bug was a renderer parsing `final.md` raw and looking for `### Notes` — which only
+  exists after `convert.py` (which also drops `### Sources`, unwraps `### Content`, and
+  removes working-meta). SKILL.md now states loudly that `final.md` is untouchable source
+  and the intermediate is the only thing the renderer parses.
+
 ## [0.9.1] — 2026-07-09
 
 ### Fixed

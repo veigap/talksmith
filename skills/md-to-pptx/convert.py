@@ -65,11 +65,15 @@ _H1_LINE_RE = re.compile(r"^#(?!#)\s+")
 # a labeled block ends.
 _ANY_HEADING_RE = re.compile(r"^#{1,6}\s")
 _BOLD_LABEL_RE = re.compile(r"^\*\*[^*]+:\*\*\s*$")
-# Working-meta labels that are scaffolding, never slide content — stripped in draft
-# mode so a preview slide shows only real content (the Agenda shows just its section
-# list, not the narrative arc; nothing shows presenter feedback). Matches whether the
-# label stands alone on its line or is followed by inline prose on the same line.
-_STRIP_LABEL_RE = re.compile(r"^\*\*(?:Presenter feedback|Narrative arc):\*\*")
+# Working-meta labels that are authoring scaffolding, never slide content, and must
+# never reach the renderer — stripped in EVERY mode. `Goal of this section` is the
+# author's note about a section's purpose (it belongs on the divider's audit trail in
+# draft.md/final.md, not on the divider slide); `Narrative arc` is the Agenda's arc note;
+# `Presenter feedback` is the review log. Matches whether the label stands alone on its
+# line or is followed by inline prose on the same line.
+_STRIP_LABEL_RE = re.compile(
+    r"^\*\*(?:Presenter feedback|Narrative arc|Goal of this section):\*\*"
+)
 
 # Sections at H1 that must be stripped wholesale (heading + body until the
 # next H1 or EOF).
@@ -252,17 +256,20 @@ def _normalize_headings_outside_code(text: str) -> str:
     return "\n".join(out)
 
 
-def _strip_bold_feedback_blocks(text: str) -> str:
-    """Remove working-meta labeled blocks (draft-mode only).
+def _strip_working_meta_blocks(text: str) -> str:
+    """Remove working-meta labeled blocks — in EVERY mode.
 
-    `draft.md` carries `**Presenter feedback:**` (Agenda + section-divider bodies)
-    and `**Narrative arc:**` (Agenda) blocks — scaffolding for the author, never
-    slide content. Polish removes them on the way to `final.md`, so the default
-    pipeline never sees them; in draft mode we strip them here so a preview slide
-    shows only real content (the Agenda slide shows just its section list). A block
-    runs from its `**Label:**` line up to (but not including) the next horizontal
-    rule, ATX heading, or other bold field label; the label line and everything
-    under it up to that terminator are dropped.
+    Both `draft.md` and `final.md` carry authoring scaffolding that belongs in the
+    editable source / audit trail but must never render onto a slide:
+    `**Goal of this section:**` (each section divider's purpose note),
+    `**Narrative arc:**` (the Agenda's arc note), and `**Presenter feedback:**`
+    (the review log). `final.md` deliberately keeps them (draft.md and final.md
+    share shape; Polish only strips `### Presenter feedback` H3 fields, not these
+    bold-label blocks), so stripping them here — for the intermediate the renderer
+    consumes — is what keeps them off the slides. A block runs from its `**Label:**`
+    line up to (but not including) the next horizontal rule, ATX heading, or other
+    bold field label; the label line and everything under it up to that terminator
+    are dropped. Only these three exact labels match, so real bolded content is safe.
     """
     lines = text.splitlines(keepends=True)
     out: list[str] = []
@@ -332,15 +339,17 @@ def _collapse_blank_lines(text: str) -> str:
 def convert(final_md: str, draft: bool = False) -> str:
     """Run the full conversion pipeline on the contents of `final.md`.
 
-    When `draft` is True, the input is a pre-Polish `draft.md`: additionally
-    strip the `**Presenter feedback:**` labeled blocks it still carries, and
-    let raw ASCII fenced blocks pass through unchanged (no SVG required).
+    Working-meta bold-label blocks (`Goal of this section` / `Narrative arc` /
+    `Presenter feedback`) are stripped in **every** mode — both `draft.md` and
+    `final.md` carry them and neither should render onto a slide.
+
+    When `draft` is True, the input is a pre-Polish `draft.md`: raw ASCII fenced
+    blocks are additionally left to pass through unchanged (no SVG required).
     """
     text = final_md
     text = _strip_frontmatter(text)
     text = _strip_html_comments(text)
-    if draft:
-        text = _strip_bold_feedback_blocks(text)
+    text = _strip_working_meta_blocks(text)
     text = _strip_h1_sections(text, _STRIP_H1)
     text = _process_h3_fields(text)
     # After H3 processing, re-walk and normalize remaining H1 / H2 prefixes
