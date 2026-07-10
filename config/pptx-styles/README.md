@@ -38,7 +38,7 @@ The render **flow** is owned by [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.
 | Phase | strict | free-form | preview |
 |---|---|---|---|
 | GENERATE | §19.3 7-stage + §15.5 emit-rules (native `pptx`) | §3 renderer-decides (native `pptx`) | `build_preview.py` code wireframe, **per-slide, changed-only** (no deck) |
-| CONTROL | aspect + block-coverage + cover-fidelity + **palette/fonts + layout-fit** + OOXML | aspect + block-coverage + cover-fidelity + OOXML | **block-coverage only** (no deck → no aspect/cover-fidelity/OOXML) |
+| CONTROL | aspect + block-coverage + cover-fidelity + **palette/fonts + layout-fit** + OOXML | aspect + block-coverage + cover-fidelity + OOXML | **none** (no deck → the deck-parsing audits can't run; block-coverage holds by construction) |
 | FEEDBACK | CONTENT + AESTHETIC + DISTRIBUTION + **LAYOUT-CONFORMANCE** | CONTENT + AESTHETIC + DISTRIBUTION | CONTENT + AESTHETIC + DISTRIBUTION |
 | REGENERATE | touched slides, ≤ 3 cycles | touched slides, ≤ 2 cycles | changed slides, ≤ 2 cycles (findings surface — deterministic renderer) |
 

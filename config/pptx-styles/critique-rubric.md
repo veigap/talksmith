@@ -33,11 +33,11 @@ deterministic Python audits run before FEEDBACK.
 
 | Mode | Categories walked (FEEDBACK) | Deterministic audits (CONTROL) | Cycle cap | Scope | On finding |
 |---|---|---|:--:|---|---|
-| **strict** | CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE | block-coverage, aspect-ratio, cover-fidelity, **palette/fonts**, **layout-fit** | 3 | whole deck | auto-regenerate; editorial → defer |
-| **free-form** | CONTENT + AESTHETIC + DISTRIBUTION | block-coverage, aspect-ratio, cover-fidelity | 2 | whole deck | auto-regenerate; editorial → defer |
-| **preview** | CONTENT + AESTHETIC + DISTRIBUTION | block-coverage (from the intermediate) | 2 | **per-slide, changed-only** | findings **surface** (deterministic renderer — no autonomous restyle) |
+| **strict** | CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE | OOXML, block-coverage, aspect-ratio, cover-fidelity, **palette/fonts**, **layout-fit** | 3 | whole deck | auto-regenerate; editorial → defer |
+| **free-form** | CONTENT + AESTHETIC + DISTRIBUTION | OOXML, block-coverage, aspect-ratio, cover-fidelity | 2 | whole deck | auto-regenerate; editorial → defer |
+| **preview** | CONTENT + AESTHETIC + DISTRIBUTION | *none (no deck to audit)* | 2 | **per-slide, changed-only** | findings **surface** (deterministic renderer — no autonomous restyle) |
 
-**Preview walks the same critique categories and cycle shape as free-form** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2-cycle loop — on the numbered slide images that [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) produces, scoped per-slide to the changed subset. Two honest differences from free-form: (1) CONTROL is block-coverage on the intermediate only (aspect/cover-fidelity need a real deck); (2) the renderer is a **deterministic code wireframe that takes no fix instructions**, so preview's REGENERATE cannot *autonomously restyle* a slide the way free-form's native renderer can — FEEDBACK findings **surface** to the presenter, who resolves them by editing `draft.md` (which re-fires the preview on the changed slides). This fits the workflow: preview runs during Review (Step 5), where content edits are exactly what the presenter is doing anyway; aesthetic/distribution findings are informational and are truly *fixed* on the Step-8 render. *(For full autonomous parity, `build_preview.py` would need per-slide fix hints — a possible enhancement.)*
+**Preview walks the same critique categories and cycle shape as free-form** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2-cycle loop — on the numbered slide images that [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) produces, scoped per-slide to the changed subset. Two honest differences from free-form: (1) **there is no CONTROL phase** — preview produces no `.pptx`, so the deterministic audits (block-coverage, aspect-ratio, cover-fidelity, OOXML) that all parse a rendered deck cannot run; block-coverage's guarantee (every source block becomes a slide element) instead holds **by construction**, since `build_preview.py` renders every slide unit. (2) The renderer is a **deterministic code wireframe that takes no fix instructions**, so preview's REGENERATE cannot *autonomously restyle* a slide the way free-form's native renderer can — FEEDBACK findings **surface** to the presenter, who resolves them by editing `draft.md` (which re-fires the preview on the changed slides). This fits the workflow: preview runs during Review (Step 5), where content edits are exactly what the presenter is doing anyway; aesthetic/distribution findings are informational and are truly *fixed* on the Step-8 render. *(For full autonomous parity, `build_preview.py` would need per-slide fix hints — a possible enhancement.)*
 
 `palette/fonts` and `layout-fit` are **strict-only** (they enforce the strict
 template — a layout-conformance concern). `block-coverage`, `aspect-ratio`, and
@@ -73,7 +73,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   category: CONTENT
   enforcement: CONTROL
   audit: audit_block_coverage.py
-  modes: [strict, free-form, preview]
+  modes: [strict, free-form]   # preview produces no .pptx to audit — the guarantee holds by construction (build_preview renders every unit)
   check: "Every block in the source appears as a shape on the rendered slide. Deterministic gate — not walked; any [block-drop] → REGENERATE before FEEDBACK runs."
 
 - id: CONTENT-01
@@ -119,7 +119,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   enforcement: FEEDBACK
   audit: audit_aspect_ratios.py
   modes: [strict, free-form, preview]
-  check: "Image scale appropriate to role; aspect ratio preserved (no stretching). Dual-enforced by design: audit_aspect_ratios.py (CONTROL) catches sub-perceptual stretch, this practice catches gross squashing. (strict adds a per-slide measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
+  check: "Image scale appropriate to role; aspect ratio preserved (no stretching). Dual-enforced in strict/free-form: audit_aspect_ratios.py (CONTROL) catches sub-perceptual stretch, this practice catches gross squashing. In preview (no deck, no CONTROL) only the FEEDBACK half runs. (strict adds a per-slide measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
 
 - id: AESTHETIC-06
   category: AESTHETIC

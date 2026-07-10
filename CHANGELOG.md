@@ -12,6 +12,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.8.1] — 2026-07-09
+
+### Fixed
+
+- **Contradiction sweep across the PPTX docs** (from role-playing a real render and an
+  independent audit). Corrected the base-template delete range **3–13 → 3–15** everywhere
+  (the template is verified 15 slides; deleting only 3–13 would have leaked the card-row
+  and icon-bullet example slides 14–15 into every strict deck — a real render bug); removed
+  the last places that implied preview runs a CONTROL/block-coverage audit (it has no deck —
+  block-coverage holds by construction); added OOXML back to the rubric CONTROL matrix rows;
+  repointed the strict spec's dangling `orchestrator.md *Render cycle*` cap references to
+  `SKILL.md` → *Render flow*; fixed a stale `§18.2` workflow ref to `§19.3`; and dropped the
+  strict spec's undercounted "10 example slides" wording. No behavioral change — the render
+  instructions are now internally consistent for all three modes.
+
 ## [0.8.0] — 2026-07-09
 
 ### Changed

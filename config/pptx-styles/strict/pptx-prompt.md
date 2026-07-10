@@ -1,6 +1,6 @@
 Visual specification distilled from [`config/template.pptx`](template.pptx) (53 slides). All measurements are concrete and reproducible: a downstream generator should be able to emit `final.pptx` shapes matching the template by reading the EMU coordinates and color hexes verbatim from this file. For diagram-internal style see [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md). Visual references for the two contractually-fixed slides are in [`template-previews/`](template-previews/) — they are the source of truth alongside this prose.
 
-> **Starting a new deck?** Open [`config/base-template.pptx`](base-template.pptx) — it's the working foundation derived from this spec: cover + agenda with `{{placeholders}}` to substitute, a red separator banner, and 10 example slides demonstrating every recurring layout pattern. Each example slide carries a `TEMPLATE — <LAYOUT>` pill so it's unambiguous during generation. See **§17** for the branded icon library, **§18** for a slide-by-slide reference of `base-template.pptx`, and **§19** for the operating guide an agent/skill follows when rendering `final.md` into `.pptx` (reading order, workflow stages, output contract, anti-patterns).
+> **Starting a new deck?** Open [`config/base-template.pptx`](base-template.pptx) — it's the working foundation derived from this spec: cover + agenda with `{{placeholders}}` to substitute, a red separator banner, and the layout-example slides (slides 3–15) demonstrating every recurring layout pattern. Each example slide carries a `TEMPLATE — <LAYOUT>` pill so it's unambiguous during generation. See **§17** for the branded icon library, **§18** for a slide-by-slide reference of `base-template.pptx`, and **§19** for the operating guide an agent/skill follows when rendering `final.md` into `.pptx` (reading order, workflow stages, output contract, anti-patterns).
 
 > **EMU primer.** 1 inch = 914400 EMU; 1 point = 12700 EMU; font `sz` is in hundredths of a point (`sz="1450"` = 14.5pt). Slide size is `9144000 × 5143500` EMU = `10.00 × 5.625` inches. All shape coordinates below are quoted in **both** EMU (XML-faithful) and inches (human-readable).
 
@@ -641,7 +641,7 @@ This sub-section is the operational form of §10's bullet-glyph contract. The au
 
 #### 15.6.4 Surfacing protocol — what to do when the audit can't resolve
 
-When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` *Render cycle* 3-cycle cap) and surfaces a single structured prompt to the presenter:
+When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the strict 3-cycle cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*) and surfaces a single structured prompt to the presenter:
 
 ```
 [pptx pre-emit audit] Slide N — <H2 title>
@@ -884,7 +884,7 @@ The whole guide is small enough to serve as the body of an `md-to-pptx` skill, a
 |---|---|---|
 | [`config/template.pptx`](template.pptx) | The original 53-slide brand reference deck. Read-only. | Only when verifying a measurement not in the spec, or copying a binary asset (cover logo). |
 | [`config/pptx-prompt.md`](pptx-prompt.md) | This file — canonical visual specification. | **Always.** Read end-to-end on entry. |
-| [`config/base-template.pptx`](base-template.pptx) | Working foundation: cover + agenda with `{{placeholders}}`, red separator (slide 3), 10 layout-example slides, section-divider example (slide 13). | **Always.** Open as the starting deck; substitute placeholders; discard slides 3–13. |
+| [`config/base-template.pptx`](base-template.pptx) | Working foundation (15 slides): cover + agenda with `{{placeholders}}`, red separator (slide 3), the layout-example slides, and a section-divider example (slide 13). | **Always.** Open as the starting deck; substitute placeholders; discard slides 3–15. |
 | [`config/template-previews/`](template-previews/) | Rendered PNGs of every template.pptx and base-template.pptx slide + icon catalog. | Visual cross-check when a recipe is ambiguous in prose. |
 | [`config/template-previews/icons/`](template-previews/icons/) | 15 branded line-art icon PNG previews. SVG+PNG pairs live in `base-template.pptx` at `ppt/media/icon-<name>.{svg,png}`. | When picking an icon per §17.5. |
 | [`config/profile.md`](profile.md) | Presenter's subject-level defaults — Subject, Presenter, Audience, Default duration, Presentation language. | At cover/agenda substitution time (§19.3 stages 1–2). |
@@ -940,7 +940,7 @@ After emit, the renderer runs four checks in order before declaring the build a 
 
 Only after all four pass: render the deck to PNG via `soffice --headless --convert-to pdf` + `pdftoppm` (or the native skill's slide-to-image endpoint), then walk the shared critique rubric [`../critique-rubric.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/critique-rubric.md) — strict selects all four categories (CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE), with the strict elaborations in §20 — as the cycle's FEEDBACK phase.
 
-Edit + re-render up to **3 cycles total** per the `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` *Render cycle* cap. After the cap, surface unresolved defects to the presenter rather than looping.
+Edit + re-render up to **3 cycles total** per the strict cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*. After the cap, surface unresolved defects to the presenter rather than looping.
 
 ### 19.6 Consolidated anti-patterns
 
@@ -958,7 +958,7 @@ Things that look reasonable but break the template. The §-section in each row i
 | Resize an image without preserving aspect ratio (stretch/squish/anamorphic crop) | Aspect ratio is fixed at the source; scale uniformly only | §12 |
 | Use a non-5760 EMU corner radius on roundRects | Constant across all pills/cards/callouts/code/dots | §2.3 |
 | Fudge agenda row count to match the placeholder's 7 (pad with blanks, or truncate sections) | Agenda row count = N (section count); clone/delete rows to match. Warn only when N > 8 (tight) or > 10 (out of room). | §5.3 + §5.5 |
-| Include base-template slides 3–13 (separator + examples) in output | They are reference, not content | §18 zone C |
+| Include base-template slides 3–15 (separator + examples) in output | They are reference, not content | §18 zone C |
 | Reuse the pink callout for declarative claims, or the blue for analogies | Variants are not interchangeable | §8 decision table |
 | Invent a new icon when the §17.1 catalog has one that fits | Defeats the visual consistency of the library | §17.5 |
 | Plain-bullet layout (§10) shipped when source has ≥4 `### Subhead` groups (§15.5 → card-grid / content+cards+image) | Card layouts exist because the deck "strongly prefers cards over bullet lists for grouped content" (§10); falling through to plain bullets defeats the visual hierarchy | §15.6.1 |
