@@ -12,6 +12,15 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.14.2] — 2026-07-10
+
+### Changed
+
+- **Stub's presenter section is now a link, not an inline how-to.** Replaced the five-step
+  "How to use Talksmith" in `talksmith-orch.md` with a short *"Learn more"* pointer to the
+  project repo (`https://github.com/veigap/talksmith`) — one place to keep current instead
+  of a copy that drifts. Re-running `/talksmith:init` is optional (no contract change).
+
 ## [0.14.1] — 2026-07-10
 
 ### Changed

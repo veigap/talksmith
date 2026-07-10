@@ -39,14 +39,6 @@ Everything the presenter owns is created on demand by the workflow, not scaffold
 
 ---
 
-## How to use Talksmith — for the presenter
+## Learn more
 
-Talksmith turns your raw material into a talk, one guided step at a time. You don't need to set anything up.
-
-1. **Just start.** Say hello or name your topic — Talksmith introduces itself and asks whether you're starting a new presentation or resuming one.
-2. **Drop in your sources.** Papers, chat exports, URLs, notes — or just talk it through in chat.
-3. **Draft together.** Choose to be interviewed, let Talksmith draft from your sources, or paste your own outline.
-4. **Review in the file.** Edit `draft.md` and leave feedback bullets; each round gets applied.
-5. **Get the deliverable.** Talksmith polishes it into `final.md`, renders the diagrams, and — if you want — a PowerPoint.
-
-It writes structured Markdown, not pretty slides directly; the shape of the content is the point. Answer its questions and it drives the rest.
+New to Talksmith, or want the full picture of what it does and how the workflow runs? See the project repo: **https://github.com/veigap/talksmith**. Otherwise just say hello and it will walk you through it.
