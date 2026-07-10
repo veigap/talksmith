@@ -12,6 +12,30 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.7.0] — 2026-07-09
+
+### Changed
+
+- **Draft preview is now one committed, code-only renderer — `build_preview.py`.** Instead
+  of the agent hand-rolling a throwaway build script each run, the whole Step-5.5 preview
+  is a single committed command: `python3 build_preview.py --talk talks/<Talk>`. It draws
+  each slide **directly to a PNG with Pillow** (title, bullets, diagram/image thumbnails)
+  and assembles a contact-sheet `grid.png` — **no `.pptx`, no `.pdf`, no native `pptx`
+  skill, no LibreOffice**, so it now runs in **any** session (Cowork no longer required)
+  and can truly auto-fire in the background. Only changed slides re-render (content-addressed
+  cache). The preview is a deliberately provisional *wireframe* for eyeballing structure
+  (slide order, missing/thin sections); it runs **no automated critique** — the real
+  content/aesthetic/distribution critique stays on the Step-8 strict/free-form renders,
+  whose layouts are actually designed.
+
+### Fixed
+
+- **Preview no longer leaks working-notes onto slides.** `convert.py --draft` now strips
+  `**Narrative arc:**` (and still `**Presenter feedback:**`) blocks, and matches those
+  labels whether they stand alone or have inline prose on the same line — so a preview
+  Agenda shows only its section list, not the author's narrative-arc scaffolding. Inline
+  markdown emphasis (`**`, `*`, `` ` ``) is also stripped from wireframe text.
+
 ## [0.6.1] — 2026-07-09
 
 ### Fixed

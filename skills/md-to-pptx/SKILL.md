@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-pptx
-description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`. **Alternate entry — `preview: true`:** the optional Step-5.5 draft preview renders a fast, throwaway per-slide deck from a pre-Polish `draft.md` (no `style:` needed — free-form spec, ASCII rasterized to PNG by code, per-slide incremental critique loop walking CONTENT + AESTHETIC + DISTRIBUTION); output isolated under `talks/<Talk>/output/draft-preview/`.
+description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec + base-template under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: `talks/<Talk>/output/final.pptx`. **Alternate entry — `preview: true`:** the optional Step-5.5 draft preview renders a fast, throwaway per-slide **wireframe** from a pre-Polish `draft.md` via the committed [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) — no `.pptx`, no `.pdf`, no native skill (Pillow only, Cowork-independent), ASCII rasterized to PNG by code, only changed slides re-rendered; output (per-slide PNGs + `grid.png`) isolated under `talks/<Talk>/output/draft-preview/`.
 ---
 
 # md-to-pptx — Render `final.md` to PowerPoint
@@ -72,7 +72,7 @@ talks/<Talk>/
 
 ## Process
 
-0. **Preview branch.** If the invocation carries **`preview: true`**, skip the style ask entirely and follow the *`preview: true` — Step-5.5 draft preview* path in *Render flow* below (input `draft.md` via `convert.py --draft --split-dir`, free-form spec, ASCII→PNG by code, per-slide incremental critique loop, output under `output/draft-preview/`). `preview:` overrides `style:` if both are present. Otherwise continue with normal style resolution:
+0. **Preview branch.** If the invocation carries **`preview: true`**, skip the style ask and everything below — the preview is a separate, self-contained renderer: just run [`build_preview.py --talk talks/<Talk>`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) (see *`preview: true` — Step-5.5 draft preview* in *Render flow*). No native `pptx` skill, no audits, no critique loop. `preview:` overrides `style:` if both are present. Otherwise continue with normal style resolution:
 
 0. **Resolve style.** Read the `style:` value from the invocation parameters (the orchestrator's Step 8 step 1 asked the presenter and passed it in). **The parameter is mandatory — no default.** If the value is **absent or empty**, fail render-blocking with `[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).` Do not proceed; the orchestrator's job is to re-ask the presenter, not the skill's job to guess. If the value is present but not a directory under `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/`, fail render-blocking per *Style resolution failed* in *Failure modes*. Cache `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` and `<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx`. Verify both files exist; if either is missing, the style enum has drifted from disk — surface as a render-blocking error naming the missing file. Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>, base=<base_template_path>).`
 1. Verify all prerequisites (table above). Stop on any failure.
@@ -185,7 +185,7 @@ The skill is invoked with a mandatory `style:` parameter (the orchestrator asks 
 > 1. **Never run the whole render as one opaque, long-lived dispatch.** Structure it so a phase event reaches the presenter's chat at **every phase boundary** — after pre-process, after the deck is built, after CONTROL, after each FEEDBACK pass, after each REGENERATE — and the checklist item flips `[⟳]`→`[✓]` at that moment.
 > 2. **Chunk the slow phases and report between chunks.** The FEEDBACK multimodal walk is the long pole (it reads every slide PNG). Do it in **batches** (e.g. 8–10 slides) and emit a progress line after each batch — *"Reviewing slides 10 of 29…"* — so the item visibly advances. Same for building many slides: emit *"Built 12 of 29…"*. **Any phase quiet for > 30 s must emit a heartbeat.** A silent stretch longer than that is a defect, not normal.
 >
-> This applies identically to preview (per-slide build + per-slide critique of the changed subset), free-form (build → CONTROL → ≤2 critique cycles), and strict (build → CONTROL → ≤3 critique cycles). The critique loop is the slowest and the one most prone to going silent — it is exactly where the batch-level progress matters most.
+> This applies to the real renders — free-form (build → CONTROL → ≤2 critique cycles) and strict (build → CONTROL → ≤3 critique cycles); the critique loop is the slowest and most prone to going silent, so batch-level progress matters most there. The preview (`build_preview.py`) is code-only with no critique loop, but it too streams `[preview i/4]` phase lines and per-batch render counts.
 
 The skill is a Python pipeline + native `pptx` author + (for strict only) an internally-dispatched multimodal sub-agent that reads slide PNGs and walks the rubric. That sub-agent's invocation is an implementation detail of this skill; do not surface it to the orchestrator.
 
@@ -215,27 +215,32 @@ Four phases, up to **2 cycles** (cycle 1 = build; cycle 2 = review-and-edit budg
 
 After cycle 2, surviving items surface as `unresolved:` / `deferred:` in the closing report.
 
-#### `preview: true` — Step-5.5 draft preview *(skill-internal)*
+#### `preview: true` — Step-5.5 draft preview *(one committed script, code-rendered)*
 
-An optional **fast, throwaway** path that renders a preview deck from a **pre-Polish `draft.md`** so the presenter can eyeball slide shape *before* committing to Step 6 (Polish) + a final render. The orchestrator auto-fires it in the background when `draft.md` first completes and again when the Step-5 review changes it (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 5.5 — Draft preview*); the skill itself is stateless about that scheduling — it just renders when invoked with a `draft.md` path and `preview: true`.
+An optional **fast, throwaway** wireframe of a **pre-Polish `draft.md`** so the presenter can eyeball slide order and rough content *before* committing to Step 6 (Polish) + a real render. The orchestrator auto-fires it in the background when `draft.md` first completes and again when the Step-5 review changes it (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 5.5 — Draft preview*).
 
-Invoked with **`preview: true`** in place of `style:`. If both arrive, `preview:` wins and `style:` is ignored. The preview is **not the deliverable** — the real deck is always Step 8 from `final.md`.
+**Run the committed renderer — never hand-roll one.** The entire preview is a single script, [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py):
 
-Preview walks the **same critique categories as free-form — CONTENT + AESTHETIC + DISTRIBUTION** (never LAYOUT-CONFORMANCE) — but per-slide and incremental so re-renders after a review edit are cheap. Differences from a free-form render:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py --talk talks/<Talk>
+```
+
+It orchestrates the whole thing deterministically and reuses the sibling substrate: `convert.py --draft --split-dir` (per-slide units, `**Presenter feedback:**`/`**Narrative arc:**` scaffolding stripped) → `preview_plan.py` (content-addressed cache: only changed slides re-render) → `render_ascii.py` (ASCII fences → `ascii-<hash>.png`) → **a Pillow wireframe of each slide** (title, bullets/body, image/diagram thumbnails, page number) → a contact-sheet `grid.png`. **Do not write an ad-hoc render script** — that is the exact anti-pattern this file exists to prevent (mirrors the *Why Cowork-only* rule for the real deck).
+
+Key properties:
 
 | Aspect | Preview behavior |
 |---|---|
-| **Input file** | `talks/<Talk>/draft.md` (not `final.md`). Pre-process with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py --draft --split-dir talks/<Talk>/output/draft-preview/units talks/<Talk>/draft.md -o talks/<Talk>/output/draft-preview/preview.intermediate.md`. `--draft` strips the `**Presenter feedback:**` blocks a pre-Polish draft carries and lets raw ASCII fences pass through; `--split-dir` emits one `slide-NN.md` unit per slide for the per-slide render. |
-| **Prereqs waived** | The `final.md`-only gates do **not** apply: a pre-Polish draft is the *expected* input, `Presenter feedback` fields are fine (stripped by `--draft`), and **raw ASCII fenced blocks are fine** (no SVG required). The Keynote-safe image-extension gate still applies to any *image refs* present. Do **not** dispatch the Illustrator and do **not** stop on missing SVGs. |
-| **Style / spec** | Always free-form — `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/free-form/pptx-prompt.md`, `<base_template_path> = .../free-form/base-template.pptx`. No `style:` ask. |
-| **ASCII fences → PNG by code** | Each fenced block is rasterized to a monospace **PNG by code** via [`render_ascii.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/render_ascii.py) with `--img-dir talks/<Talk>/output/draft-preview/ascii` (content-addressed `ascii-<hash>.png` filenames), and the fence rewritten to an image ref — a diagram-shaped stand-in for the eventual SVG. No model call, no SVG pipeline. **Never write into `talks/<Talk>/images/`** — that is Polish's SVG→PNG territory (`s<sec>-<slide>-…png`); the preview's `ascii-*.png` stay under `draft-preview/` so the two never share a folder (and their name prefixes differ regardless). If Pillow/a monospace font is unavailable the script exits non-zero and the renderer falls back to a monospace text box. |
-| **Incremental** | [`preview_plan.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/preview_plan.py) content-addresses each `slide-NN.md` unit (hash + `RENDER_VERSION` salt) against the prior manifest → per slide `reuse | render`. **Only `render` (changed) slides** go through GENERATE → CONTROL → FEEDBACK → REGENERATE; `reuse` slides keep their approved PNG and cached verdict and are never re-authored or re-critiqued. |
-| **Render flow** | Per changed slide: GENERATE → CONTROL → FEEDBACK → REGENERATE, **≤ 2 cycles**, walking CONTENT + AESTHETIC + DISTRIBUTION. Same loop as free-form, scoped to the changed-slide subset. |
-| **Output (isolated, git-ignored)** | `talks/<Talk>/output/draft-preview/` — `units/slide-NN.md`, `preview.intermediate.md`, per-slide `.previews/slide-NN.png`, ASCII PNGs, and the `.preview-cache.json` manifest. **Never** writes `output/final.pptx` or `output/.critique/`. The deliverable is the PNG grid, not a merged deck. |
-| **CONTROL** | Shared-floor audits only — OOXML invariants, block-coverage (from `preview.intermediate.md`), aspect-ratio, cover-fidelity — run per changed slide. Non-zero → surface `unresolved: <audit_name>` but **still deliver the preview**; never block the presenter on a preview audit. |
-| **Progress tags** | Same log-only discipline; emissions prefixed `[preview` (e.g. `[preview 2/4] Rendering 3 changed slides…`). Suppressed from chat exactly like `[pptx` tags. |
+| **No `.pptx`, no `.pdf`, no native skill** | Slides are drawn **directly to PNG by code** (Pillow). Nothing authors a deck, nothing rasterizes a PDF. The deliverable is **individual per-slide PNGs + `grid.png`**, never a merged deck. |
+| **Cowork-independent** | Unlike Step 8, the preview needs no native `pptx` skill and no LibreOffice — only Pillow. It runs in any session, which is why it can auto-fire in the background. |
+| **Input** | `talks/<Talk>/draft.md` (read-only). Raw ASCII fences and `Presenter feedback` are expected and handled — do **not** dispatch the Illustrator, do **not** stop on missing SVGs. |
+| **ASCII → PNG by code** | Each fence → `output/draft-preview/ascii/ascii-<hash>.png`. **Never** writes `talks/<Talk>/images/` (Polish's SVG→PNG territory). |
+| **Incremental** | `preview_plan.py` re-renders only slides whose content hash changed; unchanged slides keep their cached PNG. A review edit re-renders just the touched slides. |
+| **Review = the presenter's eye, not an automated critique loop** | The wireframe layout is generated by a fixed code template, so an aesthetic/distribution critique of it is not meaningful — the presenter reviews `grid.png` for **structure** (missing slide, wrong order, a thin section). The real CONTENT/AESTHETIC/DISTRIBUTION critique runs on the Step-8 strict/free-form renders. |
+| **Output (isolated)** | `talks/<Talk>/output/draft-preview/` — `units/slide-NN.md`, `preview.intermediate.md`, `ascii/`, `.previews/slide-<hash>.png`, `grid.png`, `.preview-cache.json`. **Never** touches `output/final.pptx` or `output/.critique/`. |
+| **Progress** | `build_preview.py` streams `[preview i/4]` phase lines and per-batch counts (*"rendered 16/74…"*), suppressed from chat like `[pptx` tags but driving the checklist. |
 
-Everything not listed above matches the free-form path. Cowork-only, same as Step 8 — the native `pptx` skill is required.
+Degrades gracefully: no Pillow / no monospace font → the script says so and the orchestrator reports the preview is unavailable (never fatal — it's a convenience).
 
 ### Presenter-facing progress checklist
 
@@ -285,26 +290,24 @@ Item ↔ phase mapping (free-form):
 | Applying fixes | Skill returns from REGENERATE-driven re-render, OR `[—] no fixes needed` if the cycle was clean. |
 | Final check | Final cycle exits clean OR cycle 2 ends with surviving `unresolved: …` / `deferred: …` (marker `[✗]` if any unresolved). |
 
-**`preview: true` checklist** (5 items; the counts personalize to the run — *"Rendering 3 changed slides"*, *"Reviewing 3 slides"*):
+**`preview: true` checklist** (4 items; counts personalize — *"Rendering 3 changed slides (71 reused)"*):
 
 ```
 Putting together a quick preview:
   [ ] Formatting draft
   [ ] Rendering N changed slides (M reused)
-  [ ] Reviewing slides (cycle N of 2)
-  [ ] Applying fixes
+  [ ] Assembling the grid
   [ ] Ready to view
 ```
 
-Item ↔ phase mapping (preview):
+Item ↔ phase mapping (preview) — `build_preview.py`'s `[preview i/4]` lines:
 
 | Item | Ticks when |
 |---|---|
-| Formatting draft | `[preview 1/…]` — `convert.py --draft --split-dir` + `preview_plan.py` done; the split reports how many slides changed vs reused. |
-| Rendering N changed slides | Every changed-slide GENERATE (ASCII→PNG + author + rasterize) written; reused slides are shown as `[—] M reused`. |
-| Reviewing slides (cycle N) | FEEDBACK finishes walking CONTENT + AESTHETIC + DISTRIBUTION on the changed slides. |
-| Applying fixes | REGENERATE re-renders touched slides, OR `[—] no fixes needed`. |
-| Ready to view | Per-slide PNGs assembled into the grid under `output/draft-preview/.previews/`. |
+| Formatting draft | `[preview 1/4]` — `convert.py --draft --split-dir` done (N slides from `draft.md`). |
+| Rendering N changed slides | `[preview 2/4]`/`[preview 3/4]` — `preview_plan.py` classified reuse vs render, and the changed slides finished rendering (batch counts stream: *"rendered 16/74…"*); reused shown as `[—] M reused`. |
+| Assembling the grid | `[preview 4/4]` — per-slide PNGs composited into `grid.png`. |
+| Ready to view | Grid + `.previews/slide-*.png` on disk; the presenter eyeballs them. |
 
 ### Progress reporting — internal log-only
 

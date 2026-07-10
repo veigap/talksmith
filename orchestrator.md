@@ -67,7 +67,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 | 3 | Corpus | Librarian: raw sources → `research/corpus/`. | Confirms uploads. |
 | 4 | Draft | Fill `draft.md` in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers / decides / redirects. |
 | 5 | Review | Apply `Presenter feedback` bullets in `draft.md`. Loops. | Edits `draft.md`; appends `- "feedback"` bullets. |
-| 5.5 *(opt)* | Draft preview | Auto-fire a fast, throwaway preview deck from `draft.md` in the **background** (non-blocking) so it's ready to eyeball when Review ends. Cowork only. | Optionally looks; keeps reviewing meanwhile. |
+| 5.5 *(opt)* | Draft preview | Auto-fire a fast, throwaway **wireframe** of `draft.md` (`build_preview.py`, code-rendered PNGs — no `.pptx`/`.pdf`, no Cowork) in the **background** (non-blocking) so it's ready to eyeball when Review ends. | Optionally looks; keeps reviewing meanwhile. |
 | 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG; clean `final.md`. | Passive. |
 | 7 | Learnings | **Mandatory.** Promote ≥3× recurring feedback to `learnings.md`; ask promotion + render decisions. | Picks options. |
 | 8 *(opt)* | Render PPTX | Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md). Cowork only. | Confirms. |
@@ -220,7 +220,7 @@ Per-mode authoring sequences + the critical-only question budget live in [`edito
 
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
-**On first complete draft, kick the draft preview.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 draft preview** in the background if the session is in Cowork (see *Step 5.5 — Draft preview*). It runs in parallel and must **not** block the presenter from starting their review.
+**On first complete draft, kick the draft preview.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 draft preview** in the background (`build_preview.py` — runs anywhere Pillow is available; see *Step 5.5 — Draft preview*). It runs in parallel and must **not** block the presenter from starting their review.
 
 ---
 
@@ -237,11 +237,13 @@ When the presenter signals ready, Step 5 ends. **If a draft preview is available
 
 ---
 
-## Step 5.5 — Draft preview *(optional, Cowork only, non-blocking)*
+## Step 5.5 — Draft preview *(optional, non-blocking)*
 
-A fast, **throwaway** PowerPoint rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* before committing to Polish + the final render. It is a sanity check, **not the deliverable** — the real deck is always Step 8 from `final.md`. It stays fast by skipping the expensive parts of the full pipeline: ASCII diagrams are rasterized to PNG **by code** (no Illustrator SVG pass), and only **changed slides** are re-rendered on each refresh. It still critiques what it builds — a light content/look/arrangement pass (the same CONTENT + AESTHETIC + DISTRIBUTION bar as free-form), scoped per-slide so it stays cheap.
+A fast, **throwaway wireframe** of the slides rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* — order, roughly what's on each slide — before committing to Polish + the final render. It is a sanity check, **not the deliverable** (the real deck is always Step 8 from `final.md`), and it is deliberately provisional: individual per-slide PNGs drawn **by code** (title, bullets, diagram/image thumbnails), assembled into a grid. It stays fast by skipping everything expensive — no `.pptx`, no `.pdf`, no native skill, ASCII shown as code-rasterized PNGs (no Illustrator SVG pass), and only **changed slides** re-rendered on each refresh.
 
-**Prerequisite: Cowork** (native `pptx` skill in registry). If absent, the preview is simply unavailable — never block on it, and don't mention the machinery; if the presenter explicitly asks for a preview outside Cowork, say previews render inside Cowork and move on.
+**No automated critique** — the wireframe's layout is a fixed code template, so there's nothing to critique aesthetically; the presenter reviews the grid for *structure* (missing slide, wrong order, a thin section). The real content/look/arrangement critique happens on the Step-8 render.
+
+**Prerequisite: Pillow** (Python imaging). It runs in **any** session — no Cowork needed (that's why it can auto-fire in the background). If Pillow is unavailable, the preview is simply skipped — never block on it.
 
 ### How it fires — two moments
 
@@ -259,7 +261,7 @@ When the presenter signals ready at the end of Step 5, **before** advancing to S
 
 ### Dispatch
 
-Dispatch [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) with **`preview: true`** (in place of `style:`) on `talks/<Talk>/draft.md`. The skill owns everything else — `convert.py --draft --split-dir` pre-processing, the per-slide incremental render (only changed slides), ASCII-to-PNG by code, the per-slide critique loop, the isolated `output/draft-preview/` outputs, and its `[preview …]` stage events. Those events are **log-only**, suppressed from chat exactly like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). **Show the live preview checklist** while it runs (see SKILL.md → *Presenter-facing progress checklist*), even though it's a background render — a returning background preview still ticks its checklist so the presenter can see it finish. Never write the preview's style, path, or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
+Run the committed renderer [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py --talk talks/<Talk>` (equivalently, dispatch `md-to-pptx` with `preview: true`). **Never hand-roll a preview script** — the renderer is committed for exactly this reason. It owns everything: `convert.py --draft --split-dir` pre-processing, the incremental cache (only changed slides re-render), ASCII-to-PNG by code, the per-slide wireframes, the grid, and the isolated `output/draft-preview/` outputs. Its `[preview i/4]` stage events are **log-only**, suppressed from chat like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). **Show the live preview checklist** while it runs — even as a background render, it ticks its 4 items so the presenter sees it finish. Never write the preview's paths or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
 
 **Never let the preview mutate the pipeline.** It reads `draft.md` read-only, writes only under `output/draft-preview/` (git-ignored), and never touches `final.md` or `output/final.pptx`. It does not consume Step-8's style choice — a later Step 8 still asks the style fresh.
 

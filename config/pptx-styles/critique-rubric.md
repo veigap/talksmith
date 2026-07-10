@@ -35,7 +35,9 @@ deterministic Python audits run before FEEDBACK.
 |---|---|---|:--:|---|---|
 | **strict** | CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE | block-coverage, aspect-ratio, cover-fidelity, **palette/fonts**, **layout-fit** | 3 | whole deck | auto-regenerate; editorial → defer |
 | **free-form** | CONTENT + AESTHETIC + DISTRIBUTION | block-coverage, aspect-ratio, cover-fidelity | 2 | whole deck | auto-regenerate; editorial → defer |
-| **preview** | CONTENT + AESTHETIC + DISTRIBUTION | block-coverage, aspect-ratio, cover-fidelity | 2 | **per-slide, changed-only** | auto-regenerate |
+| **preview** | *(none — reviewed by eye)* | *(none)* | — | **per-slide, changed-only** | presenter eyeballs the grid |
+
+**Preview runs no automated critique.** It is a fast, code-rendered *wireframe* (see [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py)); its layout comes from a fixed code template, so an aesthetic/distribution critique of it would be meaningless. The presenter reviews the preview grid for **structure** (missing slide, wrong order, a thin section). The CONTENT/AESTHETIC/DISTRIBUTION loop below runs on the real Step-8 renders (strict, free-form), not the preview.
 
 `palette/fonts` and `layout-fit` are **strict-only** (they enforce the strict
 template — a layout-conformance concern). `block-coverage`, `aspect-ratio`, and

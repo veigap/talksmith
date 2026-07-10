@@ -65,7 +65,11 @@ _H1_LINE_RE = re.compile(r"^#(?!#)\s+")
 # a labeled block ends.
 _ANY_HEADING_RE = re.compile(r"^#{1,6}\s")
 _BOLD_LABEL_RE = re.compile(r"^\*\*[^*]+:\*\*\s*$")
-_FEEDBACK_LABEL_RE = re.compile(r"^\*\*Presenter feedback:\*\*\s*$")
+# Working-meta labels that are scaffolding, never slide content — stripped in draft
+# mode so a preview slide shows only real content (the Agenda shows just its section
+# list, not the narrative arc; nothing shows presenter feedback). Matches whether the
+# label stands alone on its line or is followed by inline prose on the same line.
+_STRIP_LABEL_RE = re.compile(r"^\*\*(?:Presenter feedback|Narrative arc):\*\*")
 
 # Sections at H1 that must be stripped wholesale (heading + body until the
 # next H1 or EOF).
@@ -249,20 +253,22 @@ def _normalize_headings_outside_code(text: str) -> str:
 
 
 def _strip_bold_feedback_blocks(text: str) -> str:
-    """Remove `**Presenter feedback:**` labeled blocks (draft-mode only).
+    """Remove working-meta labeled blocks (draft-mode only).
 
-    `draft.md` carries these blocks in its Agenda and section-divider bodies;
-    Polish removes them on the way to `final.md`, so the default pipeline never
-    sees them. A block runs from the `**Presenter feedback:**` label line up to
-    (but not including) the next horizontal rule, ATX heading, or other bold
-    field label. The label line and everything under it up to that terminator
-    are dropped.
+    `draft.md` carries `**Presenter feedback:**` (Agenda + section-divider bodies)
+    and `**Narrative arc:**` (Agenda) blocks — scaffolding for the author, never
+    slide content. Polish removes them on the way to `final.md`, so the default
+    pipeline never sees them; in draft mode we strip them here so a preview slide
+    shows only real content (the Agenda slide shows just its section list). A block
+    runs from its `**Label:**` line up to (but not including) the next horizontal
+    rule, ATX heading, or other bold field label; the label line and everything
+    under it up to that terminator are dropped.
     """
     lines = text.splitlines(keepends=True)
     out: list[str] = []
     i, n = 0, len(lines)
     while i < n:
-        if _FEEDBACK_LABEL_RE.match(lines[i].strip()):
+        if _STRIP_LABEL_RE.match(lines[i].strip()):
             i += 1  # drop the label line
             while i < n:
                 stripped = lines[i].strip()
