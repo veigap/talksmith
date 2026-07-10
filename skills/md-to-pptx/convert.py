@@ -52,7 +52,14 @@ import sys
 from pathlib import Path
 
 
-_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# Inline (single-line) HTML comment. Applied per line, so a `-->` arrow on a
+# *different* line can never terminate it early.
+_INLINE_COMMENT_RE = re.compile(r"<!--.*?-->")
+# A line that is *only* the comment close `-->` (the convention for the closing
+# line of a multi-line `<!-- ascii-source: … -->` block). Matching just this —
+# not any line that merely ends in `-->` — is what keeps ASCII arrows (`A -->`,
+# `===>`) inside the block from closing it early.
+_BLOCK_CLOSE_RE = re.compile(r"^\s*-->\s*$")
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
 
 # A line that is a horizontal rule (`---`) or an H1 heading (`# ...`). These
@@ -102,7 +109,33 @@ _HEADING_PREFIX_RE = re.compile(
 
 
 def _strip_html_comments(text: str) -> str:
-    return _HTML_COMMENT_RE.sub("", text)
+    """Strip HTML comments — line-based, robust to `-->` inside the content.
+
+    Two comment shapes appear in `final.md`: single-line inline comments
+    (`<!-- … -->`) and multi-line `<!-- ascii-source: … -->` / `ascii-note:`
+    blocks whose body is ASCII art that frequently contains `-->`/`===>` arrows.
+    A naive non-greedy `<!--.*?-->` terminates at the first arrow and leaks the
+    rest of the block into the slide body. Instead: strip complete inline
+    comments per line, and treat an unclosed `<!--` as opening a block that runs
+    until a line that is *only* the close marker `-->`.
+    """
+    out: list[str] = []
+    in_block = False
+    for line in text.splitlines(keepends=True):
+        if in_block:
+            if _BLOCK_CLOSE_RE.match(line.rstrip("\n")):
+                in_block = False
+            continue  # drop every line of the block, including its `-->` close
+        stripped = _INLINE_COMMENT_RE.sub("", line)  # remove complete inline comments
+        idx = stripped.find("<!--")
+        if idx != -1:  # an unclosed `<!--` remains → a multi-line block opens here
+            head = stripped[:idx]
+            if head.strip():
+                out.append(head.rstrip() + "\n")
+            in_block = True
+            continue
+        out.append(stripped)
+    return "".join(out)
 
 
 def _strip_frontmatter(text: str) -> str:

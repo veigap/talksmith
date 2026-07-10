@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.10.2] — 2026-07-09
+
+### Fixed
+
+- **`convert.py` no longer leaks `<!-- ascii-source -->` blocks into slide bodies.** The
+  HTML-comment stripper used a non-greedy `<!--.*?-->` regex that terminated at the first
+  `-->` — but ASCII diagrams preserved inside `ascii-source` / `ascii-note` comments
+  routinely contain `-->` / `===>` arrows, so the block closed early and its tail spilled
+  onto the slide. Rewrote it line-based: inline comments are stripped per line, and a
+  multi-line block runs until a line that is *only* the close marker `-->`, so arrows inside
+  the ASCII can never close it early.
+
 ## [0.10.1] — 2026-07-09
 
 ### Changed
