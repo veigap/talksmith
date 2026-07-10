@@ -16,17 +16,6 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ### Changed
 
-- **Restructured the working-directory stub (`talksmith-orch.md`) to lead with directives.**
-  Now: the two directives first (load the spec; introduce-yourself-first), then context (what
-  a subject repo is, the created-on-demand layout, updating), then a short **"How to use
-  Talksmith"** for a first-time presenter. Tighter throughout. The session-start behavior is
-  unchanged from 0.14.0 — same rule, clearer placement — so **re-running `/talksmith:init` is
-  optional** (do it only if you want the tidier stub + how-to in your working directory).
-
-## [0.14.0] — 2026-07-10
-
-### Changed
-
 - **Talksmith now introduces itself and takes the lead on turn one, no matter what the
   user types first.** A hard, non-negotiable session-start directive: whatever the opening
   message is (a topic, a direct "build me a deck" request, a pasted file, an unrelated
@@ -34,8 +23,10 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   + the new-vs-resume ask, then it drives the conversation into the workflow — never
   answering the opening message on its own terms and skipping the intro, never sitting idle
   waiting to be told to begin. Any signal in the opening message is folded into Step 1, not
-  dropped. Enforced in **both** the working-directory stub (`talksmith-orch.md`, the load
-  contract) and the orchestrator's Step 0.
+  dropped. Enforced in **both** the working-directory stub (`talksmith-orch.md`) and the
+  orchestrator's Step 0. The stub was also restructured to lead with its directives (load
+  the spec; introduce-first), then context, then a short **"How to use Talksmith"** for a
+  first-time presenter.
   - **Action required: re-run `/talksmith:init`** in each Talksmith working directory to
     pick up the stricter stub (the command always overwrites). The orchestrator half
     propagates automatically on next session reload.
