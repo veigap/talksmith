@@ -12,20 +12,26 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
-## [0.16.0] — 2026-07-10
+## [0.17.0] — 2026-07-10
 
 ### Changed
 
-- **`/talksmith:init` now loads the spec and starts the workflow, instead of deferring to a
-  reload.** Previously init just dropped the `CLAUDE.md` stub and told the user to `/clear` so
-  the next session's `@`-import would pull the spec — the exact mechanism that silently
-  no-ops in Cowork. Init now: (1) writes the stub (with a locate-the-install fallback if
-  `${CLAUDE_PLUGIN_ROOT}` is unset), (2) **reads `orchestrator.md` directly into context** so
-  the spec is guaranteed loaded regardless of environment, and (3) **immediately runs Step 0**
-  — introduces Talksmith and asks "new presentation or resume existing?". That question both
-  starts the work and confirms the spec loaded; no reload needed. Subsequent sessions still
-  load the spec via the 0.15.0 stub directive. **Re-run `/talksmith:init`** to get the
-  load-and-start behavior (Cowork users especially).
+- **The stub now opens with an imperative that *forces* the spec to load and the workflow to
+  start — fixing the "spec never loads" failure at its root.** The `@`-import is lazy: the
+  stub being auto-loaded doesn't make the agent *act* on it, so descriptive load instructions
+  could just sit there while the agent answered the user's prompt with no spec. The stub's
+  first content is now a three-step instruction to **execute now**: (1) ensure
+  `orchestrator.md` is loaded — Read it directly if the `@`-import didn't resolve (Cowork),
+  with a locate-the-install fallback; (2) **execute the spec's Step 0** (introduce Talksmith,
+  show the workflow, ask new-vs-resume) as the first response; (3) only then handle the user's
+  message, folding it into Step 1. The stub holds *only* this bootstrap trigger — all evolving
+  behavior lives in `orchestrator.md`, which reloads fresh every session, so the stub stays
+  stable and re-init stays a once-ever action.
+- **`/talksmith:init` is a clean one-time stub drop again.** It writes `CLAUDE.md` (with a
+  locate-the-install fallback if `${CLAUDE_PLUGIN_ROOT}` is unset) and finishes by telling the
+  user to close the session and reopen — the freshly-loaded stub then forces the load + Step 0.
+  Init no longer loads the spec or runs the workflow itself (that was replicating what the
+  reopen already does). **Re-run `/talksmith:init`** to pick up the new forcing stub.
 
 ## [0.15.0] — 2026-07-10
 

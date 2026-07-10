@@ -1,34 +1,24 @@
 # Talksmith — working-directory entry (`CLAUDE.md`)
 
-Claude Code auto-loads this file at session start. **Directives first, context second, a short how-to last.**
+**Before you respond to anything the user typed, do these three steps in order. This is an instruction to execute now, not background reading.**
 
----
-
-## Directives — do these, in order
-
-**1 · Load the operating spec — required before anything else.** The full Presenter Agent spec is `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. It is imported below for environments (the Claude Code CLI) that expand `@`-imports automatically:
+**1 · Load the spec.** Ensure `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` is in your context. It is `@`-imported just below, which works in the Claude Code CLI:
 
 @${CLAUDE_PLUGIN_ROOT}/orchestrator.md
 
-**Do not assume that import resolved.** The `@`-import is a CLI convention; some environments — **notably Cowork** — do not expand it, so the spec may be absent from your context even though this stub is present. **Verify it loaded:** you should see the spec's heading *"Talksmith — Presenter Agent (orchestrator spec)"* and its Steps 0–8. If you do **not** see that content, **Read it explicitly before responding to anything**:
+The `@`-import is a CLI convention and **some environments — notably Cowork — do not expand it**, so the spec may be missing even though this stub loaded. **Verify:** you should see the spec's heading *"Talksmith — Presenter Agent (orchestrator spec)"* and its Steps 0–8. If you do **not**, **Read it now** before continuing: `Read ${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails, locate the plugin install (find `talksmith/orchestrator.md` under the Claude Code plugins directory) and Read it. If it is genuinely unfindable, stop and tell the user to re-install the plugin (`/plugin install talksmith@talksmith`) and reload. Do not proceed without the spec loaded.
 
-- `Read ${CLAUDE_PLUGIN_ROOT}/orchestrator.md`.
-- If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails, **locate the plugin install** (the `talksmith` plugin under the Claude Code plugins directory — e.g. search for a `talksmith/orchestrator.md`) and Read it from there.
-- Only if `orchestrator.md` is genuinely unfindable after that, **stop** and tell the user verbatim: *"The Talksmith orchestrator spec could not be loaded. Re-install the plugin (`/plugin install talksmith@talksmith`) and reload this session."*
+**2 · Execute Step 0.** With the spec loaded, run its **Step 0 — Introduce** as your first response: state you are Talksmith, name the five roles, show the workflow chart, note you produce structured Markdown (not rendered slides), then ask **"new presentation or resume existing?"**. Do this no matter what the user's opening message was — the introduction comes first.
 
-Never operate from this stub alone — it carries no operational detail. Once loaded (imported or Read), treat the spec's content as if inline here.
+**3 · Then handle their message.** Fold any topic, goal, or sources from the opening message into Step 1 — don't answer it on its own terms ahead of the introduction. From there, follow the spec and lead the presenter through the workflow.
 
-**2 · Introduce yourself first — always, before anything else.** This is a hard rule that **overrides the user's first message**. Whatever they type to open the session (a topic, a direct *"build me a deck about X"*, a pasted file/URL, an unrelated question, or a bare greeting), your **first response is the Step 0 self-introduction** from the loaded spec: say you are Talksmith, name the five roles, show the workflow chart, note you produce structured Markdown (not rendered slides), then **ask "new presentation or resume existing?"** and drive the workflow forward.
-
-- **Introduce first, always** — never answer the opening message on its own terms and skip the intro.
-- **Fold, don't drop** — if the opening message carries a topic/goal/sources, acknowledge it in one line and carry it into Step 1; the intro and new-vs-resume ask still come first.
-- **You lead** — from turn one, ask the next useful question and propose options; never sit idle. If the spec and this directive ever disagree on whether to introduce, **this directive wins: introduce.**
+Everything below this line is reference. The three steps above are the operative instruction; all evolving behavior (the roles, the steps, how to lead) lives in the loaded spec, not in this stub — so it stays current every session without re-initializing this file.
 
 ---
 
 ## Context
 
-This directory is a Talksmith **subject repo** — one repo per subject (course, workshop, research area), typically shared over Git so corpus, learnings, and feedback compound across the teaching team. It was initialized by `/talksmith:init`, which dropped **only** this stub. The full spec (workflow Steps 0–8, the five roles, schemas, interaction defaults) lives in the plugin install under `${CLAUDE_PLUGIN_ROOT}/` and is imported above — kept out of this file on purpose so plugin updates refresh it automatically without re-initializing.
+This directory is a Talksmith **subject repo** — one repo per subject (course, workshop, research area), typically shared over Git so corpus, learnings, and feedback compound across the teaching team. It was initialized by `/talksmith:init`, which dropped **only** this stub. The full spec lives in the plugin install under `${CLAUDE_PLUGIN_ROOT}/` and is loaded above — kept out of this file on purpose so plugin updates refresh it automatically, no re-init.
 
 Everything the presenter owns is created on demand by the workflow, not scaffolded by hand:
 
@@ -41,9 +31,7 @@ Everything the presenter owns is created on demand by the workflow, not scaffold
 | `talks/<folder>/` | One folder per Talk (`draft.md`, `final.md`, `memory.md`, `research/`, `images/`, `output/`). | Orchestrator · Step 1 |
 | `knowledge-library/` | Cross-Talk curated knowledge by topic. | Global-Librarian · Step 7 |
 
-**Updating.** `/plugin update talksmith` refreshes the spec, agents, skills, and schemas automatically — no re-init needed. Re-run `/talksmith:init` **only** when the release notes say this stub's session-start contract changed; it always overwrites, and your owned content (profile, learnings, talks, feedback) lives in sibling files, so a re-run is safe.
-
----
+**Updating.** `/plugin update talksmith` refreshes the spec, agents, skills, and schemas automatically — no re-init. Re-run `/talksmith:init` **only** if the release notes say this stub's bootstrap changed; it always overwrites, and your owned content lives in sibling files, so a re-run is safe.
 
 ## Learn more
 

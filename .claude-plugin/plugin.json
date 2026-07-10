@@ -1,6 +1,6 @@
 {
   "name": "talksmith",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow — Frame → Collect → Corpus → Draft → Review → Polish → Learnings → Render PPTX — to a structured outline (draft.md), a polished deliverable (final.md), and optionally a .pptx. Five subagents (Librarian, Composer, Editor, Illustrator, Global-Librarian) plus skills for ingestion, ASCII→SVG, polish, PPTX rendering, a reverse pipeline (pptx-extract → pptx-diff → pptx-merge) that reconciles an externally-edited deck back into draft.md, and pptx-learn, which mines styling/positioning patterns from hand-corrected decks to improve future strict renders.",
   "author": {
     "name": "Paulo Gustavo Veiga"

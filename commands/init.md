@@ -1,12 +1,12 @@
 ---
-description: Initialize Talksmith here — drop the CLAUDE.md stub, load the operating spec into context, and start the workflow.
+description: Drop the Talksmith working-directory stub into the current project root as CLAUDE.md.
 ---
 
 # /talksmith:init
 
-One-shot bootstrap. Runs in the **current working directory** (the project root where the user opened Claude Code). It (1) writes the Talksmith working-directory stub as `CLAUDE.md`, (2) **loads the full operating spec into context immediately**, and (3) starts the workflow with the Step 0 introduction — all in this session, no reload required.
+One-shot bootstrap, run **once per working directory**. It writes the Talksmith working-directory stub as `CLAUDE.md` in the current directory — nothing else. On the next session, that stub loads the full operating spec and Talksmith introduces itself and starts; this command does not replicate that, it just puts the stub in place.
 
-Loading the spec here is deliberate and important. The stub relies on an `@${CLAUDE_PLUGIN_ROOT}/orchestrator.md` import to pull the spec at session start, but that `@`-import is a Claude Code **CLI** convention that some environments — **notably Cowork** — do not expand. By reading the spec directly as part of init, this command guarantees Talksmith is fully operational right now regardless of environment, instead of depending on an import that may silently no-op. Subsequent sessions load the spec via the refreshed stub's directive #1 (verify it's loaded; Read it directly if not).
+The stub is intentionally minimal and stable — it only knows how to load the real spec from `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. The spec itself is **not** copied; it lives in the plugin install and refreshes automatically on `/plugin update`, so `/talksmith:init` rarely needs re-running.
 
 This command does **not** scaffold `config/` files, the `talks/` directory, or the profile — those are the orchestrator's job (Editor subagent, Step 0.5 and Step 1) once the workflow is running.
 
@@ -22,11 +22,18 @@ This command does **not** scaffold `config/` files, the `talks/` directory, or t
    ```bash
    cp -f "${CLAUDE_PLUGIN_ROOT}/talksmith-orch.md" ./CLAUDE.md
    ```
-   If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails (e.g. in Cowork), **locate the plugin install** — find `talksmith-orch.md` under the Claude Code plugins directory — and copy that file to `./CLAUDE.md`. Re-running `/talksmith:init` is the supported way to pick up stub changes; user content belongs in `config/`, `talks/`, never in `CLAUDE.md`. Emit:
+   If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails, **locate the plugin install** (find `talksmith-orch.md` under the Claude Code plugins directory) and copy that file to `./CLAUDE.md`. Re-running `/talksmith:init` is the supported way to pick up stub changes; user content belongs in `config/`, `talks/`, never in `CLAUDE.md`. Emit:
    ```
    [init] CLAUDE.md written from the Talksmith stub (talksmith-orch.md). Any prior CLAUDE.md was overwritten.
    ```
-4. **Load the operating spec into context now — required, before starting.** Read `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` so its full content is in your context. If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails, **locate the plugin install** (find `talksmith/orchestrator.md` under the Claude Code plugins directory) and Read it from there. Confirm you can see the spec's heading *"Talksmith — Presenter Agent (orchestrator spec)"* and its Steps 0–8. Only if `orchestrator.md` is genuinely unfindable, stop and emit: `[init] FAILED: could not load ${CLAUDE_PLUGIN_ROOT}/orchestrator.md — re-install the plugin (/plugin install talksmith@talksmith) and retry.` Do **not** proceed to step 5 without the spec loaded.
-5. **Start the workflow.** With the spec loaded, immediately perform its **Step 0 — Introduce**: state you are Talksmith, name the five roles, show the workflow chart, note you produce structured Markdown (not rendered slides), then **ask the presenter "new presentation or resume existing?"** and drive the conversation forward. This introduction + question is what turns init into a working session (and confirms the spec actually loaded). Do not stop and wait for a reload.
+4. Finish by telling the user to restart:
+   ```
+   Done. Close this session and open a new one in this directory to start creating —
+   the stub will load Talksmith, which introduces itself and walks you through
+   Step 0 → Step 0.5 (profile) → Step 1 (Frame your first Talk).
 
-That's the command: write the stub, load the spec, introduce, and hand the presenter their first question. Do not create `config/` or `talks/` directories or template files by hand — the orchestrator creates those on demand from Step 0.5 onward.
+   Everything else — config/profile.md, config/learnings.md, the feedback logs,
+   and the talks/ tree — is created by the orchestrator on demand. Nothing to scaffold by hand.
+   ```
+
+That's the entire command: write the stub, then hand off to the next session. Do not load the spec, run the workflow, or create `config/` / `talks/` here — the freshly-opened session does all of that.
