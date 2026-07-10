@@ -12,6 +12,36 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.12.0] — 2026-07-10
+
+### Added
+
+- **`visual-guidance.md` — the generic visualization floor.** A new shared doc holding the
+  *medium-agnostic* good-design principles (figure/ground, one hierarchy, alignment,
+  whitespace, signal-over-noise, structure-over-bullets) **and** the hard
+  "must-never-happen" defects (text/image overlap, off-slide bleed, truncation, occlusion,
+  image distortion, illegible contrast, sub-legibility type, dropped content). Referenced by
+  every mode at GENERATE (honor it) and FEEDBACK (hard violations are blocking). It is the
+  most generic layer; `slide-design.md` *implements* it as per-slide checks and must not
+  contradict it.
+- **`preview` is now a first-class render style.** Added `config/pptx-styles/preview/pptx-prompt.md`
+  and a row in the styles table; `preview` is selected like any style (`style: preview`, with
+  the legacy `preview: true` accepted as an alias) and differs only in *substrate* — a code
+  wireframe (Pillow), no base-template, no native `pptx`, its own critique loop. No longer a
+  special-case exception branch.
+
+### Changed
+
+- **Renamed `slide-quality.md` → `slide-design.md`** and reframed it as *the mandate for the
+  visual transformation of a slide* that the critique loop exists to enforce (not just a
+  "quality bar"). All references updated.
+- **Resolved the remaining strict-spec duplication.** The design-level layout guidance that
+  was inline in strict §7.3/§7.6/§8/§10/§11 (card-row-vs-list chooser, labeled-enumeration
+  invariant, callout pink-vs-blue intent, cards-over-bullets, pipe-table→card mapping) now
+  lives once in `slide-templates.md`; strict keeps only its EMU realizations and references
+  the catalog. Global rendering principles were centralized too — the no-dead-title-gap rule
+  became `DISTRIBUTION-08`; one-line-title/aspect reference the shared floor.
+
 ## [0.11.0] — 2026-07-10
 
 ### Added
@@ -33,7 +63,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   (`_classify`) and draws its template shape — cards, figures, content/image split, code
   block, statement, image-grid — instead of a single bullet-flattened layout.
 - **The critique is template-aware.** New `TEMPLATE` category in
-  [`slide-quality.md`](config/pptx-styles/slide-quality.md): FEEDBACK reviews each slide
+  [`slide-design.md`](config/pptx-styles/slide-design.md): FEEDBACK reviews each slide
   against its classified template's *Format*, not a generic look. Walked in every mode.
 - **Speaker-notes coverage is now enforced, not just specified.** New
   `audit_notes_coverage.py` (shared CONTROL floor, all `.pptx` modes) fails the build if any
@@ -94,7 +124,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   duty — the per-format *pipeline config* (matrix + action definitions) *and* the *design
   quality bar* (the CONTENT / AESTHETIC / DISTRIBUTION / LAYOUT-CONFORMANCE practices). Split
   them: `render-modes.md` keeps the matrix + actions (how each format runs); the practice
-  catalog + walk discipline + closing-report moved to a new **`slide-quality.md`** (what a
+  catalog + walk discipline + closing-report moved to a new **`slide-design.md`** (what a
   good slide looks like). The FEEDBACK action references the catalog. You can now tune the
   aesthetic bar without touching mode config, and vice versa.
 

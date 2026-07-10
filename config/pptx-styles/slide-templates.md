@@ -14,7 +14,7 @@ All three render formats — `strict`, `free-form`, `preview` — use it. When n
 matches, they fall back (`fallback` below).
 
 > **This is the single home — do not duplicate.** The design-level template guidance that
-> used to live in strict §7/§8/§13/§15.5, free-form's prose, and `slide-quality.md`
+> used to live in strict §7/§8/§13/§15.5, free-form's prose, and `slide-design.md`
 > (when-to-pick rules, capacity thresholds, format-at-the-design-level, the
 > card-not-bullet invariant) lives **here now**. Each spec keeps only what is genuinely
 > substrate-specific: **strict** keeps its exact EMU measurements (base-template

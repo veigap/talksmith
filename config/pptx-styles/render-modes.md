@@ -7,13 +7,18 @@ critique action, cycle cap, and deliverable, per phase.
 - **The config** (which action each format runs per phase) is the **matrix** below.
 - **The design/quality bar** the FEEDBACK action walks — the CONTENT / AESTHETIC /
   DISTRIBUTION / LAYOUT-CONFORMANCE practices — lives in its own file,
-  [`slide-quality.md`](slide-quality.md). This file only names the *categories*; the
+  [`slide-design.md`](slide-design.md). This file only names the *categories*; the
   practices themselves are there.
 - **The slide-template catalog** every mode classifies against at GENERATE (and the
   critique checks against at FEEDBACK) is [`slide-templates.md`](slide-templates.md) —
   the shared home for *which template a slide is, when it applies, and the format it must
   take* (cards, not bullets). GENERATE picks + renders the template; FEEDBACK reviews the
   slide against that template's format.
+- **The generic visualization floor** — universal good-design principles + the hard
+  "must-never-happen" defects (text/image overlap, off-slide bleed, illegible contrast,
+  distorted images) — is [`visual-guidance.md`](visual-guidance.md). Every GENERATE honors
+  it; every FEEDBACK treats a hard-invariant violation as blocking. `slide-design.md`
+  implements it as per-slide checks and must not contradict it.
 
 > **Do not duplicate this config.** Every other doc (SKILL.md, README.md, the per-style
 > `pptx-prompt.md` specs, orchestrator.md) **references** this matrix; none restates it.
@@ -58,15 +63,15 @@ holds in all three.
 - `audit-floor` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + `audit_notes_coverage.py`. The shared floor; no palette/fonts, no layout-fit. `audit_notes_coverage.py` fails the build if any `### Notes` block lands in an empty notes pane (notes are load-bearing and template-independent).
 - `audit-none` — no audits run: the format produces no `.pptx`, and every deterministic audit parses a rendered deck. `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_preview.py` renders every slide unit).
 
-**FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-quality.md`](slide-quality.md))
+**FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-design.md`](slide-design.md))
 - `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).
 - `walk-design` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION** (never layout-conformance — the code wireframe has no strict base-template, but it *does* realize catalog templates, so TEMPLATE is walked).
-- `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the `slide-quality.md` practices are a handy self-review checklist for that human pass).
+- `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the `slide-design.md` practices are a handy self-review checklist for that human pass).
 
 **REGENERATE** (disposition of FEEDBACK findings)
 - `auto-regenerate` — the skill composes per-slide edit instructions and re-renders the touched slides, up to the cycle cap; objective defects are fixed, editorial-judgement calls get `defer because <reason>` and surface in the closing report.
 - `surface` — findings are **surfaced** to the presenter, not auto-fixed: the deterministic wireframe takes no fix instructions, so the presenter resolves them by editing `draft.md` (which re-fires the preview on the changed slides). Objective content/structure findings are what the presenter acts on during Review anyway; aesthetic/distribution findings are informational and are truly fixed on the Step-8 render.
 
-The **walk discipline**, **aesthetic note**, and **closing-report / declare-clean** contract that any FEEDBACK action follows live in [`slide-quality.md`](slide-quality.md).
+The **walk discipline**, **aesthetic note**, and **closing-report / declare-clean** contract that any FEEDBACK action follows live in [`slide-design.md`](slide-design.md).
 
-**To change a format:** edit its cell in the matrix above. **To change the quality bar** (add/refine a practice): edit [`slide-quality.md`](slide-quality.md) — every format that walks that category picks it up.
+**To change a format:** edit its cell in the matrix above. **To change the quality bar** (add/refine a practice): edit [`slide-design.md`](slide-design.md) — every format that walks that category picks it up.

@@ -1,10 +1,19 @@
-# Slide quality — the critique practice catalog
+# Slide design — the visual-transformation mandate + critique catalog
 
-The **design/quality bar** for a rendered slide: the practices the FEEDBACK action walks
-(see [`render-modes.md`](render-modes.md) → *Per-format effort matrix* for which format
-walks which categories). Organized into four categories; each practice is one entry with
-a category-prefixed id. This is *what a good slide looks like* — the pipeline config that
-decides *when* each is walked lives in `render-modes.md`, not here.
+This is the **mandate for the visual transformation** of a slide: the operational,
+per-slide practices a rendered slide must honour, and that the **critique loop exists to
+enforce**. Organized into categories; each practice is one entry with a category-prefixed
+id. This is *what a good slide looks like* — the pipeline config that decides *when* each
+is walked lives in [`render-modes.md`](render-modes.md), not here.
+
+It sits between two shared docs and must stay consistent with both:
+
+- [`visual-guidance.md`](visual-guidance.md) — the **generic** visualization floor
+  (universal principles + hard "must-never-happen" defects). This catalog **implements**
+  those principles as concrete, checkable practices and must never contradict them; its
+  hard-invariant checks are the operational form of that floor's Part A.
+- [`slide-templates.md`](slide-templates.md) — *which template* a slide is; the `TEMPLATE`
+  category below reviews each slide against its classified template's *Format*.
 
 ## Categories
 
@@ -228,6 +237,12 @@ optional padding — the part only the critic can do.
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "Focal point & reading flow — one dominant element the eye lands on first (not two equally-prominent images/headings), placed for impact (rule-of-thirds / off-centre rather than dead-centre by default), with the layout following a natural Z/F eye path: entry top-left, resolution/CTA bottom-right."
+
+- id: DISTRIBUTION-08
+  category: DISTRIBUTION
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "No dead title→body gap — body content begins just below the title's *actual* wrapped height, not below a worst-case reserve. A short one-line title must not leave a large empty band above the body (the classic symptom of a renderer that reserved room for a 2–3-line title the text didn't need). (strict realizes this via the measured-height rule in strict/pptx-prompt.md §3.5.)"
 ```
 
 ## LAYOUT-CONFORMANCE  *(strict-only)*
