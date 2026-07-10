@@ -41,9 +41,11 @@ deterministic Python audits run before FEEDBACK.
 
 `palette/fonts` and `layout-fit` are **strict-only** (they enforce the strict
 template — a layout-conformance concern). `block-coverage`, `aspect-ratio`, and
-`cover-fidelity` are the **shared floor**, run in every mode. In `preview`, audit
-failures are surfaced but non-blocking (the preview still ships — it is a sanity
-check, not a deliverable).
+`cover-fidelity` are the **shared floor for the two real renders — strict and
+free-form**. **Preview runs none of them**: it produces no `.pptx`, and all four
+deterministic audits parse a rendered deck, so there is nothing for them to read
+(block-coverage's guarantee instead holds by construction — `build_preview.py`
+renders every slide unit).
 
 **To extend:** add one entry below under its category — every mode that selects that
 category picks it up. **To refine a mode:** edit its row above (categories, cycle cap)

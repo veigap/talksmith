@@ -586,9 +586,9 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 2. **Slide 2 = Agenda with active item 1.** Emit the §5 recipe. Pull the N item titles from the N H1s in `final.md` (N = section count, not fixed); pull subtitles from per-section `Subtitle:` fields. Clone or delete placeholder rows in `base-template.pptx` to match N. Surface a warning to the presenter when N > 8 (tight) or N > 10 (out of room — see §5.3 capacity).
 3. **Section dividers.** Before every new section k (k ∈ {2..N}), re-emit the §5 agenda with active item set to k. Place each divider immediately before its section's first content slide — there are no absolute slide-number positions to honor.
 4. **Every content slide carries a §6 section pill** at top-left, with text = the active section's H1 verbatim, uppercased.
-5. **Layout selection per content slide** — pick from §13 based on Markdown signal:
+5. <a id="15.5"></a>**Layout selection per content slide (§15.5)** — pick from §13 based on Markdown signal:
 
-   The **Markdown signal** column is mechanical (regex-shaped); the **Content-intent fit** column is the discriminator for an LLM choosing a layout when two signals could plausibly match — read it before defaulting to the first row that fits.
+   The **Markdown signal** column is mechanical (regex-shaped); the **Content-intent fit** column is the discriminator for an LLM choosing a layout when two signals could plausibly match — read it before defaulting to the first row that fits. *(This emit-rule 5 is the "§15.5 layout-selection table" referenced throughout the specs and by `audit_layout_fit.py`.)*
 
    | Markdown signal in the H2-led slide | Layout type (§13) | Content-intent fit (when this layout is right; when it is not) |
    |---|---|---|

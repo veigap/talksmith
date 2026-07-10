@@ -4,7 +4,7 @@ Free-form is **almost-no spec**: the cover slide is contractually fixed (§2), t
 
 For the alternative spec-driven style see [`../strict/pptx-prompt.md`](../strict/pptx-prompt.md); for the style-selection mechanism see [`../README.md`](../README.md).
 
-> **Starting a new deck?** Open [`base-template.pptx`](base-template.pptx) — a 1-slide cover-only foundation. Substitute the four §2.2 placeholders on slide 1. From slide 2 onward you design.
+> **Starting a new deck?** Open [`base-template.pptx`](base-template.pptx) — a 1-slide cover-only foundation. Substitute the four §2 cover placeholders on slide 1. From slide 2 onward you design.
 
 > **EMU primer.** 1 inch = 914400 EMU; 1 point = 12700 EMU; font `sz` is in hundredths of a point. Slide size is `9144000 × 5143500` EMU (`10.00 × 5.625` inches; 16:9).
 

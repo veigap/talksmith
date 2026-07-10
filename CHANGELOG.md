@@ -12,6 +12,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.8.2] — 2026-07-09
+
+### Fixed
+
+- **Second, deeper contradiction sweep of the PPTX docs.** Reconciled the last preview-audit
+  contradiction (the rubric's "shared floor runs in every mode" + SKILL's "cover-fidelity runs
+  in all modes" still implied preview ran deck-parsing audits — it produces no deck, so none
+  run); gave the heavily-referenced **§15.5 layout-selection table an addressable anchor** (it
+  was cited 20+ times but existed only as an unlabelled list item); and fixed a cluster of
+  dangling cross-references — orchestrator's "Step 8 reverse pipeline" (repointed to
+  pptx-merge/pptx-learn), free-form "§2.2"→"§2" cover placeholders, SKILL "strict §4–§20"→"§1–§20",
+  the strict-centric §4.3 cover-slot label (now notes free-form §2 too), and the phantom
+  "PNG companion for every SVG" prereq-row reference in illustrator.md + ascii-to-svg. Commands
+  in every spec were re-verified against the scripts' actual CLIs — all correct.
+
 ## [0.8.1] — 2026-07-09
 
 ### Fixed
