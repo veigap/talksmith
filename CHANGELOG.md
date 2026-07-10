@@ -12,6 +12,32 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.13.0] — 2026-07-10
+
+### Added
+
+- **`slide-templates.md` now has a precise signal glossary, discriminator order, and worked
+  matching examples** so classification is deterministic across modes — each signal
+  (`labeled_items`, `is_ordered`, `has_table`, `one_claim`, …) has an exact detection rule,
+  and ~10 Markdown→template examples show the decision (including the tricky ties:
+  concept-breakdown vs process, card-row vs icon-list, figures vs concept-breakdown,
+  table→comparison vs card-grid).
+- **New `single-point` template** for the very common "lead + exactly one labeled point"
+  shape — rendered as a card or callout, never a lone bullet.
+
+### Fixed
+
+- **Closed five real classification gaps found by dry-running the full security deck
+  (74 slides) through the catalog** (a debugging pass, no live render): (1) the `≥3
+  labeled-items` threshold left 1–2-item slides undefined — 40/74 fell to `fallback`;
+  lowered to `≥2` and added `single-point` for 1 item, so **all 74 now classify** into a
+  real template; (2) `concept-breakdown` Match said "3–N" while Format said "2–4 cards" —
+  reconciled to `2–N`; (3) section dividers marked `〔divisor〕`/`〔Backup〕` at H2 (not H1)
+  were misread as content — the divider signal now recognizes the marker; (4) `pipe-table →
+  comparison` was too eager — a table is `comparison` only for two comparable value-columns,
+  else `concept-breakdown`; (5) `statement` was too narrow — now allows a short reveal /
+  counter-point (myth→reality slides).
+
 ## [0.12.0] — 2026-07-10
 
 ### Added

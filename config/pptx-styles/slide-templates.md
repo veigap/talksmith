@@ -48,17 +48,54 @@ deterministically by `audit_notes_coverage.py` (CONTROL floor) in every mode tha
 
 Decide the template **from the content**, as a discriminator walk — not first-match:
 
-1. **Collect surface signals** — is it slide 1 / the final slide? heading level (H1 vs
-   H2); `![]()` image count; fenced ```` ``` ```` code block present?; count of *labeled*
-   items (`- **Label** …`, `#### Label`/`### Subhead` + paragraph groups); is the label
-   set **ordered** (`1.`/`Paso N`/`Step N`/`Fase N`/`A,B,C`)?; pipe-table present?;
-   two symmetric groups (A-vs-B)?; a single dominant short line (≤ ~14 words) with no
-   enumeration?; per-item body length; large standalone number/metric.
-2. **Enumerate every catalog entry whose _Match_ fires.**
+1. **Collect surface signals.** Detect each of these on the slide unit (an H2 block and its
+   body). Detection must be identical across modes — the definitions below are the contract:
+
+   | Signal | How to detect it (precise) |
+   |---|---|
+   | `is_cover` | The unit is slide 1 / has frontmatter and no H2. |
+   | `is_divider` | The heading is an **H1** (`# …`), not an H2 — the canonical signal. **Also** a slide whose title carries an explicit section-break marker (`〔divisor〕`, `〔Backup〕`, or equivalent) even at H2: some authoring conventions mark dividers/backups by marker rather than heading level, and the pipeline must treat these as dividers, not content slides. |
+   | `is_terminal` | The unit is the last slide of the deck or of a section. |
+   | `n_images` | Count of `![alt](path)` refs in the body. |
+   | `has_code` | A fenced ```` ``` ```` block is present as body content. |
+   | `has_table` | A Markdown pipe-table (`\| … \| … \|` with a `---` separator row) is present. |
+   | `labeled_items` | Count of **labeled** units: a bullet whose lead is bold (`- **Label** body` / `- <emoji> **Label:** body`), **or** an `#### Label` / `### Subhead` immediately followed by a short paragraph. A *labeled* item ≠ a plain `- text` bullet. |
+   | `is_ordered` | Any labeled item's label matches an ordinal: `1.`/`2.`, `Paso N`, `Step N`, `Fase N`/`Fase I`, `Etapa …`, `Case A`/`Caso A`, `Phase N`, or the items form a numbered list / a stepwise/decision flow. |
+   | `body_len` | Per-item body length in characters, post-Markdown-strip. "Short" ≤ ~80 chars; "prose" > ~80. Judge by the **longest** item. |
+   | `two_groups` | The body splits into **two symmetric groups** compared against each other (A-vs-B, before/after, myth/reality), or a pipe-table of `factor \| A \| B` rows. |
+   | `big_metrics` | 2–4 standalone numbers/metrics with labels (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`). |
+   | `one_claim` | A single dominant assertion (≤ ~16 words) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
+   | `one_two_words` | The whole slide is 1–2 words (`Q&A`, `Gracias`). |
+
+2. **Enumerate every catalog entry whose _Match_ fires** given those signals.
 3. **Apply the disambiguators** (each entry's *Match* names what it is **not**) to pick
-   **exactly one**. **Never fall to a plainer template** (plain bullets, raw table,
-   `content-text`) when a richer one matches.
+   **exactly one**. The decisive discriminators, in order (first match wins **only** after
+   the richer-template rule — never fall to a plainer template when a richer one fits):
+   - `is_divider` → `agenda` / section-divider.
+   - `has_code` → `code-example` (before anything else — code dominates).
+   - `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
+   - `has_table`: **two comparable value-columns** (A-vs-B, before/after) → `comparison`;
+     a **label/value or N-level/N-column** table → `concept-breakdown` (card-per-row grid),
+     **not** `comparison`. (A pipe-table is never a native `<a:tbl>`.)
+   - `two_groups` (two symmetric prose blocks compared) → `comparison`.
+   - `labeled_items ≥ 2` and `is_ordered` → `process`.
+   - `labeled_items ≥ 2`, each item has its own image → `figures`.
+   - `labeled_items ≥ 2`, unordered, no per-item image → `card-row` (lead + 3–5 short) /
+     `icon-list` (lead + 3–5 prose) / `concept-breakdown` (the general case, **including a
+     2-item set** → two cards).
+   - `labeled_items == 1` (a lead + one point) → `single-point` (one card or callout; if an
+     image supports it → `content+image`). **Never a lone bullet under a title.**
+   - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
+     `content+image`; cards **and** one supporting image → `content+cards+image`.
+   - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
+     one counter-point — e.g. a myth→reality slide) → `statement`.
+   - `one_two_words` + `is_terminal` → `closing-hero`.
+   - only prose, none of the above → `content-text` (flag as restructure candidate).
+   **Never fall to a plainer template** (plain bullets, raw table, `content-text`) when a
+   richer one matches.
 4. **No entry matches → `fallback`** (log it).
+
+See **Matching examples** below for worked classifications, including the tricky ties.
 
 Strict additionally runs a **deterministic post-emit gate**
 ([`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py)):
@@ -170,17 +207,33 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Strict recipe:** §7.5 (+ §7.3 chooser). **Provenance:** ref (§7.5), final S11/12.
 
 #### `concept-breakdown`
-- **Match:** **3–N** parallel **labeled** concepts (`### Subhead`+short-para groups,
-  4+ groups; or a labeled set that is neither a clean 3–5 row nor prose-heavy), **short
-  bodies, no per-item image, unordered.** The general labeled-grid case.
+- **Match:** **2–N** parallel **labeled** concepts (`- **Label** body`, or `### Subhead` /
+  `#### Label` + short-para groups), **short bodies, no per-item image, unordered.** The
+  general labeled-grid case — this is the **default home for any labeled set of 2+ items**
+  that isn't a clean 3–5 lead+row (`card-row`), prose-heavy (`icon-list`), ordered
+  (`process`), or per-item-imaged (`figures`). A **2-item** labeled set is a valid
+  concept-breakdown (two cards) — do **not** drop it to bullets or prose.
   **Not:** ordered/numbered (→ `process`); each item has a figure (→ `figures`);
-  exactly 3–5 with the lead+item shape (→ `card-row`/`icon-list`).
-- **Format:** title + a **2×N or 3×N grid of equal cards**, each = label (13.5 pt Bold) +
-  one-line body (11 pt), optional small icon. **Uniform card size**, consistent gutters
-  (~0.2 in), shared gridlines, aligned rows. **Never bullets.** Up to ~6 cards; beyond →
-  split.
+  a lead paragraph + exactly 3–5 items (→ `card-row`/`icon-list`).
+- **Format:** title + a grid of **equal cards** — 2 items → 2 cards side by side; 3 → a row;
+  4 → 2×2; 5–6 → 3×N. Each card = label (13.5 pt Bold) + one-line body (11 pt), optional
+  small icon. **Uniform card size**, consistent gutters (~0.2 in), shared gridlines, aligned
+  rows. **Never bullets.** Beyond ~6 → split.
 - **Strict recipe:** §7.2 (plain cards) / §7.6. **Provenance:** ref S5/8/25/53, final
   S11/12/13, gov S22/24.
+
+#### `single-point` — exactly one labeled item (lead + one point)
+- **Match:** a slide whose body is a lead/prose paragraph plus **exactly one** labeled item
+  or emphasized point (a single `- **Label** …`, a lone bold takeaway, or a one-line
+  reveal). Very common (a claim + its one supporting beat). **Not:** 2+ labeled items
+  (→ `concept-breakdown`); a bare emphasized aside with no host content (→ `callout`); a
+  single ≤16-word claim with no supporting prose (→ `statement`).
+- **Format:** the lead as the slide's body (a short statement or 1–2 sentences) + the single
+  point rendered as **one card/panel or a callout**, never a lone bullet floating under a
+  title. If an image supports it → `content+image` with the point as a caption card. The
+  rule: one labeled point is *emphasis*, so give it a shape (card/callout), not a bullet.
+- **Strict recipe:** §7.2 single card or §8 callout. **Provenance:** gov S36/38/42–47
+  (many "one claim + one beat" slides).
 
 #### `stat`
 - **Match:** the payload is **2–4 standalone metrics/figures** — big numbers with labels
@@ -282,21 +335,136 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
 ---
 
+## Matching examples — worked classifications
+
+Each shows a slide's Markdown, the template it classifies to, and **why** (which signals
+fired, which near-miss was ruled out). These are the ground truth for consistent matching.
+
+**`concept-breakdown`** — labeled set, unordered, short bodies, no images:
+```
+## Limitaciones de los modelos
+- **Alucinaciones** Predicen texto plausible, no verifican hechos.
+- **No-determinismo** El mismo prompt produce respuestas diferentes.
+- **Sesgo de recencia** Presta más atención al inicio y al final.
+```
+→ `concept-breakdown`. `labeled_items=3`, `is_ordered=false`, `n_images=0`, bodies short →
+3 equal cards. **Ruled out:** plain bullets (labels make it a card set — the invariant);
+`card-row` would also fit but with no lead paragraph the general grid is chosen; `process`
+(no ordinal labels).
+
+**`process`** — same shape but ordered:
+```
+## Cómo funciona el pipeline
+- **Paso 1** El usuario envía un prompt.
+- **Paso 2** El modelo tokeniza la entrada.
+- **Paso 3** Genera la salida token a token.
+```
+→ `process`. Identical to the above **except** `is_ordered=true` (`Paso N`) → numbered
+cards. This single signal is the whole difference; never render an ordered set as an
+unordered grid.
+
+**`card-row` vs `icon-list`** — lead + 3–5 labeled items, split by body length:
+```
+## Tres innovaciones de StyleGAN
+StyleGAN cambió la síntesis de imágenes en tres frentes.
+- **Mapping network** Desenreda el espacio latente.
+- **AdaIN** Inyecta estilo por capa.
+- **Mixing regularization** Combina estilos de dos latentes.
+```
+→ `card-row`. Lead paragraph + `labeled_items=3`, longest body ≤ 80 chars → one horizontal
+row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be `icon-list`
+(vertical, prose room). Pick by the **longest** item; never split the group across both.
+
+**`figures` vs `concept-breakdown`** — the per-item image decides:
+```
+## Alucinaciones en profundidad
+![why](images/hall-1.svg) **¿Por qué ocurren?** No acceden a hechos verificados.
+![bias](images/hall-2.svg) **Entrenamiento sesgado** Datos incompletos o desactualizados.
+![conf](images/hall-3.svg) **Confianza sin verificación** No distingue saber de inventar.
+```
+→ `figures`. `labeled_items=3` **and each carries its own image** (`n_images=3`, one per
+item) → image+label+body cards. Without the per-item images this is `concept-breakdown`.
+
+**`content+image` vs `image-grid`** — image count + intent:
+```
+## ¿Cuánto es 1 millón de tokens?
+Un millón de tokens es más contexto del que parece.
+![scale](images/tokens-scale.png)
+📚 ~750K tokens — toda la obra de Tolkien.  🏥 ~800K tokens — historial clínico completo.
+```
+→ `content+image`. Prose leads, `n_images=1` supports it. (The 📚/🏥 pair is a `stat`
+sub-band, not its own slide.) With `n_images ≥ 4` where the *variety* is the point, it would
+be `image-grid`.
+
+**`comparison`** — two symmetric groups / a compare-table:
+```
+## Modelo único vs. Cascading
+| Factor | Modelo único | Cascading |
+| --- | --- | --- |
+| Precisión | Estable | Depende del routing |
+| Costo | Mayor por llamada | Menor en promedio |
+```
+→ `comparison`. `has_table` with `factor | A | B` → card-per-row compare-strip, **never a
+native `<a:tbl>`**. A two-column "Pros vs Cons" of labeled cards classifies here too
+(`two_groups`).
+
+**`code-example`** — code dominates:
+```
+## Prompt caching
+```python
+client.messages.create(model=…, system=[{"type":"text","cache_control":{…}}])
+```
+Marca las partes reutilizables para cachear.
+```
+→ `code-example`. `has_code=true` wins before any other signal → mono code surface + a short
+explanation column.
+
+**`statement`** — one bold claim:
+```
+## La IA no piensa como un humano
+```
+→ `statement`. `one_claim=true` (≤ 16 words, no items/images/code) → one large assertion.
+**Ruled out:** `content-text` (that carries *several* supporting facts; this is a single
+line). A recurring myth/reality series is a run of `statement` slides.
+
+**`stat`** — standalone metrics:
+```
+## Costes en la práctica
+- **~$2.50 / 1M** tokens de entrada (GPT-4o)
+- **~$10 / 1M** tokens de salida
+- **50–90%** de ahorro con prompt caching
+```
+→ `stat`. `big_metrics` (2–4 numbers with labels) → big-number cards. (If the numbers were
+prose points rather than the payload, this would be `concept-breakdown`.)
+
+**`fallback`** — nothing fires:
+```
+## Una definición
+La ingeniería de prompts es el arte de estructurar instrucciones para un modelo.
+```
+→ `content-text` (a `fallback`-adjacent last resort). No labeled items, no images, no code,
+> 16 words. Emit as a lead statement + light panels; **flag as a restructure candidate**
+(most such slides are a hidden `card-row`/`content+image`).
+
 ## Disambiguation quick-reference
 
 | If the slide is… | and… | → |
 |---|---|---|
-| a labeled set | ordered (steps/1./Paso) | `process` |
-| a labeled set | each item has an image | `figures` |
-| a labeled set | 3–5 items, bodies ≤ 80 chars | `card-row` |
-| a labeled set | 3–5 items, prose bodies | `icon-list` |
-| a labeled set | otherwise (grid of short concepts) | `concept-breakdown` |
+| a labeled set (**≥2**) | ordered (steps/1./Paso) | `process` |
+| a labeled set (**≥2**) | each item has an image | `figures` |
+| a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars | `card-row` |
+| a labeled set (**≥2**) | lead + 3–5 items, prose bodies | `icon-list` |
+| a labeled set (**≥2**) | otherwise (incl. a **2-item** grid) | `concept-breakdown` |
+| **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | numbers/metrics | 2–4 big figures + labels | `stat` |
-| two groups | A vs B / before-after / factor table | `comparison` |
+| a table | **2 comparable value-columns** (A vs B) | `comparison` |
+| a table | label/value or **N-level/N-column** | `concept-breakdown` (card-per-row) |
+| two prose groups | A vs B / before-after | `comparison` |
 | images | ≥4, variety is the message | `image-grid` |
 | images | 1–3 supporting prose | `content+image` |
 | cards **and** an image | hybrid | `content+cards+image` |
-| one big claim | ≤16 words, no enumeration | `statement` |
+| one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
 | one emphasized aside | inside another slide | `callout` |
+| section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `agenda`/divider |
 | only prose | no visual, no enumeration | `content-text` (flag) |
 | code | meant to be read | `code-example` |
