@@ -1,20 +1,21 @@
-# Critique rubric — shared, categorized, per-mode-selectable
+# Render modes — the per-format effort matrix (single source of truth)
 
-This is the **single source of truth** for what the render critique walks. Every
-render mode (`strict`, `free-form`, `preview`) selects a subset of the categories
-below; it does not carry its own rubric. The FEEDBACK sub-agent walks the selected
-`FEEDBACK` practices on the rasterized slide PNGs; the `CONTROL` practices are the
-deterministic Python audits run before FEEDBACK.
+This file is the **one authoritative definition of how each render format behaves** —
+`strict`, `free-form`, and `preview`. It has two parts:
 
-> **Why this file exists.** The per-style `pptx-prompt.md` specs are deliberately
-> self-contained and duplicate the visual *floor* (canvas / palette / fonts / cover).
-> The critique rubric is a **documented exception** to that convention — it is
-> centralized here, exactly like the deterministic `audit_*.py` scripts are shared
-> rather than copied per style. Its consumer is the critique sub-agent and
-> [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md)
-> → *Render flow*, not the per-slide renderer. Centralizing it is what makes the
-> aesthetic/distribution bar improvable in one place instead of drifting across three
-> specs (which is how the phantom free-form "§6 8-practice list" arose).
+1. **The per-format effort matrix** (below): *phase × format → action*. This is the
+   config — which render substrate, which audits, which critique categories, cycle cap,
+   deliverable — for every format.
+2. **The critique category catalog** (further down): the CONTENT / AESTHETIC /
+   DISTRIBUTION / LAYOUT-CONFORMANCE practices the FEEDBACK action walks.
+
+> **Why this file exists — do not duplicate its config.** Every other doc (SKILL.md,
+> README.md, the per-style `pptx-prompt.md` specs, orchestrator.md) **references** this
+> matrix; none restates it. Restating per-format config across those files is exactly
+> what produced the drift this repo kept having to fix (preview-CONTROL, the 3–13 range,
+> the phantom free-form "§6"). To change a format, edit its cell here — one place. (This
+> is a deliberate exception to the "each spec is self-contained" convention, mirroring
+> how the deterministic `audit_*.py` scripts are shared, not copied per style.)
 
 ## Categories
 
@@ -29,23 +30,49 @@ deterministic Python audits run before FEEDBACK.
   icons. **strict-only** — free-form and preview render their own layouts and are
   never judged against a fixed template.
 
-## Selection matrix
+## Per-format effort matrix — THE single source of truth
 
-| Mode | Categories walked (FEEDBACK) | Deterministic audits (CONTROL) | Cycle cap | Scope | On finding |
-|---|---|---|:--:|---|---|
-| **strict** | CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE | OOXML, block-coverage, aspect-ratio, cover-fidelity, **palette/fonts**, **layout-fit** | 3 | whole deck | auto-regenerate; editorial → defer |
-| **free-form** | CONTENT + AESTHETIC + DISTRIBUTION | OOXML, block-coverage, aspect-ratio, cover-fidelity | 2 | whole deck | auto-regenerate; editorial → defer |
-| **preview** | CONTENT + AESTHETIC + DISTRIBUTION | *none (no deck to audit)* | 2 | **per-slide, changed-only** | findings **surface** (deterministic renderer — no autonomous restyle) |
+**This matrix is the one authoritative definition of what each render format does per
+phase. Every other doc (SKILL.md, README.md, the per-style specs, orchestrator.md) must
+*reference* it, never restate it — restating it is what caused the drift this file
+exists to end.** Rows are the render phases; columns are the formats; each cell names an
+**action** defined in *Action definitions* below (which say *how* the action is
+performed). To change a format's behavior, edit its cell here — one place.
 
-**Preview walks the same critique categories and cycle shape as free-form** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2-cycle loop — on the numbered slide images that [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) produces, scoped per-slide to the changed subset. Two honest differences from free-form: (1) **there is no CONTROL phase** — preview produces no `.pptx`, so the deterministic audits (block-coverage, aspect-ratio, cover-fidelity, OOXML) that all parse a rendered deck cannot run; block-coverage's guarantee (every source block becomes a slide element) instead holds **by construction**, since `build_preview.py` renders every slide unit. (2) The renderer is a **deterministic code wireframe that takes no fix instructions**, so preview's REGENERATE cannot *autonomously restyle* a slide the way free-form's native renderer can — FEEDBACK findings **surface** to the presenter, who resolves them by editing `draft.md` (which re-fires the preview on the changed slides). This fits the workflow: preview runs during Review (Step 5), where content edits are exactly what the presenter is doing anyway; aesthetic/distribution findings are informational and are truly *fixed* on the Step-8 render. *(For full autonomous parity, `build_preview.py` would need per-slide fix hints — a possible enhancement.)*
+| Phase / effort | `strict` | `free-form` | `preview` |
+|---|---|---|---|
+| **GENERATE** (render) | `native-render` | `native-render` | `wireframe-render` |
+| **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` |
+| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` |
+| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` |
+| **Cycle cap** | 3 | — (single pass, no critique) | 2 |
+| **Scope** | whole deck | whole deck | per-slide, changed-only |
+| **Deliverable** | `output/final.strict.pptx` (+ canonical copy) | `output/final.free-form.pptx` (+ canonical copy) | numbered `output/draft-preview/slide-NN.png` |
+| **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (Pillow only) |
 
-`palette/fonts` and `layout-fit` are **strict-only** (they enforce the strict
-template — a layout-conformance concern). `block-coverage`, `aspect-ratio`, and
-`cover-fidelity` are the **shared floor for the two real renders — strict and
-free-form**. **Preview runs none of them**: it produces no `.pptx`, and all four
-deterministic audits parse a rendered deck, so there is nothing for them to read
-(block-coverage's guarantee instead holds by construction — `build_preview.py`
-renders every slide unit).
+## Action definitions — *how* each action is performed
+
+Each action is defined once and reused across formats via the matrix above.
+
+**GENERATE**
+- `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*.
+- `wireframe-render` — [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) draws each changed slide directly to a numbered PNG (Pillow); no `.pptx`, no `.pdf`, no native skill. ASCII → PNG by code (`render_ascii.py`); only changed slides re-render (content-addressed cache). Cowork-independent.
+
+**CONTROL** (all deterministic Python audits; a non-zero exit ends the phase)
+- `audit-full` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + **`audit_palette_fonts.py`** + **`audit_layout_fit.py`**. The last two enforce the strict template (layout-conformance) and are strict-only.
+- `audit-floor` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py`. The shared floor; no palette/fonts, no layout-fit.
+- `audit-none` — no audits run: the format produces no `.pptx`, and every deterministic audit parses a rendered deck. `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_preview.py` renders every slide unit).
+
+**FEEDBACK** (multimodal walk of slide pixels against the *Categories* below)
+- `walk-all` — walk **CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `strict/pptx-prompt.md` §20.
+- `walk-design` — walk **CONTENT + AESTHETIC + DISTRIBUTION** (never layout-conformance — the code wireframe has no template).
+- `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the CONTENT/AESTHETIC/DISTRIBUTION practices below are a handy self-review checklist for that human pass).
+
+**REGENERATE** (disposition of FEEDBACK findings)
+- `auto-regenerate` — the skill composes per-slide edit instructions and re-renders the touched slides, up to the cycle cap; objective defects are fixed, editorial-judgement calls get `defer because <reason>` and surface in the closing report.
+- `surface` — findings are **surfaced** to the presenter, not auto-fixed: the deterministic wireframe takes no fix instructions, so the presenter resolves them by editing `draft.md` (which re-fires the preview on the changed slides). Objective content/structure findings are what the presenter acts on during Review anyway; aesthetic/distribution findings are informational and are truly fixed on the Step-8 render.
+
+**Walk discipline**, the **aesthetic note**, and the **closing-report / declare-clean** contract apply to any format that runs FEEDBACK — see the shared sections at the bottom of this file.
 
 **To extend:** add one entry below under its category — every mode that selects that
 category picks it up. **To refine a mode:** edit its row above (categories, cycle cap)

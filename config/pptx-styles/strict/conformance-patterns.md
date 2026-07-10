@@ -3,7 +3,7 @@
 **Strict-only.** This file holds the strict template's LAYOUT-CONFORMANCE rules as
 **declarative data** the renderer applies at GENERATE and the FEEDBACK critique checks
 at review — rather than prose scattered through [`pptx-prompt.md`](pptx-prompt.md). The
-`CONFORMANCE-*` entries in [`../critique-rubric.md`](../critique-rubric.md) name the
+`CONFORMANCE-*` entries in [`../render-modes.md`](../render-modes.md) name the
 intent; the measurable rules live here, so they can be **grown from real edits**: the
 [`talksmith:pptx-learn`](${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/SKILL.md) skill mines
 patterns from decks a presenter hand-corrected and, after human curation, appends them

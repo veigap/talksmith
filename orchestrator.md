@@ -241,7 +241,7 @@ When the presenter signals ready, Step 5 ends. **If a draft preview is available
 
 A fast, **throwaway wireframe** of the slides rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* — order, roughly what's on each slide — before committing to Polish + the final render. It is a sanity check, **not the deliverable** (the real deck is always Step 8 from `final.md`), and it is deliberately provisional: **individual numbered per-slide PNGs** (`slide-01.png … slide-NN.png`) drawn **by code**. It stays fast by skipping everything expensive — no `.pptx`, no `.pdf`, no native skill, ASCII shown as code-rasterized PNGs (no Illustrator SVG pass), and only **changed slides** re-rendered on each refresh.
 
-**It runs the same critique categories/cycle as the free-form render** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide — so the presenter gets the same quality read early. One honest limit: the code wireframe is deterministic and takes no fix instructions, so the loop **surfaces** findings rather than autonomously restyling — the presenter resolves them via a `draft.md` edit (which re-fires the preview). Layout-conformance is never walked (there's no template).
+**It runs its own light critique loop** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide (config per [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md), preview column) — so the presenter gets a quality read early. One honest limit: the code wireframe is deterministic and takes no fix instructions, so the loop **surfaces** findings rather than autonomously restyling — the presenter resolves them via a `draft.md` edit (which re-fires the preview). Layout-conformance is never walked (there's no template). (Free-form, by contrast, is single-pass with no automated critique.)
 
 **Prerequisite: Pillow** (Python imaging). It runs in **any** session — no Cowork needed (that's why it can auto-fire in the background). If Pillow is unavailable, the preview is simply skipped — never block on it.
 
@@ -309,7 +309,7 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
    > Render this Talk as which style?
    > 1. **strict — Style Guided** — spec-driven template, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished.
-   > 2. **free-form — Free with minimal guidance** — the renderer designs its own layout, then critiques it for content, look, and arrangement (up to 2 review passes). Not bound to a template.
+   > 2. **free-form — Free with minimal guidance** — the renderer designs its own layout in a single pass; you review the deck afterward. Not bound to a template.
 
    **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess.
 
@@ -319,7 +319,7 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 3. **Show a live progress checklist — mandatory, every mode (strict, free-form, preview).** Renders take 30 s – 3 min; the presenter must never be left staring at silence wondering if it hung. On render entry, post the mode's checklist from [SKILL.md *Presenter-facing progress checklist*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) and **edit that same message in place** as the processing **phases** arrive — flip each item to `[⟳]` when it starts and `[✓]` the instant it finishes, personalizing counts (*"Rendering 3 changed slides"*, *"Reviewing 12 slides — pass 2 of 3"*).
 
-   **Do not bury the render in one opaque, multi-minute dispatch.** If any part runs as a sub-agent (e.g. the strict/free-form visual critique), it must **return phase/batch events that you surface as they happen** — after pre-process, after the build, after CONTROL, after each FEEDBACK batch (*"reviewed 10 of 29…"*), after each fix pass — not a single silent call that only reports when finished. If a stage runs quiet > 30 s, surface a plain-language heartbeat (*"still building — 7 of 18 slides…"*). A render that shows only *"Multitasking…"* for more than ~a minute is a defect, in every mode.
+   **Do not bury the render in one opaque, multi-minute dispatch.** If any part runs as a sub-agent (e.g. the strict or preview visual critique), it must **return phase/batch events that you surface as they happen** — after pre-process, after the build, after CONTROL, after each FEEDBACK batch (*"reviewed 10 of 29…"*), after each fix pass — not a single silent call that only reports when finished. If a stage runs quiet > 30 s, surface a plain-language heartbeat (*"still building — 7 of 18 slides…"*). A render that shows only *"Multitasking…"* for more than ~a minute is a defect, in every mode.
 
    **Suppression rule (hard).** Everything the skill emits is **internal log-only** — consume it for the checklist + the closing report, never relay verbatim. Suppression covers two shapes:
 

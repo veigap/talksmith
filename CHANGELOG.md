@@ -12,6 +12,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.10.0] — 2026-07-09
+
+### Changed
+
+- **Per-format render config centralized into one matrix — the source of all the drift is
+  gone.** The per-format behavior (render substrate, CONTROL audits, FEEDBACK categories,
+  cycle cap, deliverable) was duplicated across ~6 files (the rubric, SKILL's phase tables,
+  README's phase table, each style spec, the orchestrator) and kept diverging. It now lives
+  once in a **phase × format → action** matrix, with each *action* defined once (how it's
+  performed). Renamed `config/pptx-styles/critique-rubric.md` → **`render-modes.md`** to
+  reflect its role; every other doc now *references* the matrix instead of restating it.
+  Changing a format is a one-cell edit.
+- **Free-form is single-pass again — no automated critique.** The renderer designs freely
+  and the presenter reviews after delivery (GENERATE → CONTROL, floor audits, done). The
+  automated critique loop now lives only in `strict` (all four categories, ≤3 cycles); the
+  throwaway `preview` keeps its own light ≤2-cycle content/aesthetic/distribution loop whose
+  findings surface.
+
 ## [0.9.2] — 2026-07-09
 
 ### Fixed
@@ -197,7 +215,7 @@ render instructions internally consistent and runnable across all three modes.
 
 ### Added
 
-- **Shared, categorized critique rubric** ([`config/pptx-styles/critique-rubric.md`](config/pptx-styles/critique-rubric.md)).
+- **Shared, categorized critique rubric** ([`config/pptx-styles/render-modes.md`](config/pptx-styles/render-modes.md)).
   One source of truth for what each render mode's visual review walks, organized into
   four categories — **CONTENT**, **AESTHETIC**, **DISTRIBUTION** (new), and
   **LAYOUT-CONFORMANCE** (strict-only). Each mode selects which categories it walks;
