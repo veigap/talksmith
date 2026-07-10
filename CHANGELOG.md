@@ -12,6 +12,54 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.11.0] — 2026-07-10
+
+### Added
+
+- **Shared slide-template catalog — all three render modes now build to the same layout
+  vocabulary.** New [`config/pptx-styles/slide-templates.md`](config/pptx-styles/slide-templates.md)
+  is the single home for *which template a slide is, when it applies, and the prescriptive
+  format it must take* — cover, agenda, statement, concept-breakdown, card-row, icon-list,
+  process, comparison, stat, figures, image-grid, content+image, content+cards+image,
+  code-example, callout, closing-cta/hero, and a fallback. Distilled from three real
+  hand-built decks (131 slides, **0 bullet lists** — every enumeration is cards/panels).
+  Each mode now **classifies every slide against the catalog at GENERATE and renders the
+  matched template**, falling back to its default only when nothing fits. Previously this
+  vocabulary lived only in strict's prose; free-form ("renderer decides") and the preview
+  (which flattened everything to bullets) had no notion of it — so concept sets shipped as
+  bullet lists. The universal invariant — **labeled enumerations render as cards, never
+  plain bullets** — is now enforced at GENERATE in every mode and walked in FEEDBACK.
+- **The preview wireframe is template-aware.** `build_preview.py` classifies each slide
+  (`_classify`) and draws its template shape — cards, figures, content/image split, code
+  block, statement, image-grid — instead of a single bullet-flattened layout.
+- **The critique is template-aware.** New `TEMPLATE` category in
+  [`slide-quality.md`](config/pptx-styles/slide-quality.md): FEEDBACK reviews each slide
+  against its classified template's *Format*, not a generic look. Walked in every mode.
+- **Speaker-notes coverage is now enforced, not just specified.** New
+  `audit_notes_coverage.py` (shared CONTROL floor, all `.pptx` modes) fails the build if any
+  `### Notes` block lands in an empty notes pane. Notes were load-bearing but nothing checked
+  them, so a forgotten notes stage shipped silently.
+- **Committed free-form cover/agenda builder (groundwork).** `skills/md-to-pptx/freeform_deck.py`
+  builds the free-form deck's fixed cover + agenda from `final.md` metadata into a from-scratch
+  `python-pptx` `Presentation()` (which ships a default theme + slideMaster, so it imports into
+  Keynote), plus the bundled `config/pptx-styles/free-form/cover-logo.png`. Standalone-tested;
+  not yet wired into the free-form render flow (that spec rewrite is a separate change).
+
+### Fixed
+
+- **Title extraction no longer assumes Roboto Mono.** The shared `_extract_title` in
+  `audit_block_coverage.py` (reused by the new notes audit) hardcoded `"Roboto Mono"`, stale
+  since the Helvetica migration — it under-matched titles on every current deck, weakening the
+  block- and notes-coverage audits. Now accepts Helvetica/Arial titles too.
+
+### Changed
+
+- **Layout guidance consolidated into the catalog, not duplicated.** Strict §13/§15.5 now
+  reference `slide-templates.md` as authoritative for *when* a template applies (strict keeps
+  only its exact EMU realizations + the `audit_layout_fit.py` gate); free-form §3 changed from
+  "renderer decides freely" to "classify against the catalog first, design freely only on
+  fallback" (logging the chosen template id to `.layout-log.md`).
+
 ## [0.10.3] — 2026-07-09
 
 ### Fixed

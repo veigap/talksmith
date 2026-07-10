@@ -9,6 +9,11 @@ critique action, cycle cap, and deliverable, per phase.
   DISTRIBUTION / LAYOUT-CONFORMANCE practices — lives in its own file,
   [`slide-quality.md`](slide-quality.md). This file only names the *categories*; the
   practices themselves are there.
+- **The slide-template catalog** every mode classifies against at GENERATE (and the
+  critique checks against at FEEDBACK) is [`slide-templates.md`](slide-templates.md) —
+  the shared home for *which template a slide is, when it applies, and the format it must
+  take* (cards, not bullets). GENERATE picks + renders the template; FEEDBACK reviews the
+  slide against that template's format.
 
 > **Do not duplicate this config.** Every other doc (SKILL.md, README.md, the per-style
 > `pptx-prompt.md` specs, orchestrator.md) **references** this matrix; none restates it.
@@ -40,18 +45,22 @@ performed). To change a format's behavior, edit its cell here — one place.
 
 Each action is defined once and reused across formats via the matrix above.
 
-**GENERATE**
-- `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*.
-- `wireframe-render` — [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) draws each changed slide directly to a numbered PNG (Pillow); no `.pptx`, no `.pdf`, no native skill. ASCII → PNG by code (`render_ascii.py`); only changed slides re-render (content-addressed cache). Cowork-independent.
+Every GENERATE action first **classifies each slide against the shared catalog**
+[`slide-templates.md`](slide-templates.md) (its *Classification procedure*) and renders
+the matched template's *Format*, falling back to the mode default when nothing matches.
+The universal invariant — labeled enumerations are cards/panels, never plain bullets —
+holds in all three.
+- `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Classifies each slide against `slide-templates.md` and emits the matched template via the style's §-recipes (strict additionally runs the `audit_layout_fit.py` gate; free-form logs its pick to `.layout-log.md`). Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*.
+- `wireframe-render` — [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) is **template-aware**: it classifies each slide (`_classify`, same catalog signals) and draws that template's shape — concept-breakdown/process/figures as cards (never bullets), content+image split, code block, statement, image-grid — falling back to a plain title+body flow. Draws each changed slide directly to a numbered PNG (Pillow); no `.pptx`, no `.pdf`, no native skill. ASCII → PNG by code (`render_ascii.py`); only changed slides re-render (content-addressed cache; bump `preview_plan.RENDER_VERSION` on recipe changes). Cowork-independent.
 
 **CONTROL** (all deterministic Python audits; a non-zero exit ends the phase)
-- `audit-full` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + **`audit_palette_fonts.py`** + **`audit_layout_fit.py`**. The last two enforce the strict template (layout-conformance) and are strict-only.
-- `audit-floor` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py`. The shared floor; no palette/fonts, no layout-fit.
+- `audit-full` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + **`audit_notes_coverage.py`** + **`audit_palette_fonts.py`** + **`audit_layout_fit.py`**. The last two enforce the strict template (layout-conformance) and are strict-only; the rest are the shared floor.
+- `audit-floor` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + `audit_notes_coverage.py`. The shared floor; no palette/fonts, no layout-fit. `audit_notes_coverage.py` fails the build if any `### Notes` block lands in an empty notes pane (notes are load-bearing and template-independent).
 - `audit-none` — no audits run: the format produces no `.pptx`, and every deterministic audit parses a rendered deck. `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_preview.py` renders every slide unit).
 
 **FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-quality.md`](slide-quality.md))
-- `walk-all` — walk **CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `strict/pptx-prompt.md` §20.
-- `walk-design` — walk **CONTENT + AESTHETIC + DISTRIBUTION** (never layout-conformance — the code wireframe has no template).
+- `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).
+- `walk-design` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION** (never layout-conformance — the code wireframe has no strict base-template, but it *does* realize catalog templates, so TEMPLATE is walked).
 - `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the `slide-quality.md` practices are a handy self-review checklist for that human pass).
 
 **REGENERATE** (disposition of FEEDBACK findings)

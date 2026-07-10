@@ -9,7 +9,10 @@ decides *when* each is walked lives in `render-modes.md`, not here.
 ## Categories
 
 - **CONTENT** — is the substance right and digestible: every source block present, no
-  wall-of-text, sane bullet budget, no raw emoji.
+  wall-of-text, sane bullet budget, no raw emoji, speaker notes preserved.
+- **TEMPLATE** — does the slide take the right *shape*: it realizes its classified
+  catalog template ([`slide-templates.md`](slide-templates.md)) and honours the universal
+  cards-not-bullets invariant. Walked in every mode.
 - **AESTHETIC** — visual polish: overflow, margins, balance, focal point, image scale,
   contrast, type scale, alignment, emphasis, colour, image treatment, widows/orphans.
 - **DISTRIBUTION** — spatial arrangement: grid alignment, gutters, negative-space
@@ -69,6 +72,35 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "One core message per slide — the slide makes a single point. If it argues two unrelated things, split it. (Gamma: 'make one single point per slide.')"
+
+- id: CONTENT-05
+  category: CONTENT
+  enforcement: CONTROL
+  audit: audit_notes_coverage.py
+  modes: [strict, free-form]   # preview produces no .pptx; notes are not part of the wireframe deliverable
+  check: "Every `### Notes` block reaches a non-empty notes pane on its slide. Deterministic gate — any [notes-drop] → REGENERATE before FEEDBACK runs. Notes are load-bearing and template-independent."
+```
+
+## TEMPLATE
+
+The critique is **template-aware**: it receives each slide's classified template id (from
+GENERATE — strict's pre-emit audit line, free-form's `.layout-log.md`, or the preview
+classifier) and reviews the slide against **that template's *Format* in
+[`slide-templates.md`](slide-templates.md)**, not a generic notion of "looks good." Walked
+in every mode.
+
+```
+- id: TEMPLATE-01
+  category: TEMPLATE
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "The slide realizes its classified catalog template (or a justified `fallback`): the right regions, item counts, arrangement (row/grid/columns/split), and uniform sizing per that template's Format in slide-templates.md. A slide that classified as concept-breakdown but rendered as prose, or as figures but dropped its images, fails."
+
+- id: TEMPLATE-02
+  category: TEMPLATE
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "The universal invariant: a set of parallel labeled concepts renders as cards/panels/figures, NEVER as a plain bullet list. Plain unlabeled bullets only as a ≤3-item caveat aside. A 'title + bullets' slide is a mis-rendered concept-breakdown / card-row / icon-list / process / figures."
 ```
 
 ## AESTHETIC

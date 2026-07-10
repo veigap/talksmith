@@ -40,13 +40,28 @@ The cover's specific font choices (Helvetica Bold / Helvetica) are part of the f
 
 ---
 
-## 3. From slide 2 onward — renderer decides
+## 3. From slide 2 onward — classify against the catalog, then design
 
-After the cover, the renderer is the designer. Read each `## <H2>` slide's content, decide what serves it best, emit. The spec does not prescribe layout, fonts, sizes, colors, palette, icon idiom, or table treatment — the renderer judges by its own criteria. What the renderer builds is then judged by the FEEDBACK critique (§5) on **whether it works**, not on template conformance.
+After the cover, the renderer is the designer — but not from a blank slate. **Read each
+`## <H2>` slide's content and classify it against the shared template catalog**
+[`../slide-templates.md`](../slide-templates.md) (its *Classification procedure* + each
+template's *Match*). When a template matches, **render that template following its
+*Format*** — the same templates strict and preview use. When nothing matches, **design
+freely** (the catalog's `fallback`).
+
+Free-form's freedom is in the **execution**, not the taxonomy: the catalog fixes *what
+shape* the content takes (a labeled set is cards, not bullets; an ordered sequence is a
+process; a big claim is a `statement`) and free-form chooses the fonts, colours, palette,
+spacing, and icon idiom that realize it. The one hard rule the catalog carries into every
+mode — **the universal invariant: labeled enumerations are cards/panels, never plain
+bullets** — holds here too. What the renderer builds is then judged by the FEEDBACK
+critique (§5) against the matched template's *Format*, not against a strict base-template.
 
 ### 3.1 Layout log
 
-Log each choice to `talks/<Talk>/output/.layout-log.md` (one entry per slide, naming what you built + one-line rationale). The log is the render's audit trail.
+Log each choice to `talks/<Talk>/output/.layout-log.md` — one entry per slide naming the
+**catalog template id** it realized (or `fallback`) + a one-line rationale. The log is
+the render's audit trail and what the critique reads to know each slide's intended template.
 
 ### 3.2 Icons — optional
 

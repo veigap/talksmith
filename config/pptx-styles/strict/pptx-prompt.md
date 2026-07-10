@@ -496,6 +496,15 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 
 ## 13. Layout taxonomy (53 slides)
 
+> **The template vocabulary — the ids, *when* each applies, and each one's design-level
+> *Format* — is the shared catalog [`../slide-templates.md`](../slide-templates.md).**
+> All three render modes classify against it. This section is strict's **binding of each
+> catalog id to its exact §-recipe** (the base-template-precise EMU geometry that only
+> strict needs); the §15.5 table below is strict's operational realization of the
+> catalog's classification procedure, plus the strict-only `audit_layout_fit.py` gate.
+> Do not restate the catalog's when-to-pick / capacity / card-not-bullet rules here —
+> they live there now.
+
 | Type | Count | Slide # | Recipe |
 |---|---|---|---|
 | **cover** | 1 | 1 | §4 |
@@ -589,6 +598,8 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 5. <a id="15.5"></a>**Layout selection per content slide (§15.5)** — pick from §13 based on Markdown signal:
 
    The **Markdown signal** column is mechanical (regex-shaped); the **Content-intent fit** column is the discriminator for an LLM choosing a layout when two signals could plausibly match — read it before defaulting to the first row that fits. *(This emit-rule 5 is the "§15.5 layout-selection table" referenced throughout the specs and by `audit_layout_fit.py`.)*
+
+   > **The authoritative when-to-pick lives in the shared catalog** [`../slide-templates.md`](../slide-templates.md) → *Classification procedure* + each template's *Match*. This table is strict's realization of it: each row binds a catalog template to its strict §-recipe and the mechanical signal that predicts it (what `audit_layout_fit.py` checks). When this table and the catalog disagree on *when* a template applies, the catalog wins; this table governs only which strict recipe emits it.
 
    | Markdown signal in the H2-led slide | Layout type (§13) | Content-intent fit (when this layout is right; when it is not) |
    |---|---|---|

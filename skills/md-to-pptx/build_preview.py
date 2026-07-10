@@ -11,6 +11,13 @@ with Pillow — no native `pptx` skill, no LibreOffice, no Cowork dependency. St
 deliberately provisional (a wireframe): monospace text, ASCII diagrams as PNGs, image
 refs as thumbnails/placeholders. The real look comes from Step 8 (strict/free-form).
 
+The wireframe is **template-aware**: each slide is classified against the shared catalog
+`config/pptx-styles/slide-templates.md` (`_classify`) and drawn in that template's shape —
+concept-breakdown/process/figures as **cards** (never bullets, per the catalog's universal
+invariant), content+image as a text/image split, code-example as a mono block, statement as
+one large claim, image-grid as a dense grid — falling back to a plain title+body flow when
+nothing matches. Bump `preview_plan.RENDER_VERSION` when this render recipe changes.
+
 Pipeline (all deterministic, all reusing the sibling substrate):
     1. convert.py  --draft --split-dir → per-slide `slide-NN.md` units + intermediate
     2. preview_plan.py                 → per-slide reuse|render (content-addressed cache)
@@ -62,6 +69,22 @@ _IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 _HEAD_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _INLINE_MD_RE = re.compile(r"\*\*|__|`|(?<!\w)[*_](?!\s)")
 
+# Labeled-item signals (detected BEFORE inline-markdown is stripped) — a labeled
+# enumeration renders as cards, never bullets (slide-templates.md universal invariant).
+_EMOJI = r"(?:[^\w\s]️?\s*)?"
+_BOLD_ITEM_RE = re.compile(rf"^\s*[-*+]\s+{_EMOJI}\*\*(.+?)\*\*[:：]?\s*(.*)$")   # - **Label** body
+_H34_RE = re.compile(r"^(#{3,4})\s+(.+?)\s*$")                                     # ### / #### Label
+_ORDERED_RE = re.compile(
+    r"^\s*(?:\d+\s*[.)]|paso\s+\w+|step\s+\w+|fase\s+\w+|etapa\s+\w+|caso\s+\w+)\b", re.I)
+_PLAIN_BULLET_RE = re.compile(r"^\s*[-*+•]\s+")
+_FENCE_RE = re.compile(r"^\s*```")
+
+# Wireframe palette for template shapes.
+_CARD_FILL = (242, 238, 238)     # #F2EEEE
+_CARD_LINE = (214, 210, 210)
+_CODE_FILL = (242, 242, 242)     # #F2F2F2
+_NUM_FILL = (218, 27, 46)        # #DA1B2E numbered strip
+
 
 def _clean_inline(s: str) -> str:
     """Strip inline markdown emphasis (**bold**, *italic*, `code`) for the wireframe."""
@@ -94,98 +117,279 @@ def _wrap(draw, text, font, max_w):
     return lines or [""]
 
 
-def _parse_unit(md: str, talk_root: Path, preview_dir: Path):
-    """Return (title, is_divider, body_lines, image_paths) from a unit's markdown."""
-    title, is_divider, body, images = "", False, [], []
+def _parse_unit(md: str, talk_root: Path, preview_dir: Path) -> dict:
+    """Extract the catalog classification signals from a slide unit.
+
+    Returns a dict: title, level (1=divider/H1), body (plain lines, no items),
+    items (list of {label, body}), ordered (bool), images (resolved), has_code,
+    code_lines. Labeled items are detected on the *raw* line (before inline markdown
+    is stripped) so a labeled enumeration is never mistaken for prose/bullets.
+    """
+    title, level, body, images = "", 0, [], []
+    items: list[dict] = []
+    code_lines: list[str] = []
+    in_code = False
+    cur: dict | None = None            # the item currently accumulating body lines
+
+    def _flush():
+        nonlocal cur
+        if cur is not None:
+            cur["body"] = cur["body"].strip()
+            items.append(cur)
+            cur = None
+
     for raw in md.splitlines():
-        m = _HEAD_RE.match(raw.strip())
-        if m and not title:
-            title = _clean_inline(m.group(2))
-            is_divider = len(m.group(1)) == 1  # H1 → section divider
+        if _FENCE_RE.match(raw):
+            in_code = not in_code
+            continue
+        if in_code:
+            code_lines.append(raw)
+            continue
+        head = _HEAD_RE.match(raw.strip())
+        if head and not title:
+            title = _clean_inline(head.group(2))
+            level = len(head.group(1))
             continue
         for im in _IMG_RE.finditer(raw):
             images.append((im.group(1), im.group(2)))
         line = _IMG_RE.sub("", raw).rstrip()
-        if line.strip() and not m:
-            body.append(_clean_inline(line))
-    # Resolve image paths (relative to preview dir, then talk root).
+        if not line.strip():
+            continue
+        bold = _BOLD_ITEM_RE.match(line)
+        sub = _H34_RE.match(line)
+        if bold:
+            _flush()
+            cur = {"label": _clean_inline(bold.group(1)), "body": _clean_inline(bold.group(2))}
+        elif sub:
+            _flush()
+            cur = {"label": _clean_inline(sub.group(2)), "body": ""}
+        elif cur is not None and not head:
+            cur["body"] = (cur["body"] + " " + _clean_inline(line)).strip()
+        elif not head:
+            body.append(_clean_inline(_PLAIN_BULLET_RE.sub("", line)))
+    _flush()
+
+    ordered = any(_ORDERED_RE.match(it["label"]) for it in items) or \
+        any(_ORDERED_RE.match(b) for b in body)
+
     resolved = []
     for alt, ref in images:
         if ref.startswith(("http://", "https://")):
-            resolved.append((alt, None))
-            continue
+            resolved.append((alt, None)); continue
         cand = [preview_dir / ref, talk_root / ref, Path(ref)]
-        hit = next((c for c in cand if c.is_file()), None)
-        resolved.append((alt, hit))
-    return title, is_divider, body, resolved
+        resolved.append((alt, next((c for c in cand if c.is_file()), None)))
+
+    return {"title": title, "level": level, "body": body, "items": items,
+            "ordered": ordered, "images": resolved,
+            "has_code": bool(code_lines), "code_lines": code_lines}
+
+
+def _classify(u: dict) -> str:
+    """Map a parsed unit to a catalog template id (slide-templates.md)."""
+    if u["level"] == 1:
+        return "divider"
+    if u["has_code"]:
+        return "code-example"
+    ni, nimg = len(u["items"]), len(u["images"])
+    words = sum(len(b.split()) for b in u["body"])
+    if nimg >= 4 and ni < 3:
+        return "image-grid"
+    if ni >= 3:
+        if u["ordered"]:
+            return "process"
+        if nimg >= ni and nimg >= 2:
+            return "figures"
+        return "concept-breakdown"           # unordered labeled card set
+    if nimg >= 1:
+        return "content-image"
+    if ni == 0 and len(u["body"]) <= 2 and words <= 18 and u["title"]:
+        return "statement"
+    return "fallback"
+
+
+def _header(d, img_title: str, font_size: int, index: int, total: int, tag: str = ""):
+    """Draw the shared wireframe chrome (border, accent, title, footer). Returns body-top y."""
+    ft = _font(int(font_size * 1.4))
+    for ln in _wrap(d, img_title or "(untitled)", ft, SLIDE_W - 2 * _PAD)[:2]:
+        d.text((_PAD, _PAD), ln, font=ft, fill=_TEXT)
+        break
+    d.text((_PAD, SLIDE_H - _PAD), f"{index}/{total}{tag}", font=_font(font_size - 6), fill=_MUTED)
+    return _PAD + int(ft.size * 1.7)
+
+
+def _paste_or_box(img, d, path, alt, box, font_size):
+    from PIL import Image
+    x0, y0, x1, y1 = box
+    if path is not None:
+        try:
+            thumb = Image.open(path).convert("RGB")
+            thumb.thumbnail((x1 - x0, y1 - y0))
+            img.paste(thumb, (x0, y0))
+            return
+        except Exception:
+            pass
+    d.rectangle(box, fill=_PLACEHOLDER, outline=(200, 200, 200))
+    d.text((x0 + 8, (y0 + y1) // 2 - 8), f"[{(alt or 'image')[:22]}]",
+           font=_font(font_size - 6), fill=_MUTED)
+
+
+def _draw_card(img, d, box, label, body, font_size, number=None, image=None):
+    """One card: light panel + (optional number strip) + label + wrapped body. Never a bullet."""
+    x0, y0, x1, y1 = box
+    d.rectangle(box, fill=_CARD_FILL, outline=_CARD_LINE)
+    tx = x0 + 14
+    if number is not None:
+        d.rectangle([x0, y0, x0 + 8, y1], fill=_NUM_FILL)
+        tx = x0 + 22
+        d.text((tx, y0 + 10), str(number), font=_font(font_size - 4), fill=_NUM_FILL)
+        tx += 22
+    ty = y0 + 10
+    if image is not None:
+        ih = min((y1 - y0) // 2, 120)
+        _paste_or_box(img, d, image, "", [tx, ty, x1 - 12, ty + ih], font_size)
+        ty += ih + 8
+    fl = _font(font_size - 2)
+    for ln in _wrap(d, label or "", fl, x1 - tx - 12)[:2]:
+        d.text((tx, ty), ln, font=fl, fill=_TEXT); ty += fl.size + 4
+    fb = _font(font_size - 5)
+    for ln in _wrap(d, body or "", fb, x1 - tx - 12):
+        if ty > y1 - fb.size - 6:
+            break
+        d.text((tx, ty), ln, font=fb, fill=(90, 90, 90)); ty += fb.size + 3
+
+
+def _grid_boxes(n, top, with_images=False):
+    """Card boxes for n items: a row for ≤3 (or images), else a 2/3-col grid."""
+    cols = 1 if n == 1 else (3 if (n == 3 or n >= 5) else 2)
+    rows = (n + cols - 1) // cols
+    gx, gy = 20, 18
+    x0, y0 = _PAD, top
+    cw = (SLIDE_W - 2 * _PAD - (cols - 1) * gx) // cols
+    ch = (SLIDE_H - top - _PAD - (rows - 1) * gy) // rows
+    boxes = []
+    for i in range(n):
+        r, c = divmod(i, cols)
+        bx = x0 + c * (cw + gx)
+        by = y0 + r * (ch + gy)
+        boxes.append([bx, by, bx + cw, by + ch])
+    return boxes
 
 
 def _render_slide(unit_md: str, out_png: Path, talk_root: Path, preview_dir: Path,
                   font_size: int, index: int, total: int) -> None:
     from PIL import Image, ImageDraw
-    title, is_divider, body, images = _parse_unit(unit_md, talk_root, preview_dir)
+    u = _parse_unit(unit_md, talk_root, preview_dir)
+    kind = _classify(u)
 
     img = Image.new("RGB", (SLIDE_W, SLIDE_H), _BG)
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, SLIDE_W - 1, SLIDE_H - 1], outline=(225, 225, 225))
     d.line([0, 0, SLIDE_W, 0], fill=_ACCENT, width=6)
 
-    if is_divider:
+    # ── divider / section ──
+    if kind == "divider":
         f = _font(int(font_size * 2.2))
-        lines = _wrap(d, title or "(section)", f, SLIDE_W - 2 * _PAD)
-        th = sum(f.size + 12 for _ in lines)
-        y = (SLIDE_H - th) // 2
+        lines = _wrap(d, u["title"] or "(section)", f, SLIDE_W - 2 * _PAD)
+        y = (SLIDE_H - sum(f.size + 12 for _ in lines)) // 2
         for ln in lines:
             w = d.textlength(ln, font=f)
-            d.text(((SLIDE_W - w) / 2, y), ln, font=f, fill=_TEXT)
-            y += f.size + 12
-        d.text((_PAD, SLIDE_H - _PAD), f"{index}/{total} · section", font=_font(font_size - 6), fill=_MUTED)
-        img.save(out_png)
-        return
+            d.text(((SLIDE_W - w) / 2, y), ln, font=f, fill=_TEXT); y += f.size + 12
+        d.text((_PAD, SLIDE_H - _PAD), f"{index}/{total} · section",
+               font=_font(font_size - 6), fill=_MUTED)
+        img.save(out_png); return
 
-    ft = _font(int(font_size * 1.5))
-    for ln in _wrap(d, title or "(untitled)", ft, SLIDE_W - 2 * _PAD)[:2]:
-        d.text((_PAD, _PAD), ln, font=ft, fill=_TEXT)
-        break
-    y = _PAD + int(ft.size * 1.8)
+    # ── statement: one large claim, no cards ──
+    if kind == "statement":
+        f = _font(int(font_size * 2.0))
+        y = SLIDE_H // 3
+        for ln in _wrap(d, u["title"] or "", f, SLIDE_W - 2 * _PAD):
+            d.text((_PAD, y), ln, font=f, fill=_TEXT); y += f.size + 10
+        fb = _font(font_size)
+        for b in u["body"][:2]:
+            for ln in _wrap(d, b, fb, SLIDE_W - 2 * _PAD):
+                d.text((_PAD, y), ln, font=fb, fill=(90, 90, 90)); y += fb.size + 6
+        d.text((_PAD, SLIDE_H - _PAD), f"{index}/{total} · statement",
+               font=_font(font_size - 6), fill=_MUTED)
+        img.save(out_png); return
 
-    # Layout: if images, text on left half, images stacked on right half.
-    text_w = (SLIDE_W - 2 * _PAD) if not images else int((SLIDE_W - 2 * _PAD) * 0.55)
-    fb = _font(font_size)
-    for line in body:
-        if y > SLIDE_H - _PAD - fb.size:
-            d.text((_PAD, y), "…", font=fb, fill=_MUTED)
-            break
-        bullet = line.lstrip().startswith(("-", "*", "•"))
-        txt = line.lstrip("-*• ").strip() if bullet else line.strip()
-        prefix = "• " if bullet else ""
-        for wl in _wrap(d, prefix + txt, fb, text_w):
-            if y > SLIDE_H - _PAD - fb.size:
-                break
-            d.text((_PAD, y), wl, font=fb, fill=_TEXT)
-            y += fb.size + 8
+    top = _header(d, u["title"], font_size, index, total, f" · {kind}")
 
-    if images:
+    # ── code-example: mono block right, explanation left ──
+    if kind == "code-example":
+        code_w = int((SLIDE_W - 2 * _PAD) * 0.5)
+        cx0 = SLIDE_W - _PAD - code_w
+        d.rectangle([cx0, top, SLIDE_W - _PAD, SLIDE_H - _PAD], fill=_CODE_FILL, outline=_CARD_LINE)
+        fc = _font(font_size - 6)
+        cy = top + 10
+        for ln in u["code_lines"][:22]:
+            d.text((cx0 + 10, cy), ln[:52], font=fc, fill=(31, 30, 30)); cy += fc.size + 3
+        fb = _font(font_size - 2)
+        ey = top
+        for b in u["body"]:
+            for ln in _wrap(d, b, fb, code_w - 20):
+                if ey > SLIDE_H - _PAD - fb.size:
+                    break
+                d.text((_PAD, ey), ln, font=fb, fill=_TEXT); ey += fb.size + 6
+        img.save(out_png); return
+
+    # ── figures / image-grid: image cards ──
+    if kind in ("figures", "image-grid"):
+        cells = u["items"] if (kind == "figures" and u["items"]) else \
+            [{"label": a, "body": ""} for a, _ in u["images"]]
+        imgs = [p for _, p in u["images"]]
+        boxes = _grid_boxes(max(1, len(cells)), top, with_images=True)
+        for i, (box, cell) in enumerate(zip(boxes, cells)):
+            _draw_card(img, d, box, cell["label"], cell["body"], font_size,
+                       image=imgs[i] if i < len(imgs) else None)
+        img.save(out_png); return
+
+    # ── card sets: concept-breakdown / process (+ folded stat/comparison) ──
+    if kind in ("concept-breakdown", "process"):
+        boxes = _grid_boxes(len(u["items"]), top)
+        for i, (box, it) in enumerate(zip(boxes, u["items"]), 1):
+            _draw_card(img, d, box, it["label"], it["body"], font_size,
+                       number=i if kind == "process" else None)
+        img.save(out_png); return
+
+    # ── content+image: text left, images right ──
+    if kind == "content-image":
+        text_w = int((SLIDE_W - 2 * _PAD) * 0.55)
+        fb = _font(font_size)
+        y = top
+        for line in u["body"]:
+            for wl in _wrap(d, line, fb, text_w):
+                if y > SLIDE_H - _PAD - fb.size:
+                    break
+                d.text((_PAD, y), wl, font=fb, fill=_TEXT); y += fb.size + 8
+        for it in u["items"]:                       # any labeled bits become mini-cards inline
+            d.text((_PAD, y), f"{it['label']}: {it['body']}"[:70], font=_font(font_size - 3),
+                   fill=(90, 90, 90)); y += font_size + 4
         ix = _PAD + text_w + 24
         iw = SLIDE_W - _PAD - ix
-        iy = _PAD + int(ft.size * 1.8)
-        per = (SLIDE_H - iy - _PAD) // min(len(images), 3) - 16
-        for alt, path in images[:3]:
-            box = [ix, iy, ix + iw, iy + per]
-            if path is not None:
-                try:
-                    thumb = Image.open(path).convert("RGB")
-                    thumb.thumbnail((iw, per))
-                    img.paste(thumb, (ix, iy))
-                except Exception:
-                    path = None
-            if path is None:
-                d.rectangle(box, fill=_PLACEHOLDER, outline=(200, 200, 200))
-                lbl = (alt or "image")[:24]
-                d.text((ix + 10, iy + per // 2 - 8), f"[{lbl}]", font=_font(font_size - 6), fill=_MUTED)
+        per = (SLIDE_H - top - _PAD) // min(len(u["images"]), 3) - 16
+        iy = top
+        for alt, path in u["images"][:3]:
+            _paste_or_box(img, d, path, alt, [ix, iy, ix + iw, iy + per], font_size)
             iy += per + 16
+        img.save(out_png); return
 
-    d.text((_PAD, SLIDE_H - _PAD), f"{index}/{total}", font=_font(font_size - 6), fill=_MUTED)
+    # ── fallback: title + plain body (NO bullet flattening) + optional side images ──
+    fb = _font(font_size)
+    text_w = (SLIDE_W - 2 * _PAD) if not u["images"] else int((SLIDE_W - 2 * _PAD) * 0.55)
+    y = top
+    for line in u["body"]:
+        for wl in _wrap(d, line, fb, text_w):
+            if y > SLIDE_H - _PAD - fb.size:
+                d.text((_PAD, y), "…", font=fb, fill=_MUTED); break
+            d.text((_PAD, y), wl, font=fb, fill=_TEXT); y += fb.size + 8
+    if u["images"]:
+        ix = _PAD + text_w + 24
+        iw = SLIDE_W - _PAD - ix
+        per = (SLIDE_H - top - _PAD) // min(len(u["images"]), 3) - 16
+        iy = top
+        for alt, path in u["images"][:3]:
+            _paste_or_box(img, d, path, alt, [ix, iy, ix + iw, iy + per], font_size)
+            iy += per + 16
     img.save(out_png)
 
 

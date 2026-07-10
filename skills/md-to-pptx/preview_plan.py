@@ -36,7 +36,7 @@ from pathlib import Path
 
 # Bump when the preview render recipe changes (spec, base-template, ASCII font,
 # layout dispatch) so every cached slide is treated as changed on the next run.
-RENDER_VERSION = "1"
+RENDER_VERSION = "2"   # 2: template-aware render (cards not bullets) — slide-templates.md
 
 _HEADING_RE = re.compile(r"^#{1,6}\s+(.*)$")
 

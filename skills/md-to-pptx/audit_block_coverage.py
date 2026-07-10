@@ -230,10 +230,17 @@ def _looks_like_agenda(root: ET.Element) -> bool:
     return ellipses >= 4
 
 
+# Fonts a title run may use. Historically the reference deck used Roboto Mono
+# Medium; since the Roboto→Helvetica migration (0.10.3) generated decks title in
+# Helvetica/Arial Bold. Accept any of them so title extraction (and thus the
+# title-matched block/notes audits) works across both eras. The sz ≥ 1700 floor
+# already excludes section pills (≤900) and card headings (~1350).
+TITLE_FONTS = ("Roboto Mono", "Helvetica", "Arial")
+
+
 def _extract_title(root: ET.Element) -> str:
-    """Pick the first text shape whose primary run is Roboto Mono Medium
-    at sz ≥ 1700 and that is not the section pill (section pill text is
-    sz ≤ 900). Returns empty string if no title-shaped text found."""
+    """Pick the largest text shape (sz ≥ 1700) whose run uses a title font,
+    excluding the section pill (≤ 900). Empty string if none found."""
     candidates: list[tuple[int, str]] = []  # (sz, text)
     for sp in root.iter(f"{{{NS['p']}}}sp"):
         txbody = sp.find(f"{{{NS['p']}}}txBody")
@@ -246,7 +253,7 @@ def _extract_title(root: ET.Element) -> str:
         sz = int(rpr.get("sz", "0")) if rpr is not None and rpr.get("sz") else 0
         latin = rpr.find(f"{{{NS['a']}}}latin") if rpr is not None else None
         font = latin.get("typeface", "") if latin is not None else ""
-        if sz < 1700 or "Roboto Mono" not in font:
+        if sz < 1700 or not any(tf in font for tf in TITLE_FONTS):
             continue
         # Concatenate text runs in this shape
         text = "".join(
