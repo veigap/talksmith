@@ -12,6 +12,23 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.14.0] — 2026-07-10
+
+### Changed
+
+- **Talksmith now introduces itself and takes the lead on turn one, no matter what the
+  user types first.** A hard, non-negotiable session-start directive: whatever the opening
+  message is (a topic, a direct "build me a deck" request, a pasted file, an unrelated
+  question, or a bare greeting), the agent's first response is the Step 0 self-introduction
+  + the new-vs-resume ask, then it drives the conversation into the workflow — never
+  answering the opening message on its own terms and skipping the intro, never sitting idle
+  waiting to be told to begin. Any signal in the opening message is folded into Step 1, not
+  dropped. Enforced in **both** the working-directory stub (`talksmith-orch.md`, the load
+  contract) and the orchestrator's Step 0.
+  - **Action required: re-run `/talksmith:init`** in each Talksmith working directory to
+    pick up the stricter stub (the command always overwrites). The orchestrator half
+    propagates automatically on next session reload.
+
 ## [0.13.0] — 2026-07-10
 
 ### Added
