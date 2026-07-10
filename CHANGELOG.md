@@ -12,6 +12,20 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.9.1] — 2026-07-09
+
+### Fixed
+
+- **Clarified the "no python-pptx" contradiction that made a correct free-form/strict render
+  look forbidden.** The official `pptx` skill authors decks *by writing python-pptx from a
+  working copy of `base-template.pptx`* — that is the mechanism, and free-form §1 / the
+  "base template is mandatory" rule already require `Presentation(<base_template_path>)`. But
+  SKILL.md's intro said, absolutely, "no python-pptx," contradicting that. Reworded so the
+  rule reads correctly: driving the native skill's python-pptx-from-base-template workflow is
+  required; what's forbidden is *bypassing* it (a blank `Presentation()` from scratch,
+  reimplementing the theme, or another tool). A generator that starts from the base template
+  and builds each slide per the visual spec is the correct render, not the anti-pattern.
+
 ## [0.9.0] — 2026-07-09
 
 Milestone release consolidating this cycle's PPTX work (details in 0.4.0–0.8.2 below):

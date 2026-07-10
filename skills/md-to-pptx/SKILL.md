@@ -5,7 +5,11 @@ description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck 
 
 # md-to-pptx — Render `final.md` to PowerPoint
 
-**This skill is a thin orchestrator. All `.pptx` authoring must be delegated to Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx).** Do not author the deck with any other tool — no `python-pptx`, no `pandoc`, no Marp, no hand-written XML. Pre-process `final.md`, then invoke `skill://antropic-skills:/pptx` with the intermediate file, the image paths, **the base template, and the visual spec**. If that skill is not in the current session's registry (i.e. the session is not running inside Claude Cowork), stop and tell the presenter to run this step inside Cowork. No CLI fallback — see *Why Cowork-only* at the bottom.
+**This skill is a thin orchestrator. All `.pptx` authoring must go through Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx)** — which authors the deck **programmatically with `python-pptx`**, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`; see §1 of the free-form spec and the *base template is mandatory* rule below). So "delegate to the pptx skill" means: **drive that skill's `python-pptx` workflow from the base template + visual spec.** Writing `python-pptx` this way is not just allowed, it is the mechanism.
+
+What is **forbidden** is *bypassing* that path: authoring from a blank `Presentation()` from scratch, reimplementing the theme yourself, or using another tool (`pandoc`, Marp, hand-written XML) — all abandoned because they fail Keynote import (see *Why Cowork-only*). A python generator that starts from `base-template.pptx`, substitutes the cover, and builds each slide per the visual spec is the **correct** free-form/strict render, not the anti-pattern.
+
+Pre-process `final.md`, then invoke `skill://antropic-skills:/pptx` with the intermediate file, the image paths, **the base template, and the visual spec**. If that skill is not in the current session's registry (i.e. the session is not running inside Claude Cowork), stop and tell the presenter to run this step inside Cowork. No CLI fallback — see *Why Cowork-only* at the bottom.
 
 **Style resolution — `style:` invocation parameter (mandatory, no default).** Every render begins by reading the `style:` parameter the orchestrator passed in at invocation. Allowed values are `strict` and `free-form` per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). The orchestrator asks the presenter at every Step 8 entry (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → Step 8 step 1) and must get an explicit answer before dispatching this skill. `final.md` and `draft.md` carry no `style:` field — the same Talk content can be rendered in either style at any time. If the invocation arrives with no `style:` parameter, the skill **fails render-blocking** with the error message at Process step 0 below; it does not guess or default. The resolved style determines two paths the rest of this skill uses:
 
@@ -394,11 +398,11 @@ Operational / IO failures only. **Visual-spec violations** (emoji survived, non-
 
 ## Why Cowork-only
 
-Earlier iterations tried three CLI rendering paths:
+Earlier iterations tried three *CLI-only, from-scratch* rendering paths (note: this is about building a deck **without** the native `pptx` skill — the native skill's own `python-pptx`-from-base-template workflow is the sanctioned path, see the top of this file):
 
 | Attempt | Outcome |
 |---|---|
-| Hand-rolled `python-pptx` script | Brittle parsing of `final.md`, layout-by-layout reimplementation of theme. Abandoned. |
+| Hand-rolled `python-pptx` script **from a blank `Presentation()`** (reimplementing the theme, no base template, no native skill) | Brittle `final.md` parsing, layout-by-layout theme reimplementation, fails Keynote import. Abandoned. *(This is NOT the native pptx skill's base-template workflow, which is required.)* |
 | Marp CLI | Required migrating `final.md` to Marp syntax — a structural change to the source of truth. Reverted. |
 | `pandoc --reference-doc=…` | Template-layout name mismatch (pandoc expects `Title Slide`, `Section Header`, etc. — our template doesn't have them), so theme fell back to pandoc's defaults. Section dividers also split into two slides because of body content between H1 and the first H2. Tables sometimes dropped silently. Removed. |
 
