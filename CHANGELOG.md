@@ -12,6 +12,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.16.0] — 2026-07-10
+
+### Changed
+
+- **`/talksmith:init` now loads the spec and starts the workflow, instead of deferring to a
+  reload.** Previously init just dropped the `CLAUDE.md` stub and told the user to `/clear` so
+  the next session's `@`-import would pull the spec — the exact mechanism that silently
+  no-ops in Cowork. Init now: (1) writes the stub (with a locate-the-install fallback if
+  `${CLAUDE_PLUGIN_ROOT}` is unset), (2) **reads `orchestrator.md` directly into context** so
+  the spec is guaranteed loaded regardless of environment, and (3) **immediately runs Step 0**
+  — introduces Talksmith and asks "new presentation or resume existing?". That question both
+  starts the work and confirms the spec loaded; no reload needed. Subsequent sessions still
+  load the spec via the 0.15.0 stub directive. **Re-run `/talksmith:init`** to get the
+  load-and-start behavior (Cowork users especially).
+
 ## [0.15.0] — 2026-07-10
 
 ### Fixed
