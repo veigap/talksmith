@@ -4,9 +4,9 @@ This is the preview's renderer. It exists so the preview is **reproducible and l
 in the skill**, instead of the agent hand-rolling a throwaway script each run (which
 defeats the point of a plugin). Run this; never improvise a renderer.
 
-The preview is a fast, throwaway visual of `draft.md` — a per-slide PNG grid so the
-presenter can eyeball slide order and rough content before Polish. Because the
-deliverable is images (not a deliverable deck), the whole thing renders **by code**
+The preview is a fast, throwaway visual of `draft.md` — ordered, numbered per-slide PNGs
+(`slide-01.png … slide-NN.png`) so the presenter can flip through slide order and rough
+content before Polish. Because the deliverable is images (not a deck), it renders **by code**
 with Pillow — no native `pptx` skill, no LibreOffice, no Cowork dependency. Styling is
 deliberately provisional (a wireframe): monospace text, ASCII diagrams as PNGs, image
 refs as thumbnails/placeholders. The real look comes from Step 8 (strict/free-form).
@@ -15,19 +15,24 @@ Pipeline (all deterministic, all reusing the sibling substrate):
     1. convert.py  --draft --split-dir → per-slide `slide-NN.md` units + intermediate
     2. preview_plan.py                 → per-slide reuse|render (content-addressed cache)
     3. render_ascii.py                 → ASCII fences → PNG (for the render units only)
-    4. this file                       → render each render-unit to a slide PNG (Pillow)
-                                          + assemble the contact-sheet grid; reuse cached
-                                          slide PNGs for unchanged units
+    4. this file                       → render each render-unit to a slide PNG (Pillow),
+                                          reuse cached PNGs for unchanged units, then emit
+                                          ordered, numbered review images slide-01.png …
 
 Outputs under `talks/<Talk>/output/draft-preview/`:
-    units/slide-NN.md          preview.intermediate.md
-    ascii/ascii-<hash>.png     .previews/slide-<hash>.png     grid.png
+    slide-01.png … slide-NN.png   ← the numbered review images (open these, in order)
+    units/slide-NN.md             preview.intermediate.md
+    ascii/ascii-<hash>.png        .previews/slide-<hash>.png   ← content-addressed cache
     .preview-cache.json
+
+The `.previews/slide-<hash>.png` files are the incremental cache (stable across runs so
+unchanged slides are reused); the top-level `slide-NN.png` are the ordered copies the
+presenter reviews. No grid, no `.pptx`, no `.pdf`.
 
 Requires Pillow. Degrades: a missing monospace font falls back to Pillow's default.
 
 Usage:
-    python3 build_preview.py --talk talks/<Talk> [--font-size 22] [--cols 4]
+    python3 build_preview.py --talk talks/<Talk> [--font-size 22]
 """
 
 from __future__ import annotations
@@ -184,31 +189,10 @@ def _render_slide(unit_md: str, out_png: Path, talk_root: Path, preview_dir: Pat
     img.save(out_png)
 
 
-def _assemble_grid(slide_pngs: list[Path], out_png: Path, cols: int) -> None:
-    from PIL import Image
-    if not slide_pngs:
-        return
-    thumb_w = 320
-    thumb_h = int(thumb_w * SLIDE_H / SLIDE_W)
-    rows = (len(slide_pngs) + cols - 1) // cols
-    gap = 12
-    grid = Image.new("RGB", (cols * thumb_w + (cols + 1) * gap,
-                             rows * thumb_h + (rows + 1) * gap), (245, 245, 245))
-    for i, p in enumerate(slide_pngs):
-        try:
-            t = Image.open(p).convert("RGB").resize((thumb_w, thumb_h))
-        except Exception:
-            continue
-        r, c = divmod(i, cols)
-        grid.paste(t, (gap + c * (thumb_w + gap), gap + r * (thumb_h + gap)))
-    grid.save(out_png)
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--talk", type=Path, required=True, help="Talk root, e.g. talks/<Talk>")
     ap.add_argument("--font-size", type=int, default=22)
-    ap.add_argument("--cols", type=int, default=4)
     args = ap.parse_args(argv)
 
     try:
@@ -262,14 +246,28 @@ def main(argv=None) -> int:
             print(f"[preview 3/4] rendered {u['index']}/{total}…", file=sys.stderr)
     print(f"[preview 3/4] slides ready ({total})", file=sys.stderr)
 
-    # grid + manifest
-    ordered = [Path(u["slide_png"]) for u in plan]
-    grid = pdir / "grid.png"
-    _assemble_grid(ordered, grid, args.cols)
+    # Emit ordered, numbered review images (slide-01.png, slide-02.png, …). The
+    # hash-named PNGs under .previews/ stay as the incremental cache; these numbered
+    # copies are what the presenter opens to review, in order.
+    import shutil
+    nwidth = max(2, len(str(len(plan))))
+    review: list[Path] = []
+    for i, u in enumerate(plan, 1):
+        src = Path(u["slide_png"])
+        if not src.is_file():
+            continue
+        dst = pdir / f"slide-{i:0{nwidth}d}.png"
+        shutil.copyfile(src, dst)
+        review.append(dst)
+    # Drop stale numbered images from a previous, longer run.
+    for old in pdir.glob("slide-*.png"):
+        if old not in review:
+            old.unlink()
+
     manifest_path.write_text(json.dumps(
         {"render_version": _plan.RENDER_VERSION, "units": new_units}, indent=2), encoding="utf-8")
-    print(f"[preview 4/4] grid → {grid}", file=sys.stderr)
-    print(str(grid))
+    print(f"[preview 4/4] {len(review)} review images → {pdir}/slide-NN.png", file=sys.stderr)
+    print(str(pdir))
     return 0
 
 

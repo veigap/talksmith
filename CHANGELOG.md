@@ -12,6 +12,32 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.8.0] — 2026-07-09
+
+### Changed
+
+- **Preview outputs numbered individual images, not a grid.** `build_preview.py` now writes
+  `slide-01.png … slide-NN.png` at the top of `output/draft-preview/` (the presenter flips
+  through them in order); the content-addressed cache stays hidden in `.previews/`. No
+  contact-sheet grid.
+- **Preview runs the same critique categories and cycle as free-form** — CONTENT +
+  AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide — walked on the numbered images. One
+  honest limitation, documented throughout: the preview's renderer is a *deterministic
+  code wireframe that takes no fix instructions*, so its REGENERATE cannot autonomously
+  restyle a slide the way free-form's native renderer can — FEEDBACK findings **surface**
+  for the presenter, who resolves them with a `draft.md` edit (which re-fires the preview).
+  This fits the workflow (preview runs during Review, where content edits happen anyway);
+  aesthetic/distribution issues are truly fixed on the Step-8 render.
+
+### Fixed
+
+- **Consistency pass across the pptx docs.** Corrected preview's CONTROL to block-coverage
+  only (it has no deck, so aspect/cover-fidelity/OOXML can't run), removed stale "grid" and
+  "no-critique" references left over from the intermediate iterations, and aligned the
+  free-form/preview cycle wording. No contradictory statements remain about caps, category
+  selection, audit membership, or the ASCII→SVG (strict/free-form) vs ASCII→PNG (preview)
+  split.
+
 ## [0.7.0] — 2026-07-09
 
 ### Changed
