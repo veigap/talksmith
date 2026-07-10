@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.9.0] — 2026-07-09
+
+Milestone release consolidating this cycle's PPTX work (details in 0.4.0–0.8.2 below):
+the optional **Step-5.5 draft preview** (committed code-only renderer `build_preview.py`
+— numbered per-slide wireframes, no `.pptx`/`.pdf`, Cowork-independent); the shared,
+**categorized critique rubric** (CONTENT / AESTHETIC / DISTRIBUTION / LAYOUT-CONFORMANCE)
+selectable per mode, with free-form and preview gaining a real critique loop; the
+strict-only **`pptx-learn`** skill that mines styling/positioning patterns from
+hand-corrected decks into declarative conformance rules; live per-phase render progress
+in every mode; per-mode output isolation; and two deep contradiction sweeps leaving the
+render instructions internally consistent and runnable across all three modes.
+
 ## [0.8.2] — 2026-07-09
 
 ### Fixed
