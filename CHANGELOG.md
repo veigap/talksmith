@@ -12,6 +12,20 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.10.3] — 2026-07-09
+
+### Fixed
+
+- **Strict/free-form base-template cover no longer fails its own audits.** The shipped
+  `base-template.pptx` covers (and the strict agenda) were authored in **Roboto / Roboto
+  Mono Medium** — which `audit_palette_fonts.py` forbids (system-fonts-only, because Roboto
+  crashes Keynote import) while `audit_cover_fidelity.py` requires the render to *match* that
+  cover. The two hard audits contradicted each other on the shipped asset, so no strict
+  render could pass both. Rewrote the cover + agenda font runs to the fonts the §4.3 recipe
+  already specifies — **Helvetica Bold** (title/subtitle) and **Helvetica** (author/date) —
+  so template = spec recipe = allowed palette, and both audits now agree. (Strict template
+  slides 3–15 are the deleted layout-reference zone and don't reach the render.)
+
 ## [0.10.2] — 2026-07-09
 
 ### Fixed
