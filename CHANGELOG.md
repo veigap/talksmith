@@ -12,6 +12,22 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.15.0] — 2026-07-10
+
+### Fixed
+
+- **The orchestrator spec now loads reliably in Cowork, not just the CLI.** The stub relied
+  on the `@${CLAUDE_PLUGIN_ROOT}/orchestrator.md` import to pull the full spec into context —
+  but that `@`-import is a Claude Code **CLI** convention that **Cowork does not expand**, so
+  the stub loaded while the actual operating spec silently did not, and Talksmith ran with no
+  workflow knowledge. Worse, the old stub misread this as a broken install and told the user
+  to reinstall. The load directive now: keeps the import for the CLI, **tells the agent not
+  to assume it resolved**, has it **verify the spec is in context and Read
+  `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` explicitly if not** (with a locate-the-install
+  fallback), and only surfaces a reinstall message if the file is genuinely unfindable.
+  - **Action required: re-run `/talksmith:init`** in each working directory to pick up the
+    robust load directive (Cowork users especially).
+
 ## [0.14.2] — 2026-07-10
 
 ### Changed
