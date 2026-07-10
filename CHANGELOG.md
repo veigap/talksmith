@@ -12,6 +12,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.14.1] — 2026-07-10
+
+### Changed
+
+- **Restructured the working-directory stub (`talksmith-orch.md`) to lead with directives.**
+  Now: the two directives first (load the spec; introduce-yourself-first), then context (what
+  a subject repo is, the created-on-demand layout, updating), then a short **"How to use
+  Talksmith"** for a first-time presenter. Tighter throughout. The session-start behavior is
+  unchanged from 0.14.0 — same rule, clearer placement — so **re-running `/talksmith:init` is
+  optional** (do it only if you want the tidier stub + how-to in your working directory).
+
 ## [0.14.0] — 2026-07-10
 
 ### Changed

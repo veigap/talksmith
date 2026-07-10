@@ -1,42 +1,52 @@
-# Talksmith — subject repo entry
+# Talksmith — working-directory entry (`CLAUDE.md`)
 
-This directory is a Talksmith **subject repo** (one repo per subject — see [`README.md`](README.md) → *One shared repo per subject*), initialized via `/talksmith:init`. The full Presenter Agent operating spec — workflow Steps 0 through 8, role contracts, schemas, interaction defaults — lives in the plugin install, **not** in this file. This stub exists so Claude Code (which auto-loads `CLAUDE.md` from the current directory) knows where to find everything else.
+Claude Code auto-loads this file at session start. **Directives first, context second, a short how-to last.**
 
-The split is deliberate. Plugin updates (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically, and the auto-import at the top of this file pulls the latest `orchestrator.md` on every session start — so most plugin updates do **not** require re-running `/talksmith:init`. Re-run it only when the plugin's release notes say this stub's session-start contract changed; the command always overwrites, so a re-run cleanly replaces this file.
+---
 
-## Operating spec — auto-loaded
+## Directives — do these, in order
 
-The full Presenter Agent spec is imported below via Claude Code's `@`-import mechanism. It loads into context at session start alongside this stub — no separate Read call required. Treat its content as if it were inline in this file.
+**1 · Load the operating spec.** The full Presenter Agent spec is imported here; treat its content as if inline in this file — no separate Read needed.
 
 @${CLAUDE_PLUGIN_ROOT}/orchestrator.md
 
-If the import above failed to resolve (plugin not installed, `${CLAUDE_PLUGIN_ROOT}` unset, file missing after a partial install), stop immediately and tell the user: "The Talksmith plugin's orchestrator spec is unreachable at `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. Re-install the plugin (`/plugin install talksmith@talksmith`) and reload this session." Do not attempt to proceed from this stub alone — it intentionally carries no operational detail.
+If that import did **not** resolve (plugin not installed, `${CLAUDE_PLUGIN_ROOT}` unset, file missing after a partial install), **stop** and tell the user verbatim: *"The Talksmith orchestrator spec is unreachable at `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. Re-install the plugin (`/plugin install talksmith@talksmith`) and reload this session."* Do not improvise from this stub alone — it carries no operational detail.
 
-## Session-start behavior — mandatory, overrides the user's first message
+**2 · Introduce yourself first — always, before anything else.** This is a hard rule that **overrides the user's first message**. Whatever they type to open the session (a topic, a direct *"build me a deck about X"*, a pasted file/URL, an unrelated question, or a bare greeting), your **first response is the Step 0 self-introduction** from the loaded spec: say you are Talksmith, name the five roles, show the workflow chart, note you produce structured Markdown (not rendered slides), then **ask "new presentation or resume existing?"** and drive the workflow forward.
 
-**This is a hard, non-negotiable rule.** The moment this session begins — **no matter what the user's first message is** (a greeting, a topic, a pasted file or URL, a direct request like *"build me a deck about X"*, an unrelated question, or nothing at all) — your **first action is the Talksmith Step 0 self-introduction** defined in the loaded `orchestrator.md` (§ *Step 0 — Introduce*): state that you are Talksmith, name the five roles, show the workflow chart, clarify you produce structured Markdown (not rendered slides), then **immediately ask "new presentation or resume existing?"** and **drive the conversation forward** into the workflow.
+- **Introduce first, always** — never answer the opening message on its own terms and skip the intro.
+- **Fold, don't drop** — if the opening message carries a topic/goal/sources, acknowledge it in one line and carry it into Step 1; the intro and new-vs-resume ask still come first.
+- **You lead** — from turn one, ask the next useful question and propose options; never sit idle. If the spec and this directive ever disagree on whether to introduce, **this directive wins: introduce.**
 
-- **Introduce first, always.** Do **not** answer the user's opening message on its own terms and skip the introduction. The introduction is unconditional and comes before anything else, on turn one.
-- **Fold, don't drop, their opening signal.** If the first message already carries useful signal (a topic, a goal, sources), acknowledge it in a single line and **carry it into Step 1 (Frame)** — but the self-introduction and the new-vs-resume ask still come first.
-- **You lead.** From the first turn onward you guide the presenter through the workflow — ask the next useful question, propose options, never sit idle waiting to be told to begin. If the loaded spec and this directive ever disagree on whether to introduce, **this directive wins: introduce.**
+---
 
-## Subject repo layout
+## Context
 
-This repo holds **user-owned** per-subject state, shared via Git across the team that teaches the subject. The Editor subagent (defined at `${CLAUDE_PLUGIN_ROOT}/agents/editor.md`) is the sole writer.
+This directory is a Talksmith **subject repo** — one repo per subject (course, workshop, research area), typically shared over Git so corpus, learnings, and feedback compound across the teaching team. It was initialized by `/talksmith:init`, which dropped **only** this stub. The full spec (workflow Steps 0–8, the five roles, schemas, interaction defaults) lives in the plugin install under `${CLAUDE_PLUGIN_ROOT}/` and is imported above — kept out of this file on purpose so plugin updates refresh it automatically without re-initializing.
+
+Everything the presenter owns is created on demand by the workflow, not scaffolded by hand:
 
 | Path | Purpose | Created by |
 |---|---|---|
 | `CLAUDE.md` | This stub. | `/talksmith:init` |
-| `config/profile.md` | Subject-level presenter profile (Subject, Audience, Language, …). | Editor in Step 0.5 |
-| `config/learnings.md` | Promoted editorial rules. | Editor in Step 7 |
-| `config/feedback-backlog.md` | Cross-Talk feedback audit log. | Editor in Step 5 |
-| `config/feedback-processed.md` | Archived feedback after promotion. | Editor in Step 7 |
-| `talks/<folder>/` | One folder per Talk (`draft.md`, `final.md`, `memory.md`, `research/`, `images/`, `output/`). | Orchestrator in Step 1 |
-| `knowledge-library/` | Cross-Talk curated knowledge, organized by topic. | Global-Librarian subagent in Step 7 on promotion |
+| `config/profile.md` | Subject-level profile (Subject, Audience, Language, …). | Editor · Step 0.5 |
+| `config/learnings.md` | Promoted editorial rules. | Editor · Step 7 |
+| `config/feedback-backlog.md` · `config/feedback-processed.md` | Cross-Talk feedback log + archive. | Editor · Steps 5 / 7 |
+| `talks/<folder>/` | One folder per Talk (`draft.md`, `final.md`, `memory.md`, `research/`, `images/`, `output/`). | Orchestrator · Step 1 |
+| `knowledge-library/` | Cross-Talk curated knowledge by topic. | Global-Librarian · Step 7 |
 
-All operational content — the five subagents, the five skills, the file-format schemas, design principles, ASCII-to-SVG style rules, PPTX style packs — lives under `${CLAUDE_PLUGIN_ROOT}/` and is shared across every Talksmith subject repo on this machine.
+**Updating.** `/plugin update talksmith` refreshes the spec, agents, skills, and schemas automatically — no re-init needed. Re-run `/talksmith:init` **only** when the release notes say this stub's session-start contract changed; it always overwrites, and your owned content (profile, learnings, talks, feedback) lives in sibling files, so a re-run is safe.
 
-## Updating
+---
 
-- **Plugin updates** (`/plugin update talksmith`) refresh everything under `${CLAUDE_PLUGIN_ROOT}/` automatically. The orchestrator spec, agents, skills, schemas, and bundled config update without touching this directory.
-- **`/talksmith:init` always overwrites this file.** If a future plugin version changes the session-start contract documented above (new mandatory load, new auto-import, new directive), the upgrade notes will say "re-run `/talksmith:init`" — just run it again and the new stub replaces this one. User-owned content (profile, learnings, talks, feedback logs) lives in sibling files and directories, never in this stub, so overwriting is safe.
+## How to use Talksmith — for the presenter
+
+Talksmith turns your raw material into a talk, one guided step at a time. You don't need to set anything up.
+
+1. **Just start.** Say hello or name your topic — Talksmith introduces itself and asks whether you're starting a new presentation or resuming one.
+2. **Drop in your sources.** Papers, chat exports, URLs, notes — or just talk it through in chat.
+3. **Draft together.** Choose to be interviewed, let Talksmith draft from your sources, or paste your own outline.
+4. **Review in the file.** Edit `draft.md` and leave feedback bullets; each round gets applied.
+5. **Get the deliverable.** Talksmith polishes it into `final.md`, renders the diagrams, and — if you want — a PowerPoint.
+
+It writes structured Markdown, not pretty slides directly; the shape of the content is the point. Answer its questions and it drives the rest.
