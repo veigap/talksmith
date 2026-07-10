@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.10.1] — 2026-07-09
+
+### Changed
+
+- **Separated two concerns that had been in one file.** `render-modes.md` was doing double
+  duty — the per-format *pipeline config* (matrix + action definitions) *and* the *design
+  quality bar* (the CONTENT / AESTHETIC / DISTRIBUTION / LAYOUT-CONFORMANCE practices). Split
+  them: `render-modes.md` keeps the matrix + actions (how each format runs); the practice
+  catalog + walk discipline + closing-report moved to a new **`slide-quality.md`** (what a
+  good slide looks like). The FEEDBACK action references the catalog. You can now tune the
+  aesthetic bar without touching mode config, and vice versa.
+
 ## [0.10.0] — 2026-07-09
 
 ### Changed
