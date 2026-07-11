@@ -12,6 +12,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.17.1] — 2026-07-10
+
+### Fixed
+
+- **The render's style-suffixed output guarantee is now stated in the orchestrator's Step 8,
+  not only in the skill.** Renders are meant to write `output/final.<style>.pptx`
+  (`final.strict.pptx`, `final.free-form.pptx`) so strict and free-form decks of the same Talk
+  coexist, with the latest copied to a canonical `final.pptx` — but that rule lived only in
+  `md-to-pptx`'s spec, and real Cowork renders were writing `final.pptx` directly (styles
+  overwriting each other). Step 8 (the render driver) now names the guarantee explicitly:
+  never render straight to `final.pptx`, always the suffixed name; a render that produced only
+  `final.pptx` bypassed the rule and is a defect.
+
 ## [0.17.0] — 2026-07-10
 
 ### Changed
