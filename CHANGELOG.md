@@ -12,6 +12,22 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.19.0] — 2026-07-12
+
+### Changed
+
+- **Free-form now honors the shared design bar *at GENERATE*, not just template choice.**
+  Free-form classified against the catalog but otherwise designed "freely," treating the
+  design practices as a mere human checklist — so decks under-honored the guidance, and a
+  dangling ref pointed at a non-existent free-form FEEDBACK step. Free-form's §1/§3 now
+  require the renderer to design *from* the shared bar as it builds: the generic
+  `visual-guidance.md` floor (hard invariants + principles), the matched template's *Format*
+  (incl. the concept-breakdown per-concept icon and balanced cards), and the
+  `slide-design.md` CONTENT/TEMPLATE/AESTHETIC/DISTRIBUTION practices. Its freedom is now
+  scoped to the *visual execution* (palette, type, spacing, icon idiom); the only bar it
+  still skips is the strict-only LAYOUT-CONFORMANCE. Stays single-pass (no critique loop) —
+  the guidance is applied while building and the presenter reviews after.
+
 ## [0.18.0] — 2026-07-12
 
 ### Added
