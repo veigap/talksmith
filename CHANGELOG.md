@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.19.1] — 2026-07-12
+
+### Changed
+
+- **Dev docs: added a "refreshing the plugin so Cowork picks up changes" section** to the
+  plugin-repo `CLAUDE.md` — the short loop (commit + push → bump version → `/plugin update
+  talksmith` → new session / `/plugin reload`) that avoids the full reinstall + re-init,
+  since everything under `${CLAUDE_PLUGIN_ROOT}/` is read fresh each session and only the stub
+  needs re-init. Contributor-facing only; no runtime behavior change.
+
 ## [0.19.0] — 2026-07-12
 
 ### Changed

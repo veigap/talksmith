@@ -71,3 +71,21 @@ Every commit **must** record a **functional description** of what changed and wh
 1. Reload the plugin in your Claude Code session (`/plugin reload talksmith` or restart the session).
 2. In a **separate** scratch directory (never this repo), run `/talksmith:init` and walk through Step 0 → Step 1 to confirm the orchestrator boots and the five agents dispatch correctly.
 3. For skill changes, invoke the skill directly via its slash form (e.g. `/talksmith:ingest <url>`) on a representative input.
+
+## Refreshing the plugin so Cowork picks up changes (fast loop, no full reinstall)
+
+The marketplace **is this git repo** ([`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) → `source: "./"`); Cowork (desktop) and the CLI share one install and update via `/plugin update talksmith`. You almost never need the "full" cycle (remove marketplace → reinstall → re-init). Two facts make the loop short:
+
+- **Everything under `${CLAUDE_PLUGIN_ROOT}/`** — `orchestrator.md`, `agents/`, `skills/`, `schemas/`, `config/` — is **read fresh at every session start** (the stub loads `orchestrator.md`; skills/agents/config load just-in-time). So once the *install* has the new files, a **new session** picks them up with **no `/talksmith:init` and no reinstall**.
+- **Only the stub** (`talksmith-orch.md` → a working dir's `CLAUDE.md`) is frozen until `/talksmith:init` re-runs. Change the stub → users re-init; change *anything else* → they just start a fresh session after the install updates.
+
+**Minimal refresh loop (Cowork or CLI):**
+1. Commit **and push** — the marketplace pulls from what's on GitHub, so unpushed commits are invisible to `/plugin update`.
+2. **Bump `plugin.json` `version`** — the marketplace uses it to decide there's an update; an unbumped push won't be pulled.
+3. In the session: **`/plugin update talksmith`** (pulls the new files into the shared install), then **`/plugin reload talksmith`** *or* **start a new session** so the stub re-reads the latest `orchestrator.md`.
+
+For a spec/skill/agent/config edit (the common case) that's the whole loop — no re-init, no reinstall. Re-init is needed **only** when the stub's bootstrap changed (the changelog entry will say so).
+
+**Even faster for local iteration:** add a **local-path marketplace** pointing at your clone — `/plugin marketplace add <path-to-this-repo>` — then `/plugin update` / `/plugin reload` picks up **committed** changes with no GitHub push (where the environment supports local marketplaces; the desktop app may be GitHub-only — verify in your setup).
+
+> **Caveat.** The in-session reload affordance varies by environment (CLI has `/plugin reload`; the desktop plugin manager may differ). When in doubt, a **fresh session always re-reads** `${CLAUDE_PLUGIN_ROOT}/`, so "start a new session" is the reliable fallback after `/plugin update`.
