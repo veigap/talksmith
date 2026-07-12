@@ -243,6 +243,12 @@ optional padding — the part only the critic can do.
   enforcement: FEEDBACK
   modes: [strict, free-form, preview]
   check: "No dead title→body gap — body content begins just below the title's *actual* wrapped height, not below a worst-case reserve. A short one-line title must not leave a large empty band above the body (the classic symptom of a renderer that reserved room for a 2–3-line title the text didn't need). (strict realizes this via the measured-height rule in strict/pptx-prompt.md §3.5.)"
+
+- id: DISTRIBUTION-09
+  category: DISTRIBUTION
+  enforcement: FEEDBACK
+  modes: [strict, free-form, preview]
+  check: "Card content is balanced within the card — uniform equal cards in a grid are correct (a concept grid *should* be a regular grid of equal cards, even filling the region), but the content must sit balanced inside each card (vertically centred, or icon-top with even padding), never crammed at the top with a large dead void below. The failure mode is not uniformity — it is a big box whose content hugs the top edge, so items read as far apart. Balance the content; keep the grid uniform."
 ```
 
 ## LAYOUT-CONFORMANCE  *(strict-only)*

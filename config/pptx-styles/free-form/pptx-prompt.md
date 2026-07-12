@@ -57,11 +57,15 @@ mode — **the universal invariant: labeled enumerations are cards/panels, never
 bullets** — holds here too. What the renderer builds is then judged by the FEEDBACK
 critique (§5) against the matched template's *Format*, not against a strict base-template.
 
-### 3.1 Layout log
+### 3.1 Template-decision log
 
-Log each choice to `talks/<Talk>/output/.layout-log.md` — one entry per slide naming the
-**catalog template id** it realized (or `fallback`) + a one-line rationale. The log is
-the render's audit trail and what the critique reads to know each slide's intended template.
+Write the standard **template-decision log** to `talks/<Talk>/output/final.free-form.template-log.md`
+(same `final.<style>` convention as the deck, side by side with it) — one entry per slide
+naming the **catalog template id** it realized (or `fallback`), the signals that drove the
+choice, what was ruled out, and any flags. Schema:
+[`../slide-templates.md`](../slide-templates.md) → *Template decision log*. It is the render's
+audit trail and what the critique reads to know each slide's intended template. (This replaces
+the older `.layout-log.md`.)
 
 ### 3.2 Icons — optional
 

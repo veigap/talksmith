@@ -192,19 +192,95 @@ def _classify(u: dict) -> str:
         return "code-example"
     ni, nimg = len(u["items"]), len(u["images"])
     words = sum(len(b.split()) for b in u["body"])
-    if nimg >= 4 and ni < 3:
+    if nimg >= 4 and ni < 2:
         return "image-grid"
-    if ni >= 3:
+    if ni >= 2:
         if u["ordered"]:
             return "process"
-        if nimg >= ni and nimg >= 2:
+        if nimg >= 1:                        # any source image → figures, never concept-breakdown
             return "figures"
-        return "concept-breakdown"           # unordered labeled card set
+        return "concept-breakdown"           # labeled set, no source image (renderer adds icons)
+    if ni == 1:
+        return "single-point"
+    if nimg >= 4:
+        return "image-grid"
     if nimg >= 1:
         return "content-image"
-    if ni == 0 and len(u["body"]) <= 2 and words <= 18 and u["title"]:
+    if len(u["body"]) <= 2 and words <= 18 and u["title"]:
         return "statement"
     return "fallback"
+
+
+def _signals(u: dict) -> dict:
+    """The classification signals for one unit (mirrors slide-templates.md glossary)."""
+    return {
+        "labeled_items": len(u["items"]),
+        "images": len(u["images"]),
+        "has_code": u["has_code"],
+        "ordered": u["ordered"],
+        "body_words": sum(len(b.split()) for b in u["body"]),
+        "level": u["level"],
+    }
+
+
+# One-line rationale + the near-miss it beat, keyed by template (slide-templates.md).
+_WHY = {
+    "divider": ("H1 / section-break heading.", ""),
+    "code-example": ("fenced code block present — code dominates.", "content+image"),
+    "image-grid": ("≥4 images; the visual variety is the message.", "figures / content+image"),
+    "figures": ("≥2 labeled items, each carrying its own image.", "concept-breakdown"),
+    "process": ("≥2 labeled items with ordinal labels (steps/flow).", "concept-breakdown"),
+    "concept-breakdown": ("≥2 unordered labeled items, no per-item image → card grid.",
+                          "card-row / bullets"),
+    "single-point": ("exactly one labeled point → card/callout, never a bullet.",
+                     "concept-breakdown / content-text"),
+    "content-image": ("1–3 supporting images with leading prose.", "image-grid"),
+    "statement": ("one short dominant claim, no enumeration.", "content-text"),
+    "fallback": ("no template signal fired.", ""),
+}
+
+
+def _log_entry(index: int, u: dict, kind: str) -> str:
+    s = _signals(u)
+    why, ruled = _WHY.get(kind, (kind, ""))
+    flags = []
+    if kind == "fallback":
+        flags.append("fallback — catalog gap, review")
+    if kind == "content-image" and s["body_words"] > 60 and s["images"] == 1:
+        flags.append("prose-heavy — could be content-text/restructure")
+    if s["labeled_items"] == 1 and kind != "single-point":
+        flags.append("single-labeled-item — verify single-point vs concept")
+    sig = " ".join(f"{k}={v}" for k, v in s.items())
+    lines = [
+        f"## Slide {index:02d} — {u['title'] or '(untitled)'}",
+        f"- template: `{kind}`",
+        f"- why: {why}",
+        (f"- ruled_out: {ruled}" if ruled else "- ruled_out: —"),
+        f"- signals: {sig}",
+        f"- flags: {', '.join(flags) if flags else '—'}",
+    ]
+    return "\n".join(lines)
+
+
+def _write_template_log(entries: list, talk: Path, style: str, out_path: Path) -> None:
+    """Persist the per-slide template-decision log (slide-templates.md → Template decision log)."""
+    from collections import Counter
+    tally = Counter(k for _, _, k in entries)
+    fallbacks = tally.get("fallback", 0)
+    head = [
+        f"# Template decision log — {talk.name} · {style} · {len(entries)} slides",
+        "",
+        "Per-slide record of which catalog template was chosen and why, for review and to "
+        "improve `slide-templates.md`. See that file → *Template decision log*.",
+        "",
+        "**Tally:** " + ", ".join(f"{k} ×{n}" for k, n in tally.most_common()),
+        f"**Fallbacks:** {fallbacks}",
+        "",
+        "---",
+        "",
+    ]
+    body = "\n\n".join(_log_entry(i, u, k) for i, u, k in entries)
+    out_path.write_text("\n".join(head) + body + "\n", encoding="utf-8")
 
 
 def _header(d, img_title: str, font_size: int, index: int, total: int, tag: str = ""):
@@ -233,17 +309,31 @@ def _paste_or_box(img, d, path, alt, box, font_size):
            font=_font(font_size - 6), fill=_MUTED)
 
 
-def _draw_card(img, d, box, label, body, font_size, number=None, image=None):
-    """One card: light panel + (optional number strip) + label + wrapped body. Never a bullet."""
+def _draw_card(img, d, box, label, body, font_size, number=None, image=None, icon=False,
+               center=False):
+    """One card: light panel + (number strip | per-concept icon) + label + wrapped body. Never a bullet.
+
+    center=True vertically centres the content block inside the card, so a uniform (possibly
+    larger-than-content) grid card reads balanced rather than top-jammed (DISTRIBUTION-09).
+    """
     x0, y0, x1, y1 = box
     d.rectangle(box, fill=_CARD_FILL, outline=_CARD_LINE)
     tx = x0 + 14
+    ty = y0 + 10
+    if center and number is None:
+        need = _needed_card_h(d, label, body, font_size, icon, inner_w=x1 - tx - 12)
+        ty = max(y0 + 10, y0 + ((y1 - y0) - need) // 2)
     if number is not None:
         d.rectangle([x0, y0, x0 + 8, y1], fill=_NUM_FILL)
         tx = x0 + 22
         d.text((tx, y0 + 10), str(number), font=_font(font_size - 4), fill=_NUM_FILL)
         tx += 22
-    ty = y0 + 10
+    elif icon:
+        # per-concept icon marker (a filled accent disc) above the label — the wireframe
+        # stand-in for the §17 branded line-art glyph a concept-breakdown card carries.
+        r = max(10, font_size // 2)
+        d.ellipse([x0 + 14, ty, x0 + 14 + 2 * r, ty + 2 * r], fill=_NUM_FILL)
+        ty += 2 * r + 8
     if image is not None:
         ih = min((y1 - y0) // 2, 120)
         _paste_or_box(img, d, image, "", [tx, ty, x1 - 12, ty + ih], font_size)
@@ -258,14 +348,31 @@ def _draw_card(img, d, box, label, body, font_size, number=None, image=None):
         d.text((tx, ty), ln, font=fb, fill=(90, 90, 90)); ty += fb.size + 3
 
 
-def _grid_boxes(n, top, with_images=False):
-    """Card boxes for n items: a row for ≤3 (or images), else a 2/3-col grid."""
+def _needed_card_h(d, label, body, font_size, icon, inner_w=300):
+    """Height a card actually needs for its content — so cards hug content, not a fixed box."""
+    h = 12
+    if icon:
+        h += max(20, font_size) + 8
+    fl = _font(font_size - 2)
+    h += min(2, len(_wrap(d, label or "", fl, inner_w))) * (fl.size + 4)
+    fb = _font(font_size - 5)
+    h += len(_wrap(d, body or "", fb, inner_w)) * (fb.size + 3)
+    return h + 16
+
+
+def _grid_boxes(n, top, with_images=False, card_h=None):
+    """Card boxes for n items: a row for ≤3 (or images), else a 2/3-col grid.
+
+    card_h (if given) sizes cards to their content (hug), capped to the available height —
+    so short-content cards are not stretched into oversized boxes with dead space.
+    """
     cols = 1 if n == 1 else (3 if (n == 3 or n >= 5) else 2)
     rows = (n + cols - 1) // cols
     gx, gy = 20, 18
     x0, y0 = _PAD, top
     cw = (SLIDE_W - 2 * _PAD - (cols - 1) * gx) // cols
-    ch = (SLIDE_H - top - _PAD - (rows - 1) * gy) // rows
+    avail = (SLIDE_H - top - _PAD - (rows - 1) * gy) // rows
+    ch = min(card_h, avail) if card_h else avail
     boxes = []
     for i in range(n):
         r, c = divmod(i, cols)
@@ -343,12 +450,30 @@ def _render_slide(unit_md: str, out_png: Path, talk_root: Path, preview_dir: Pat
                        image=imgs[i] if i < len(imgs) else None)
         img.save(out_png); return
 
-    # ── card sets: concept-breakdown / process (+ folded stat/comparison) ──
+    # ── card sets: concept-breakdown (per-card icon) / process (numbered) ──
+    # Uniform grid that fills the region (a concept grid is a regular grid of equal cards),
+    # with content vertically balanced inside each card so it isn't top-jammed (DISTRIBUTION-09).
     if kind in ("concept-breakdown", "process"):
-        boxes = _grid_boxes(len(u["items"]), top)
+        with_icon = kind == "concept-breakdown"
+        boxes = _grid_boxes(len(u["items"]), top)      # fill the region, uniform cards
         for i, (box, it) in enumerate(zip(boxes, u["items"]), 1):
             _draw_card(img, d, box, it["label"], it["body"], font_size,
-                       number=i if kind == "process" else None)
+                       number=i if kind == "process" else None, icon=with_icon, center=True)
+        img.save(out_png); return
+
+    # ── single-point: lead body + the one labeled point as a card (never a bullet) ──
+    if kind == "single-point":
+        fb = _font(font_size)
+        y = top
+        for line in u["body"]:
+            for wl in _wrap(d, line, fb, SLIDE_W - 2 * _PAD):
+                if y > SLIDE_H // 2:
+                    break
+                d.text((_PAD, y), wl, font=fb, fill=_TEXT); y += fb.size + 8
+        if u["items"]:
+            it = u["items"][0]
+            _draw_card(img, d, [_PAD, max(y + 8, SLIDE_H // 2), SLIDE_W - _PAD, SLIDE_H - _PAD - 6],
+                       it["label"], it["body"], font_size, icon=True)
         img.save(out_png); return
 
     # ── content+image: text left, images right ──
@@ -449,6 +574,14 @@ def main(argv=None) -> int:
         if u["index"] % 8 == 0:
             print(f"[preview 3/4] rendered {u['index']}/{total}…", file=sys.stderr)
     print(f"[preview 3/4] slides ready ({total})", file=sys.stderr)
+
+    # Template-decision log — one entry per slide (chosen template + why), for review.
+    log_entries = []
+    for i, unit in enumerate(units, 1):
+        pu = _parse_unit(unit, talk, pdir)
+        log_entries.append((i, pu, _classify(pu)))
+    _write_template_log(log_entries, talk, "preview", pdir / "template-log.md")
+    print(f"[preview] template-log.md written ({len(log_entries)} slides)", file=sys.stderr)
 
     # Emit ordered, numbered review images (slide-01.png, slide-02.png, …). The
     # hash-named PNGs under .previews/ stay as the incremental cache; these numbered

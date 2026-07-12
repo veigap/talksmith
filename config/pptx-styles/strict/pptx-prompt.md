@@ -316,6 +316,18 @@ Smaller, no left strip, no number. Used for sibling cards in a flat grid.
 
 The card's inner padding is **~0.18 in** on the left (`5.37 − 5.19 = 0.18`) and **~0.18 in** on the top (`2.21 − 2.03 = 0.18`).
 
+### 7.2.1 Per-concept icon — standard on `concept-breakdown` cards
+
+A `concept-breakdown` card (per [`../slide-templates.md`](../slide-templates.md)) is **anchored by a content-matched icon**, not a bare heading. Each card/column carries a **0.44 × 0.44 in** line-art icon **above** its heading, picked per §17.5 from *that* concept's heading/body — a **different §17 glyph per card**, never one house glyph repeated. Reference geometry (slide 8, three concepts across the content width):
+
+| Element | Per-column geometry (col x ∈ {0.54, 3.58, 6.62}, 3.04-in stride) |
+|---|---|
+| Icon | `(col_x, 2.37)` ext `(0.44, 0.44)` — line-art `#DA1B2E` per §17.2 (no chip), a `<p:pic>` of the chosen §17 glyph per §17.4 |
+| Heading | `(col_x, 3.00)` ext `(2.18, 0.27)`, `sz="1350"` Helvetica Bold `#1F1E1E` |
+| Body | `(col_x, 3.37)` ext `(2.84, …)`, `sz="1100"` Helvetica `#3B3535` |
+
+The **icon is not optional** — a concept slide rendered as plain iconless cards (the §7.2 flat grid) is the *fallback* only for a dense 5–6-concept set or when no glyph fits; the default concept-breakdown carries the per-card icon. **No source image is involved** — the source is labeled text (`- **Label** body` / `### Subhead` groups); the renderer *adds* the icon. If the slide's Markdown carries an `![]()` image, it is **not** a concept-breakdown (→ content+image / image-grid / content+cards+image per §15.5).
+
 ### 7.3 Lead + N items — card-row (§7.4) vs icon-bullet list (§7.5)
 
 **When to pick which — and the capacity limits — are the catalog's `card-row` and

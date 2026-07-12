@@ -54,7 +54,11 @@ Every GENERATE action first **classifies each slide against the shared catalog**
 [`slide-templates.md`](slide-templates.md) (its *Classification procedure*) and renders
 the matched template's *Format*, falling back to the mode default when nothing matches.
 The universal invariant — labeled enumerations are cards/panels, never plain bullets —
-holds in all three.
+holds in all three. Every GENERATE also writes a **template-decision log** beside its
+output — `output/final.<style>.template-log.md` for the native styles (side by side with
+`final.<style>.pptx`), `output/draft-preview/template-log.md` for preview — recording the
+template chosen per slide and why (schema: [`slide-templates.md`](slide-templates.md) →
+*Template decision log*).
 - `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Classifies each slide against `slide-templates.md` and emits the matched template via the style's §-recipes (strict additionally runs the `audit_layout_fit.py` gate; free-form logs its pick to `.layout-log.md`). Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*.
 - `wireframe-render` — [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) is **template-aware**: it classifies each slide (`_classify`, same catalog signals) and draws that template's shape — concept-breakdown/process/figures as cards (never bullets), content+image split, code block, statement, image-grid — falling back to a plain title+body flow. Draws each changed slide directly to a numbered PNG (Pillow); no `.pptx`, no `.pdf`, no native skill. ASCII → PNG by code (`render_ascii.py`); only changed slides re-render (content-addressed cache; bump `preview_plan.RENDER_VERSION` on recipe changes). Cowork-independent.
 

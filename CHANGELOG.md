@@ -12,6 +12,38 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.18.0] — 2026-07-12
+
+### Added
+
+- **Every render writes a template-decision log** beside its output —
+  `output/final.<style>.template-log.md` (same `final.<style>` convention as the deck, side
+  by side) for strict/free-form, `output/draft-preview/template-log.md` for preview. Records
+  per slide the template chosen, why, what was ruled out, the raw signals, and flags, plus a
+  header tally + fallback count — for review and to improve the catalog / feed `pptx-learn`.
+  Schema in `slide-templates.md`; the preview writes it in code (implemented + tested).
+  Supersedes free-form's ad-hoc `.layout-log.md`.
+
+### Changed
+
+- **`concept-breakdown` carries a per-concept icon by default.** A concept card is anchored
+  by a content-matched §17 line-art glyph (≈0.44 in, different per card, renderer-chosen —
+  the source has no per-item image), above its label + body — the plain iconless card grid is
+  now the *fallback* (dense 5–6-item sets). Fixes real strict slides that rendered as flat
+  iconless cards. Added the strict recipe (§7.2.1, ref-S8 geometry) and drew the icon in the
+  preview.
+- **Hard rule: any source `![]()` image disqualifies `concept-breakdown`** (→ `figures` /
+  `content+image` / `content+cards+image`) — its icons are renderer-added, never source
+  pictures. Encoded in the Match, discriminator walk, and disambiguation table.
+- **Card content is balanced within the card (`DISTRIBUTION-09`).** Uniform equal cards in a
+  grid are correct (a concept grid *should* be a regular grid), but content must sit balanced
+  (vertically centred / icon-top with even padding), never crammed at the top with a dead
+  void below — the "items spread out in oversized boxes" defect. The preview now fills the
+  region with uniform cards and centres their content.
+- **Preview classifier aligned to the catalog** — enumeration threshold lowered to ≥2,
+  `single-point` handled (one labeled item → card, not a bullet), and the no-image rule for
+  concept-breakdown applied.
+
 ## [0.17.1] — 2026-07-10
 
 ### Fixed

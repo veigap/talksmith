@@ -64,7 +64,9 @@ talks/<Talk>/
 └── output/
     ├── final.pptx                    # canonical deliverable — a copy of the most recent render
     ├── final.strict.pptx             # per-mode render, persists for comparison
+    ├── final.strict.template-log.md  # per-mode template-decision log (side by side w/ its .pptx)
     ├── final.free-form.pptx          # per-mode render, persists for comparison
+    ├── final.free-form.template-log.md
     ├── final.<style>.intermediate.md # per-mode transient pre-processed file (convert.py)
     ├── .critique/                    # critique-only slide previews (git-ignored)
     │   ├── strict/slide-NN.png
@@ -72,7 +74,7 @@ talks/<Talk>/
     └── draft-preview/                # preview mode — fully isolated (see preview subsection)
 ```
 
-**Per-mode output isolation (so renders don't overwrite each other).** Each render writes a **suffixed** deck `output/final.<style>.pptx` (and its intermediate `output/final.<style>.intermediate.md`, and critique PNGs under `output/.critique/<style>/`), so a strict and a free-form render of the same Talk coexist and can be compared side by side. After a successful render the skill also **copies** the suffixed deck to the canonical `output/final.pptx` — the single deliverable that the reverse pipeline and the Phase-2 as-generated baseline read. Last render wins the canonical slot; the suffixed files persist. Preview is separate — it never touches any of these, writing only under `output/draft-preview/`.
+**Per-mode output isolation (so renders don't overwrite each other).** Each render writes a **suffixed** deck `output/final.<style>.pptx` (its intermediate `output/final.<style>.intermediate.md`, its critique PNGs under `output/.critique/<style>/`, and its **template-decision log `output/final.<style>.template-log.md`** — same `final.<style>` convention, side by side with the deck), so a strict and a free-form render of the same Talk coexist and can be compared side by side. After a successful render the skill also **copies** the suffixed deck to the canonical `output/final.pptx` — the single deliverable that the reverse pipeline and the Phase-2 as-generated baseline read. Last render wins the canonical slot; the suffixed files persist. The **template-decision log** records, per slide, which catalog template was chosen and why (schema: [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) → *Template decision log*) — the strict render fills it from the §15.6 pre-emit audit (chosen template, emitted §-recipe, `audit_layout_fit` pass/mismatch); free-form from its per-slide layout choices. Preview is separate — it never touches any of these, writing its own `template-log.md` under `output/draft-preview/`.
 
 ## Process
 

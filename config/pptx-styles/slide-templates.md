@@ -80,9 +80,11 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - `two_groups` (two symmetric prose blocks compared) → `comparison`.
    - `labeled_items ≥ 2` and `is_ordered` → `process`.
    - `labeled_items ≥ 2`, each item has its own image → `figures`.
-   - `labeled_items ≥ 2`, unordered, no per-item image → `card-row` (lead + 3–5 short) /
+   - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `card-row` (lead + 3–5 short) /
      `icon-list` (lead + 3–5 prose) / `concept-breakdown` (the general case, **including a
-     2-item set** → two cards).
+     2-item set** → two cards). **`concept-breakdown` requires `images == 0`** — any source
+     image disqualifies it (its per-card icons are renderer-added, not source pictures);
+     labeled items *with* images → `figures`.
    - `labeled_items == 1` (a lead + one point) → `single-point` (one card or callout; if an
      image supports it → `content+image`). **Never a lone bullet under a title.**
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
@@ -213,14 +215,24 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   that isn't a clean 3–5 lead+row (`card-row`), prose-heavy (`icon-list`), ordered
   (`process`), or per-item-imaged (`figures`). A **2-item** labeled set is a valid
   concept-breakdown (two cards) — do **not** drop it to bullets or prose.
-  **Not:** ordered/numbered (→ `process`); each item has a figure (→ `figures`);
-  a lead paragraph + exactly 3–5 items (→ `card-row`/`icon-list`).
+  **Hard rule — no source image.** A concept-breakdown carries **zero `![]()` images**; its
+  per-card icons are renderer-added §17 glyphs, never source pictures. **If the slide has any
+  `![]()` image, it is NOT concept-breakdown** → `figures` (a per-item image), `content+image`
+  (1–3 supporting), or `content+cards+image` (cards + one image).
+  **Also not:** ordered/numbered (→ `process`); a lead paragraph + exactly 3–5 items
+  (→ `card-row`/`icon-list`).
 - **Format:** title + a grid of **equal cards** — 2 items → 2 cards side by side; 3 → a row;
-  4 → 2×2; 5–6 → 3×N. Each card = label (13.5 pt Bold) + one-line body (11 pt), optional
-  small icon. **Uniform card size**, consistent gutters (~0.2 in), shared gridlines, aligned
+  4 → 2×2; 5–6 → 3×N. Each card = **a content-matched icon** (≈0.44 in, a branded line-art
+  glyph from the §17 icon library, **different per card**, chosen to fit that concept — the
+  source has no per-item image, the renderer picks the icon) **above** a label (13.5 pt Bold)
+  + one-line body (11 pt). The **per-concept icon is standard, not optional** — a concept is
+  *anchored by its icon* (see ref S8/S27: a 0.44 in icon over each concept). The plain,
+  iconless card grid is a **fallback** only for a dense 5–6-item set or when no sensible icon
+  fits. **Uniform card + icon size**, consistent gutters (~0.2 in), shared gridlines, aligned
   rows. **Never bullets.** Beyond ~6 → split.
-- **Strict recipe:** §7.2 (plain cards) / §7.6. **Provenance:** ref S5/8/25/53, final
-  S11/12/13, gov S22/24.
+- **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6; icon chosen
+  per §17.5. **Provenance:** ref S8/S27/S49 (icon'd), S5/S25/S53 (dense/plain fallback),
+  final S11/12/13, gov S22/24.
 
 #### `single-point` — exactly one labeled item (lead + one point)
 - **Match:** a slide whose body is a lead/prose paragraph plus **exactly one** labeled item
@@ -334,6 +346,33 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   bullets**; log that fallback was used so the gap can be added to the catalog later.
 
 ---
+
+## Template decision log (per-render deliverable)
+
+Every render writes a companion **template-decision log** next to its output — a Markdown
+record of *which template each slide got and why* — so decisions are auditable, the catalog
+can be improved from real renders, and `pptx-learn` has a rationale to mine. It is
+**descriptive only** — writing it never changes the render.
+
+- **strict / free-form:** `talks/<Talk>/output/final.<style>.template-log.md`.
+- **preview:** `talks/<Talk>/output/draft-preview/template-log.md` (written by `build_preview.py`).
+
+It supersedes free-form's earlier `.layout-log.md` (same idea, standardized shape). Header
+carries a **tally** (count per template) and a **fallback count**; each slide is one entry:
+
+| Field | Content |
+|---|---|
+| `template` | the catalog id chosen (or `fallback`). |
+| `why` | the signal / discriminator that decided it, one line. |
+| `ruled_out` | the near-miss template(s) and why not — **the key ambiguity signal** for improving the catalog. |
+| `signals` | raw detected signals: `labeled_items`, `images`, `has_code`, `ordered`, `body_words`, heading `level`. |
+| `flags` | actionable review items: `fallback` (catalog gap), `restructure-candidate`, `single-point↔concept ambiguous`, `N>cap`. |
+| `notes` | `present` \| `empty` (did the slide carry speaker notes). |
+| `emitted` · `layout_fit` | **strict only:** the §-recipe emitted, and `pass`\|`mismatch` from `audit_layout_fit.py` (emitted == predicted). |
+
+Review the log's `ruled_out` + `flags` after a render: recurring `fallback`s or ambiguity
+flags are the signal that a template's *Match* needs tightening or a new template is missing
+(exactly how the dry-run against the security deck surfaced the 1–2-item gap).
 
 ## Matching examples — worked classifications
 
@@ -451,10 +490,11 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | If the slide is… | and… | → |
 |---|---|---|
 | a labeled set (**≥2**) | ordered (steps/1./Paso) | `process` |
+| a labeled set (**≥2**) | **any `![]()` image present** | `figures` / `content+image` — **never `concept-breakdown`** |
 | a labeled set (**≥2**) | each item has an image | `figures` |
-| a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars | `card-row` |
-| a labeled set (**≥2**) | lead + 3–5 items, prose bodies | `icon-list` |
-| a labeled set (**≥2**) | otherwise (incl. a **2-item** grid) | `concept-breakdown` |
+| a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars, no image | `card-row` |
+| a labeled set (**≥2**) | lead + 3–5 items, prose bodies, no image | `icon-list` |
+| a labeled set (**≥2**) | otherwise, **no image** (incl. a **2-item** grid) | `concept-breakdown` (renderer adds per-card icons) |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | numbers/metrics | 2–4 big figures + labels | `stat` |
 | a table | **2 comparable value-columns** (A vs B) | `comparison` |
