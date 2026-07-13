@@ -121,6 +121,13 @@ def _title_block(section, title):
     return pill + t
 
 
+def _mk(head, content):
+    """A content slide: a **fixed** header (pill + title, never moves) + a content region
+    that fits/scales independently. Keeps the title anchored regardless of content."""
+    return (f'<div class="stage"><div class="shead">{head}</div>'
+            f'<div class="cbody">{content}</div></div>')
+
+
 def render_slide(kind, u, section, cache) -> str:
     title = u.get("title", "")
     items = u.get("items", [])
@@ -128,62 +135,63 @@ def render_slide(kind, u, section, cache) -> str:
     images = u.get("images", [])
     code = u.get("code_lines", [])
     lead = f'<p class="lead">{_esc(body[0])}</p>' if body else ""
-
-    if kind == "divider":
-        return f'<div class="stage cover"><div class="stmt"><p class="big">{_esc(title)}</p></div></div>'
-
-    if kind == "statement":
-        sub = f'<p class="sub">{_esc(body[0])}</p>' if body else ""
-        return (f'<div class="stage cover"><div class="stmt">'
-                f'<p class="big">{_esc(title)}</p>{sub}</div></div>')
-
     head = _title_block(section, title)
 
-    if kind in ("concept-breakdown",):
+    # ── full-bleed, centred — no fixed header ──
+    if kind == "divider":
+        return f'<div class="stage cover"><div class="stmt"><p class="big">{_esc(title)}</p></div></div>'
+    if kind == "statement":
+        sub = f'<p class="sub">{_esc(body[0])}</p>' if body else ""
+        return f'<div class="stage cover"><div class="stmt"><p class="big">{_esc(title)}</p>{sub}</div></div>'
+    if kind == "closing-hero":
+        sub = f'<span class="qc">{_esc(body[0])}</span>' if body else ""
+        return f'<div class="stage cover"><div class="hero"><span class="qa">{_esc(title)}</span>{sub}</div></div>'
+
+    # ── content templates: fixed header via _mk, body in the fitting region ──
+    if kind == "concept-breakdown":
         cs = "".join(
             f'<div class="ccard">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
             f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return f'<div class="stage">{head}<div class="cards c{min(len(items),3)}">{cs}</div></div>'
+        return _mk(head, f'<div class="cards c{min(len(items),3)}">{cs}</div>')
 
     if kind == "process":
         cs = "".join(
             f'<div class="ncard"><div class="strip">{i}</div><div class="nbody">'
             f'<h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div></div>'
             for i, it in enumerate(items, 1))
-        return f'<div class="stage">{head}<div class="numrow">{cs}</div></div>'
+        return _mk(head, f'<div class="numrow">{cs}</div>')
 
     if kind == "card-row":
         cs = "".join(
             f'<div class="rcard">{chip(icon_for(it["label"]+" "+it.get("body","")), cache)}'
             f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return f'<div class="stage">{head}{lead}<div class="cardrow">{cs}</div></div>'
+        return _mk(head, f'{lead}<div class="cardrow">{cs}</div>')
 
     if kind == "icon-list":
         cs = "".join(
             f'<div class="ilrow">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
             f'<div><h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div></div>' for it in items)
-        return f'<div class="stage">{head}{lead}<div class="iconlist">{cs}</div></div>'
+        return _mk(head, f'{lead}<div class="iconlist">{cs}</div>')
 
     if kind == "code-example":
         codetxt = "<br>".join(_esc(l) for l in code[:18])
         expl = "".join(f'<p>{_esc(b)}</p>' for b in body[:3])
-        return (f'<div class="stage">{head}<div class="split">'
-                f'<div class="explain">{expl}</div><div class="codebox">{codetxt}</div></div></div>')
+        return _mk(head, f'<div class="split"><div class="explain">{expl}</div>'
+                         f'<div class="codebox">{codetxt}</div></div>')
 
     if kind in ("figures", "image-grid"):
         if kind == "image-grid" or not items:
             cs = "".join(_embed(a, p) for a, p in images)
-            return f'<div class="stage">{head}<div class="imggrid">{cs}</div></div>'
+            return _mk(head, f'<div class="imggrid">{cs}</div>')
         cs = "".join(f'<div class="figc">{_embed(*(images[k] if k < len(images) else ("","")))}'
                      f'<h4>{_esc(c["label"])}</h4><p>{_esc(c.get("body",""))}</p></div>'
                      for k, c in enumerate(items))
-        return f'<div class="stage">{head}<div class="figs">{cs}</div></div>'
+        return _mk(head, f'<div class="figs">{cs}</div>')
 
-    if kind in ("content-image",):
+    if kind == "content-image":
         body_html = lead + "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[1:2])
         pic = _embed(*images[0]) if images else _embed("", None)
-        return (f'<div class="stage">{head}<div class="ci"><div class="citext">{body_html}</div>'
-                f'{pic}</div></div>')
+        return _mk(head, f'<div class="ci"><div class="citext">{body_html}</div>{pic}</div>')
 
     if kind == "comparison":
         rows = []
@@ -196,51 +204,46 @@ def render_slide(kind, u, section, cache) -> str:
             hd = '<div class="chead">' + "".join(f"<span>{_esc(c)}</span>" for c in rows[0]) + "</div>"
             br = "".join('<div class="crow">' + "".join(f"<span>{_esc(c)}</span>" for c in r) + "</div>"
                          for r in rows[1:])
-            return f'<div class="stage">{head}<div class="compare">{hd}{br}</div></div>'
+            return _mk(head, f'<div class="compare">{hd}{br}</div>')
 
     if kind in ("single-point", "callout"):
         it = items[0] if items else {"label": "", "body": (body[0] if body else "")}
         tone = "blue" if kind == "callout" else "pink"
-        return (f'<div class="stage">{head}{lead if kind=="single-point" else ""}'
-                f'<div class="callout {tone}">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
-                f'<p><b>{_esc(it["label"])}</b> {_esc(it.get("body",""))}</p></div></div>')
+        return _mk(head, f'{lead if kind=="single-point" else ""}'
+                         f'<div class="callout {tone}">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
+                         f'<p><b>{_esc(it["label"])}</b> {_esc(it.get("body",""))}</p></div>')
 
     if kind == "agenda":
         entries = [it["label"] for it in items] or body
         rows = "".join(f'<div class="agrow {"on" if k==0 else ""}"><span class="agn">{k+1}</span>'
                        f'<span>{_esc(e)}</span></div>' for k, e in enumerate(entries))
-        return f'<div class="stage">{_title_block(section, title or "Agenda")}<div class="agenda">{rows}</div></div>'
+        return _mk(_title_block(section, title or "Agenda"), f'<div class="agenda">{rows}</div>')
 
     if kind == "stat":
         cells = "".join(f'<div class="stat"><span class="statn">{_esc(it["label"])}</span>'
                         f'<span class="statl">{_esc(it.get("body",""))}</span></div>' for it in items)
-        return f'<div class="stage">{head}<div class="stats">{cells}</div></div>'
+        return _mk(head, f'<div class="stats">{cells}</div>')
 
     if kind == "content-text":
         big = _esc(body[0]) if body else _esc(title)
         panels = "".join(f'<div class="ctp">{_esc(it["label"])}{": "+_esc(it["body"]) if it.get("body") else ""}</div>'
                          for it in items) or "".join(f'<div class="ctp">{_esc(b)}</div>' for b in body[1:])
-        return (f'<div class="stage">{_title_block(section, title)}<div class="ctext">'
-                f'<p class="big2">{big}</p><div class="ctpanels">{panels}</div></div></div>')
+        return _mk(_title_block(section, title),
+                   f'<div class="ctext"><p class="big2">{big}</p><div class="ctpanels">{panels}</div></div>')
 
     if kind == "content+cards+image":
         cs = "".join(f'<div class="ccard sm">{icon(icon_for(it["label"]), cache)}'
                      f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
         pic = _embed(*images[0]) if images else _embed("", None)
-        return f'<div class="stage">{head}<div class="cci"><div class="ccicards">{cs}</div>{pic}</div></div>'
+        return _mk(head, f'<div class="cci"><div class="ccicards">{cs}</div>{pic}</div>')
 
     if kind == "closing-cta":
         cards = "".join(f'<div class="ctacard">{icon(icon_for(it["label"]), cache)}'
                         f'<h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return f'<div class="stage">{head}<div class="ctagrid">{cards}</div></div>'
-
-    if kind == "closing-hero":
-        sub = f'<span class="qc">{_esc(body[0])}</span>' if body else ""
-        return f'<div class="stage cover"><div class="hero"><span class="qa">{_esc(title)}</span>{sub}</div></div>'
+        return _mk(head, f'<div class="ctagrid">{cards}</div>')
 
     # fallback: title + body paragraphs (no bullets)
-    paras = "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[:6])
-    return f'<div class="stage">{head}{paras}</div>'
+    return _mk(head, "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[:6]))
 
 
 def cover_slide(fm: dict) -> str:
@@ -285,6 +288,9 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .slide{aspect-ratio:16/9;background:var(--slide);border-radius:10px;position:relative;border:1px solid var(--hair);box-shadow:0 1px 0 var(--hair),0 18px 40px -24px rgba(0,0,0,.45);overflow:hidden;container-type:inline-size}
 .snum{position:absolute;right:2.5cqw;bottom:2cqw;font-size:1.8cqw;color:var(--fm);font-family:var(--mono);z-index:2}
 .stage{position:absolute;inset:0;padding:5cqw 5.5cqw;display:flex;flex-direction:column}
+.shead{flex:0 0 auto}
+.cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;padding-top:2.6cqw}
+.cbody>*{margin-top:0!important;margin-bottom:0!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--ink);font-weight:700;font-size:2.2cqw;letter-spacing:.06em;text-transform:uppercase;padding:.9cqw 2cqw;border-radius:2cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:2.4cqw 0 0;line-height:1.08;text-wrap:balance}
 .stitle.ag{font-size:5cqw}.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
@@ -292,7 +298,7 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .sub{font-size:2.8cqw;color:var(--body);margin:3cqw 0 0}
-.covt{font-size:7cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.02;letter-spacing:-.02em}
+.covt{font-size:5.8cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.04;letter-spacing:-.02em}
 .covc{font-size:2.8cqw;font-weight:700;color:var(--ink);margin:4cqw 0 0}.cova{font-size:2.2cqw;color:var(--body);margin:1.4cqw 0 0}
 .covlogo{position:absolute;right:0;bottom:0;width:12cqw;height:9cqw;border:2px solid var(--card);border-radius:1.5cqw;display:grid;place-items:center;font-weight:800;color:var(--red);font-size:3cqw}
 .agenda{margin-top:3cqw;display:flex;flex-direction:column;gap:1.6cqw}
@@ -368,14 +374,14 @@ PRESENT_JS = """<div class="toolbar"><button class="btn" id="present-btn" aria-l
 (function(){
   var figs=[].slice.call(document.querySelectorAll('.deck>figure, .grid>figure'));
   var i=0, root=document.documentElement;
-  function fit(){                                   // scale any slide whose content overflows 16:9
+  function fit(){                                   // scale only the content region; header stays put
     figs.forEach(function(f){
-      var st=f.querySelector('.stage'); if(!st) return;
+      var st=f.querySelector('.cbody'); if(!st) return;   // cover/statement/hero have no .cbody
       st.style.transform='none';
       if(st.clientHeight<20) return;                // hidden (present mode: non-current slide)
       var over=st.scrollHeight-st.clientHeight;
       if(over>1){ var s=Math.max(0.5, st.clientHeight/st.scrollHeight);
-        st.style.transformOrigin='center center'; st.style.transform='scale('+s.toFixed(3)+')'; }
+        st.style.transformOrigin='top center'; st.style.transform='scale('+s.toFixed(3)+')'; }
     });
   }
   function show(n){ if(!figs.length)return; i=Math.max(0,Math.min(figs.length-1,n));
