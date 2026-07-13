@@ -158,6 +158,15 @@ footer, header, hgroup, main, menu, nav, section {
 .tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
 .tldate{margin:0;font-size:2.9cqw;font-weight:800;color:var(--red);font-family:var(--mono)}
 .tlbody p{margin:.4cqw 0 0;font-size:2.5cqw;color:var(--body);line-height:1.3}
+/* big-number — one hero metric (vs the `stat` 2–4-metric grid) */
+.bignumwrap{margin:auto 0}.bignum{font-size:17cqw;font-weight:800;color:var(--red);line-height:.85;letter-spacing:-.03em;margin:0}
+.bigcap{font-size:3.6cqw;font-weight:700;color:var(--ink);margin:1.6cqw 0 0;text-wrap:balance}.biglead{font-size:2.5cqw;color:var(--body);margin:1cqw 0 0}
+/* pros-cons — two colour-coded columns (blue = pro, pink = con), check / error icons */
+.proscons{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
+.pccol{border-radius:2cqw;padding:3cqw 2.8cqw;display:flex;flex-direction:column;gap:1.4cqw}
+.pc-pro{background:var(--call-blue)}.pc-con{background:var(--call-pink)}
+.pccol .ic{width:6cqw;height:6cqw}.pccol h3{margin:0;font-size:3.1cqw;font-weight:800;color:var(--ink)}
+.pccol p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.35}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 </style>
@@ -247,7 +256,14 @@ footer, header, hgroup, main, menu, nav, section {
 <div class="chead"><span>Factor</span><span>Modelo único</span><span>Cascading</span></div>
 <div class="crow"><span>Precisión</span><span>Estable, predecible</span><span>Depende del routing</span></div><div class="crow"><span>Costo</span><span>Mayor por llamada</span><span>Menor en promedio</span></div><div class="crow"><span>Latencia</span><span>Menor (una llamada)</span><span>Mayor (fallback)</span></div></div>
 </div></div></div>
-</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement, stat &amp; comparison</p><p class="quotemark">&ldquo;</p><p class="quotetext">Nadie quería hacer algo malo. Nadie fue negligente. Todos hicimos algo parecido.</p><p class="quoteattr">&mdash; Un ingeniero de Samsung, 2023</p></div></div></section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare">
+</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement, stat &amp; comparison</p><p class="quotemark">&ldquo;</p><p class="quotetext">Nadie quería hacer algo malo. Nadie fue negligente. Todos hicimos algo parecido.</p><p class="quoteattr">&mdash; Un ingeniero de Samsung, 2023</p></div></div></section><section class="slide" data-kind="big-number"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Big-number · métrica hero</h2></div><div class="cbody"><div class="cfit"><div class="bignumwrap"><p class="bignum">$2.50</p><p class="bigcap">por millón de tokens de entrada — el costo real de mover datos a un modelo externo.</p></div>
+</div></div></div>
+</section><section class="slide" data-kind="pros-cons"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Pros-cons · consumo vs enterprise</h2></div><div class="cbody"><div class="cfit"><div class="proscons">
+<div class="pccol pc-pro"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m346-60-76-130-151-31 17-147-96-112 96-111-17-147 151-31 76-131 134 62 134-62 77 131 150 31-17 147 96 111-96 112 17 147-150 31-77 130-134-62-134 62Zm27-79 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Zm-43 133 227-225-45-41-182 180-95-99-46 45 141 140Z"/></svg></span><h3>Ventajas</h3><p>Rápido de adoptar, familiar para el equipo, sin costo inicial.</p></div>
+<div class="pccol pc-con"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg></span><h3>Riesgos</h3><p>Datos fuera de control, sin contrato ni borrado, incumplimiento posible.</p></div>
+</div>
+</div></div></div>
+</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare">
 <div class="chead"><span>Mito</span><span>Realidad</span></div>
 <div class="crow"><span>“Todo lo que escribo entrena al modelo”</span><span>Depende del plan y la configuración</span></div><div class="crow"><span>“Grande = seguro y compliant”</span><span>El tamaño no implica gobernanza</span></div></div>
 </div></div></div>

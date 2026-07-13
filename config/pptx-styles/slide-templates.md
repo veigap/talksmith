@@ -265,6 +265,14 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Strict recipe:** §7.2 card variant with an enlarged number run. **Provenance:** ref
   S6 (📚~750K / 🏥~800K pair).
 
+#### `big-number` (one hero metric)
+- **Match:** a **single** dominant figure is the whole slide (`$2.50`, `18%`, `1M`) with a
+  one-line caption. Distinct from `stat` (2–4 metrics in a grid). Author-directed
+  (`<!-- template: big-number -->`); `body[0]` is the number, the rest is the caption.
+- **Format:** the number set **very large** in `#DA1B2E`, a bold caption beneath, optional
+  supporting line. Left-aligned, vertically centred.
+- **Provenance:** impact / headline-stat slides; common in Gamma-style decks.
+
 ### Ordered templates
 
 #### `process`
@@ -304,6 +312,14 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   shared gridlines. **Not** bullets.
 - **Strict recipe:** §11 (pipe-table → card-grid) / two §7.2 columns. **Provenance:** ref
   S44 (compare-strip), S6 (pair).
+
+#### `pros-cons` (two colour-coded columns)
+- **Match:** a **decision framed as upside vs downside** — two labelled groups (Ventajas /
+  Riesgos, Pros / Cons, Consumo / Enterprise). Author-directed (`<!-- template: pros-cons -->`);
+  content is two `### Group` items (first = the "pro", second = the "con").
+- **Format:** two panels — the pro in the **blue** callout tint with a `verified` check, the
+  con in the **pink** tint with an `error`/`dangerous` mark; each = label + a short body.
+- **Provenance:** trade-off / decision slides; common in Gamma-style decks.
 
 ### Visual templates
 

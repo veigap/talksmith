@@ -185,6 +185,24 @@ Predice, no razona; no recuerda, no verifica.
 
 ---
 
+## Big-number · métrica hero
+<!-- template: big-number -->
+
+$2.50
+por millón de tokens de entrada — el costo real de mover datos a un modelo externo.
+
+---
+
+## Pros-cons · consumo vs enterprise
+<!-- template: pros-cons -->
+
+### Ventajas
+Rápido de adoptar, familiar para el equipo, sin costo inicial.
+### Riesgos
+Datos fuera de control, sin contrato ni borrado, incumplimiento posible.
+
+---
+
 ## Comparison · 2 columnas (mito vs realidad)
 <!-- template: comparison -->
 

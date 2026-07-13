@@ -216,7 +216,8 @@ _TMPL = {
     "image-grid": "image-grid.j2", "content-image": "content-image.j2", "comparison": "comparison.j2",
     "single-point": "single-point.j2", "callout": "single-point.j2", "agenda": "agenda.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
-    "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2", "fallback": "fallback.j2",
+    "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",
+    "big-number": "big-number.j2", "pros-cons": "pros-cons.j2", "fallback": "fallback.j2",
 }
 
 
@@ -277,6 +278,12 @@ def render_slide(kind, u, section, cache) -> str:
     elif kind == "timeline":
         # items: label = date/milestone, body = detail (falls back to plain numbered/labeled items)
         ctx["items"] = items
+    elif kind == "big-number":
+        ctx["number"] = body[0] if body else title
+        ctx["caption"] = body[1] if len(body) > 1 else ""
+        ctx["more"] = body[2:]
+    elif kind == "pros-cons":
+        ctx["items"] = items          # expect 2: the pro group then the con group
     elif kind == "agenda":
         ctx["sections"] = [it["label"] for it in items] or body
         ctx["active"] = 0
@@ -422,6 +429,15 @@ CSS = r"""
 .tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
 .tldate{margin:0;font-size:2.9cqw;font-weight:800;color:var(--red);font-family:var(--mono)}
 .tlbody p{margin:.4cqw 0 0;font-size:2.5cqw;color:var(--body);line-height:1.3}
+/* big-number — one hero metric (vs the `stat` 2–4-metric grid) */
+.bignumwrap{margin:auto 0}.bignum{font-size:17cqw;font-weight:800;color:var(--red);line-height:.85;letter-spacing:-.03em;margin:0}
+.bigcap{font-size:3.6cqw;font-weight:700;color:var(--ink);margin:1.6cqw 0 0;text-wrap:balance}.biglead{font-size:2.5cqw;color:var(--body);margin:1cqw 0 0}
+/* pros-cons — two colour-coded columns (blue = pro, pink = con), check / error icons */
+.proscons{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
+.pccol{border-radius:2cqw;padding:3cqw 2.8cqw;display:flex;flex-direction:column;gap:1.4cqw}
+.pc-pro{background:var(--call-blue)}.pc-con{background:var(--call-pink)}
+.pccol .ic{width:6cqw;height:6cqw}.pccol h3{margin:0;font-size:3.1cqw;font-weight:800;color:var(--ink)}
+.pccol p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.35}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 """

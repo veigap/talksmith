@@ -1,0 +1,4 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title) %}
+<div class="bignumwrap"><p class="bignum">{{ number }}</p>{% if caption %}<p class="bigcap">{{ caption }}</p>{% endif %}{% for x in more %}<p class="biglead">{{ x }}</p>{% endfor %}</div>
+{% endcall %}

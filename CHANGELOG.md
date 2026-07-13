@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.35.0] — 2026-07-13
+
+### Added
+
+- **Two more slide types: `big-number` and `pros-cons`.** `big-number` is a single hero metric
+  (vs the `stat` grid); `pros-cons` is two colour-coded columns (blue check = pro, pink ×= con).
+  Author-directed, documented in `slide-templates.md`, and added to the reference deck.
+
 ## [0.34.0] — 2026-07-13
 
 ### Added
