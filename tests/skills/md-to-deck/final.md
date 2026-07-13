@@ -90,6 +90,16 @@ Tres razones para dejar que el modelo piense en voz alta.
 
 ---
 
+## Steps · plain numbered list
+<!-- template: process -->
+
+1. Identificá qué dato vas a pegar y de dónde viene.
+2. Clasificá su sensibilidad: público, interno o confidencial.
+3. Elegí una herramienta autorizada acorde a esa clasificación.
+4. Registrá qué se compartió, por si hay que auditarlo después.
+
+---
+
 ## Single-point · lead + one beat
 <!-- template: single-point -->
 
@@ -228,6 +238,17 @@ La ingeniería de prompts es el arte de estructurar instrucciones para obtener l
 - **Menos ambigüedad** → menos alucinación
 - **Ejemplos** → mejor formato
 - **Restricciones** → salida acotada
+
+---
+
+## Fallback · lead + points
+<!-- template: fallback -->
+
+El perímetro no se rompió: se esquivó. Nadie hackeó nada.
+
+Nadie quería hacer algo malo.
+Nadie fue negligente con intención.
+Todos hicimos algo parecido alguna vez.
 
 ---
 

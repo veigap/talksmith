@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.29.2] — 2026-07-13
+
+### Added
+
+- **Test fixture now exercises the plain numbered-steps and styled-fallback render paths** — two
+  slides added to `tests/skills/md-to-deck/final.md` (a plain `1.`…`4.` numbered list → vertical
+  steps, and a lead + point-panels fallback), so `style-reference.html` covers every slide type.
+
 ## [0.29.1] — 2026-07-13
 
 ### Changed
