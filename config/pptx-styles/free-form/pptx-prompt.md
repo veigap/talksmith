@@ -15,9 +15,9 @@ For the alternative spec-driven style see [`../strict/pptx-prompt.md`](../strict
 These are not style rules — they are correctness rules. They hold regardless of design choices.
 
 - **Open `base-template.pptx` as the working file.** In python-pptx terms: `Presentation(<base_template_path>)`, never `Presentation()` from scratch. Scratch-built decks fail Keynote import even with valid OOXML.
-- **Every block in `final.md` becomes a shape on the rendered slide.** No content dropping to fit a design. Audited at CONTROL by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py).
+- **Every block in `final.md` becomes a shape on the rendered slide.** No content dropping to fit a design. Audited at CONTROL by [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py).
 - **Every `### Notes` block lands verbatim in the corresponding slide's notes pane.** Never on the slide body.
-- **Aspect ratio preserved on every image** (no non-uniform scaling). Audited at CONTROL by [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py).
+- **Aspect ratio preserved on every image** (no non-uniform scaling). Audited at CONTROL by [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py).
 - **OOXML invariants hold** per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules — dangling rels, `[Content_Types].xml` ordering, etc.).
 - **Honor the shared design bar *at GENERATE*.** Free-form designs *from* the guidance, not around it — its freedom is the *visual execution*, not permission to skip the design bar. As the deck is built, apply:
   - the **generic visualization floor** [`../visual-guidance.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/visual-guidance.md) — its **hard invariants** (no text/image overlap, no off-slide bleed, no truncation, no image distortion, legible contrast, above the ~30 pt floor, inside the safe area) *and* its generic **principles** (one clear hierarchy, alignment to a grid, structural whitespace, signal-over-noise, structure over bullets);
@@ -82,11 +82,11 @@ Free-form has no branded icon catalog and no icon requirement. Use icons or not,
 
 ## 4. Render flow — single pass
 
-Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow — branches by style*.
+Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow — branches by style*.
 
 | Phase | What runs |
 |---|---|
 | **GENERATE** | Cover (§2) byte-equivalent from `base-template.pptx`; slides 2+ built fresh per §3 — **applying the shared design bar as it builds** (§1: the `visual-guidance.md` floor, the matched template's *Format*, the `slide-design.md` practices). Writes `output/final.free-form.template-log.md` (§3.1) + slide previews to `output/.critique/slide-NN.png`. |
-| **CONTROL** | Shared-floor audits only: OOXML invariants, [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py), cover-fidelity. **No palette/font audit, no layout-fit audit** — those enforce the strict template (layout-conformance) and don't apply here. All audits 0 → done. Any non-zero → surface `unresolved: <audit_name>` and stop; **no auto-fix** — the presenter decides whether to re-trigger. |
+| **CONTROL** | Shared-floor audits only: OOXML invariants, [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py), [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py), cover-fidelity. **No palette/font audit, no layout-fit audit** — those enforce the strict template (layout-conformance) and don't apply here. All audits 0 → done. Any non-zero → surface `unresolved: <audit_name>` and stop; **no auto-fix** — the presenter decides whether to re-trigger. |
 
 **No FEEDBACK phase, no REGENERATE phase. The presenter is the reviewer.** The CONTENT + AESTHETIC + DISTRIBUTION practices in [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) make a handy self-review checklist for that human pass, but the skill does not walk them automatically for free-form. (The automated per-slide critique loop lives in `strict`; the throwaway `preview` runs its own light version.)

@@ -112,7 +112,7 @@ Five roles, one file as source of truth:
 - **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during the Polish step.
 - **Global-Librarian** — cross-Talk curator. On Step 7 promotion, reads the finalized Talk's corpus + `final.md` and curates reusable, topic-organized knowledge into a shared `knowledge-library/` at the repo root, merging with existing topic folders when they overlap. Curation, not 1-to-1 copy.
 
-Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`talksmith-orch.md`](talksmith-orch.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-pptx`, etc.).
+Role specs live at [agents/](agents/) and are dispatched as Claude Code subagents from the orchestrator ([`orchestrator.md`](orchestrator.md) — loaded at session start by the [`talksmith-orch.md`](talksmith-orch.md) stub that `/talksmith:init` copies into your working directory). Skills live at [skills/](skills/) and are invoked by name (`talksmith:ascii-to-svg`, `talksmith:polish-ascii`, `talksmith:md-to-deck`, etc.).
 
 ## Workflow
 
@@ -139,7 +139,7 @@ Role specs live at [agents/](agents/) and are dispatched as Claude Code subagent
        v
   [7] Learnings    -- promote >=3x recurring feedback to learnings.md
        v
-  [8] Render PPTX  -- md-to-pptx (optional, Cowork only)
+  [8] Render PPTX  -- md-to-deck (optional, Cowork only)
 ```
 
 Step 0 (Introduce) runs automatically on session start and isn't shown above. The full step-by-step instructions live in [orchestrator.md](orchestrator.md); the small [talksmith-orch.md](talksmith-orch.md) stub copied into your subject working directory by `/talksmith:init` tells the agent to load that spec on every session.

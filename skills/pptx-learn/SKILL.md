@@ -21,7 +21,7 @@ The Python (`learn_patterns.py`) exists to keep that reasoning **grounded** — 
 
 | | What | Where |
 |---|---|---|
-| **Baseline (B)** — as generated | The deck Talksmith produced, before any human touched it | geometry snapshot `output/final.generated.geometry.json` (written at strict render — see [`md-to-pptx` SKILL.md](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Output*) |
+| **Baseline (B)** — as generated | The deck Talksmith produced, before any human touched it | geometry snapshot `output/final.generated.geometry.json` (written at strict render — see [`md-to-deck` SKILL.md](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Output*) |
 | **Edited (A)** — human-corrected | The `.pptx` the presenter edited and handed to reconcile | the deck path passed to `talksmith:pptx-extract` |
 
 The geometry snapshot is what makes B survive **in-place editing** of `output/final.pptx`. If the snapshot is absent (older render, or a non-strict render), the skill no-ops.
@@ -47,7 +47,7 @@ The geometry snapshot is what makes B survive **in-place editing** of `output/fi
 
    It matches slides (by title, then order) and shapes (by role, then nearest position), computes per-shape deltas (move / resize / refont / refill), and keeps deltas that **recur across ≥ `--min-recur` slides** with a consistent direction. Each carries a `summary`, the median delta (EMU / pt / hex), the slide `class` + shape `role`, and the evidence `count` + `slides`. **This is evidence, not conclusions** — recurrence is a *pre-filter* that discards single nudges, not a promotion decision.
 
-1.5. **See the change (multimodal, best-effort).** For each candidate's evidence slides, render the **baseline** slide and the **edited** slide to PNG so the LLM can look at the actual before/after, not just EMU numbers — reuse the md-to-pptx rasterization path (`libreoffice --headless --convert-to pdf` → `pdftoppm`) on both decks and pair them by slide. If libreoffice is unavailable, skip this and analyse from the deltas + the slides' text content; note `multimodal: unavailable` in the report.
+1.5. **See the change (multimodal, best-effort).** For each candidate's evidence slides, render the **baseline** slide and the **edited** slide to PNG so the LLM can look at the actual before/after, not just EMU numbers — reuse the md-to-deck rasterization path (`libreoffice --headless --convert-to pdf` → `pdftoppm`) on both decks and pair them by slide. If libreoffice is unavailable, skip this and analyse from the deltas + the slides' text content; note `multimodal: unavailable` in the report.
 
 2. **Analyse — the LLM decides (the heavy step).** For each measured candidate, reason about the *before/after* (the PNGs from 1.5 where available) together with the delta and the slide content, and produce a judgement:
    - **Why** the presenter made the change — the design decision behind it.

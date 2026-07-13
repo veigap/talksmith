@@ -100,7 +100,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
 See **Matching examples** below for worked classifications, including the tricky ties.
 
 Strict additionally runs a **deterministic post-emit gate**
-([`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py)):
+([`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_layout_fit.py)):
 emitted layout must equal the predicted template or the build fails. Free-form and
 preview use the same classification judgment **without** the hard gate (free-form logs
 its pick to `.layout-log.md`; the preview classifier selects the render function).

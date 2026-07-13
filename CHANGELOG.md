@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.24.0] — 2026-07-13
+
+### Changed
+
+- **Skill renamed `md-to-pptx` → `md-to-deck`.** The skill now renders `.pptx` (strict /
+  free-form) *and* styled HTML (`html` / `preview`), so the `pptx`-specific name undersold it.
+  Renames the skill folder, its `SKILL.md` `name:` (`talksmith:md-to-deck`), the test fixture
+  folder (`tests/skills/md-to-deck/`), and every `${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/…`
+  reference repo-wide. The orchestrator dispatches it by the new name automatically; no re-init
+  needed. (The `config/pptx-styles/` folder and the reverse-pipeline `pptx-*` skills keep their
+  names — they are genuinely pptx-scoped.)
+
 ## [0.23.1] — 2026-07-13
 
 ### Added
@@ -34,7 +46,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   class/author lower-left, institution logo bottom-right).
 - **Strict icon-coverage audit** (`audit_icon_coverage.py`) — fails a strict render that
   ships concept cards / callouts with zero small icon pictures.
-- **Canonical HTML test fixture** at `tests/skills/md-to-pptx/` — one slide per template
+- **Canonical HTML test fixture** at `tests/skills/md-to-deck/` — one slide per template
   plus edge cases (2/3/4/6 concept cards, 3/5-step process, 2/3-column comparison, long
   titles/bodies), each forced with a `<!-- template: X -->` directive, rendered to the
   committed `style-reference.html`. Regenerate it after any style change.
@@ -113,7 +125,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   not only in the skill.** Renders are meant to write `output/final.<style>.pptx`
   (`final.strict.pptx`, `final.free-form.pptx`) so strict and free-form decks of the same Talk
   coexist, with the latest copied to a canonical `final.pptx` — but that rule lived only in
-  `md-to-pptx`'s spec, and real Cowork renders were writing `final.pptx` directly (styles
+  `md-to-deck`'s spec, and real Cowork renders were writing `final.pptx` directly (styles
   overwriting each other). Step 8 (the render driver) now names the guarantee explicitly:
   never render straight to `final.pptx`, always the suffixed name; a render that produced only
   `final.pptx` bypassed the rule and is a defect.
@@ -266,7 +278,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   `audit_notes_coverage.py` (shared CONTROL floor, all `.pptx` modes) fails the build if any
   `### Notes` block lands in an empty notes pane. Notes were load-bearing but nothing checked
   them, so a forgotten notes stage shipped silently.
-- **Committed free-form cover/agenda builder (groundwork).** `skills/md-to-pptx/freeform_deck.py`
+- **Committed free-form cover/agenda builder (groundwork).** `skills/md-to-deck/freeform_deck.py`
   builds the free-form deck's fixed cover + agenda from `final.md` metadata into a from-scratch
   `python-pptx` `Presentation()` (which ships a default theme + slideMaster, so it imports into
   Keynote), plus the bundled `config/pptx-styles/free-form/cover-logo.png`. Standalone-tested;
@@ -546,9 +558,9 @@ render instructions internally consistent and runnable across all three modes.
   template's layout; it judges whether its own design *works*.
 - **Preview upgraded to a per-slide, incremental critique loop.** The Step-5.5 draft
   preview now renders per slide, rasterizes ASCII diagrams to PNG **by code**
-  ([`render_ascii.py`](skills/md-to-pptx/render_ascii.py)), and re-renders only the
+  ([`render_ascii.py`](skills/md-to-deck/render_ascii.py)), and re-renders only the
   slides that changed between review rounds via a content-addressed cache
-  ([`preview_plan.py`](skills/md-to-pptx/preview_plan.py)). It walks the same
+  ([`preview_plan.py`](skills/md-to-deck/preview_plan.py)). It walks the same
   CONTENT + AESTHETIC + DISTRIBUTION bar as free-form.
 - **Live progress visibility in every render mode.** All modes now drive a live,
   todo-list-style checklist that ticks each step as it completes, with heartbeats on
@@ -585,7 +597,7 @@ render instructions internally consistent and runnable across all three modes.
 
 ### Fixed
 
-- **md-to-pptx section dividers.** The `final.md` → intermediate converter was letting a
+- **md-to-deck section dividers.** The `final.md` → intermediate converter was letting a
   trailing stripped field (e.g. `### Sources`) swallow the following `# N.` section
   divider; every section divider after the first could vanish. Field bodies now
   terminate at the next `---` rule or heading.
@@ -624,5 +636,5 @@ render instructions internally consistent and runnable across all three modes.
 Initial plugin release: the Presenter Agent orchestrator, five subagents
 (Librarian, Composer, Editor, Illustrator, Global-Librarian), the `/talksmith:init`
 command, and the forward-pipeline skills (`ingest`, `ascii-to-svg`, `polish-ascii`,
-`feedback-cycle`, `md-to-pptx`) driving the 8-step workflow from raw sources to
+`feedback-cycle`, `md-to-deck`) driving the 8-step workflow from raw sources to
 `draft.md`, `final.md`, and an optional `.pptx`.

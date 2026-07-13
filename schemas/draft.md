@@ -2,7 +2,7 @@
 
 Specification for `talks/<Talk>/draft.md`: the per-Talk **working file** Talksmith produces during Steps 1–5, and for `talks/<Talk>/final.md`: the **derived deliverable** Step 6 (Polish) produces from it.
 
-Each Talk has at most one of each. The shape defined here is parsed downstream by the Composer and Editor roles and by the `talksmith:md-to-pptx` skill's `convert.py` — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
+Each Talk has at most one of each. The shape defined here is parsed downstream by the Composer and Editor roles and by the `talksmith:md-to-deck` skill's `convert.py` — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
 
 ## Two files, one shape
 
@@ -36,7 +36,7 @@ The split exists so Step 6 stays re-runnable: re-render diagrams, re-tweak the P
 | Composer role (reader of `draft.md`) | Every drafting milestone in Step 4 | Critique the scoped slice (`thesis` / `agenda` / `section:N` / `full`) against thesis alignment, audience fit, citations, principles, and learnings. Returns a punch-list; does **not** edit. |
 | Illustrator role (reader of `final.md`) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; invoke the `talksmith:ascii-to-svg` skill per block. Read-only. |
 | Global-Librarian role (reader of `final.md`) | Step 7 (Learnings) on promotion | Curate reusable knowledge into `knowledge-library/`. Read-only. |
-| `talksmith:md-to-pptx` skill / `convert.py` (reader of `final.md`) | Step 8 (Render PPTX) | Pre-process into an intermediate Markdown shape and hand to `skill://antropic-skills:/pptx`. Read-only. |
+| `talksmith:md-to-deck` skill / `convert.py` (reader of `final.md`) | Step 8 (Render PPTX) | Pre-process into an intermediate Markdown shape and hand to `skill://antropic-skills:/pptx`. Read-only. |
 
 The orchestrator does **not** write either file directly — every change goes through the editor.
 
@@ -151,7 +151,7 @@ duration:
 date:
 # NOTE: PPTX render style is NOT a frontmatter field. It is a render-time parameter
 # asked fresh by the orchestrator at every Step 8 entry (see orchestrator.md Step 8
-# step 1) and passed to md-to-pptx as an invocation argument. draft.md and final.md
+# step 1) and passed to md-to-deck as an invocation argument. draft.md and final.md
 # are style-agnostic so the same content can be rendered in either style at any time.
 ---
 

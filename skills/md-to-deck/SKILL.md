@@ -1,9 +1,9 @@
 ---
-name: talksmith:md-to-pptx
-description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form` | `preview`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md); `strict`/`free-form` add a `base-template.pptx`. Output: `talks/<Talk>/output/final.pptx`. **The `preview` and `html` styles** render a **styled HTML deck by code** (no native skill, Cowork-independent) via the committed [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py): `html` renders `final.md` as a shareable deliverable at `output/html/index.html`; `preview` (Step-5.5, `style: preview` — the legacy `preview: true` is an accepted alias) renders a fast, throwaway look at a pre-Polish `draft.md` at `output/draft-preview/preview.html`, then runs **its own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, findings surface). Because they render in HTML, the styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**.
+name: talksmith:md-to-deck
+description: Convert a Talk's cleaned `final.md` into a PowerPoint (.pptx) deck by delegating all .pptx authoring to Anthropic's official `pptx` skill at `skill://antropic-skills:/pptx`. **Cowork-only** — requires that skill in the session registry. Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish) has rendered SVGs and produced `final.md`. Consumes images already on disk under `talks/<Talk>/images/`; does not author the deck itself. **Branches by the `style:` invocation parameter** (`strict` | `free-form` | `preview`, **mandatory — no default**) — the orchestrator asks the presenter at every Step 8 entry and passes the answer in; `final.md` itself is style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md); `strict`/`free-form` add a `base-template.pptx`. Output: `talks/<Talk>/output/final.pptx`. **The `preview` and `html` styles** render a **styled HTML deck by code** (no native skill, Cowork-independent) via the committed [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py): `html` renders `final.md` as a shareable deliverable at `output/html/index.html`; `preview` (Step-5.5, `style: preview` — the legacy `preview: true` is an accepted alias) renders a fast, throwaway look at a pre-Polish `draft.md` at `output/draft-preview/preview.html`, then runs **its own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, findings surface). Because they render in HTML, the styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**.
 ---
 
-# md-to-pptx — Render `final.md` to PowerPoint
+# md-to-deck — Render `final.md` to PowerPoint
 
 **This skill is a thin orchestrator. All `.pptx` authoring must go through Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx)** — which authors the deck **programmatically with `python-pptx`**, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`; see §1 of the free-form spec and the *base template is mandatory* rule below). So "delegate to the pptx skill" means: **drive that skill's `python-pptx` workflow from the base template + visual spec.** Writing `python-pptx` this way is not just allowed, it is the mechanism.
 
@@ -80,14 +80,14 @@ talks/<Talk>/
 ## Process
 
 0. **Preview is a style, not an exception.** `preview` is one of the render styles
-   ([`preview/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/preview/pptx-prompt.md)); it differs only in **substrate** — a styled HTML deck rendered by code, not a native `.pptx`. When the resolved style is **`preview`** (the orchestrator's Step-5.5 passes `style: preview`; the legacy `preview: true` invocation is accepted as an alias for it), the render is [`build_html.py --talk talks/<Talk> --draft`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py) (no native `pptx` skill, no base-template, no CONTROL audits) followed by its **own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide, findings surface) — see *preview — Step-5.5 draft preview* in *Render flow*. All other steps below (the native-`pptx` pipeline) apply to the `strict` / `free-form` styles.
+   ([`preview/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/preview/pptx-prompt.md)); it differs only in **substrate** — a styled HTML deck rendered by code, not a native `.pptx`. When the resolved style is **`preview`** (the orchestrator's Step-5.5 passes `style: preview`; the legacy `preview: true` invocation is accepted as an alias for it), the render is [`build_html.py --talk talks/<Talk> --draft`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (no native `pptx` skill, no base-template, no CONTROL audits) followed by its **own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide, findings surface) — see *preview — Step-5.5 draft preview* in *Render flow*. All other steps below (the native-`pptx` pipeline) apply to the `strict` / `free-form` styles.
 
 0. **Resolve style.** Read the `style:` value from the invocation parameters (the orchestrator's Step 8 step 1 asked the presenter and passed it in). **The parameter is mandatory — no default.** If the value is **absent or empty**, fail render-blocking with `[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).` Do not proceed; the orchestrator's job is to re-ask the presenter, not the skill's job to guess. If the value is present but not a directory under `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/`, fail render-blocking per *Style resolution failed* in *Failure modes*. Cache `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` and (for the native-`pptx` styles only) `<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx`. Verify `<spec_path>` exists for every style; verify `<base_template_path>` exists for `strict` / `free-form` (the **`preview`** style has a code substrate and **no base-template** — skip that check). If a required file is missing, the style enum has drifted from disk — surface as a render-blocking error naming the missing file. Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>).`
 1. Verify all prerequisites (table above). Stop on any failure.
 2. **Pre-process `final.md` with [`convert.py`](convert.py)** — a CLI-safe, dependency-free Python script that emits the Markdown shape `skill://antropic-skills:/pptx` consumes:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/convert.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/convert.py \
      talks/<Talk>/final.md \
      -o talks/<Talk>/output/final.<style>.intermediate.md
    ```
@@ -135,7 +135,7 @@ talks/<Talk>/
 6. **Audit `<p:pic>` aspect ratios.** Run [`audit_aspect_ratios.py`](audit_aspect_ratios.py) against the rendered deck:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py \
      talks/<Talk>/output/final.pptx
    ```
 
@@ -144,7 +144,7 @@ talks/<Talk>/
    **Then run [`audit_palette_fonts.py`](audit_palette_fonts.py) — only when `style == strict`.** This enforces the strict template's §2 palette + §3.1 font set (a LAYOUT-CONFORMANCE concern — see [`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md)). **Skip for `free-form` and `preview`** — their slides 2+ deliberately have no fixed palette/font, so this audit does not apply (for free-form the fixed cover is still checked by `audit_cover_fidelity.py`; preview produces no deck, so no deck-parsing audit runs there at all). For strict:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_palette_fonts.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_palette_fonts.py \
      talks/<Talk>/output/final.pptx
    ```
 
@@ -153,7 +153,7 @@ talks/<Talk>/
    Then run [`audit_cover_fidelity.py`](audit_cover_fidelity.py) to confirm slide 1 of `final.pptx` is byte-equivalent to slide 1 of the style's `<base_template_path>` (modulo only the four cover substitution slots — title, subtitle, author+date, logo image basename; defined in strict §4.3 and free-form §2):
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_cover_fidelity.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_cover_fidelity.py \
      talks/<Talk>/output/final.pptx \
      <base_template_path>
    ```
@@ -163,7 +163,7 @@ talks/<Talk>/
    **Then run [`audit_layout_fit.py`](audit_layout_fit.py) — only when `style == strict`.** When `style == free-form`, skip this audit entirely (free-form has no §15.5 emit-rules table to predict against). For strict:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_layout_fit.py \
      talks/<Talk>/final.md \
      talks/<Talk>/output/final.pptx
    ```
@@ -173,7 +173,7 @@ talks/<Talk>/
    **Then run [`audit_icon_coverage.py`](audit_icon_coverage.py) — only when `style == strict`.** For strict:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_icon_coverage.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_icon_coverage.py \
      talks/<Talk>/final.md \
      talks/<Talk>/output/final.pptx
    ```
@@ -183,7 +183,7 @@ talks/<Talk>/
    Then run [`audit_block_coverage.py`](audit_block_coverage.py) to confirm every load-bearing block from `final.md` survived into the rendered deck:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py \
      talks/<Talk>/final.md \
      talks/<Talk>/output/final.pptx
    ```
@@ -193,7 +193,7 @@ talks/<Talk>/
    Then run [`audit_notes_coverage.py`](audit_notes_coverage.py) (shared floor — **strict and free-form**) to confirm speaker notes were not dropped:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_notes_coverage.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_notes_coverage.py \
      talks/<Talk>/final.md \
      talks/<Talk>/output/final.pptx
    ```
@@ -250,10 +250,10 @@ The CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION practices in [`slide-design.md
 
 An optional **fast, throwaway** **styled HTML deck** of a **pre-Polish `draft.md`** so the presenter can eyeball slide order, layout, and rough content *before* committing to Step 6 (Polish) + a real render. The orchestrator auto-fires it in the background when `draft.md` first completes and again when the Step-5 review changes it (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 5.5 — Draft preview*).
 
-**Run the committed renderer — never hand-roll one.** Preview is the same code renderer as the `html` deliverable style, [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py), invoked with `--draft`:
+**Run the committed renderer — never hand-roll one.** Preview is the same code renderer as the `html` deliverable style, [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py), invoked with `--draft`:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py --talk talks/<Talk> --draft
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft
 ```
 
 It orchestrates the whole thing deterministically and reuses the sibling substrate: `convert.py --draft` (per-slide units, `**Presenter feedback:**`/`**Narrative arc:**` scaffolding stripped) → per-unit classification against the shared catalog (`_classify`, with `<!-- template: X -->` overrides) → **the matched template's real styling** via the shared `html_style` components (cards, per-concept Material Symbols icons, callout boxes, code surfaces), a fit-to-16:9 pass, and present mode → a **single self-contained styled HTML deck**, `output/draft-preview/preview.html`. **Do not write an ad-hoc render script** — that is the exact anti-pattern this file exists to prevent (mirrors the *Why Cowork-only* rule for the real deck).

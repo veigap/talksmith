@@ -211,7 +211,7 @@ labels: ...
 - **External WebP / AVIF / HEIC sources** (typically corpus images — a `.webp` downloaded by the librarian) are rasterized to PNG at the same basename here, before the reference is rewritten. These are *not* SVG-generation territory so they stay with the editor. Recipes: `Image.open('<in.webp>').save('<out.png>', 'PNG')` (Pillow) or `cwebp`/`sips`/`magick` CLI. Keep the original file alongside the PNG for traceability.
 - **Refs already pointing to `.png`/`.jpg`** pass through unchanged.
 
-Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 8 `md-to-pptx` pre-flight enforces the same rule as a backstop.
+Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 8 `md-to-deck` pre-flight enforces the same rule as a backstop.
 
 (c) **Rescue `[open]` feedback (from `final.md`).** Run [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) `rescue-open`:
 ```bash

@@ -5,7 +5,7 @@ special-case branch. Its distinguishing property is its **substrate**: instead o
 native `.pptx` via the Cowork `pptx` skill, it renders a **styled HTML deck by code** from a
 pre-Polish `draft.md`. That makes it fast, throwaway, and **Cowork-independent** — the right
 tool for a Step-5.5 look before committing to a full render. It is the same renderer as the
-`html` deliverable style ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py));
+`html` deliverable style ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py));
 `preview` reads `draft.md`, `html` reads `final.md`.
 
 For the native-`pptx` styles see [`../strict/pptx-prompt.md`](../strict/pptx-prompt.md) and

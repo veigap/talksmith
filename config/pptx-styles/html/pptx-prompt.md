@@ -2,7 +2,7 @@
 
 `html` is a **first-class render style** whose deliverable is a **styled static HTML site**,
 not a `.pptx`. It is the presentable sibling of `preview`: both are the same code-generated
-renderer ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py), shared
+renderer ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py), shared
 tokens/components in `html_style.py`) — `preview` renders a pre-Polish `draft.md` for a fast
 throwaway look, `html` renders `final.md` as a shareable deliverable.
 
@@ -22,7 +22,7 @@ For the native-`pptx` styles see [`../strict/pptx-prompt.md`](../strict/pptx-pro
 ([`../slide-templates.md`](../slide-templates.md), `_classify`) → render the matched
 template's real styling in the strict tokens (palette, Helvetica/Courier, §7/§8/§9 geometry):
 cards, **per-concept Material Symbols icons** (fetched by name via
-[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py), recoloured to
+[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py), recoloured to
 `#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. A §4 **cover slide** is
 prepended from the frontmatter. SVG images embed inline; PNG/JPG as data-URIs.
 
@@ -50,4 +50,4 @@ restate it. **No CONTROL phase** (it produces no `.pptx`, so the deck-parsing au
 apply; block-coverage holds by construction — every unit is rendered). REGENERATE **surfaces**
 findings (the code renderer takes no per-slide fix instructions; the presenter resolves them
 by editing `final.md` and re-rendering). The canonical `test` fixture that exercises every
-template lives at `tests/skills/md-to-pptx/`.
+template lives at `tests/skills/md-to-deck/`.

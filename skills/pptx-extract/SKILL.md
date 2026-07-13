@@ -12,7 +12,7 @@ Talksmith's forward pipeline is one-directional: `draft.md` → `final.md` → `
 | Points at the edited `.pptx` + the active Talk + the render style | Parses the deck, classifies slides, de-dups images, writes `finalpptx.md` + inventory |
 | Refines the mechanical draft (resolves `<!-- reconstruct: ... -->` markers) | Emits a conservative first pass; never invents Thesis/Sources |
 
-Reading a `.pptx` needs no external tool (a `.pptx` is a zip of OOXML), so — unlike [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md), which is Cowork-only because *authoring* a deck needs the native `pptx` skill — this skill is fully CLI-safe.
+Reading a `.pptx` needs no external tool (a `.pptx` is a zip of OOXML), so — unlike [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md), which is Cowork-only because *authoring* a deck needs the native `pptx` skill — this skill is fully CLI-safe.
 
 ## When to use
 

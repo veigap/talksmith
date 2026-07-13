@@ -502,7 +502,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
   **Enforcement (three layers, defense in depth):**
   1. **Upstream — SVG generation.** Every SVG produced by [`ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) declares a `viewBox` whose `W:H` matches the diagram's true visual aspect, with no conflicting `width`/`height` attrs and no `preserveAspectRatio="none"`. See that skill's step 5 *Aspect-ratio contract* for the rule. A wrong viewBox at this stage poisons every downstream check.
   2. **Baseline — base template.** [`config/base-template.pptx`](base-template.pptx) is shipped pre-audited: every `<p:pic>` in cover + agenda + every retained layout slide already passes the aspect audit at 1% tolerance and carries `noChangeAspect="1"`. A working copy of the base template is compliant by construction.
-  3. **Downstream — post-render audit.** After the native renderer emits `final.pptx`, the [`md-to-pptx`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) skill runs [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py) (Process step 6, progress stage 5) which walks every `<p:pic>`, resolves its source asset, and **fails the render on any mismatch ≥ 1%**. Repair = shrink the larger placement dimension to match the source ratio per the rule above. Never resolve by widening the tolerance, never by emitting `<a:srcRect>` / non-zero `<a:stretch fillRect>` insets.
+  3. **Downstream — post-render audit.** After the native renderer emits `final.pptx`, the [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) skill runs [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py) (Process step 6, progress stage 5) which walks every `<p:pic>`, resolves its source asset, and **fails the render on any mismatch ≥ 1%**. Repair = shrink the larger placement dimension to match the source ratio per the rule above. Never resolve by widening the tolerance, never by emitting `<a:srcRect>` / non-zero `<a:stretch fillRect>` insets.
 
 ---
 
@@ -531,7 +531,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 
 ### 13.1 Layout files — Marp-style, one per slide
 
-The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) named `Slide 1 master` … `Slide N master` — i.e. **one bespoke layout per slide**. Layouts are *not* reusable templates with placeholders; they are slide-specific carriers. Downstream `md-to-pptx` should **generate shape geometry directly** rather than expect named placeholders.
+The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) named `Slide 1 master` … `Slide N master` — i.e. **one bespoke layout per slide**. Layouts are *not* reusable templates with placeholders; they are slide-specific carriers. Downstream `md-to-deck` should **generate shape geometry directly** rather than expect named placeholders.
 
 ---
 
@@ -597,7 +597,7 @@ The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) nam
 
 ---
 
-## 15. Generator emit-rules (for `md-to-pptx` and equivalents)
+## 15. Generator emit-rules (for `md-to-deck` and equivalents)
 
 **Meta-rule — the renderer applies the layout the spec selects, not the layout that ships without violations.** Every layout rule in §6–§17 pairs an anti-pattern (what must not appear) with a positive obligation (what must appear in its place). Satisfying the anti-pattern by *deletion* — stripping an emoji, dropping a label, picking a plainer layout — is a render failure when the positive obligation calls for *substitution* or for a richer layout. A §19.6-clean deck that bypassed §15.5's discriminator or §17.7's substitution table is still a render failure; §19.6 is necessary but not sufficient. The pre-emit audit in §15.6 enforces the positive obligation per slide; the post-emit audit in §19.5 verifies it landed.
 
@@ -625,7 +625,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
    | H2 + pipe-table | **card-grid** via §11 conversion | **Use when:** the content is structurally label/value pairs — model specs, parameter comparisons, "before vs after" rows, dosage tables. The template never emits native `<a:tbl>`; pipe-tables convert to a card-per-row visual. **NOT for:** 3–5 parallel concepts where the "table" is just a layout convenience (→ §7.4 or §7.5, more visually appropriate); narrative rows that read as prose (→ content-text or split into multiple slides). |
    | Final slide with H2 + list of links | **closing-cta** | **Use when:** the talk's last slide — a call to action, a "where to next" list, contact + repo links, references the audience will photograph. **NOT for:** any non-terminal slide; an inline references section (those belong in speaker notes or an appendix slide, not in a CTA layout). |
    | H2 + paragraphs only, no images, no code | **content-text** | **Last-resort use when:** a slide genuinely carries only prose — a definition, a quote, an opening framing. Template avoids this; appears 1× in 53 source slides. **NOT for:** anything that could be restructured — most "wall of paragraphs" slides are draft defects where parallel structure (→ §7.4 / §7.5) or a diagram (→ content+image) would serve better. Flag in review as a candidate to restructure before accepting. |
-   | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink (§8.1) for analogy/tip/warning, blue (§8.2) for declarative claim/key takeaway | **Use when:** a slide's content includes a single emphasized claim or aside that markdown-authored as a one-item bullet with emoji + bold lead. The shape is **not a bullet list** — a 1-bullet "list" never reads as enumeration; it reads as emphasis. Promote to the §8 callout layout, picking pink vs. blue per the §8 decision table by the bullet's intent (`🎯`, `💡`, `📚`, `⚠` → pink; `📊`, `ℹ️`, declarative claim → blue). Per [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py), the renderer is audited for this — emitting the bullet as a plain `<a:buChar>` paragraph instead of a callout shape registers as a `[block-drop]` because the audit looks for the matching `#F7BBC1`/`#B8E6F5` roundRect. **NOT for:** multi-bullet emoji-prefixed lists (those are §10 bullet lists with the emoji-to-icon swap per §17.7); inline bold within a paragraph (not a callout signal — just emphasis). |
+   | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink (§8.1) for analogy/tip/warning, blue (§8.2) for declarative claim/key takeaway | **Use when:** a slide's content includes a single emphasized claim or aside that markdown-authored as a one-item bullet with emoji + bold lead. The shape is **not a bullet list** — a 1-bullet "list" never reads as enumeration; it reads as emphasis. Promote to the §8 callout layout, picking pink vs. blue per the §8 decision table by the bullet's intent (`🎯`, `💡`, `📚`, `⚠` → pink; `📊`, `ℹ️`, declarative claim → blue). Per [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py), the renderer is audited for this — emitting the bullet as a plain `<a:buChar>` paragraph instead of a callout shape registers as a `[block-drop]` because the audit looks for the matching `#F7BBC1`/`#B8E6F5` roundRect. **NOT for:** multi-bullet emoji-prefixed lists (those are §10 bullet lists with the emoji-to-icon swap per §17.7); inline bold within a paragraph (not a callout signal — just emphasis). |
 
 6. **Title sizing per content slide.** Apply §3.3 — pick the largest size from the discrete ladder `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` pt that fits the title on one line.
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.
@@ -664,7 +664,7 @@ This sub-section is the operational form of §10's bullet-glyph contract. The au
 
 #### 15.6.4 Surfacing protocol — what to do when the audit can't resolve
 
-When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the strict 3-cycle cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*) and surfaces a single structured prompt to the presenter:
+When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the strict 3-cycle cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*) and surfaces a single structured prompt to the presenter:
 
 ```
 [pptx pre-emit audit] Slide N — <H2 title>
@@ -706,10 +706,10 @@ When you only need a one-line cheat-sheet:
 
 The deck uses a **single, consistent icon style**: clean line-art strokes in brand red `#DA1B2E` on transparent background. **No two icon styles in one deck.** No filled silhouettes, no two-tone illustrations, no system emojis (💡 📚 🏥 do not render reliably in LibreOffice and visually clash with the typographic restraint of the template).
 
-**Icons are Material Symbols, fetched by name — not bundled, not generated.** The source is Google **Material Symbols** (outlined weight-400 — clean 2px line-art, Apache-2.0, safe to embed). Icons are **not** shipped with the plugin and are **never generated**; the render fetches the *content-matched* icon on demand with [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py):
+**Icons are Material Symbols, fetched by name — not bundled, not generated.** The source is Google **Material Symbols** (outlined weight-400 — clean 2px line-art, Apache-2.0, safe to embed). Icons are **not** shipped with the plugin and are **never generated**; the render fetches the *content-matched* icon on demand with [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py <material-name> \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py <material-name> \
   --cache talks/<Talk>/output/.icons --color DA1B2E
 # → a local recolored .svg path (cached; network only on first fetch)
 ```
@@ -826,7 +826,7 @@ When a content slide is being assembled and an icon slot needs to be filled:
 
 There is **no bundled icon library** and icons are **never generated**. Each icon is a
 **Material Symbols** SVG fetched **by name, on demand** via
-[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py) (see the §17 intro),
+[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py) (see the §17 intro),
 cached under `talks/<Talk>/output/.icons/`. Fetch each content-matched icon, recolor to
 `#DA1B2E`, then embed it as a `<p:pic>` per §17.4 (SVG primary + PNG fallback). A deck fetches
 only the handful of icons it uses.
@@ -925,7 +925,7 @@ Plus the single red separator banner on slide 3. Combined, anyone — human or a
 
 This section is the procedural layer on top of the spec — what an agent does, in what order, to render a `final.md` into `talks/<Talk>/output/final.pptx`. **Decision rules are not duplicated here** — every step points to the earlier §-section that owns the rule. Read the cross-references; don't reinvent them.
 
-The whole guide is small enough to serve as the body of an `md-to-pptx` skill, a system message for a dedicated rendering agent, or a `/render-deck` slash command. If you carry it elsewhere, carry the §-pointers with it — the spec is the contract.
+The whole guide is small enough to serve as the body of an `md-to-deck` skill, a system message for a dedicated rendering agent, or a `/render-deck` slash command. If you carry it elsewhere, carry the §-pointers with it — the spec is the contract.
 
 ### 19.1 Asset inventory
 
@@ -983,13 +983,13 @@ A clean rebuild of `base-template.pptx` (see its commit history) passes all five
 After emit, the renderer runs four checks in order before declaring the build a success:
 
 1. **OOXML invariants** per §19.4 — `[Content_Types].xml` first in zip, no dangling overrides / rels, `sldIdLst` resolves.
-2. **Aspect-ratio audit** — [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py): every `<p:pic>` cx:cy matches the source asset intrinsic ratio within 1%.
-3. **Block-coverage audit** — [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py): every callout and content image in `final.md` appears as the corresponding shape on the rendered slide.
-4. **Layout-fit audit** — [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py): for every content slide, the layout *predicted* from the §15.5 emit-rules table (recomputed from the source markdown's surface signals + §15.6.1 discriminator) equals the layout *emitted* in the rendered slide (inferred from shape composition — `<p:pic>` count and geometry, native `<a:tbl>` presence, bullet shape inventory, code-block presence, per-row icon presence). When predicted ≠ emitted, the audit fails with a structured report naming the source evidence, the emitted evidence, and the likely root cause (typically a §15.6.1 discriminator skip — §10 plain bullets shipped when §7.5 was selected, or content+image shipped when image-grid was selected). This catches the class of regression where the §19.6 anti-pattern check passes (no emojis, no native tables, no theme drift) but the substantive spec was bypassed.
+2. **Aspect-ratio audit** — [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py): every `<p:pic>` cx:cy matches the source asset intrinsic ratio within 1%.
+3. **Block-coverage audit** — [`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py): every callout and content image in `final.md` appears as the corresponding shape on the rendered slide.
+4. **Layout-fit audit** — [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_layout_fit.py): for every content slide, the layout *predicted* from the §15.5 emit-rules table (recomputed from the source markdown's surface signals + §15.6.1 discriminator) equals the layout *emitted* in the rendered slide (inferred from shape composition — `<p:pic>` count and geometry, native `<a:tbl>` presence, bullet shape inventory, code-block presence, per-row icon presence). When predicted ≠ emitted, the audit fails with a structured report naming the source evidence, the emitted evidence, and the likely root cause (typically a §15.6.1 discriminator skip — §10 plain bullets shipped when §7.5 was selected, or content+image shipped when image-grid was selected). This catches the class of regression where the §19.6 anti-pattern check passes (no emojis, no native tables, no theme drift) but the substantive spec was bypassed.
 
 Only after all four pass: render the deck to PNG via `soffice --headless --convert-to pdf` + `pdftoppm` (or the native skill's slide-to-image endpoint), then walk the shared quality catalog [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) — strict selects all four categories (CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE) per the [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md) matrix, with the strict elaborations in §20 — as the cycle's FEEDBACK phase.
 
-Edit + re-render up to **3 cycles total** per the strict cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*. After the cap, surface unresolved defects to the presenter rather than looping.
+Edit + re-render up to **3 cycles total** per the strict cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*. After the cap, surface unresolved defects to the presenter rather than looping.
 
 ### 19.6 Consolidated anti-patterns
 
@@ -1036,7 +1036,7 @@ Things that look reasonable but break the template. The §-section in each row i
 
 The whole spec (§§1–19) is self-contained. Three places it usefully gets installed:
 
-1. **`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md` body** — the skill loads the full spec on invocation; downstream actually emits the XML.
+1. **`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md` body** — the skill loads the full spec on invocation; downstream actually emits the XML.
 2. **System message of a dedicated rendering agent** — agent stays oriented across multi-turn editing; pass `talks/<Talk>/final.md` and `config/profile.md` as user-turn inputs.
 3. **`/render-deck` slash command body** — one-shot CLI invocation.
 
@@ -1046,7 +1046,7 @@ In all three cases pointing the agent at `config/pptx-prompt.md` is sufficient �
 
 ## 20. Post-render visual review
 
-This is the **FEEDBACK phase** of the strict render cycle (cycle contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*). The skill's FEEDBACK sub-agent runs it after CONTROL passes, reading `talks/<Talk>/output/.critique/slide-NN.png` via the `Read` tool for each slide (visual analysis on rasterized pixels — XML inspection is forbidden; text overflow, off-balance layout, image clashes, and theme drift are visual properties XML routinely misses).
+This is the **FEEDBACK phase** of the strict render cycle (cycle contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*). The skill's FEEDBACK sub-agent runs it after CONTROL passes, reading `talks/<Talk>/output/.critique/slide-NN.png` via the `Read` tool for each slide (visual analysis on rasterized pixels — XML inspection is forbidden; text overflow, off-balance layout, image clashes, and theme drift are visual properties XML routinely misses).
 
 **The practices strict walks live in the shared catalog** [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md). Strict selects **all four categories — CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, at cycle cap 3, per the per-format matrix in [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md). §20.2 below is no longer a standalone rubric; it records only the strict-specific *elaborations* keyed by catalog id (the depth the catalog deliberately omits). §20.1 (the block-coverage gate), and the shared walk discipline / aesthetic note / declare-clean contract now live in `slide-design.md`; strict inherits them and keeps only the notes below.
 
@@ -1056,17 +1056,17 @@ If `slide_previews: failed`, surface `unresolved: slide_previews_failed` — no 
 
 ### 20.1 Block-coverage precondition (CONTROL gate, not FEEDBACK)
 
-[`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_block_coverage.py) runs in CONTROL. Any `[block-drop]` line ends CONTROL immediately → straight to REGENERATE. **FEEDBACK never runs on a deck with missing blocks** — the rubric below has no practice catching a *missing* shape (no shape on the slide → no rubric hit), so a silent drop sails through. This audit is the deterministic guard.
+[`audit_block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_block_coverage.py) runs in CONTROL. Any `[block-drop]` line ends CONTROL immediately → straight to REGENERATE. **FEEDBACK never runs on a deck with missing blocks** — the rubric below has no practice catching a *missing* shape (no shape on the slide → no rubric hit), so a silent drop sails through. This audit is the deterministic guard.
 
 ### 20.2 Strict elaborations (keyed by catalog id)
 
 The practice list itself lives in [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md). Strict walks all four categories; below is the extra depth strict applies to specific catalog entries — the catalog keeps the one-line intent, these notes keep the strict rigor.
 
-- **`AESTHETIC-04` (image scale/aspect) — per-slide measurement protocol, non-optional (the eye misses sub-50% stretch).** For every slide carrying a diagram or non-photographic image, open the source asset (SVG `viewBox` or PNG/JPG header → `intrinsic_w:intrinsic_h`) and compare to the rendered shape. A 35% horizontal compression looks like a 2.143:1 source in a 1.400:1 placeholder — glyphs and arrowheads visibly squashed but shape still readable; this is the failure mode that previously shipped. Any visible squashing of glyphs, asymmetric arrowheads, or non-circular dots is a fail for slide N × `AESTHETIC-04`. [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_aspect_ratios.py) is the build-time gate at 1% tolerance — if the audit passed and the eye still sees stretch, the source asset is wrong (re-render the SVG), not the placement.
+- **`AESTHETIC-04` (image scale/aspect) — per-slide measurement protocol, non-optional (the eye misses sub-50% stretch).** For every slide carrying a diagram or non-photographic image, open the source asset (SVG `viewBox` or PNG/JPG header → `intrinsic_w:intrinsic_h`) and compare to the rendered shape. A 35% horizontal compression looks like a 2.143:1 source in a 1.400:1 placeholder — glyphs and arrowheads visibly squashed but shape still readable; this is the failure mode that previously shipped. Any visible squashing of glyphs, asymmetric arrowheads, or non-circular dots is a fail for slide N × `AESTHETIC-04`. [`audit_aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_aspect_ratios.py) is the build-time gate at 1% tolerance — if the audit passed and the eye still sees stretch, the source asset is wrong (re-render the SVG), not the placement.
 - **`CONFORMANCE-03` (theme/pixel-equivalence).** Cross-check against [`base-template.pptx`](base-template.pptx): slides 1–2 must be pixel-equivalent to base-template slides 1–2 modulo placeholder text. No ad-hoc one-off colors, no system-font fallbacks from copy-paste, no unstyled fragments.
 - **`CONFORMANCE-04` (section pill).** The `#F9D2D6` rounded-rect pill at top-left names the active section in ALL CAPS on every non-cover, non-agenda slide. Missing pill = generator skipped §6.
 - **`CONFORMANCE-05` (branded icons).** Every iconographic mark resolves to a `#DA1B2E` line-art icon from the §17 catalog; mixed icon styles is a fail. The forbidden system-emoji set (💡 📚 🏥 ⚠️ ✅ ⚙️ 🔍 ⏰ 💰 👥 🛡️ ⭐ 📊 ℹ️ 📖 …) is caught by `CONTENT-01` before it reaches the icon check.
-- **`CONFORMANCE-06` (emit-rules) + §15.5/§15.6.** The predicted-vs-emitted layout gate is [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_layout_fit.py) against the §15.5 table + §15.6.1 discriminator (a CONTROL audit, run at build-time).
+- **`CONFORMANCE-06` (emit-rules) + §15.5/§15.6.** The predicted-vs-emitted layout gate is [`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_layout_fit.py) against the §15.5 table + §15.6.1 discriminator (a CONTROL audit, run at build-time).
 
 > In Phase 2 the measurable `CONFORMANCE-*` rules move into the declarative [`conformance-patterns.md`](conformance-patterns.md) so they can be grown from learned edits; these prose notes remain the human-readable intent.
 
