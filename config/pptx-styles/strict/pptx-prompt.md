@@ -706,11 +706,29 @@ When you only need a one-line cheat-sheet:
 
 The deck uses a **single, consistent icon style**: clean line-art strokes in brand red `#DA1B2E` on transparent background. **No two icon styles in one deck.** No filled silhouettes, no two-tone illustrations, no system emojis (💡 📚 🏥 do not render reliably in LibreOffice and visually clash with the typographic restraint of the template).
 
-The library ships with `base-template.pptx` as both SVG (`ppt/media/icon-<name>.svg`) and rasterized PNG previews. Visual reference: [`template-previews/icons/`](template-previews/icons/).
+**Icons are Material Symbols, fetched by name — not bundled, not generated.** The source is Google **Material Symbols** (outlined weight-400 — clean 2px line-art, Apache-2.0, safe to embed). Icons are **not** shipped with the plugin and are **never generated**; the render fetches the *content-matched* icon on demand with [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py <material-name> \
+  --cache talks/<Talk>/output/.icons --color DA1B2E
+# → a local recolored .svg path (cached; network only on first fetch)
+```
+
+Pick the Material Symbols name that fits the concept (the vocabulary is ~3000 icons — e.g. `shield`, `lock`, `payments`, `savings`, `schedule`, `history`, `database`, `dataset`, `group`, `person`, `code`, `terminal`, `lightbulb`, `bolt`, `warning`, `verified`, `search`, `insights`, `hub`, `settings`). A deck needs only a handful, so only those are fetched. The old `template-previews/icons/` PNGs remain as a **visual reference** for the 15 core categories in §17.1 (mapped to Material names below); they are not the render assets. (The prior claim that `ppt/media/icon-<name>.svg` ships in the base template was wrong — no such files exist; that broke icon rendering.)
 
 ### 17.1 Catalog — 15 icons, semantic mapping
 
-The icon **must be visually related to its content**. This table maps each icon to the topics it pairs with. Pick from the catalog; do not invent new icons unless the topic is unambiguously outside it.
+The icon **must be visually related to its content**. This table gives 15 core semantic
+categories and the topics they pair with; each maps to a **Material Symbols** name fetched via
+§17.6. You are **not** limited to these 15 — pick whatever Material Symbols name best fits the
+concept (the library is ~3000 icons); the 15 are the common cases:
+
+`warning`→`warning` · `shield`→`shield` (or `lock`, `security`) · `coins`→`payments` (or
+`savings`) · `lightbulb`→`lightbulb` (or `bolt`) · `book`→`menu_book` (or `article`) ·
+`medical`→`medical_services` · `star`→`star` · `check`→`check_circle` (or `verified`) ·
+`gear`→`settings` (or `tune`) · `chart`→`insights` (or `bar_chart`) · `clock`→`schedule` (or
+`history`) · `people`→`group` · `code`→`code` (or `terminal`) · `search`→`search` ·
+`info`→`info` (reserved for the §8.2 blue callout).
 
 | Icon | Preview | Use for content about | Example pairings |
 |---|---|---|---|
@@ -804,14 +822,22 @@ When a content slide is being assembled and an icon slot needs to be filled:
 4. **If nothing fits**, fall back to `star` (neutral "this matters") rather than inventing a new icon.
 5. **In a multi-item layout (e.g. §7.4 card-row, §7.5 icon-bullet list, slide 9's content+image 3-section list, slide 11's 5-row mitigation list), pick a *different* §17.1 icon per item.** Repeating one icon across cards/rows in the same group destroys the visual differentiation the icons exist to provide — the reader scans by glyph shape, not by reading every heading. If two items genuinely share the same dominant concept (rare — usually a sign the items should be merged), fall through to the next-most-specific catalog entry for one of them rather than duplicating. `star` may appear once per group as a neutral fallback; it should never fill more than one slot in the same multi-item layout.
 
-### 17.6 Where to find the assets
+### 17.6 Where the assets come from — fetch by name, don't bundle
 
-| Asset | Location in `base-template.pptx` | Standalone preview |
-|---|---|---|
-| SVG (preferred — vector) | `ppt/media/icon-<name>.svg` | [`template-previews/icons/icon-preview-<name>.png`](template-previews/icons/) |
-| PNG (fallback — 200×200 raster) | Already substituted into the slide media as `image-*.png` | (same preview) |
+There is **no bundled icon library** and icons are **never generated**. Each icon is a
+**Material Symbols** SVG fetched **by name, on demand** via
+[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/icon_fetch.py) (see the §17 intro),
+cached under `talks/<Talk>/output/.icons/`. Fetch each content-matched icon, recolor to
+`#DA1B2E`, then embed it as a `<p:pic>` per §17.4 (SVG primary + PNG fallback). A deck fetches
+only the handful of icons it uses.
 
-The 23 slide-attached image slots in `base-template.pptx` are already pre-populated with branded icons (rotating through the catalog) so every preview renders cleanly. When you generate a real deck, replace the rotating selection with the **content-matched** icon per §17.5.
+| Need | Do |
+|---|---|
+| The icon SVG for concept "X" | `icon_fetch.py <material-name> --cache …/output/.icons --color DA1B2E` → local recolored `.svg` |
+| PNG fallback for the `<asvg:svgBlip>` pair (§17.4) | rasterize the fetched SVG (the Cowork `pptx` skill / renderer handles SVG→PNG), or embed SVG-only where the target supports it |
+| A visual reference for the 15 core categories | [`template-previews/icons/`](template-previews/icons/) PNGs (reference only — **not** the render assets) |
+
+*(The earlier claim that `ppt/media/icon-<name>.svg` ships inside `base-template.pptx` was wrong — those files never existed, which is why concept icons rendered blank. Fetch from Material Symbols instead.)*
 
 ### 17.7 Emoji → catalog-icon swap table
 
