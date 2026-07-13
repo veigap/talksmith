@@ -84,6 +84,7 @@ def _frontmatter(text: str) -> dict:
 
 def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str, subtitle: str):
     cache = out_dir / ".icons"
+    _hs.load_catalog(cache)               # match concepts against the live Material Symbols catalog
     hints = _template_hints(md_text)
     converted = _convert.convert(md_text, draft=draft)
     units = _convert._split_into_slide_units(converted)

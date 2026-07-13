@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.26.0] — 2026-07-13
+
+### Changed
+
+- **Per-concept icons are matched against the live Material Symbols catalog, not a hardcoded
+  keyword→icon table.** `build_html` fetches the full catalog metadata (icon names + English
+  search tags + popularity, cached, never committed) and scores each concept's **label** (body
+  only breaks ties) against it — so any of the ~4200 icons can be chosen, and the choice is
+  grounded in Material's own tags. A thin Spanish→English bridge lets Spanish concept words match
+  the English tags; a small regex seed is the offline fallback. Fixes e.g. "Seguridad" → `shield`
+  (was a brittle 25-row map, and body text could hijack the icon).
+
 ## [0.25.1] — 2026-07-13
 
 ### Fixed

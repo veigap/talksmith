@@ -25,6 +25,7 @@ falls back to a plain card — the icon is an enhancement, never a hard dependen
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 import urllib.error
@@ -32,7 +33,52 @@ import urllib.request
 from pathlib import Path
 
 CDN = "https://cdn.jsdelivr.net/npm/@material-symbols/svg-{weight}/{style}/{name}.svg"
+# The full Material Symbols catalog metadata (icon name + English search tags + categories +
+# popularity) — the source of truth for content-matched icon selection, instead of a hardcoded map.
+CATALOG_URL = "https://fonts.google.com/metadata/icons?incomplete=true"
 _SLUG_RE = re.compile(r"[^a-z0-9_]")
+
+
+def fetch_catalog(cache_dir, timeout: int = 20) -> dict | None:
+    """Return the Material Symbols catalog as `{name: {"tags": [...], "pop": float}}` (cached).
+
+    Fetched once from Google Fonts metadata and cached to `<cache>/_catalog.json`. Returns None
+    on failure (offline) — the caller falls back to a minimal built-in seed. Never committed.
+    """
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    dest = cache_dir / "_catalog.json"
+    if dest.is_file() and dest.stat().st_size > 0:
+        try:
+            return json.loads(dest.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            pass
+    try:
+        req = urllib.request.Request(CATALOG_URL, headers={"User-Agent": "talksmith-icon-fetch"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read().decode("utf-8")
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+        return None
+    raw = raw[raw.find("{"):]                       # strip the )]}' XSSI guard prefix
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return None
+    cat: dict[str, dict] = {}
+    for it in data.get("icons", []):
+        name = it.get("name")
+        if not name:
+            continue
+        tags = {t.lower() for t in it.get("tags", [])} | {c.lower() for c in it.get("categories", [])}
+        tags.add(name.replace("_", " "))
+        prev = cat.get(name)
+        if prev is None or it.get("popularity", 0) > prev["pop"]:
+            cat[name] = {"tags": sorted(tags), "pop": float(it.get("popularity", 0))}
+    try:
+        dest.write_text(json.dumps(cat), encoding="utf-8")
+    except OSError:
+        pass
+    return cat
 
 
 def _slug(name: str) -> str:

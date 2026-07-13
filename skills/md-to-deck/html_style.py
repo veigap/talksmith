@@ -12,7 +12,8 @@ code surfaces, and card strips always render.
 Public API:
   CSS                                  the full stylesheet (tokens + components + page frame)
   icon(name, cache) / chip(name,cache) inline a recoloured Material Symbols SVG
-  icon_for(text)                       keyword → Material Symbols name (content-matched)
+  icon_for(label, body)                concept → Material Symbols name (matched vs the live catalog)
+  load_catalog(cache)                  fetch + index the Material Symbols catalog once
   render_slide(kind, u, section, cache) one slide's inner HTML for catalog template `kind`
   page(body, title, subtitle, mode)    wrap slides into a full self-contained HTML document
 """
@@ -25,47 +26,122 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
-from icon_fetch import fetch_icon  # noqa: E402
+from icon_fetch import fetch_icon, fetch_catalog  # noqa: E402
 
 ACCENT = "DA1B2E"
-
-# --- content-matched icon vocabulary: keyword → Material Symbols name -------- #
-ICON_KEYWORDS = [
-    (r"segurid|secur|privac|protec|riesgo|amenaza|guardrail", "shield"),
-    (r"bloque|lock|cifr|encrypt|credencial|secreto|password", "lock"),
-    (r"cost|precio|price|presupuesto|budget|pago|payment|econom", "payments"),
-    (r"ahorr|saving|roi|ganancia", "savings"),
-    (r"tiempo|latenc|schedule|horari|deadline|cuando", "schedule"),
-    (r"histor|recenc|pasado|antes|previo", "history"),
-    (r"dato|data|dataset|base de|database|almacen", "database"),
-    (r"usuari|equipo|team|audiencia|persona|clínic|gente|group", "group"),
-    (r"cod|code|api|program|desarroll|dev|script|terminal", "code"),
-    (r"idea|tip|analog|intuic|insight|lightbulb|creativ", "lightbulb"),
-    (r"velocid|rápid|speed|performance|rendimiento", "speed"),
-    (r"alucin|error|falla|bug|fail|problema|mito", "error"),
-    (r"aleator|random|shuffle|determin|variab", "shuffle"),
-    (r"métric|metric|dato|result|chart|insight|analytic|número", "insights"),
-    (r"conect|connect|integr|hub|mcp|red|network", "hub"),
-    (r"config|ajuste|setting|mecanism|engine|gear", "settings"),
-    (r"valid|verif|check|aprob|correct|calidad", "verified"),
-    (r"conocim|document|referenc|libro|book|aprend|manual", "menu_book"),
-    (r"curso|educ|escuela|school|enseñ|tutor", "school"),
-    (r"colabor|foro|forum|comun|chat|convers", "forum"),
-    (r"plugin|extens|módulo|module|paquete|package", "extension"),
-    (r"proyect|project|carpeta|folder|workspace", "folder_open"),
-    (r"razon|thinking|psicolog|mente|cerebr", "psychology"),
-    (r"lanz|launch|deploy|inici|start|rocket", "rocket_launch"),
-    (r"agent|automat|bolt|acción|action|ejecut", "bolt"),
-]
 _DEFAULT_ICON = "bolt"
 
+# The icon *choice* comes from the live Material Symbols catalog (fetch_catalog) — not a hardcoded
+# icon map. This is only a thin **Spanish → English** bridge so a Spanish concept word can match
+# the catalog's English tags (e.g. "seguridad" → the tags of `shield`/`security`). Language help,
+# not icon selection.
+_ES_EN = {
+    "seguridad": "security", "seguro": "security", "segura": "security", "privacidad": "privacy",
+    "riesgo": "risk warning", "amenaza": "threat warning", "ataque": "threat", "atacante": "threat",
+    "dato": "data", "datos": "data", "base": "database", "almacenamiento": "storage",
+    "costo": "payments money", "coste": "payments money", "precio": "price money",
+    "presupuesto": "budget money", "pago": "payments", "ahorro": "savings",
+    "tiempo": "schedule time", "latencia": "speed", "rapido": "speed", "velocidad": "speed",
+    "usuario": "person", "usuarios": "group people", "equipo": "group team", "gente": "group people",
+    "persona": "person", "cliente": "person", "clientes": "group",
+    "codigo": "code", "programacion": "code", "modelo": "model", "red": "hub", "network": "hub",
+    "conexion": "link", "conexiones": "hub", "herramienta": "build tool", "herramientas": "build tools",
+    "trazabilidad": "history", "traza": "history", "deepfake": "face", "deepfakes": "face",
+    "gobernanza": "policy", "gobierno": "policy", "cumplimiento": "verified compliance",
+    "contrato": "contract description", "residencia": "location place", "ubicacion": "location",
+    "borrar": "delete", "eliminar": "delete", "cifrado": "lock encryption", "cifrar": "lock",
+    "credencial": "password key", "credenciales": "password key", "secreto": "lock key", "clave": "key password",
+    "error": "error warning", "errores": "error", "alucinacion": "error", "falla": "error",
+    "bug": "bug error", "problema": "warning error", "mito": "help", "realidad": "check",
+    "agente": "robot", "agentes": "robot", "automatizacion": "bolt", "accion": "bolt", "ejecutar": "bolt",
+    "prompt": "edit", "inyeccion": "bug", "deepfake": "face", "cara": "face", "caras": "face",
+    "ley": "policy gavel", "leyes": "policy gavel", "auditoria": "checklist", "auditorias": "checklist",
+    "practica": "checklist verified", "practicas": "checklist", "buena": "verified", "mejor": "star",
+    "incidente": "warning report", "respuesta": "reply", "pregunta": "help", "preguntas": "help",
+    "proveedor": "business", "empresa": "business", "negocio": "business", "organizacion": "business",
+    "gestion": "settings", "configuracion": "settings", "mensaje": "message chat", "ejemplo": "lightbulb",
+    "documento": "description document", "documentacion": "menu book", "aprender": "school", "curso": "school",
+    "idea": "lightbulb", "consejo": "lightbulb tip", "analogia": "lightbulb",
+    "metrica": "insights analytics", "metricas": "insights", "numero": "insights", "resultado": "insights",
+    "impacto": "insights", "control": "tune", "permiso": "lock key", "permisos": "lock",
+    "perimetro": "security", "frontera": "location", "vocabulario": "menu book", "concepto": "lightbulb",
+    "arquitectura": "account tree", "fundamento": "foundation",
+}
+# Offline fallback only (catalog unavailable): a minimal regex seed so icons still resolve.
+_SEED = [
+    (r"segur|privac|riesgo|amenaza|protec", "shield"), (r"cifr|lock|credencial|secreto|clave", "lock"),
+    (r"cost|precio|pago|presupuest|money", "payments"), (r"tiempo|latenc|schedule", "schedule"),
+    (r"dato|data|base", "database"), (r"usuari|equipo|gente|persona|group", "group"),
+    (r"cod|code|api|program", "code"), (r"idea|tip|analog|insight", "lightbulb"),
+    (r"metric|result|número|analytic", "insights"), (r"conect|integr|hub|red|network", "hub"),
+    (r"config|ajuste|setting", "settings"), (r"valid|verif|check|cumpl", "verified"),
+    (r"agent|automat|acción|ejecut", "bolt"),
+]
 
-def icon_for(text: str) -> str:
-    t = (text or "").lower()
-    for pat, name in ICON_KEYWORDS:
-        if re.search(pat, t):
-            return name
-    return _DEFAULT_ICON
+_STOP = {"de", "la", "el", "los", "las", "un", "una", "y", "o", "que", "en", "con", "para", "por",
+         "del", "al", "es", "son", "se", "su", "lo", "sus", "una", "the", "of", "to", "and", "or",
+         "in", "on", "for", "with", "is", "are", "a", "no", "si", "más", "mas"}
+_WORD_RE = re.compile(r"[a-záéíóúñü]+", re.I)
+_CAT_INDEX: list | None = None            # [(name, frozenset(tokens), popularity)] — built lazily
+
+
+def _strip_accents(s: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def _tokens(text: str) -> set[str]:
+    return {w for w in _WORD_RE.findall(_strip_accents((text or "").lower()))
+            if len(w) >= 3 and w not in _STOP}
+
+
+def load_catalog(cache) -> None:
+    """Build the icon index from the live Material Symbols catalog (once). Falls back to the seed."""
+    global _CAT_INDEX
+    if _CAT_INDEX is not None:
+        return
+    cat = fetch_catalog(cache)
+    if not cat:
+        _CAT_INDEX = []                   # signal: catalog unavailable → icon_for uses _SEED
+        return
+    idx = []
+    for name, meta in cat.items():
+        toks = set()
+        for tag in meta.get("tags", []):
+            toks |= _tokens(tag)
+        toks |= _tokens(name.replace("_", " "))
+        idx.append((name, frozenset(toks), meta.get("pop", 0.0)))
+    _CAT_INDEX = idx
+
+
+def _expand(toks: set[str]) -> set[str]:
+    out = set(toks)
+    for w in toks:
+        if w in _ES_EN:
+            out |= _tokens(_ES_EN[w])
+    return out
+
+
+def icon_for(label: str, body: str = "") -> str:
+    """Content-match a concept to a Material Symbols icon using the live catalog. The concept
+    **label** drives the choice; the body only nudges ties (so "Seguridad" → shield even if its
+    body happens to mention "credenciales")."""
+    ltoks = _expand(_tokens(label))
+    btoks = _expand(_tokens(body)) - ltoks
+    if not _CAT_INDEX:                     # offline / not loaded → regex seed on the label
+        t = _strip_accents(f"{label} {body}".lower())
+        for pat, name in _SEED:
+            if re.search(pat, t):
+                return name
+        return _DEFAULT_ICON
+    best, best_score, best_pop = _DEFAULT_ICON, 0, -1.0
+    for name, tset, pop in _CAT_INDEX:
+        score = 3 * len(ltoks & tset) + len(btoks & tset)   # label weighted 3×, body 1×
+        if name in ltoks:
+            score += 6                     # exact name hit in the label is decisive
+        if score > best_score or (score == best_score and score > 0 and pop > best_pop):
+            best, best_score, best_pop = name, score, pop
+    return best if best_score > 0 else _DEFAULT_ICON
 
 
 def _svg(name: str, cache, white: bool = False):
@@ -153,7 +229,7 @@ def render_slide(kind, u, section, cache) -> str:
         n = len(items)
         cols = 1 if n == 1 else (2 if n in (2, 4) else 3)   # 2→2col · 3→row · 4→2×2 · 5–6→3col
         cs = "".join(
-            f'<div class="ccard">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
+            f'<div class="ccard">{icon(icon_for(it["label"], it.get("body","")), cache)}'
             f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
         return _mk(head, f'<div class="cards c{cols}">{cs}</div>')
 
@@ -166,13 +242,13 @@ def render_slide(kind, u, section, cache) -> str:
 
     if kind == "card-row":
         cs = "".join(
-            f'<div class="rcard">{chip(icon_for(it["label"]+" "+it.get("body","")), cache)}'
+            f'<div class="rcard">{chip(icon_for(it["label"], it.get("body","")), cache)}'
             f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
         return _mk(head, f'{lead}<div class="cardrow">{cs}</div>')
 
     if kind == "icon-list":
         cs = "".join(
-            f'<div class="ilrow">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
+            f'<div class="ilrow">{icon(icon_for(it["label"], it.get("body","")), cache)}'
             f'<div><h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div></div>' for it in items)
         return _mk(head, f'{lead}<div class="iconlist">{cs}</div>')
 
@@ -213,7 +289,7 @@ def render_slide(kind, u, section, cache) -> str:
         it = items[0] if items else {"label": "", "body": (body[0] if body else "")}
         tone = "blue" if kind == "callout" else "pink"
         return _mk(head, f'{lead if kind=="single-point" else ""}'
-                         f'<div class="callout {tone}">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
+                         f'<div class="callout {tone}">{icon(icon_for(it["label"], it.get("body","")), cache)}'
                          f'<p><b>{_esc(it["label"])}</b> {_esc(it.get("body",""))}</p></div>')
 
     if kind == "agenda":
