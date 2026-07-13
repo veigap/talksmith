@@ -120,6 +120,7 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
     log_entries = []
     section = ""              # current section name (for the pill)
     active = -1               # index of the active section (for the re-shown agenda)
+    secno = 0                 # running section counter (for the divider's big number)
     n = len(units)
     for i, u in enumerate(parsed, 1):
         kind = hints.get(_norm(u["title"])) or _sm._classify(u)   # author hint overrides
@@ -132,14 +133,20 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
             # A section start is: an agenda-matched divider, or — when there's no agenda list —
             # every divider (they *are* the sections). Sub-openers (agenda exists, no match) keep
             # the current section. Enrich `section` here so every following slide carries it.
+            number = None
             if mi >= 0:
                 active = mi
                 section = agenda[mi]
+                number = mi + 1
             elif not agenda:
                 section = re.sub(r"^\d+[.)]\s*", "", u["title"])
+                secno += 1
+                number = secno
             if agenda and mi >= 0:                                # re-show the agenda at a real section start
                 inner = _hs.section_agenda(agenda, active, u["title"])
-            else:                                                 # no agenda list, or a sub-opener → plain title
+            else:                                                 # no agenda list, or a sub-opener → styled section title
+                u["_number"] = number                             # None for sub-openers (no number shown)
+                u["title"] = re.sub(r"^\d+[.)]\s*", "", u["title"])
                 inner = _hs.render_slide(kind, u, "", cache)
         else:
             inner = _hs.render_slide(kind, u, section, cache)

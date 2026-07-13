@@ -263,6 +263,9 @@ def render_slide(kind, u, section, cache) -> str:
         ctx["big"] = body[0] if body else title
         ctx["panels"] = [it["label"] + ((": " + it["body"]) if it.get("body") else "") for it in items] \
             or body[1:]
+    elif kind == "divider":
+        no = u.get("_number")
+        ctx["number"] = f"{no:02d}" if isinstance(no, int) else None
     elif kind == "agenda":
         ctx["sections"] = [it["label"] for it in items] or body
         ctx["active"] = 0
@@ -323,6 +326,11 @@ CSS = r"""
 .ic{display:block}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+/* section divider — big red section number + title, with an accent rule */
+.secdiv{display:flex;flex-direction:column;gap:1.4cqw}
+.secnum{font-size:3.4cqw;font-weight:800;color:var(--red);font-family:var(--mono);letter-spacing:.05em;line-height:1}
+.secnum::after{content:"";display:block;width:9cqw;height:.6cqw;background:var(--red);border-radius:.3cqw;margin-top:1.4cqw}
+.sectitle{font-size:7cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.03;letter-spacing:-.02em;text-wrap:balance}
 .sub{font-size:2.8cqw;color:var(--body);margin:3cqw 0 0}
 /* section eyebrow on full-bleed statement/hero slides (the section they belong to) */
 .steyebrow{font-size:2.1cqw;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin:0 0 2.4cqw}

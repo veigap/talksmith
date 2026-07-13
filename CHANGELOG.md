@@ -12,6 +12,13 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.31.0] — 2026-07-13
+
+### Changed
+
+- **Section dividers are redesigned** — a red monospace section number (`01`) with an accent
+  rule over the large section title, instead of a bare centred title.
+
 ## [0.30.1] — 2026-07-13
 
 ### Changed
