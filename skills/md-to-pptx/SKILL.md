@@ -169,6 +169,16 @@ talks/<Talk>/
 
    The script reparses `final.md` per H2 (image count, code blocks, pipe-tables, labeled-bullet count, per-item body length, H3 group count, emoji prefixes) and applies the §15.5 + §15.6.1 decision tree to compute the **predicted** layout. It then parses `final.pptx` per slide and infers the **emitted** layout from shape composition. When predicted ≠ emitted, the audit fails with the source evidence, the emitted evidence, and a likely root cause (typically a §15.6.1 discriminator skip). Catches the class of regression where the §19.6 anti-pattern check passes but the substantive spec was bypassed by picking the plainer layout. Non-zero exit = render failure.
 
+   **Then run [`audit_icon_coverage.py`](audit_icon_coverage.py) — only when `style == strict`.** For strict:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/audit_icon_coverage.py \
+     talks/<Talk>/final.md \
+     talks/<Talk>/output/final.pptx
+   ```
+
+   Concept-breakdown cards (§7.2.1) and callouts (§8) each carry a small branded icon (Material Symbols, fetched by name via `icon_fetch.py` per §17). The render fetches + embeds those by following prose and can **silently skip it** — shipping naked cards while the layout log claims icons were used. This audit counts the icons a slide *should* have (one per concept card, one per callout) from `final.md`, counts the small (≤0.6 in) `<p:pic>` shapes actually emitted, and fails with `[icon-drop] slide N …` when a slide that calls for icons rendered **zero**. It closes the exact gap where a no-icon deck passed clean because the other six audits never look at icons. Non-zero exit = render failure — fetch the icons (§17.6) and re-render.
+
    Then run [`audit_block_coverage.py`](audit_block_coverage.py) to confirm every load-bearing block from `final.md` survived into the rendered deck:
 
    ```bash
