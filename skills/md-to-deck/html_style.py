@@ -297,7 +297,7 @@ CSS = r"""
 :root{--red:#DA1B2E;--pill:#F9D2D6;--call-pink:#F7BBC1;--call-blue:#B8E6F5;--card:#F2EEEE;
 --ink:#1F1E1E;--body:#3B3535;--code-bg:#F2F2F2;--kw:#D73A49;--st:#005CC5;--cm:#6A737D;--slide:#fff;
 --page:#E8E4E1;--panel:#FBFAF9;--fi:#2A2626;--fm:#6E6663;--hair:#D8D2CE;
---sans:"Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"Courier New",ui-monospace,monospace;}
+--sans:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono","Courier New",ui-monospace,monospace;}
 @media(prefers-color-scheme:dark){:root{--page:#191615;--panel:#221E1D;--fi:#EFEAE7;--fm:#A69D98;--hair:#332D2B;}}
 :root[data-theme=light]{--page:#E8E4E1;--panel:#FBFAF9;--fi:#2A2626;--fm:#6E6663;--hair:#D8D2CE;}
 :root[data-theme=dark]{--page:#191615;--panel:#221E1D;--fi:#EFEAE7;--fm:#A69D98;--hair:#332D2B;}
@@ -437,6 +437,30 @@ def _vendor(name: str) -> str:
     return (_HERE / "vendor" / "reveal" / name).read_text(encoding="utf-8")
 
 
+# IBM Plex Sans/Mono — vendored woff2, inlined as @font-face data-URIs (the Artifact CSP blocks
+# font CDNs). A distinctive, embeddable editorial superfamily; the strict `.pptx` render keeps
+# Helvetica/Courier — only the HTML deck uses these.
+_FONT_FACES = [
+    ("IBM Plex Sans", 400, "plex-sans-400.woff2"),
+    ("IBM Plex Sans", 600, "plex-sans-600.woff2"),
+    ("IBM Plex Sans", 700, "plex-sans-700.woff2"),
+    ("IBM Plex Mono", 500, "plex-mono-500.woff2"),
+]
+
+
+def _fonts_css() -> str:
+    import base64
+    out = []
+    for family, weight, fn in _FONT_FACES:
+        p = _HERE / "vendor" / "fonts" / fn
+        if not p.is_file():
+            continue
+        b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+        out.append(f"@font-face{{font-family:'{family}';font-weight:{weight};font-style:normal;"
+                   f"font-display:swap;src:url(data:font/woff2;base64,{b64}) format('woff2')}}")
+    return "".join(out)
+
+
 def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
     """Assemble the full self-contained Reveal.js deck: vendored CSS/JS inlined, our theme
     layered on top, slides as <section>s. Presentation, navigation, scaling, transitions,
@@ -448,6 +472,7 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f'<title>{_esc(title)}</title>\n'
+        f'<style>{_fonts_css()}</style>\n'
         f'<style>{reveal_css}</style>\n'
         f'<style>{CSS}</style>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'

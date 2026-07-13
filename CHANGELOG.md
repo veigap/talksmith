@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.33.0] — 2026-07-13
+
+### Changed
+
+- **The HTML deck uses IBM Plex Sans + IBM Plex Mono** (vendored woff2, inlined as @font-face
+  data-URIs so the deck stays offline) — a distinctive, editorial superfamily in place of
+  Helvetica/Courier. The native `.pptx` styles are unchanged (Helvetica/Courier).
+
 ## [0.32.0] — 2026-07-13
 
 ### Changed
