@@ -249,18 +249,19 @@ def render_slide(kind, u, section, cache) -> str:
     return _mk(head, "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[:6]))
 
 
-def cover_slide(fm: dict) -> str:
-    """The contractually-fixed cover (§4) built from frontmatter — the deck's first slide."""
+def cover_slide(fm: dict, author_label: str = "Autor:", modified_label: str = "Última modificación:") -> str:
+    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML:
+    title top-left, class + author/date lower-left, institution logo bottom-right."""
     title = _esc(fm.get("presentation", ""))
     cls = _esc(fm.get("class", ""))
     author = _esc(fm.get("presenter", ""))
     date = _esc(fm.get("date", ""))
     logo = _esc((re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper())
     return ('<figure><div class="slide"><span class="snum">cover</span>'
-            '<div class="stage cover">'
+            '<div class="stage cov">'
             f'<h1 class="covt">{title}</h1>'
-            f'<p class="covc">{cls}</p>'
-            f'<p class="cova">Autor: {author}<br>Última modificación: {date}</p>'
+            f'<div class="covmeta"><p class="covc">{cls}</p>'
+            f'<p class="cova">{author_label} {author}<br>{modified_label} {date}</p></div>'
             f'<div class="covlogo">{logo}</div>'
             '</div></div></figure>')
 
@@ -292,8 +293,12 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .snum{position:absolute;right:2.5cqw;bottom:2cqw;font-size:1.8cqw;color:var(--fm);font-family:var(--mono);z-index:2}
 .stage{position:absolute;inset:0;padding:5cqw 5.5cqw;display:flex;flex-direction:column}
 .shead{flex:0 0 auto}
-.cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;padding-top:2.6cqw}
+/* content region: flows from the TOP (never overlaps the header), clipped as a safety;
+   the fit pass scales it down so overflow never actually clips. */
+.cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding-top:2.8cqw;overflow:hidden}
 .cbody>*{margin-top:0!important;margin-bottom:0!important}
+/* single short block (e.g. one callout) may centre in the remaining space */
+.cbody>.callout:only-child,.cbody>.compare:only-child{margin-top:auto!important;margin-bottom:auto!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--ink);font-weight:700;font-size:2.2cqw;letter-spacing:.06em;text-transform:uppercase;padding:.9cqw 2cqw;border-radius:2cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:2.4cqw 0 0;line-height:1.08;text-wrap:balance}
 .stitle.ag{font-size:5cqw}.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
@@ -301,9 +306,13 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .sub{font-size:2.8cqw;color:var(--body);margin:3cqw 0 0}
-.covt{font-size:5.8cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.04;letter-spacing:-.02em}
-.covc{font-size:2.8cqw;font-weight:700;color:var(--ink);margin:4cqw 0 0}.cova{font-size:2.2cqw;color:var(--body);margin:1.4cqw 0 0}
-.covlogo{position:absolute;right:0;bottom:0;width:12cqw;height:9cqw;border:2px solid var(--card);border-radius:1.5cqw;display:grid;place-items:center;font-weight:800;color:var(--red);font-size:3cqw}
+/* cover — free-form §2 recipe proportions: title top-left, class/author lower-left, logo bottom-right */
+.stage.cov{display:block;padding:0}
+.stage.cov .covt{position:absolute;left:5.4%;right:22%;top:10.4%;font-size:5.6cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.06;letter-spacing:-.02em}
+.stage.cov .covmeta{position:absolute;left:5.4%;right:22%;top:47.6%}
+.covc{font-size:2.6cqw;font-weight:700;color:var(--ink);margin:0}
+.cova{font-size:2.05cqw;color:var(--body);margin:1.6cqw 0 0;line-height:1.5}
+.stage.cov .covlogo{position:absolute;right:5.4%;top:56%;width:13cqw;height:10.5cqw;border:2px solid var(--card);border-radius:1.5cqw;display:grid;place-items:center;font-weight:800;color:var(--red);font-size:3.2cqw}
 .agenda{margin-top:3cqw;display:flex;flex-direction:column;gap:1.6cqw}
 .agrow{display:flex;align-items:center;gap:2.4cqw;font-size:3cqw;color:var(--body);font-weight:600}
 .agn{width:4.4cqw;height:4.4cqw;border-radius:50%;background:var(--card);color:var(--body);display:grid;place-items:center;font-size:2.4cqw;font-weight:800;flex:0 0 auto}
@@ -339,7 +348,9 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .imgph{background:repeating-linear-gradient(45deg,#eee,#eee 6px,#e4e4e4 6px,#e4e4e4 12px);border:1px solid #ddd;border-radius:1.4cqw;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.imgph span{font-family:var(--mono);font-size:1.9cqw;color:#999}
 .imgph.svg,.imgph.has{background:#fff;border:1px solid var(--card)}.imgph.svg svg,.imgph.has img{width:100%;height:100%;display:block;object-fit:contain}
 .imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;margin-top:auto}
-.ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;margin-top:auto;align-items:center}.citext{display:flex;flex-direction:column}
+.ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
+.cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
+.ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:#000;overflow:hidden}

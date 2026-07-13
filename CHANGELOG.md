@@ -12,6 +12,41 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.23.1] — 2026-07-13
+
+### Added
+
+- **HTML render — a deterministic, styled deck rendered by code.** New `build_html.py`
+  (shared tokens/components in `html_style.py`) turns a talk's markdown into a
+  self-contained styled HTML deck that **always** emits the full styled layer — cards
+  (never bullets), per-concept Material Symbols icons (fetched by name via `icon_fetch.py`,
+  recoloured, inlined), callout boxes, code surfaces — because the same components produce
+  it in code. This fixes the native-`.pptx` failure where the styled layer was silently
+  dropped and no audit caught it. Two styles share the renderer: **`html`** renders
+  `final.md` as a shareable deliverable (`output/html/index.html`); **`preview`** replaces
+  the old Pillow wireframe — it now renders a pre-Polish `draft.md` to a styled
+  `output/draft-preview/preview.html`. Both classify every slide against the shared catalog,
+  honour an optional `<!-- template: X -->` override, and write a template-decision log.
+- **Presentable deck + present mode.** A fixed header (section pill + title, anchored — it
+  does not move with content) over a content region that **scales to fit 16:9** (nothing
+  clipped), plus present mode: ▶ full screen, → / ← or click to advance, `F` browser full
+  screen, `Esc` exits. The cover follows the free-form §2 recipe (title top-left,
+  class/author lower-left, institution logo bottom-right).
+- **Strict icon-coverage audit** (`audit_icon_coverage.py`) — fails a strict render that
+  ships concept cards / callouts with zero small icon pictures.
+- **Canonical HTML test fixture** at `tests/skills/md-to-pptx/` — one slide per template
+  plus edge cases (2/3/4/6 concept cards, 3/5-step process, 2/3-column comparison, long
+  titles/bodies), each forced with a `<!-- template: X -->` directive, rendered to the
+  committed `style-reference.html`. Regenerate it after any style change.
+
+### Fixed
+
+- Concept-breakdown of 4 cards renders 2×2 (not 3+1); stat strips use adaptive columns.
+- Slides 4/5: cards no longer overwrite the title (content region flows from the top and
+  clips, so overflow never pushes up into the fixed header).
+- Slide 22 (content + cards + image): added the missing `.cci`/`.ccicards` grid CSS.
+- `<meta charset="utf-8">` on the HTML doc fixes mojibake.
+
 ## [0.19.1] — 2026-07-12
 
 ### Changed

@@ -1,6 +1,7 @@
 .DS_Store
 .venv
 talks/*/output/
+tests/skills/*/output/
 talks/*/images/.critique/
 __pycache__/
 *.pyc
