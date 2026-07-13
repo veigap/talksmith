@@ -76,9 +76,13 @@ Every commit **must** record a **functional description** of what changed and wh
 
 Talksmith renders to a **styled static HTML site** as well as `.pptx`: `skills/md-to-pptx/build_html.py` (shared components + tokens in `html_style.py`; content-matched Material Symbols icons via `icon_fetch.py`). Unlike the native `.pptx` render, this is deterministic code — icons, callout boxes, code surfaces, and card strips always render — and it drives both the fast **preview** (from `draft.md`) and an **HTML deliverable** (from `final.md`, with arrow-key + full-screen present mode). An optional `<!-- template: X -->` comment under a slide heading forces that template.
 
-The canonical visual reference **and** regression test is [`tests/skills/md-to-pptx/`](tests/skills/md-to-pptx/): a directive-forced `final.md` with **one slide per template type plus edge cases** (2/3/4/6 concept cards, long titles/bodies, 2/3-col comparison, …) and `pipeline.svg`.
+The canonical visual reference is [`tests/skills/md-to-pptx/`](tests/skills/md-to-pptx/): a directive-forced `final.md` with **one slide per template type plus edge cases** (2/3/4/6 concept cards, long titles/bodies, 2/3-col comparison, …) and `pipeline.svg`. Its `style-reference.html` is nothing more than the `build_html` output of that `final.md` — a presentable deck (cover + present mode), committed so a diff shows any visual regression.
 
-> **After any change to the strict style tokens (`strict/pptx-prompt.md` §1–§17), `html_style.py`, the catalog, or the render, run `python3 tests/skills/md-to-pptx/run.py`.** It regenerates `tests/skills/md-to-pptx/style-reference.html` and **fails** if any forced type falls back, HTML bullets appear, or a styled element (icons / callouts / code surface / card strips / present-mode) goes missing. Open the refreshed HTML to eyeball the result before committing.
+> **After any change to the strict style tokens (`strict/pptx-prompt.md` §1–§17), `html_style.py`, the catalog, or the render, regenerate and eyeball it:**
+> ```
+> python3 skills/md-to-pptx/build_html.py --talk tests/skills/md-to-pptx -o tests/skills/md-to-pptx/style-reference.html
+> ```
+> Open the refreshed HTML (Present ▶ for full-screen), confirm no slide fell to `fallback` and every template still reads right, then commit the updated `style-reference.html` alongside your change.
 
 ## Refreshing the plugin so Cowork picks up changes (fast loop, no full reinstall)
 

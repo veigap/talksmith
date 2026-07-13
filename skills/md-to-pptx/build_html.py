@@ -102,8 +102,10 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
         slides_html.append(
             f'<figure><div class="slide"><span class="snum">{i}/{n} · {kind}</span>{inner}</div></figure>')
 
-    body = "".join(slides_html)
-    return _hs.page(body, title, subtitle, mode="deck"), n
+    fm = _frontmatter(md_text)
+    cover = _hs.cover_slide(fm) if fm.get("presentation") else ""
+    body = cover + "".join(slides_html)
+    return _hs.page(body), n
 
 
 def main(argv=None) -> int:

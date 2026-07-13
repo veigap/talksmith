@@ -243,9 +243,25 @@ def render_slide(kind, u, section, cache) -> str:
     return f'<div class="stage">{head}{paras}</div>'
 
 
-def page(body_html: str, title: str, subtitle: str = "", mode: str = "site") -> str:
-    return HTML_DOC.replace("__TITLE__", _esc(title)).replace("__SUB__", _esc(subtitle)) \
-                   .replace("__MODE__", mode).replace("__BODY__", body_html)
+def cover_slide(fm: dict) -> str:
+    """The contractually-fixed cover (§4) built from frontmatter — the deck's first slide."""
+    title = _esc(fm.get("presentation", ""))
+    cls = _esc(fm.get("class", ""))
+    author = _esc(fm.get("presenter", ""))
+    date = _esc(fm.get("date", ""))
+    logo = _esc((re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper())
+    return ('<figure><div class="slide"><span class="snum">cover</span>'
+            '<div class="stage cover">'
+            f'<h1 class="covt">{title}</h1>'
+            f'<p class="covc">{cls}</p>'
+            f'<p class="cova">Autor: {author}<br>Última modificación: {date}</p>'
+            f'<div class="covlogo">{logo}</div>'
+            '</div></div></figure>')
+
+
+def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
+    # A presentation, not a document: just the deck + the present-mode chrome.
+    return HTML_DOC.replace("__BODY__", body_html)
 
 
 CSS = r"""
@@ -374,9 +390,5 @@ PRESENT_JS = """<div class="toolbar"><button class="btn" id="present-btn" aria-l
 </script>"""
 
 HTML_DOC = ("<style>" + CSS + "</style>\n"
-            '<div class="wrap"><header><p class="eyebrow">Talksmith</p>'
-            '<h1 class="title">__TITLE__</h1><p class="lede">__SUB__</p></header>'
-            '<div class="__MODE__">__BODY__</div>'
-            '<footer>Rendered by Talksmith · strict style, code-generated HTML. '
-            'Icons: Material Symbols (Apache-2.0). Image slots are placeholders.</footer></div>'
+            '<div class="wrap"><div class="deck">__BODY__</div></div>'
             + PRESENT_JS)
