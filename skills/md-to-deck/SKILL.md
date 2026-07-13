@@ -3,7 +3,7 @@ name: talksmith:md-to-deck
 description: Render a Talk's cleaned `final.md` to a presentation. **Branches by the mandatory `style:` invocation parameter** — three modes, no default: **`pptx-strict`** and **`pptx-free-form`** author a native PowerPoint (`.pptx`) via Anthropic's official `pptx` skill (`skill://antropic-skills:/pptx`, **Cowork-only**, each with a `base-template.pptx`); **`html-strict`** renders a styled **HTML / Reveal.js** deck by code via [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (**Cowork-independent**, needs `jinja2`) — from `final.md` as the shareable deliverable (`output/html/index.html`), and, auto-fired by the orchestrator with `--draft`, from the in-progress `draft.md` as a **live view kept in sync during drafting** (same renderer, same output). Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish); the live view auto-fires earlier (Step 5.5). Consumes images already on disk under `talks/<Talk>/images/`. The orchestrator asks the presenter the style at every Step 8 entry and passes it in; `final.md`/`draft.md` are style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: the `.pptx` styles → `talks/<Talk>/output/final.<style>.pptx` (+ canonical `final.pptx`); `html-strict` → `output/html/index.html`. Because `html-strict` renders in HTML, its styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**, unlike the native `.pptx` render which can drop it.
 ---
 
-# md-to-deck — Render `final.md` to PowerPoint
+# md-to-deck — Render `final.md` to a presentation (`.pptx` or HTML)
 
 **This skill is a thin orchestrator. All `.pptx` authoring must go through Anthropic's official `pptx` skill at [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx)** — which authors the deck **programmatically with `python-pptx`**, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`; see §1 of the free-form spec and the *base template is mandatory* rule below). So "delegate to the pptx skill" means: **drive that skill's `python-pptx` workflow from the base template + visual spec.** Writing `python-pptx` this way is not just allowed, it is the mechanism.
 
@@ -28,7 +28,7 @@ Both paths are **mandatory inputs** to the render. References below that say "th
 
 ## When to use
 
-After Step 6 (Polish) completes and the presenter picks **Render to PowerPoint** from the terminal branch. Optional — many presenters stop at the outline.
+After Step 6 (Polish) completes and the presenter picks **Render** from the terminal branch (then chooses `pptx-strict`, `pptx-free-form`, or `html-strict`). Optional — many presenters stop at the outline. (`html-strict` also auto-runs earlier as the Step-5.5 live view.)
 
 ## Prerequisites
 
@@ -62,24 +62,23 @@ talks/<Talk>/
 │   ├── s1-1.svg
 │   └── ...
 └── output/
-    ├── final.pptx                    # canonical deliverable — a copy of the most recent render
-    ├── final.pptx-strict.pptx             # per-mode render, persists for comparison
-    ├── final.strict.template-log.md  # per-mode template-decision log (side by side w/ its .pptx)
-    ├── final.pptx-free-form.pptx          # per-mode render, persists for comparison
-    ├── final.free-form.template-log.md
-    ├── final.<style>.intermediate.md # per-mode transient pre-processed file (convert.py)
-    ├── .critique/                    # critique-only slide previews (git-ignored)
-    │   ├── strict/slide-NN.png
-    │   └── free-form/slide-NN.png
-    ├── html/                         # html deliverable style — index.html + template-log.md (build_html.py)
-    └── html/                        # html-strict deck — index.html (from final.md deliverable OR draft.md live view)
+    ├── final.pptx                          # canonical deliverable — a copy of the most recent .pptx render
+    ├── final.pptx-strict.pptx              # per-mode .pptx render, persists for comparison
+    ├── final.pptx-strict.template-log.md   # per-mode template-decision log (side by side w/ its .pptx)
+    ├── final.pptx-free-form.pptx
+    ├── final.pptx-free-form.template-log.md
+    ├── final.<style>.intermediate.md       # per-mode transient pre-processed file (convert.py)
+    ├── .critique/                          # critique-only slide previews for the .pptx modes (git-ignored)
+    │   ├── pptx-strict/slide-NN.png
+    │   └── pptx-free-form/slide-NN.png
+    └── html/                               # html-strict deck — index.html + template-log.md + .icons/ (build_html.py; final.md deliverable OR draft.md live view)
 ```
 
-**Per-mode output isolation (so renders don't overwrite each other).** Each render writes a **suffixed** deck `output/final.<style>.pptx` (its intermediate `output/final.<style>.intermediate.md`, its critique PNGs under `output/.critique/<style>/`, and its **template-decision log `output/final.<style>.template-log.md`** — same `final.<style>` convention, side by side with the deck), so a strict and a free-form render of the same Talk coexist and can be compared side by side. After a successful render the skill also **copies** the suffixed deck to the canonical `output/final.pptx` — the single deliverable that the reverse pipeline and the Phase-2 as-generated baseline read. Last render wins the canonical slot; the suffixed files persist. The **template-decision log** records, per slide, which catalog template was chosen and why (schema: [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) → *Template decision log*) — the strict render fills it from the §15.6 pre-emit audit (chosen template, emitted §-recipe, `audit_layout_fit` pass/mismatch); free-form from its per-slide layout choices. Preview is separate — it never touches any of these, writing its own `template-log.md` under `output/draft-preview/`.
+**Per-mode output isolation (so renders don't overwrite each other).** Each render writes a **suffixed** deck `output/final.<style>.pptx` (its intermediate `output/final.<style>.intermediate.md`, its critique PNGs under `output/.critique/<style>/`, and its **template-decision log `output/final.<style>.template-log.md`** — same `final.<style>` convention, side by side with the deck), so a strict and a free-form render of the same Talk coexist and can be compared side by side. After a successful render the skill also **copies** the suffixed deck to the canonical `output/final.pptx` — the single deliverable that the reverse pipeline and the Phase-2 as-generated baseline read. Last render wins the canonical slot; the suffixed files persist. The **template-decision log** records, per slide, which catalog template was chosen and why (schema: [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) → *Template decision log*) — the strict render fills it from the §15.6 pre-emit audit (chosen template, emitted §-recipe, `audits/layout_fit.py` pass/mismatch); free-form from its per-slide layout choices. `html-strict` is separate — it writes only under `output/html/` (its `index.html`, `template-log.md`, and `.icons/`), never the `.pptx`, intermediate, or `.critique/` files.
 
 ## Process
 
-0. **`html-strict` is a code-rendered style, not an exception.** It differs from the native styles only in **substrate** — a styled HTML / Reveal.js deck rendered by code ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/html-strict/pptx-prompt.md)), not a native `.pptx`. When the resolved style is **`html-strict`**, the render is [`build_html.py --talk talks/<Talk>`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (final.md; add `--draft` for the in-progress view from `draft.md`) — no native `pptx` skill, no base-template, no CONTROL audits — followed by its **own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, findings surface). See *`html-strict` on `draft.md`* in *Render flow*. All other steps below (the native-`pptx` pipeline) apply to the `pptx-strict` / `pptx-free-form` styles.
+0. **`html-strict` is a code-rendered style, not an exception.** It differs from the native styles only in **substrate** — a styled HTML / Reveal.js deck rendered by code ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)), not a native `.pptx`. When the resolved style is **`html-strict`**, the render is [`build_html.py --talk talks/<Talk>`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (final.md; add `--draft` for the in-progress view from `draft.md`) — no native `pptx` skill, no base-template, no CONTROL audits — followed by its **own light critique loop** (CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION, ≤2 cycles, findings surface). See *`html-strict` on `draft.md`* in *Render flow*. All other steps below (the native-`pptx` pipeline) apply to the `pptx-strict` / `pptx-free-form` styles.
 
 0. **Resolve style.** Read the `style:` value from the invocation parameters (the orchestrator's Step 8 step 1 asked the presenter and passed it in). **The parameter is mandatory — no default.** If the value is **absent or empty**, fail render-blocking with `[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).` Do not proceed; the orchestrator's job is to re-ask the presenter, not the skill's job to guess. If the value is present but not a directory under `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/`, fail render-blocking per *Style resolution failed* in *Failure modes*. Cache `<spec_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md` and (for the native-`pptx` styles only) `<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx`. Verify `<spec_path>` exists for every style; verify `<base_template_path>` exists for `pptx-strict` / `pptx-free-form` only (the **`html-strict`** style has a code substrate and **no base-template** — skip that check). If a required file is missing, the style enum has drifted from disk — surface as a render-blocking error naming the missing file. Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>).`
 1. Verify all prerequisites (table above). Stop on any failure.
@@ -249,7 +248,7 @@ The CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION practices in [`slide-design.md
 
 The **live in-progress view**: `html-strict` rendered from the current `draft.md` so the presenter always has a styled view of the deck as it takes shape. The orchestrator auto-fires it in the background when `draft.md` first completes and re-syncs it on every Step-5 review change (see [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 5.5 — Live HTML view*). It is the same renderer/output as the Step-8 `html-strict` deliverable, just reading `draft.md` instead of `final.md`.
 
-**Run the committed renderer — never hand-roll one.** Preview is the same code renderer as the `html-strict` deliverable style, [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py), invoked with `--draft`:
+**Run the committed renderer — never hand-roll one.** The live view is `html-strict` reading `draft.md` — the same [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) as the deliverable, invoked with `--draft`:
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft
@@ -259,21 +258,21 @@ It orchestrates the whole thing deterministically and reuses the sibling substra
 
 Key properties:
 
-| Aspect | Preview behavior |
+| Aspect | `html-strict` behavior |
 |---|---|
 | **No `.pptx`, no `.pdf`, no native skill** | The deck is rendered **directly to styled HTML by code**. Nothing authors a `.pptx`, nothing rasterizes a PDF. Because it renders in HTML, the **styled layer (cards, icons, callouts, code surfaces) is fully present** — the only thing deferred to a later `pptx-strict`/`pptx-free-form` render is the native `.pptx` itself. |
 | **Cowork-independent** | Unlike Step 8, html-strict needs no native `pptx` skill and no LibreOffice. It runs in any session, which is why it can auto-fire in the background. |
 | **Input** | `talks/<Talk>/draft.md` (read-only). Raw ASCII fences and `Presenter feedback` are expected and handled — do **not** dispatch the Illustrator, do **not** stop on missing SVGs. |
 | **Template-aware** | Every slide is classified against the shared catalog ([`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)) and rendered as its template (cards, never bullets), honouring [`visual-guidance.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/visual-guidance.md) and [`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md). Writes the template-decision log to `output/html/template-log.md`. |
 | **Critique — its own light loop** | After `build_html.py --draft` renders (GENERATE), html-strict runs its **own** FEEDBACK → REGENERATE loop, ≤ 2 cycles, walking **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION** (the [`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) practices) on the rendered `index.html`. (Its config is the html-strict column of the [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md) matrix; independent of free-form, which is single-pass.) Two properties: **no CONTROL phase** (html-strict has no `.pptx`, so the deck-parsing audits can't run — block-coverage instead holds by construction, `build_html` renders every unit); and the deterministic code renderer takes no fix instructions, so REGENERATE does **not** autonomously restyle — FEEDBACK findings **surface** for the presenter, who resolves them via a `draft.md` edit → re-fire. |
-| **Output (isolated)** | `talks/<Talk>/output/draft-preview/` — `index.html` (the styled deck) and `template-log.md`. **Never** touches `output/final.pptx`, `output/html/`, or `output/.critique/`. |
+| **Output** | `talks/<Talk>/output/html/` — `index.html` (the styled deck), `template-log.md`, `.icons/`. Same path for the `draft.md` live view and the `final.md` deliverable. **Never** touches `output/final.pptx` or `output/.critique/`. |
 
-Preview phase table (GENERATE = `build_html.py --draft`, then its own FEEDBACK/REGENERATE):
+`html-strict` phase table (GENERATE = `build_html.py`, then its own FEEDBACK/REGENERATE):
 
 | Phase | Tag | What runs |
 |---|---|---|
 | **GENERATE** | `[html]` / `[cycle N/2] GENERATE` | `build_html.py --draft` renders `draft.md` to the styled `index.html`. |
-| **CONTROL** | — | *None.* Preview produces no `.pptx`, so the deck-parsing audits can't run; block-coverage holds by construction (`build_html` renders every unit). |
+| **CONTROL** | — | *None.* `html-strict` produces no `.pptx`, so the deck-parsing audits can't run; block-coverage holds by construction (`build_html` renders every unit). |
 | **FEEDBACK** | `[cycle N/2] FEEDBACK` | Multimodal walk of CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION on the rendered `index.html`, per the shared rubric. Findings surface (see REGENERATE). |
 | **REGENERATE** | `[cycle N/2] REGENERATE` | Re-render after the presenter edits `draft.md`; **surface** the FEEDBACK findings (the deterministic renderer takes no fix instructions, so no autonomous restyle). |
 
@@ -323,12 +322,12 @@ Item ↔ phase mapping (free-form):
 | Building slides | `[pptx 4/8] final.pptx written`. |
 | Sanity check | All CONTROL audits exit 0 (or `[✗]` on any non-zero with the audit name in the closing report). |
 
-**`html-strict` in-progress checklist** (5 items; counts personalize — *"Rendering 3 changed slides (71 reused)"*):
+**`html-strict` in-progress checklist** (5 items):
 
 ```
 Putting together the live view:
   [ ] Formatting draft
-  [ ] Rendering N changed slides (M reused)
+  [ ] Rendering the deck
   [ ] Reviewing slides (cycle N of 2)
   [ ] Applying fixes
   [ ] Ready to view
@@ -339,7 +338,7 @@ Item ↔ phase mapping (html-strict in-progress):
 | Item | Ticks when |
 |---|---|
 | Formatting draft | `[html]` — `convert.py --draft` done (N slides from `draft.md`). |
-| Rendering styled deck | `build_html.py --draft` finished rendering `draft.md` to `index.html`. |
+| Rendering the deck | `build_html.py --draft` finished rendering `draft.md` to `index.html` (whole deck; no incremental cache). |
 | Reviewing slides (cycle N) | FEEDBACK finishes walking CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION on the rendered `index.html`. |
 | Applying fixes | REGENERATE re-renders after a `draft.md` edit / surfaces findings, OR `[—] no fixes needed`. |
 | Ready to view | `index.html` on disk under `output/html/`; the presenter opens it (Reveal.js deck: → / ← or click to advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` in the URL to export PDF). |

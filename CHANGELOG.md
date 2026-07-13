@@ -12,6 +12,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.35.1] — 2026-07-13
+
+### Fixed
+
+- **Debug pass on `md-to-deck/SKILL.md`**: removed a duplicate `html/` output-tree entry; fixed
+  stale `final.strict.`/`final.free-form.` and `.critique/strict|free-form/` names to the
+  `pptx-strict`/`pptx-free-form` IDs; corrected the `html-strict` output row (it writes
+  `output/html/`, not a separate `draft-preview/`); dropped the false "N changed slides (M reused)"
+  incremental-cache claim (build_html renders the whole deck); retitled the skill and the Step-8
+  entry away from "PowerPoint" since it also renders HTML; fixed a mislinked `build_html.py` ref.
+
 ## [0.35.0] — 2026-07-13
 
 ### Added
