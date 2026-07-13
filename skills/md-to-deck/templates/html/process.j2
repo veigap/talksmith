@@ -1,5 +1,6 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(section, title) %}
+{% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
 {% if labeled %}
 <div class="numrow">
 {% for it in items %}

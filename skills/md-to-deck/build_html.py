@@ -129,12 +129,17 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
             nt = _norm(u["title"])
             mi = next((j for j, sn in enumerate(agenda_norm)
                        if sn and (sn == nt or sn in nt or nt in sn)), -1)
-            if agenda and (mi >= 0 or nt == "agenda"):            # section start → re-show the agenda
-                if mi >= 0:
-                    active = mi
-                    section = agenda[mi]
+            # A section start is: an agenda-matched divider, or — when there's no agenda list —
+            # every divider (they *are* the sections). Sub-openers (agenda exists, no match) keep
+            # the current section. Enrich `section` here so every following slide carries it.
+            if mi >= 0:
+                active = mi
+                section = agenda[mi]
+            elif not agenda:
+                section = re.sub(r"^\d+[.)]\s*", "", u["title"])
+            if agenda and mi >= 0:                                # re-show the agenda at a real section start
                 inner = _hs.section_agenda(agenda, active, u["title"])
-            else:                                                 # sub-opener / non-section divider → plain title
+            else:                                                 # no agenda list, or a sub-opener → plain title
                 inner = _hs.render_slide(kind, u, "", cache)
         else:
             inner = _hs.render_slide(kind, u, section, cache)

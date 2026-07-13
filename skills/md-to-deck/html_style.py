@@ -315,7 +315,7 @@ CSS = r"""
    NOT shrink per-slide content, so a tiny fit pass (INIT) scales .cfit to fill the width and
    fit the height — the one thing neither Reveal nor CSS can do (fit-with-reflow). */
 .cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden}
-.cfit{width:100%;transform-origin:top left}
+.cfit{width:100%;transform-origin:top left;display:flex;flex-direction:column;gap:3cqw}
 .cfit>*{margin-top:0!important;margin-bottom:0!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--ink);font-weight:700;font-size:2.2cqw;letter-spacing:.06em;text-transform:uppercase;padding:.9cqw 2cqw;border-radius:2cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:2.4cqw 0 0;line-height:1.08;text-wrap:balance}
@@ -324,6 +324,8 @@ CSS = r"""
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .sub{font-size:2.8cqw;color:var(--body);margin:3cqw 0 0}
+/* section eyebrow on full-bleed statement/hero slides (the section they belong to) */
+.steyebrow{font-size:2.1cqw;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin:0 0 2.4cqw}
 /* cover — free-form §2 recipe (title top-left, class/author lower-left, logo bottom-right),
    pure CSS: the title band reserves space so the meta sits at the recipe position for normal
    titles and simply flows DOWN for long ones — never overlapping. (cqw is width-based; on a
@@ -361,7 +363,7 @@ CSS = r"""
 /* plain numbered steps (no per-step label) — a vertical numbered list */
 .steps{display:flex;flex-direction:column;gap:1.8cqw}
 .steprow{display:flex;gap:2.4cqw;align-items:flex-start}
-.stepn{flex:0 0 auto;width:5cqw;height:5cqw;border-radius:50%;background:var(--red);color:#fff;font-weight:800;font-size:2.6cqw;display:grid;place-items:center;margin-top:.2cqw}
+.stepn{flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:transparent;border:.3cqw solid var(--red);color:var(--red);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;margin-top:.4cqw}
 .steprow p{margin:0;font-size:2.6cqw;color:var(--body);line-height:1.35}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:1fr 1.2fr 1.2fr;gap:1.6cqw;align-items:center}
@@ -407,7 +409,7 @@ function fitContent(cb){
     var h=cf.scrollHeight; var ns=Math.max(0.35, Math.min(1, rh/h));
     if(Math.abs(ns-s)<0.005){ s=ns; break; } s=ns; }
   cf.style.width=(rw/s)+'px';
-  var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)/2)+'px';   // centre vertically
+  var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
 function fitAll(scope){ (scope||document).querySelectorAll('.reveal .slides section .cbody').forEach(fitContent); }

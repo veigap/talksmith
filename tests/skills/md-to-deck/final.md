@@ -100,6 +100,18 @@ Tres razones para dejar que el modelo piense en voz alta.
 
 ---
 
+## Steps · con intro
+<!-- template: process -->
+
+Antes de pegar cualquier dato en una herramienta de IA, seguí esta rutina de cuatro pasos.
+
+1. Identificá qué dato vas a pegar y de dónde viene.
+2. Clasificá su sensibilidad: público, interno o confidencial.
+3. Elegí una herramienta autorizada acorde a esa clasificación.
+4. Registrá qué se compartió, por si hay que auditarlo después.
+
+---
+
 ## Single-point · lead + one beat
 <!-- template: single-point -->
 

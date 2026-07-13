@@ -12,6 +12,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.30.0] — 2026-07-13
+
+### Added
+
+- **Every slide is enriched with the section it belongs to, and shows it** — a pill on content
+  slides, a red eyebrow on full-bleed statement/hero slides. The section is tracked per slide in
+  `build_html` (from the agenda when present, else each divider title). Statement slides read as
+  more editorial for it.
+- **Numbered steps can carry an intro lead** (the `process` template renders `body[0]` above the
+  steps); added a "Steps · con intro" fixture.
+
+### Changed
+
+- **Spacing + positioning polish (HTML):** the content region is a flex column with a gap, so a
+  lead line no longer crowds the cards/steps below it; numbered-step chips are smaller and
+  outlined (not filled); content sits in the upper third rather than dead-centre so sparse slides
+  hug the title.
+
 ## [0.29.2] — 2026-07-13
 
 ### Added
