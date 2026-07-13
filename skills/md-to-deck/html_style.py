@@ -246,8 +246,15 @@ def render_slide(kind, u, section, cache) -> str:
                         f'<h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div>' for it in items)
         return _mk(head, f'<div class="ctagrid">{cards}</div>')
 
-    # fallback: title + body paragraphs (no bullets)
-    return _mk(head, "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[:6]))
+    # fallback / lead+points — styled, NEVER plain paragraphs: a prominent lead statement +
+    # the remaining lines as accented point panels (the "lead + facts" catalog shape).
+    if not body:
+        return _mk(head, "")
+    if len(body) == 1:
+        return _mk(head, f'<p class="big2">{_esc(body[0])}</p>')
+    big = f'<p class="big2">{_esc(body[0])}</p>'
+    panels = "".join(f'<div class="fpoint">{_esc(b)}</div>' for b in body[1:7])
+    return _mk(head, f'<div class="leadpoints">{big}<div class="fpoints">{panels}</div></div>')
 
 
 def cover_slide(fm: dict, author_label: str = "Autor:", modified_label: str = "Última modificación:") -> str:
@@ -354,6 +361,10 @@ CSS = r"""
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:#000;overflow:hidden}
 .codebox .kw{color:var(--kw)}.codebox .st{color:var(--st)}.codebox .cm{color:var(--cm)}
 .ctext{margin:auto 0}.big2{font-size:4cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;text-wrap:balance}
+/* fallback / lead+points — a lead statement + accented point panels (never plain paragraphs) */
+.leadpoints{display:flex;flex-direction:column;gap:2.6cqw}
+.fpoints{display:flex;flex-direction:column;gap:1.6cqw}
+.fpoint{background:var(--card);border-left:.7cqw solid var(--red);border-radius:1.2cqw;padding:1.8cqw 2.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.3}
 .ctpanels{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:3cqw}.ctp{background:var(--card);border-radius:1.6cqw;padding:2.4cqw;font-size:2.2cqw;color:var(--body);font-weight:600}
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}

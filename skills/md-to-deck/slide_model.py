@@ -36,6 +36,10 @@ _ORDERED_RE = re.compile(
 _PLAIN_BULLET_RE = re.compile(r"^\s*[-*+•]\s+")
 _EMPTY_BULLET_RE = re.compile(r"^\s*[-*+•]\s*$")                 # a bullet marker with no content ("- ")
 _FENCE_RE = re.compile(r"^\s*```")
+# Author section-break markers in a title, e.g. `## 1. 〔divisor〕 …` — stripped from the shown
+# title; `divisor`/`backup` force the slide to a divider even at H2 (slide-templates.md §is_divider).
+_MARKER_RE = re.compile(r"〔([^〕]*)〕")
+_DIVIDER_MARKERS = {"divisor", "divider", "backup", "sección", "seccion", "section"}
 
 
 def _clean_inline(s: str) -> str:
@@ -81,6 +85,11 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
         if head and not title:
             title = _clean_inline(head.group(2))
             level = len(head.group(1))
+            m = _MARKER_RE.search(title)              # 〔divisor〕/〔Backup〕 → divider even at H2 (slide-templates.md)
+            if m:
+                if m.group(1).strip().lower() in _DIVIDER_MARKERS:
+                    level = 1
+                title = re.sub(r"\s{2,}", " ", _MARKER_RE.sub("", title)).strip()
             continue
         if mode is None:
             for im in _IMG_RE.finditer(raw):

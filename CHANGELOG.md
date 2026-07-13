@@ -12,6 +12,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.25.1] — 2026-07-13
+
+### Fixed
+
+- **Under-structured slides no longer render as a wall of plain text.** The `fallback` template
+  (≈⅓ of a real narrative deck) now renders a **styled lead + accented point panels** (red
+  left-rule cards) instead of bare paragraphs — the "lead + facts" catalog shape — so even
+  prose slides look designed, not like bullets.
+- **`〔divisor〕` / `〔Backup〕` section markers are honoured.** A title carrying one of these
+  markers is now treated as a section divider (even at H2, per `slide-templates.md`) and the
+  marker is stripped from the shown title — previously the literal `〔divisor〕` text leaked onto
+  the slide.
+
 ## [0.25.0] — 2026-07-13
 
 ### Changed
