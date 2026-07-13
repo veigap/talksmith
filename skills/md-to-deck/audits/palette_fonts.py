@@ -43,7 +43,7 @@ What it does:
         do they surface separately as `[scheme-clr]`.
 
 Usage:
-    python3 audit_palette_fonts.py <final.pptx> [--json] [--warn-only]
+    python3 audits/palette_fonts.py <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every color + font in slide content is in the allowed set

@@ -10,7 +10,7 @@ Why this exists:
     renderer that forgot the notes stage, or dropped a slide's notes,
     shipped silently because no audit and no visual-review rubric looks at
     the notes pane. This is the deterministic catch, mirroring
-    `audit_block_coverage.py` for slide bodies: a build-time gate that fails
+    `audits/block_coverage.py` for slide bodies: a build-time gate that fails
     the render when a source slide that carries notes lands with an empty
     notes pane.
 
@@ -27,7 +27,7 @@ What it does:
     (no false positives).
 
 Usage:
-    python3 audit_notes_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/notes_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every source slide with notes has a non-empty notes pane

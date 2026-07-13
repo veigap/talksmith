@@ -21,10 +21,10 @@ What it does:
     rendered **zero** is an `[icon-drop]`; exits non-zero.
 
     **Strict-only.** Free-form makes icons optional (its §3.2), so this audit does not apply
-    there; preview has no `.pptx`.
+    there; html-strict has no `.pptx`.
 
 Usage:
-    python3 audit_icon_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/icon_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every slide that should carry icons has at least one; nothing skipped wholesale

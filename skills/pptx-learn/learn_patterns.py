@@ -5,7 +5,7 @@ and hand-corrects positions, sizes, fonts, fills. Those corrections are signal: 
 say what the generator *should* have done. This script extracts a per-shape geometry
 inventory from a deck, diffs the human-edited deck against the as-generated baseline,
 and mines the **recurring** deltas into candidate conformance patterns — which a human
-then curates into `config/pptx-styles/strict/conformance-patterns.md`.
+then curates into `config/pptx-styles/pptx-strict/conformance-patterns.md`.
 
 Two subcommands:
 

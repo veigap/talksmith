@@ -1,6 +1,6 @@
 ---
 name: talksmith:pptx-learn
-description: Learn strict styling / distribution / positioning patterns from a deck a presenter hand-corrected — an LLM-heavy analysis, not a mechanical diff. `learn_patterns.py` (needs `python-pptx`) is the evidence layer: it diffs the human-edited `.pptx` against the **as-generated** baseline and surfaces the *recurring* geometry deltas (title nudged, image resized, pill moved, fill changed) with counts. The **LLM is the analyst**: it examines the before/after slides (multimodal where renders are available) plus the measured deltas and reasons about the *why* and the *decision* behind each change — most importantly judging whether a delta is a **generalizable template rule** (promote) or a **content-specific one-off** (discard), which the recurrence count alone cannot decide. Confirmed patterns — each carrying its design rationale — are appended to the project file `config/strict-learnings.md` for human promotion into the plugin's `config/pptx-styles/strict/conformance-patterns.md`. **strict-only.** Runs **auto** after `talksmith:pptx-merge` and **on-demand**. No Cowork dependency (rendering for the multimodal pass is best-effort via libreoffice; degrades to deltas-only).
+description: Learn strict styling / distribution / positioning patterns from a deck a presenter hand-corrected — an LLM-heavy analysis, not a mechanical diff. `learn_patterns.py` (needs `python-pptx`) is the evidence layer: it diffs the human-edited `.pptx` against the **as-generated** baseline and surfaces the *recurring* geometry deltas (title nudged, image resized, pill moved, fill changed) with counts. The **LLM is the analyst**: it examines the before/after slides (multimodal where renders are available) plus the measured deltas and reasons about the *why* and the *decision* behind each change — most importantly judging whether a delta is a **generalizable template rule** (promote) or a **content-specific one-off** (discard), which the recurrence count alone cannot decide. Confirmed patterns — each carrying its design rationale — are appended to the project file `config/strict-learnings.md` for human promotion into the plugin's `config/pptx-styles/pptx-strict/conformance-patterns.md`. **strict-only.** Runs **auto** after `talksmith:pptx-merge` and **on-demand**. No Cowork dependency (rendering for the multimodal pass is best-effort via libreoffice; degrades to deltas-only).
 ---
 
 # talksmith:pptx-learn — Learn strict patterns from human edits
@@ -15,7 +15,7 @@ Talksmith renders a strict deck; the presenter opens it in Keynote/PowerPoint an
 
 The Python (`learn_patterns.py`) exists to keep that reasoning **grounded** — the LLM never invents a delta the diff didn't measure — and to do the counting/aggregation cheaply. But the analysis is the LLM's job.
 
-**strict-only.** Free-form and preview render their own layouts and are never judged against a fixed template, so there is nothing to learn against. If the render being reconciled was not strict, this skill **no-ops** and says so.
+**strict-only.** Free-form and html-strict render their own layouts and are never judged against a fixed template, so there is nothing to learn against. If the render being reconciled was not strict, this skill **no-ops** and says so.
 
 ## The two decks it compares
 
@@ -33,7 +33,7 @@ The geometry snapshot is what makes B survive **in-place editing** of `output/fi
 
 ## Process
 
-0. **Gate.** Confirm the render was strict and a baseline exists (`output/final.generated.geometry.json`, or an as-generated `.pptx` passed explicitly). If not → emit `[pptx-learn] no-op: <reason>` and stop. Never learn from free-form/preview.
+0. **Gate.** Confirm the render was strict and a baseline exists (`output/final.generated.geometry.json`, or an as-generated `.pptx` passed explicitly). If not → emit `[pptx-learn] no-op: <reason>` and stop. Never learn from free-form/html-strict.
 
 1. **Measure — Python surfaces evidence.** Run [`learn_patterns.py`](learn_patterns.py):
 
@@ -60,7 +60,7 @@ The geometry snapshot is what makes B survive **in-place editing** of `output/fi
 
 ## Promotion (human, at Step 7)
 
-`strict-learnings.md` candidates are **suggestions, not rules** — they do not affect renders until promoted. At Step 7 (Learnings), the orchestrator surfaces any open candidates for the presenter to *Promote* / *Skip* / *Promote with edits*. A promoted pattern is moved into the plugin's [`conformance-patterns.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/conformance-patterns.md) with `status: promoted`; from then on the strict renderer applies it. This mirrors the editorial `learnings.md` promotion flow.
+`strict-learnings.md` candidates are **suggestions, not rules** — they do not affect renders until promoted. At Step 7 (Learnings), the orchestrator surfaces any open candidates for the presenter to *Promote* / *Skip* / *Promote with edits*. A promoted pattern is moved into the plugin's [`conformance-patterns.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/conformance-patterns.md) with `status: promoted`; from then on the strict renderer applies it. This mirrors the editorial `learnings.md` promotion flow.
 
 ## Rules
 

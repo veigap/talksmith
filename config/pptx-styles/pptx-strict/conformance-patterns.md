@@ -7,7 +7,7 @@ at review — rather than prose scattered through [`pptx-prompt.md`](pptx-prompt
 intent; the measurable rules live here, so they can be **grown from real edits**: the
 [`talksmith:pptx-learn`](${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/SKILL.md) skill mines
 patterns from decks a presenter hand-corrected and, after human curation, appends them
-here. Free-form and preview never read this file.
+here. Free-form and html-strict never read this file.
 
 ## How it's used
 

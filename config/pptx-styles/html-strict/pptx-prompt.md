@@ -1,13 +1,15 @@
-# PPTX style: html (static-site deliverable)
+# PPTX style: html-strict (static-site deliverable)
 
-`html` is a **first-class render style** whose deliverable is a **styled static HTML site**,
-not a `.pptx`. It is the presentable sibling of `preview`: both are the same code-generated
-renderer ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py), shared
-tokens/components in `html_style.py`) — `preview` renders a pre-Polish `draft.md` for a fast
-throwaway look, `html` renders `final.md` as a shareable deliverable.
+`html-strict` is a **first-class render style** whose deliverable is a **styled static HTML /
+Reveal.js site**, not a `.pptx`. It is the code-generated renderer
+([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py), shared
+tokens/components in `html_style.py`, per-slide-type markup in `templates/html/*.j2`). One
+renderer, **two sources**: it renders the in-progress `draft.md` as a **live view** (auto-fired
+after the first complete draft and kept in sync each review, `--draft`) and `final.md` as the
+shareable **deliverable** — both to `output/html/index.html`. There is no separate "preview" mode.
 
-For the native-`pptx` styles see [`../strict/pptx-prompt.md`](../strict/pptx-prompt.md) and
-[`../free-form/pptx-prompt.md`](../free-form/pptx-prompt.md); for style selection see
+For the native-`pptx` styles see [`../pptx-strict/pptx-prompt.md`](../pptx-strict/pptx-prompt.md) and
+[`../pptx-free-form/pptx-prompt.md`](../pptx-free-form/pptx-prompt.md); for style selection see
 [`../README.md`](../README.md).
 
 > **Deterministic, and that's the point.** Unlike the native `.pptx` render (which follows
@@ -61,7 +63,7 @@ Slides are white by design.
 
 ## 4. Render flow
 
-`html` is **GENERATE → FEEDBACK (≤2, `walk-design`) → surface**, per the `html` column of
+`html-strict` is **GENERATE → FEEDBACK (≤2, `walk-design`) → surface**, per the `html-strict` column of
 [`../render-modes.md`](../render-modes.md) — the single source of truth; this spec does not
 restate it. **No CONTROL phase** (it produces no `.pptx`, so the deck-parsing audits don't
 apply; block-coverage holds by construction — every unit is rendered). REGENERATE **surfaces**

@@ -1,7 +1,7 @@
 # Render modes — the per-format effort matrix (single source of truth)
 
 This file is the **one authoritative definition of how each render format behaves** —
-`strict`, `free-form`, and `preview`: which render substrate, which audits, which
+`pptx-strict`, `pptx-free-form`, and `html-strict`: which render substrate, which audits, which
 critique action, cycle cap, and deliverable, per phase.
 
 - **The config** (which action each format runs per phase) is the **matrix** below.
@@ -35,18 +35,18 @@ exists to end.** Rows are the render phases; columns are the formats; each cell 
 **action** defined in *Action definitions* below (which say *how* the action is
 performed). To change a format's behavior, edit its cell here — one place.
 
-| Phase / effort | `strict` | `free-form` | `preview` | `html` |
-|---|---|---|---|---|
-| **GENERATE** (render) | `native-render` | `native-render` | `html-render` | `html-render` |
-| **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` | `audit-none` |
-| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` | `walk-design` |
-| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` | `surface` |
-| **Cycle cap** | 3 | — (single pass) | 2 | 2 |
-| **Scope** | whole deck | whole deck | whole deck (from `draft.md`) | whole deck (from `final.md`) |
-| **Deliverable** | `output/final.strict.pptx` (+ canonical) | `output/final.free-form.pptx` (+ canonical) | `output/draft-preview/preview.html` | `output/html/index.html` (+ `.icons/`) |
-| **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (HTML by code) | no (HTML by code) |
+| Phase / effort | `pptx-strict` | `pptx-free-form` | `html-strict` |
+|---|---|---|---|
+| **GENERATE** (render) | `native-render` | `native-render` | `html-render` |
+| **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` |
+| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` |
+| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` |
+| **Cycle cap** | 3 | — (single pass) | 2 |
+| **Scope** | whole deck | whole deck | whole deck |
+| **Deliverable** | `output/final.pptx-strict.pptx` (+ canonical) | `output/final.pptx-free-form.pptx` (+ canonical) | `output/html/index.html` (+ `.icons/`) |
+| **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (HTML by code) |
 
-**`preview` and `html` are the same renderer** ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)) — a code-generated **styled HTML** deck (real cards, per-concept Material icons, callout boxes, code surfaces; icons via `icon_fetch.py`, inlined). `preview` renders `draft.md` for a fast throwaway look; `html` renders `final.md` as a shareable, presentable **deliverable**. Both wrap the catalog templates in a **[Reveal.js](https://revealjs.com/)** shell (vendored + inlined): cover slide, arrow-key / full-screen present mode, slide overview, speaker notes (`s`), transitions, and PDF export (`?print-pdf`). Both are deterministic — the styled layer *always* renders, unlike the native `.pptx` render which follows prose and can drop it. (Parsing + classification live in `slide_model.py`; the earlier Pillow wireframe substrate is retired.)
+**`html-strict` is the code-rendered deck** ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)) — a styled **HTML / [Reveal.js](https://revealjs.com/)** deck (real cards, per-concept Material icons, callout boxes, code surfaces; icons via `icon_fetch.py`, inlined; cover slide, present mode, slide overview, speaker notes with `s`, transitions, PDF export via `?print-pdf`). It has **two sources, one renderer and one output** (`output/html/index.html`): while the talk is being built it renders the **in-progress `draft.md`** — auto-fired after the first complete draft and kept in sync on every review (`--draft`), giving the presenter a live styled view; at Step 8 it renders **`final.md`** as the shareable deliverable. Deterministic — the styled layer *always* renders, unlike the native `.pptx` render which follows prose and can drop it. Parsing + classification live in `slide_model.py`; per-slide-type markup in `templates/html/*.j2`. (There is no separate "preview" mode — the in-progress view *is* `html-strict` on `draft.md`.)
 
 ## Action definitions — *how* each action is performed
 
@@ -58,11 +58,11 @@ the matched template's *Format*, falling back to the mode default when nothing m
 The universal invariant — labeled enumerations are cards/panels, never plain bullets —
 holds in all three. Every GENERATE also writes a **template-decision log** beside its
 output — `output/final.<style>.template-log.md` for the native styles (side by side with
-`final.<style>.pptx`), `output/draft-preview/template-log.md` for preview — recording the
+`final.<style>.pptx`), `output/html/template-log.md` for html-strict — recording the
 template chosen per slide and why (schema: [`slide-templates.md`](slide-templates.md) →
 *Template decision log*).
 - `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Classifies each slide against `slide-templates.md` and emits the matched template via the style's §-recipes (strict additionally runs the `audits/layout_fit.py` gate; free-form logs its pick to `.layout-log.md`). Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*.
-- `html-render` — [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) renders a **styled static HTML** deck (shared tokens/components in `html_style.py`): classifies each slide (`_classify`), emits the matched template's real styling — cards, per-concept Material Symbols icons (fetched by name via `icon_fetch.py`, recoloured, inlined), callout boxes, code surfaces, card strips — and prepends a §4 cover slide from the frontmatter. A fixed header (pill + title) sits over a content region that scales to fit 16:9; the page has a full-screen present mode (arrow keys). SVG images embed inline, PNG/JPG as data-URIs. An optional `<!-- template: X -->` comment forces a template. Deterministic (the styled layer always renders); no `.pptx`, no native skill, Cowork-independent. `preview` renders `draft.md` → `output/draft-preview/preview.html`; `html` renders `final.md` → `output/html/index.html`.
+- `html-render` — [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) renders a **styled static HTML** deck (shared tokens/components in `html_style.py`): classifies each slide (`_classify`), emits the matched template's real styling — cards, per-concept Material Symbols icons (fetched by name via `icon_fetch.py`, recoloured, inlined), callout boxes, code surfaces, card strips — and prepends a §4 cover slide from the frontmatter. A fixed header (pill + title) sits over a content region that scales to fit 16:9; the page has a full-screen present mode (arrow keys). SVG images embed inline, PNG/JPG as data-URIs. An optional `<!-- template: X -->` comment forces a template. Deterministic (the styled layer always renders); no `.pptx`, no native skill, Cowork-independent. html-strict renders `draft.md` (in-progress, `--draft`) or `final.md` (deliverable) → `output/html/index.html`.
 
 **CONTROL** (all deterministic Python audits; a non-zero exit ends the phase)
 - `audit-full` — OOXML invariants + `audits/block_coverage.py` + `audits/aspect_ratios.py` + `audits/cover_fidelity.py` + **`audits/notes_coverage.py`** + **`audits/palette_fonts.py`** + **`audits/layout_fit.py`** + **`audits/icon_coverage.py`**. The last three enforce the strict template (layout-conformance) and are strict-only; the rest are the shared floor. **`audits/icon_coverage.py`** fails the build when a concept-breakdown or callout slide rendered **zero** icons — closing the gap where a render silently skips the §17 icon-fetch step and ships naked cards (no other audit looked at icons, so it passed clean).
@@ -70,13 +70,13 @@ template chosen per slide and why (schema: [`slide-templates.md`](slide-template
 - `audit-none` — no audits run: the format produces no `.pptx`, and every deterministic audit parses a rendered deck. `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_html.py` renders every slide unit).
 
 **FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-design.md`](slide-design.md))
-- `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).
+- `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `pptx-strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).
 - `walk-design` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION** (never layout-conformance — the HTML render has no strict base-template, but it *does* realize catalog templates, so TEMPLATE is walked).
 - `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the `slide-design.md` practices are a handy self-review checklist for that human pass).
 
 **REGENERATE** (disposition of FEEDBACK findings)
 - `auto-regenerate` — the skill composes per-slide edit instructions and re-renders the touched slides, up to the cycle cap; objective defects are fixed, editorial-judgement calls get `defer because <reason>` and surface in the closing report.
-- `surface` — findings are **surfaced** to the presenter, not auto-fixed: the deterministic HTML renderer takes no fix instructions, so the presenter resolves them by editing `draft.md` (which re-fires the preview on the changed slides). Objective content/structure findings are what the presenter acts on during Review anyway; aesthetic/distribution findings are informational and are truly fixed on the Step-8 render.
+- `surface` — findings are **surfaced** to the presenter, not auto-fixed: the deterministic HTML renderer takes no fix instructions, so the presenter resolves them by editing `draft.md` (which re-fires the html-strict render on the changed slides). Objective content/structure findings are what the presenter acts on during Review anyway; aesthetic/distribution findings are informational and are truly fixed on the Step-8 render.
 
 The **walk discipline**, **aesthetic note**, and **closing-report / declare-clean** contract that any FEEDBACK action follows live in [`slide-design.md`](slide-design.md).
 

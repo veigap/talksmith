@@ -9,15 +9,15 @@ Input contract:
     HTML comments. `draft.md` is not a valid input in the default mode — passing
     it leaks Presenter feedback bullets into slide bodies.
 
-Draft-preview mode (`--draft`):
-    For the optional Step-5.5 draft preview, `draft.md` IS a valid input. The
+Draft mode (`--draft`):
+    For the Step-5.5 live HTML view, `draft.md` IS a valid input. The
     `--draft` flag additionally strips the `**Presenter feedback:**` labeled
     blocks that `draft.md` carries in its Agenda and section-divider bodies
     (Polish removes these on the way to `final.md`; in a pre-Polish draft they
     are still present), and it does NOT require ASCII to have been rendered to
     SVG — raw ASCII fenced blocks pass through untouched so the renderer can lay
     them out as monospace text boxes. Everything else is identical to the
-    default pipeline. The preview reads `draft.md` directly and never touches
+    default pipeline. The --draft render reads `draft.md` directly and never touches
     `final.md`, so it is available before Step 6 has run.
 
 Output contract (Markdown):
@@ -331,7 +331,7 @@ def _split_into_slide_units(text: str) -> list[str]:
     Fence-aware: a `---` line inside a fenced ASCII/code block is body content,
     not a slide boundary, so it never splits a diagram. Each returned unit is one
     renderable slide — a section-divider H1 or a content H2 with its body. Empty
-    units are dropped. Used only by the draft-preview per-slide parallel path
+    units are dropped. Used only by the --draft per-slide parallel path
     (`--split-dir`); the default single-file render never calls it.
     """
     units: list[str] = []
@@ -407,13 +407,13 @@ def main() -> int:
     )
     parser.add_argument(
         "--draft", action="store_true",
-        help="Draft-preview mode: accept a pre-Polish draft.md — strip its "
+        help="Draft mode: accept a pre-Polish draft.md — strip its "
              "**Presenter feedback:** blocks and let raw ASCII fences pass "
              "through as monospace (no SVG required)."
     )
     parser.add_argument(
         "--split-dir", type=Path, default=None,
-        help="Draft-preview only: also write one per-slide unit file "
+        help="Draft mode only: also write one per-slide unit file "
              "(slide-NN.md) into this directory for the per-slide parallel "
              "render. Prints the ordered manifest of unit paths to stdout."
     )

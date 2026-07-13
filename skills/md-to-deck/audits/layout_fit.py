@@ -3,7 +3,7 @@ predicted from the source markdown's §15.5 surface signals + §15.6.1
 discriminator.
 
 Why this exists:
-    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md` §15.5 is a decision tree, not a "first match
+    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md` §15.5 is a decision tree, not a "first match
     wins" lookup. Two markdown signals can be surface-compatible (e.g.
     "H2 + paragraph + bullets" matches §10 plain bullets, §7.4 card-row,
     and §7.5 icon-bullet list simultaneously). When the renderer skips
@@ -27,7 +27,7 @@ What it does:
          likely root cause.
 
     Source slides are matched to rendered slides by H2 title text
-    (same heuristic as `audit_block_coverage.py`). Cover and agenda
+    (same heuristic as `audits/block_coverage.py`). Cover and agenda
     re-emits are excluded.
 
     Predicted layouts (per §15.5):
@@ -53,7 +53,7 @@ What it does:
     (card-grid vs content+cards+image) report as warnings.
 
 Usage:
-    python3 audit_layout_fit.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/layout_fit.py <final.md> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every matched slide's emitted layout matches its predicted layout

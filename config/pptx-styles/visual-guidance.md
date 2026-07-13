@@ -2,7 +2,7 @@
 
 The **medium-agnostic foundation of good information design**: the universal principles a
 well-made slide obeys, and the **hard defects that must never ship** in any generated deck.
-Referenced by **every** render mode (`strict`, `free-form`, `preview`) at GENERATE (the
+Referenced by **every** render mode (`pptx-strict`, `pptx-free-form`, `html-strict`) at GENERATE (the
 renderer honors it) and at FEEDBACK (the critique enforces it).
 
 This is the **most generic layer** — it sits *beneath* the more specific shared docs and
@@ -76,7 +76,7 @@ them rather than rediscovering them.
 ## How the modes use this
 
 - **GENERATE (all modes).** The renderer designs *from* Part B and must not emit any Part-A
-  violation. Strict/free-form realize it in native `pptx`; preview/html realize it
+  violation. Strict/free-form realize it in native `pptx`; html-strict realizes it
   deterministically in styled HTML.
 - **CONTROL (pptx modes).** The deterministic subset of Part A is audited (aspect, block,
   notes); a violation fails the build.

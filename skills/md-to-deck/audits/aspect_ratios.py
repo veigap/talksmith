@@ -1,7 +1,7 @@
 """Audit every `<p:pic>` in a rendered .pptx for aspect-ratio preservation.
 
 Why this exists:
-    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md` §12 forbids non-uniform image scaling — the
+    `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md` §12 forbids non-uniform image scaling — the
     rendered `cx:cy` of every `<p:pic>` must equal the source asset's
     intrinsic `width:height`. Prose alone is not enough: renderers can
     place a wide-aspect SVG (e.g. 2.143:1) into a narrower placeholder
@@ -31,7 +31,7 @@ What it does:
     failure, because the cx:cy check is the load-bearing assertion.
 
 Usage:
-    python3 audit_aspect_ratios.py <path-to-final.pptx> [--tolerance 0.01] [--json]
+    python3 audits/aspect_ratios.py <path-to-final.pptx> [--tolerance 0.01] [--json]
 
 Exit codes:
     0  all `<p:pic>` shapes within tolerance (or zero pictures found)

@@ -12,6 +12,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.32.0] — 2026-07-13
+
+### Changed
+
+- **Three render modes, renamed and consolidated: `pptx-strict`, `pptx-free-form`, `html-strict`.**
+  The style folders (`config/pptx-styles/strict|free-form|html`) and every path/ID reference were
+  renamed accordingly (prose adjectives like "strict styling" unchanged). Step 8 offers these three.
+- **`preview` is removed as a separate concept.** The code-rendered **`html-strict`** deck now
+  serves both roles: the orchestrator auto-renders it from the in-progress `draft.md` after the
+  first complete draft and keeps it in sync on every review (the **live view**, `--draft`), and it
+  renders `final.md` as the Step-8 deliverable — one renderer, one output (`output/html/index.html`).
+  Step 5.5 is now "Live HTML view"; the `preview/` style folder is deleted.
+
+### Fixed
+
+- Repaired references that pointed at the pre-rename `config/pptx-styles/strict/…` path and the
+  pre-move `audit_*.py` names across agents, ascii-to-svg, pptx-learn, and the audits themselves.
+
 ## [0.31.0] — 2026-07-13
 
 ### Changed

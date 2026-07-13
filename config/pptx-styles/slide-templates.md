@@ -10,7 +10,7 @@ exist, the **prescriptive rule for matching each** to a slide's content, and the
   and reviews the slide **against that template's *Format* here**, not against a generic
   notion of "looks good."
 
-All three render formats — `strict`, `free-form`, `preview` — use it. When nothing
+All three render formats — `pptx-strict`, `pptx-free-form`, `html-strict` — use it. When nothing
 matches, they fall back (`fallback` below).
 
 > **This is the single home — do not duplicate.** The design-level template guidance that
@@ -19,9 +19,9 @@ matches, they fall back (`fallback` below).
 > card-not-bullet invariant) lives **here now**. Each spec keeps only what is genuinely
 > substrate-specific: **strict** keeps its exact EMU measurements (base-template
 > pixel-equivalence) and the `audits/layout_fit.py` gate, *realizing* the *Format* below;
-> the **preview** keeps its Pillow render functions. Everything else references this file.
+> the **html-strict** render uses its Jinja templates (`templates/html/*.j2`). Everything else references this file.
 
-Evidence base: three real hand-built decks — the 53-slide `strict/template.pptx`
+Evidence base: three real hand-built decks — the 53-slide `pptx-strict/template.pptx`
 reference (`ref`), a 21-slide presenter-corrected deck (`final`), and a 57-slide
 governance deck (`gov`). **0 plain bullet lists across all 131 slides.**
 
@@ -102,8 +102,8 @@ See **Matching examples** below for worked classifications, including the tricky
 Strict additionally runs a **deterministic post-emit gate**
 ([`audits/layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/layout_fit.py)):
 emitted layout must equal the predicted template or the build fails. Free-form and
-preview use the same classification judgment **without** the hard gate (free-form logs
-its pick to `.layout-log.md`; the preview classifier selects the render function).
+html-strict uses the same classification judgment **without** the hard gate (free-form logs
+its pick to `.layout-log.md`; html-strict selects the matching template).
 
 ---
 
@@ -112,7 +112,7 @@ its pick to `.layout-log.md`; the preview classifier selects the render function
 Each entry gives **Match** (precise fire conditions + disambiguators), **Format** (the
 prescriptive layout — regions, counts, sizing, spacing, and what is forbidden), the
 **Strict recipe** it binds to, and **Provenance**. Sizes are the shared design ladder
-(strict encodes them as `sz="pt*100"`; the preview scales them to its 1280×720 canvas).
+(strict encodes them as `sz="pt*100"`; html-strict scales them to its 1280×720 canvas).
 Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
 ### Frame templates
@@ -359,7 +359,7 @@ can be improved from real renders, and `pptx-learn` has a rationale to mine. It 
 **descriptive only** — writing it never changes the render.
 
 - **strict / free-form:** `talks/<Talk>/output/final.<style>.template-log.md`.
-- **preview:** `talks/<Talk>/output/draft-preview/template-log.md` (written by `build_html.py --draft`).
+- **html-strict:** `talks/<Talk>/output/html/template-log.md` (written by `build_html.py`).
 
 It supersedes free-form's earlier `.layout-log.md` (same idea, standardized shape). Header
 carries a **tally** (count per template) and a **fallback count**; each slide is one entry:

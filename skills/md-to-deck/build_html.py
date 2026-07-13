@@ -1,18 +1,18 @@
 """Render a Talk to a **styled static HTML site** — the code-generated Talksmith renderer.
 
-One renderer, two uses:
-  - **preview** (`--draft`): a fast, throwaway HTML of `draft.md` before Polish — replaces the
-    old Pillow wireframe. Same template classification, but now fully *styled* (real cards,
-    icons, callout boxes, code surfaces), not a grey wireframe.
-  - **html deliverable**: a shareable static site built from `final.md`, offered as a render
-    option alongside `strict`/`free-form`.
+One `html` render type, two sources:
+  - **in-progress** (`--draft`): renders the current `draft.md` — auto-fired by the orchestrator
+    after the first complete draft and kept in sync on every review, so the presenter always has a
+    live styled view of the deck as it takes shape.
+  - **deliverable**: renders `final.md` as the shareable static site,     `strict`/`free-form`.
+Both produce the same styled Reveal.js deck to `output/html/index.html`; only the source md differs.
 
 Why it exists: unlike the native `.pptx` render (which follows prose and silently drops the
 styled layer), this is **deterministic code** — icons, callouts, code surfaces, and card
 strips always render, because the same `html_style` components emit them every time. It needs
 no Cowork and no native skill.
 
-Pipeline: `convert.py` (→ per-slide units, `--draft` for the preview) → classify each slide
+Pipeline: `convert.py` (→ per-slide units, `--draft` for the in-progress view) → classify each slide
 against the catalog (`slide_model._classify`) → render its template via `html_style`
 (content-matched Material icons fetched by `icon_fetch.py`, inlined) → one self-contained
 `.html` file. Only images are external (shown as placeholders until real assets are wired).
@@ -160,8 +160,7 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
         slides_html.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm)}</section>')
 
     # per-slide template-decision log beside the deck (slide-templates.md → Template decision log)
-    style = "preview" if draft else "html"
-    _sm._write_template_log(log_entries, talk_root, style, out_dir / "template-log.md")
+    _sm._write_template_log(log_entries, talk_root, "html", out_dir / "template-log.md")
 
     return _hs.page("".join(slides_html), title=title, subtitle=subtitle), n
 
@@ -169,8 +168,8 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--talk", type=Path, required=True, help="Talk root, e.g. talks/<Talk>")
-    ap.add_argument("--draft", action="store_true", help="preview mode — read draft.md (pre-Polish)")
-    ap.add_argument("-o", "--output", type=Path, default=None, help="output .html (default under output/)")
+    ap.add_argument("--draft", action="store_true", help="render the in-progress draft.md (default: final.md)")
+    ap.add_argument("-o", "--output", type=Path, default=None, help="output .html (default under output/html/)")
     args = ap.parse_args(argv)
 
     src = args.talk / ("draft.md" if args.draft else "final.md")
@@ -180,12 +179,11 @@ def main(argv=None) -> int:
     text = src.read_text(encoding="utf-8")
     fm = _frontmatter(text)
     title = fm.get("presentation", args.talk.name)
-    subtitle = " · ".join(x for x in (fm.get("class", ""), fm.get("presenter", "")) if x) \
-        or ("Draft preview" if args.draft else "")
+    subtitle = " · ".join(x for x in (fm.get("class", ""), fm.get("presenter", "")) if x)
 
-    out_dir = args.talk / "output" / ("draft-preview" if args.draft else "html")
+    out_dir = args.talk / "output" / "html"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = args.output or (out_dir / ("preview.html" if args.draft else "index.html"))
+    out = args.output or (out_dir / "index.html")
 
     html, n = render(text, args.talk, out_dir, args.draft, title, subtitle)
     out.write_text(html, encoding="utf-8")

@@ -44,7 +44,7 @@ What it does:
       [cover-fidelity] shape N "<name>" differs in <field>: base=<X> rendered=<Y>
 
 Usage:
-    python3 audit_cover_fidelity.py <final.pptx> <base-template.pptx>
+    python3 audits/cover_fidelity.py <final.pptx> <base-template.pptx>
                                     [--json] [--warn-only]
 
 Exit codes:

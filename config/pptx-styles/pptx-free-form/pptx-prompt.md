@@ -1,8 +1,8 @@
-# PPTX style: free-form
+# PPTX style: pptx-free-form
 
 Free-form is **almost-no spec**: the cover slide is contractually fixed (§2), the core practices below are non-negotiable, and everything else — style, fonts, layout, colors, type scale, icon idiom, table treatment — is the renderer's call, based on its own design judgment of what serves the content.
 
-For the alternative spec-driven style see [`../strict/pptx-prompt.md`](../strict/pptx-prompt.md); for the style-selection mechanism see [`../README.md`](../README.md).
+For the alternative spec-driven style see [`../pptx-strict/pptx-prompt.md`](../pptx-strict/pptx-prompt.md); for the style-selection mechanism see [`../README.md`](../README.md).
 
 > **Starting a new deck?** Open [`base-template.pptx`](base-template.pptx) — a 1-slide cover-only foundation. Substitute the four §2 cover placeholders on slide 1. From slide 2 onward you design.
 
@@ -18,13 +18,13 @@ These are not style rules — they are correctness rules. They hold regardless o
 - **Every block in `final.md` becomes a shape on the rendered slide.** No content dropping to fit a design. Audited at CONTROL by [`audits/block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py).
 - **Every `### Notes` block lands verbatim in the corresponding slide's notes pane.** Never on the slide body.
 - **Aspect ratio preserved on every image** (no non-uniform scaling). Audited at CONTROL by [`audits/aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/aspect_ratios.py).
-- **OOXML invariants hold** per `../strict/pptx-prompt.md` §19.4 (style-agnostic structural rules — dangling rels, `[Content_Types].xml` ordering, etc.).
+- **OOXML invariants hold** per `../pptx-strict/pptx-prompt.md` §19.4 (style-agnostic structural rules — dangling rels, `[Content_Types].xml` ordering, etc.).
 - **Honor the shared design bar *at GENERATE*.** Free-form designs *from* the guidance, not around it — its freedom is the *visual execution*, not permission to skip the design bar. As the deck is built, apply:
   - the **generic visualization floor** [`../visual-guidance.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/visual-guidance.md) — its **hard invariants** (no text/image overlap, no off-slide bleed, no truncation, no image distortion, legible contrast, above the ~30 pt floor, inside the safe area) *and* its generic **principles** (one clear hierarchy, alignment to a grid, structural whitespace, signal-over-noise, structure over bullets);
   - the matched **template's *Format*** from [`../slide-templates.md`](../slide-templates.md) (§3) — including the `concept-breakdown` per-concept icon and balanced card content (`DISTRIBUTION-09`);
   - the **CONTENT / TEMPLATE / AESTHETIC / DISTRIBUTION** practices in [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md).
   The **only** design bar free-form does *not* honor is the strict-only **LAYOUT-CONFORMANCE** (fixed palette/fonts, section pill, base-template pixel-equivalence) — free-form picks its own palette, type, and layout idiom to realize the above.
-- **Single pass, no critique loop.** Free-form is GENERATE → CONTROL → done: it *applies* the design bar above while building, but there is **no** automated FEEDBACK/REGENERATE pass that re-checks it — the **presenter reviews the deck after delivery** (the `../slide-design.md` practices double as that human checklist). Automated critique lives in `strict`; the throwaway `preview` runs its own light loop.
+- **Single pass, no critique loop.** Free-form is GENERATE → CONTROL → done: it *applies* the design bar above while building, but there is **no** automated FEEDBACK/REGENERATE pass that re-checks it — the **presenter reviews the deck after delivery** (the `../slide-design.md` practices double as that human checklist). Automated critique lives in `pptx-strict`; the code-rendered `html-strict` runs its own light loop.
 
 ---
 
@@ -51,7 +51,7 @@ After the cover, the renderer is the designer — but not from a blank slate. **
 `## <H2>` slide's content and classify it against the shared template catalog**
 [`../slide-templates.md`](../slide-templates.md) (its *Classification procedure* + each
 template's *Match*). When a template matches, **render that template following its
-*Format*** — the same templates strict and preview use. When nothing matches, **design
+*Format*** — the same templates `pptx-strict` and `html-strict` use. When nothing matches, **design
 freely** (the catalog's `fallback`).
 
 Free-form's freedom is in the **execution**, not the taxonomy: the catalog fixes *what
@@ -89,4 +89,4 @@ Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full co
 | **GENERATE** | Cover (§2) byte-equivalent from `base-template.pptx`; slides 2+ built fresh per §3 — **applying the shared design bar as it builds** (§1: the `visual-guidance.md` floor, the matched template's *Format*, the `slide-design.md` practices). Writes `output/final.free-form.template-log.md` (§3.1) + slide previews to `output/.critique/slide-NN.png`. |
 | **CONTROL** | Shared-floor audits only: OOXML invariants, [`audits/block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py), [`audits/aspect_ratios.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/aspect_ratios.py), cover-fidelity. **No palette/font audit, no layout-fit audit** — those enforce the strict template (layout-conformance) and don't apply here. All audits 0 → done. Any non-zero → surface `unresolved: <audit_name>` and stop; **no auto-fix** — the presenter decides whether to re-trigger. |
 
-**No FEEDBACK phase, no REGENERATE phase. The presenter is the reviewer.** The CONTENT + AESTHETIC + DISTRIBUTION practices in [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) make a handy self-review checklist for that human pass, but the skill does not walk them automatically for free-form. (The automated per-slide critique loop lives in `strict`; the throwaway `preview` runs its own light version.)
+**No FEEDBACK phase, no REGENERATE phase. The presenter is the reviewer.** The CONTENT + AESTHETIC + DISTRIBUTION practices in [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) make a handy self-review checklist for that human pass, but the skill does not walk them automatically for free-form. (The automated per-slide critique loop lives in `pptx-strict`; `html-strict` runs its own light version.)

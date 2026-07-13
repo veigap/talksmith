@@ -47,7 +47,7 @@ What it does:
       from matching since they have no source H2.
 
 Usage:
-    python3 audit_block_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/block_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  no drops detected
@@ -75,10 +75,10 @@ NS = {
     "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
 }
 
-# Emoji ranges from ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md §17.7 detection ranges.
+# Emoji ranges from ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md §17.7 detection ranges.
 EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
 
-# Callout colors (case-insensitive); see ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/strict/pptx-prompt.md §8.
+# Callout colors (case-insensitive); see ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md §8.
 CALLOUT_FILLS = {"F7BBC1", "B8E6F5"}
 
 # Known non-content image paths to exclude from the per-slide <p:pic> count:
