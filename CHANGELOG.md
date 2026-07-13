@@ -12,6 +12,12 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.30.1] — 2026-07-13
+
+### Changed
+
+- Section label (pill) is smaller and less rounded — a subtle tag, not a big pill.
+
 ## [0.30.0] — 2026-07-13
 
 ### Added
