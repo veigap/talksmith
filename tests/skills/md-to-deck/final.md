@@ -112,6 +112,16 @@ Antes de pegar cualquier dato en una herramienta de IA, seguí esta rutina de cu
 
 ---
 
+## Timeline · hitos
+<!-- template: timeline -->
+
+- **Marzo 2023** Samsung habilita ChatGPT para sus ingenieros.
+- **20 días después** Tres fugas de datos internos, sin un solo hacker.
+- **Mayo 2023** Samsung prohíbe las herramientas de IA generativa.
+- **2024** La industria adopta políticas de gobernanza de datos.
+
+---
+
 ## Single-point · lead + one beat
 <!-- template: single-point -->
 
@@ -164,6 +174,14 @@ Predice, no razona; no recuerda, no verifica.
 | Precisión | Estable, predecible | Depende del routing |
 | Costo | Mayor por llamada | Menor en promedio |
 | Latencia | Menor (una llamada) | Mayor (fallback) |
+
+---
+
+## Quote · pull-quote
+<!-- template: quote -->
+
+"Nadie quería hacer algo malo. Nadie fue negligente. Todos hicimos algo parecido."
+— Un ingeniero de Samsung, 2023
 
 ---
 

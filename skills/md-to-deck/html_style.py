@@ -216,7 +216,7 @@ _TMPL = {
     "image-grid": "image-grid.j2", "content-image": "content-image.j2", "comparison": "comparison.j2",
     "single-point": "single-point.j2", "callout": "single-point.j2", "agenda": "agenda.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
-    "closing-cta": "closing-cta.j2", "fallback": "fallback.j2",
+    "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2", "fallback": "fallback.j2",
 }
 
 
@@ -266,6 +266,17 @@ def render_slide(kind, u, section, cache) -> str:
     elif kind == "divider":
         no = u.get("_number")
         ctx["number"] = f"{no:02d}" if isinstance(no, int) else None
+    elif kind == "quote":
+        # body[0] = the quotation; an attribution line (starts with — / – / -) is peeled off
+        qs = [b for b in body] or [title]
+        attr = ""
+        if len(qs) > 1 and re.match(r"^\s*[—–-]\s*\S", qs[-1]):
+            attr = re.sub(r"^\s*[—–-]\s*", "", qs[-1]); qs = qs[:-1]
+        ctx["quote"] = " ".join(qs).strip('"“”«»')
+        ctx["attribution"] = attr
+    elif kind == "timeline":
+        # items: label = date/milestone, body = detail (falls back to plain numbered/labeled items)
+        ctx["items"] = items
     elif kind == "agenda":
         ctx["sections"] = [it["label"] for it in items] or body
         ctx["active"] = 0
@@ -401,6 +412,16 @@ CSS = r"""
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
 .hero{margin:auto 0;display:flex;flex-direction:column;gap:2cqw}.qa{font-size:16cqw;font-weight:800;color:var(--ink);line-height:.9;letter-spacing:-.02em}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+/* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
+.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
+.quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
+/* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
+.timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}
+.tlrow{position:relative}
+.tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
+.tldate{margin:0;font-size:2.9cqw;font-weight:800;color:var(--red);font-family:var(--mono)}
+.tlbody p{margin:.4cqw 0 0;font-size:2.5cqw;color:var(--body);line-height:1.3}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 """

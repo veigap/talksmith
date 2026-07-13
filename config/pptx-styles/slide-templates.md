@@ -177,6 +177,15 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Strict recipe:** §8.1 / §8.2 / §8.3. **Provenance:** ref S3/S7; pink `F9D2D6` recurs
   across all three decks.
 
+#### `quote` (pull-quote, full-bleed)
+- **Match:** the slide **is a quotation** in someone's voice — a dominant quoted line
+  (optionally with an attribution line starting `—`/`–`). A claim in the *presenter's* voice
+  is a `statement`; a quote is attributed / voiced. Primarily **author-directed**
+  (`<!-- template: quote -->`); a leading quotation mark is the auto-hint.
+- **Format:** full-bleed, vertically centred: a large accent quotation mark, the quote in
+  large bold (≤~35 words), then a muted `— attribution` line. No cards, no header pill body.
+- **Provenance:** gov deck testimonial slides; common in Gamma-style decks.
+
 ### Enumeration templates — unordered labeled sets (cards, never bullets)
 
 > The three below share the signal "lead + 3–5 labeled parallel items." Pick by **body
@@ -274,6 +283,15 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   inline paragraph prefix — the sequence must be visually scannable as steps.
 - **Strict recipe:** §7.1 / §7.6. **Provenance:** ref S13 (6 components), S30 (ToT tree),
   S44 (cascade), S47 (5 stages).
+
+#### `timeline` (dated / milestone sequence)
+- **Match:** an ordered sequence whose labels are **dates / periods / milestones** (`2023`,
+  `Marzo 2023`, `20 días después`, `Q1`), where *when* matters — a history or roadmap. Distinct
+  from `process` (abstract steps, order-not-date). Primarily **author-directed**
+  (`<!-- template: timeline -->`); labeled items with date-like labels are the hint.
+- **Format:** a **vertical rail** with a connecting line and a dot per entry; each row = the
+  date/milestone (mono accent) + a one-line detail. Time flows top→bottom.
+- **Provenance:** roadmap / history slides; common in Gamma-style decks.
 
 ### Comparison
 

@@ -148,6 +148,16 @@ footer, header, hgroup, main, menu, nav, section {
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
 .hero{margin:auto 0;display:flex;flex-direction:column;gap:2cqw}.qa{font-size:16cqw;font-weight:800;color:var(--ink);line-height:.9;letter-spacing:-.02em}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+/* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
+.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
+.quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
+/* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
+.timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}
+.tlrow{position:relative}
+.tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
+.tldate{margin:0;font-size:2.9cqw;font-weight:800;color:var(--red);font-family:var(--mono)}
+.tlbody p{margin:.4cqw 0 0;font-size:2.5cqw;color:var(--body);line-height:1.3}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 </style>
@@ -218,6 +228,13 @@ footer, header, hgroup, main, menu, nav, section {
 <div class="steprow"><span class="stepn">4</span><p>Registrá qué se compartió, por si hay que auditarlo después.</p></div>
 </div>
 </div></div></div>
+</section><section class="slide" data-kind="timeline"><div class="stage"><div class="shead"><span class="pill">Enumeration templates</span><h2 class="stitle">Timeline · hitos</h2></div><div class="cbody"><div class="cfit"><div class="timeline">
+<div class="tlrow"><span class="tldot"></span><div class="tlbody"><h4 class="tldate">Marzo 2023</h4><p>Samsung habilita ChatGPT para sus ingenieros.</p></div></div>
+<div class="tlrow"><span class="tldot"></span><div class="tlbody"><h4 class="tldate">20 días después</h4><p>Tres fugas de datos internos, sin un solo hacker.</p></div></div>
+<div class="tlrow"><span class="tldot"></span><div class="tlbody"><h4 class="tldate">Mayo 2023</h4><p>Samsung prohíbe las herramientas de IA generativa.</p></div></div>
+<div class="tlrow"><span class="tldot"></span><div class="tlbody"><h4 class="tldate">2024</h4><p>La industria adopta políticas de gobernanza de datos.</p></div></div>
+</div>
+</div></div></div>
 </section><section class="slide" data-kind="single-point"><div class="stage"><div class="shead"><span class="pill">Enumeration templates</span><h2 class="stitle">Single-point · lead + one beat</h2></div><div class="cbody"><div class="cfit"><p class="lead">No todo dato puede ir a un modelo externo. Antes de pegar, mirá qué estás pegando.</p><div class="callout pink"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M261-120q-24.75 0-42.37-17.63Q201-155.25 201-180v-570h-41v-60h188v-30h264v30h188v60h-41v570q0 24-18 42t-42 18H261Zm438-630H261v570h438v-570ZM367-266h60v-399h-60v399Zm166 0h60v-399h-60v399ZM261-750v570-570Z"/></svg></span><p><b>Regla única</b> Si no lo pondrías en un email a un tercero, no lo pegues en el prompt.</p></div>
 </div></div></div>
 </section><section class="slide" data-kind="divider"><div class="stage cover"><div class="secdiv"><span class="secnum">02</span><p class="sectitle">Statement, stat &amp; comparison</p></div></div></section><section class="slide" data-kind="statement"><div class="stage cover"><div class="stmt"><p class="steyebrow">Statement, stat &amp; comparison</p><p class="big">Un mensaje corto y contundente</p><p class="sub">La IA no piensa como un humano — predice el siguiente token.</p></div></div></section><section class="slide" data-kind="statement"><div class="stage cover"><div class="stmt"><p class="steyebrow">Statement, stat &amp; comparison</p><p class="big">Título muy largo que debe envolver con elegancia y seguir leyéndose como una sola afirmación fuerte</p><p class="sub">Predice, no razona; no recuerda, no verifica.</p></div></div></section><section class="slide" data-kind="stat"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Stat · 3 métricas</h2></div><div class="cbody"><div class="cfit"><div class="stats" style="grid-template-columns:repeat(3,1fr)">
@@ -230,7 +247,7 @@ footer, header, hgroup, main, menu, nav, section {
 <div class="chead"><span>Factor</span><span>Modelo único</span><span>Cascading</span></div>
 <div class="crow"><span>Precisión</span><span>Estable, predecible</span><span>Depende del routing</span></div><div class="crow"><span>Costo</span><span>Mayor por llamada</span><span>Menor en promedio</span></div><div class="crow"><span>Latencia</span><span>Menor (una llamada)</span><span>Mayor (fallback)</span></div></div>
 </div></div></div>
-</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare">
+</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement, stat &amp; comparison</p><p class="quotemark">&ldquo;</p><p class="quotetext">Nadie quería hacer algo malo. Nadie fue negligente. Todos hicimos algo parecido.</p><p class="quoteattr">&mdash; Un ingeniero de Samsung, 2023</p></div></div></section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare">
 <div class="chead"><span>Mito</span><span>Realidad</span></div>
 <div class="crow"><span>“Todo lo que escribo entrena al modelo”</span><span>Depende del plan y la configuración</span></div><div class="crow"><span>“Grande = seguro y compliant”</span><span>El tamaño no implica gobernanza</span></div></div>
 </div></div></div>

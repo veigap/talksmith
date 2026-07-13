@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.34.0] — 2026-07-13
+
+### Added
+
+- **Two new slide types (Gamma-inspired): `quote` and `timeline`.** `quote` is a full-bleed
+  pull-quote with attribution (distinct from `statement`, which is a claim in the presenter's
+  voice); `timeline` is a vertical dated-milestone rail (distinct from `process` steps). Both are
+  author-directed via `<!-- template: X -->`, documented in `slide-templates.md`, and added to
+  the reference deck.
+
 ## [0.33.0] — 2026-07-13
 
 ### Changed
