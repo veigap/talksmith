@@ -309,11 +309,12 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 1. **Ask the style — mandatory, every entry, no default, no exceptions** (only intervention; render runs end-to-end after):
 
-   > Render this Talk as which style?
-   > 1. **strict — Style Guided** — spec-driven template, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished.
-   > 2. **free-form — Free with minimal guidance** — the renderer designs its own layout in a single pass; you review the deck afterward. Not bound to a template.
+   > Render this Talk as which format?
+   > 1. **strict — Style Guided** — spec-driven PowerPoint, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished. *(Cowork)*
+   > 2. **free-form — Free with minimal guidance** — the renderer designs its own PowerPoint layout in a single pass; you review the deck afterward. Not bound to a template. *(Cowork)*
+   > 3. **html — Static site** — a shareable, presentable **HTML deck** in the strict style (full styling — cards, icons, callouts — a cover slide, and full-screen present mode). No `.pptx`. Deterministic and **Cowork-independent**.
 
-   **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess.
+   **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess. (The `preview` format is a separate, auto-fired Step-5.5 look at `draft.md` — not offered here; it is the same HTML renderer reading the pre-Polish draft.)
 
    **The style is a render-time parameter, not a content attribute** — it lives only in the Step-8 invocation. Never write it to `draft.md` or `final.md` frontmatter; those files are style-agnostic so the same content can be rendered in either style at any time. A second Step-8 run on the same Talk can pick a different style with no migration.
 

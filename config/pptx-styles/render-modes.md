@@ -35,16 +35,18 @@ exists to end.** Rows are the render phases; columns are the formats; each cell 
 **action** defined in *Action definitions* below (which say *how* the action is
 performed). To change a format's behavior, edit its cell here — one place.
 
-| Phase / effort | `strict` | `free-form` | `preview` |
-|---|---|---|---|
-| **GENERATE** (render) | `native-render` | `native-render` | `wireframe-render` |
-| **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` |
-| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` |
-| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` |
-| **Cycle cap** | 3 | — (single pass, no critique) | 2 |
-| **Scope** | whole deck | whole deck | per-slide, changed-only |
-| **Deliverable** | `output/final.strict.pptx` (+ canonical copy) | `output/final.free-form.pptx` (+ canonical copy) | numbered `output/draft-preview/slide-NN.png` |
-| **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (Pillow only) |
+| Phase / effort | `strict` | `free-form` | `preview` | `html` |
+|---|---|---|---|---|
+| **GENERATE** (render) | `native-render` | `native-render` | `html-render` | `html-render` |
+| **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` | `audit-none` |
+| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` | `walk-design` |
+| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` | `surface` |
+| **Cycle cap** | 3 | — (single pass) | 2 | 2 |
+| **Scope** | whole deck | whole deck | whole deck (from `draft.md`) | whole deck (from `final.md`) |
+| **Deliverable** | `output/final.strict.pptx` (+ canonical) | `output/final.free-form.pptx` (+ canonical) | `output/draft-preview/preview.html` | `output/html/index.html` (+ `.icons/`) |
+| **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (HTML by code) | no (HTML by code) |
+
+**`preview` and `html` are the same renderer** ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py)) — a code-generated **styled HTML** deck (real cards, per-concept Material icons, callout boxes, code surfaces; icons via `icon_fetch.py`, inlined). `preview` renders `draft.md` for a fast throwaway look; `html` renders `final.md` as a shareable, presentable **deliverable** (cover slide, arrow-key / full-screen present mode). Both are deterministic — the styled layer *always* renders, unlike the native `.pptx` render which follows prose and can drop it. (The earlier Pillow wireframe substrate is superseded; `build_preview.py` remains only as the shared `_parse_unit`/`_classify` helpers `build_html` imports.)
 
 ## Action definitions — *how* each action is performed
 
@@ -60,7 +62,7 @@ output — `output/final.<style>.template-log.md` for the native styles (side by
 template chosen per slide and why (schema: [`slide-templates.md`](slide-templates.md) →
 *Template decision log*).
 - `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Classifies each slide against `slide-templates.md` and emits the matched template via the style's §-recipes (strict additionally runs the `audit_layout_fit.py` gate; free-form logs its pick to `.layout-log.md`). Consumes the `convert.py` intermediate (never re-parses `final.md`). Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/SKILL.md) → *Render flow*.
-- `wireframe-render` — [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_preview.py) is **template-aware**: it classifies each slide (`_classify`, same catalog signals) and draws that template's shape — concept-breakdown/process/figures as cards (never bullets), content+image split, code block, statement, image-grid — falling back to a plain title+body flow. Draws each changed slide directly to a numbered PNG (Pillow); no `.pptx`, no `.pdf`, no native skill. ASCII → PNG by code (`render_ascii.py`); only changed slides re-render (content-addressed cache; bump `preview_plan.RENDER_VERSION` on recipe changes). Cowork-independent.
+- `html-render` — [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-pptx/build_html.py) renders a **styled static HTML** deck (shared tokens/components in `html_style.py`): classifies each slide (`_classify`), emits the matched template's real styling — cards, per-concept Material Symbols icons (fetched by name via `icon_fetch.py`, recoloured, inlined), callout boxes, code surfaces, card strips — and prepends a §4 cover slide from the frontmatter. A fixed header (pill + title) sits over a content region that scales to fit 16:9; the page has a full-screen present mode (arrow keys). SVG images embed inline, PNG/JPG as data-URIs. An optional `<!-- template: X -->` comment forces a template. Deterministic (the styled layer always renders); no `.pptx`, no native skill, Cowork-independent. `preview` renders `draft.md` → `output/draft-preview/preview.html`; `html` renders `final.md` → `output/html/index.html`.
 
 **CONTROL** (all deterministic Python audits; a non-zero exit ends the phase)
 - `audit-full` — OOXML invariants + `audit_block_coverage.py` + `audit_aspect_ratios.py` + `audit_cover_fidelity.py` + **`audit_notes_coverage.py`** + **`audit_palette_fonts.py`** + **`audit_layout_fit.py`** + **`audit_icon_coverage.py`**. The last three enforce the strict template (layout-conformance) and are strict-only; the rest are the shared floor. **`audit_icon_coverage.py`** fails the build when a concept-breakdown or callout slide rendered **zero** icons — closing the gap where a render silently skips the §17 icon-fetch step and ships naked cards (no other audit looked at icons, so it passed clean).

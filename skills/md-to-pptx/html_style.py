@@ -149,10 +149,12 @@ def render_slide(kind, u, section, cache) -> str:
 
     # ── content templates: fixed header via _mk, body in the fitting region ──
     if kind == "concept-breakdown":
+        n = len(items)
+        cols = 1 if n == 1 else (2 if n in (2, 4) else 3)   # 2→2col · 3→row · 4→2×2 · 5–6→3col
         cs = "".join(
             f'<div class="ccard">{icon(icon_for(it["label"]+" "+it.get("body","")), cache)}'
             f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return _mk(head, f'<div class="cards c{min(len(items),3)}">{cs}</div>')
+        return _mk(head, f'<div class="cards c{cols}">{cs}</div>')
 
     if kind == "process":
         cs = "".join(
@@ -220,9 +222,10 @@ def render_slide(kind, u, section, cache) -> str:
         return _mk(_title_block(section, title or "Agenda"), f'<div class="agenda">{rows}</div>')
 
     if kind == "stat":
+        cols = min(len(items), 4) or 1
         cells = "".join(f'<div class="stat"><span class="statn">{_esc(it["label"])}</span>'
                         f'<span class="statl">{_esc(it.get("body",""))}</span></div>' for it in items)
-        return _mk(head, f'<div class="stats">{cells}</div>')
+        return _mk(head, f'<div class="stats" style="grid-template-columns:repeat({cols},1fr)">{cells}</div>')
 
     if kind == "content-text":
         big = _esc(body[0]) if body else _esc(title)
@@ -408,6 +411,8 @@ PRESENT_JS = """<div class="toolbar"><button class="btn" id="present-btn" aria-l
 })();
 </script>"""
 
-HTML_DOC = ("<style>" + CSS + "</style>\n"
+HTML_DOC = ('<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            "<style>" + CSS + "</style>\n"
             '<div class="wrap"><div class="deck">__BODY__</div></div>'
             + PRESENT_JS)
