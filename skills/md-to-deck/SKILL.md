@@ -256,7 +256,7 @@ An optional **fast, throwaway** **styled HTML deck** of a **pre-Polish `draft.md
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft
 ```
 
-It orchestrates the whole thing deterministically and reuses the sibling substrate: `convert.py --draft` (per-slide units, `**Presenter feedback:**`/`**Narrative arc:**` scaffolding stripped) → per-unit classification against the shared catalog (`_classify`, with `<!-- template: X -->` overrides) → **the matched template's real styling** via the shared `html_style` components (cards, per-concept Material Symbols icons, callout boxes, code surfaces), a fit-to-16:9 pass, and present mode → a **single self-contained styled HTML deck**, `output/draft-preview/preview.html`. **Do not write an ad-hoc render script** — that is the exact anti-pattern this file exists to prevent (mirrors the *Why Cowork-only* rule for the real deck).
+It orchestrates the whole thing deterministically and reuses the sibling substrate: `convert.py --draft` (per-slide units, `**Presenter feedback:**`/`**Narrative arc:**` scaffolding stripped) → per-unit classification against the shared catalog (`slide_model._classify`, with `<!-- template: X -->` overrides) → **the matched template's real styling** via the shared `html_style` components (cards, per-concept Material Symbols icons, callout boxes, code surfaces) inside a **[Reveal.js](https://revealjs.com/)** shell (vendored + inlined; Reveal owns navigation, scaling, transitions, speaker notes, PDF export — the only custom code is a per-slide content-fit) → a **single self-contained styled HTML deck**, `output/draft-preview/preview.html`. **Do not write an ad-hoc render script** — that is the exact anti-pattern this file exists to prevent (mirrors the *Why Cowork-only* rule for the real deck).
 
 Key properties:
 
@@ -343,7 +343,7 @@ Item ↔ phase mapping (preview):
 | Rendering styled deck | `build_html.py --draft` finished rendering `draft.md` to `preview.html`. |
 | Reviewing slides (cycle N) | FEEDBACK finishes walking CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION on the rendered `preview.html`. |
 | Applying fixes | REGENERATE re-renders after a `draft.md` edit / surfaces findings, OR `[—] no fixes needed`. |
-| Ready to view | `preview.html` on disk under `output/draft-preview/`; the presenter opens it (present mode: → / ← to advance, `F` full screen). |
+| Ready to view | `preview.html` on disk under `output/draft-preview/`; the presenter opens it (Reveal.js deck: → / ← or click to advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` in the URL to export PDF). |
 
 ### Progress reporting — internal log-only
 

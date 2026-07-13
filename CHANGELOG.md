@@ -12,6 +12,38 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.25.0] — 2026-07-13
+
+### Changed
+
+- **The HTML deck (`html` + `preview`) is now built on [Reveal.js](https://revealjs.com/)**
+  (vendored + inlined under `skills/md-to-deck/vendor/reveal/`, so the deck stays offline and
+  self-contained). Our catalog templates render *inside* Reveal `<section>`s as a **custom theme
+  aligned with the strict tokens** (Helvetica/Courier, `#DA1B2E`, pill/callout palette). Reveal
+  now owns navigation, deck-to-window scaling, the slide overview, transitions, **speaker notes**,
+  and **PDF export** — replacing the hand-rolled present/navigation/fit chrome. The only custom
+  presentation code left is a per-slide content-fit (scale-to-fill-width + fit-height), which
+  Reveal and CSS genuinely can't do.
+- **New Reveal-native features:** **PDF export** (open the deck with `?print-pdf`, then Print →
+  Save as PDF), slide **overview** (`Esc`), subtle **transitions**, and full-screen present mode
+  (`F`) — all standard Reveal affordances.
+- **Presenter comments are preserved, not dropped.** `### Speaker notes` blocks are captured into
+  `<aside class="notes">` and shown in Reveal's **speaker view** (`s`) — the native-`.pptx`
+  notes-pane behaviour, in HTML. (Previously these leaked onto the slide as a callout, then were
+  dropped; now they're kept off the slide face but available to the presenter.)
+- **Renderer cleanup.** The parse + template-classification logic moved to a clearly-named
+  `slide_model.py`; the retired Pillow wireframe renderer (`build_preview.py`, `preview_plan.py`,
+  `render_ascii.py`) is deleted. `html_style.py` now holds only template markup + the Reveal
+  theme CSS.
+
+### Fixed
+
+- Rendered the real `seguridad-governance-ai` deck (74 slides) as an end-to-end test, fixing:
+  speaker-notes / `### Sources` blocks leaking onto slides (now captured/dropped correctly),
+  literal `>` blockquote and `~~strikethrough~~` markers, an empty-bullet line producing a stray
+  " -", and a long cover title overrunning the class/author block (now a pure-CSS reserved title
+  band). Parsing lives in `slide_model.py`.
+
 ## [0.24.1] — 2026-07-13
 
 ### Fixed

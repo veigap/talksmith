@@ -258,7 +258,7 @@ When the presenter signals ready at the end of Step 5, **before** advancing to S
 
 > Want to take a quick look at a rough draft of the slides before I polish and finalize? *(optional — say skip to go straight to finishing)*
 
-- **If they look:** surface the rendered preview — the styled deck `talks/<Talk>/output/draft-preview/preview.html` (open it; present mode: → / ← to advance, `F` full screen). Frame it as rough: raw diagrams show as plain code surfaces, content is pre-Polish, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview.
+- **If they look:** surface the rendered preview — the styled **Reveal.js** deck `talks/<Talk>/output/draft-preview/preview.html` (open it: → / ← to advance, `Esc` overview, `F` full screen, `s` speaker notes). Frame it as rough: raw diagrams show as plain code surfaces, content is pre-Polish, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview.
 - **If they skip, or the preview isn't ready / failed to render:** proceed to Step 6 without ceremony. A failed or unavailable preview is never fatal — it's a convenience.
 
 ### Dispatch
@@ -312,7 +312,7 @@ Then ask two sequential decisions (independent — promotion preserves for futur
    > Render this Talk as which format?
    > 1. **strict — Style Guided** — spec-driven PowerPoint, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished. *(Cowork)*
    > 2. **free-form — Free with minimal guidance** — the renderer designs its own PowerPoint layout in a single pass; you review the deck afterward. Not bound to a template. *(Cowork)*
-   > 3. **html — Static site** — a shareable, presentable **HTML deck** in the strict style (full styling — cards, icons, callouts — a cover slide, and full-screen present mode). No `.pptx`. Deterministic and **Cowork-independent**.
+   > 3. **html — Static site** — a shareable, presentable **Reveal.js deck** in the strict style (full styling — cards, icons, callouts — a cover slide, full-screen present mode, speaker notes with `s`, and PDF export via `?print-pdf`). No `.pptx`. Deterministic and **Cowork-independent**.
 
    **The presenter must pick.** Do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess. (The `preview` format is a separate, auto-fired Step-5.5 look at `draft.md` — not offered here; it is the same HTML renderer reading the pre-Polish draft.)
 

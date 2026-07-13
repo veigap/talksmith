@@ -355,7 +355,7 @@ can be improved from real renders, and `pptx-learn` has a rationale to mine. It 
 **descriptive only** — writing it never changes the render.
 
 - **strict / free-form:** `talks/<Talk>/output/final.<style>.template-log.md`.
-- **preview:** `talks/<Talk>/output/draft-preview/template-log.md` (written by `build_preview.py`).
+- **preview:** `talks/<Talk>/output/draft-preview/template-log.md` (written by `build_html.py --draft`).
 
 It supersedes free-form's earlier `.layout-log.md` (same idea, standardized shape). Header
 carries a **tally** (count per template) and a **fallback count**; each slide is one entry:

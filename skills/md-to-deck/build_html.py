@@ -13,7 +13,7 @@ strips always render, because the same `html_style` components emit them every t
 no Cowork and no native skill.
 
 Pipeline: `convert.py` (→ per-slide units, `--draft` for the preview) → classify each slide
-against the catalog (`build_preview._classify`) → render its template via `html_style`
+against the catalog (`slide_model._classify`) → render its template via `html_style`
 (content-matched Material icons fetched by `icon_fetch.py`, inlined) → one self-contained
 `.html` file. Only images are external (shown as placeholders until real assets are wired).
 
@@ -34,7 +34,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
 import convert as _convert            # noqa: E402
-import build_preview as _bp           # noqa: E402  (_parse_unit, _classify)
+import slide_model as _sm             # noqa: E402  (_parse_unit, _classify, template log)
 import html_style as _hs              # noqa: E402
 
 _FM_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
@@ -88,24 +88,32 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
     converted = _convert.convert(md_text, draft=draft)
     units = _convert._split_into_slide_units(converted)
 
-    slides_html = []
+    sections = []
+    log_entries = []
     section = ""
     n = len(units)
     for i, unit in enumerate(units, 1):
-        u = _bp._parse_unit(unit, talk_root, out_dir)
-        kind = hints.get(_norm(u["title"])) or _bp._classify(u)  # author hint overrides
+        u = _sm._parse_unit(unit, talk_root, out_dir)
+        kind = hints.get(_norm(u["title"])) or _sm._classify(u)  # author hint overrides
         if kind in ("fallback", "content-text") and sum(1 for b in u["body"] if b.count("|") >= 2) >= 2:
             kind = "comparison"                                   # a pipe-table → comparison
         if kind == "divider":
             section = u["title"] or section
         inner = _hs.render_slide(kind, u, section, cache)
-        slides_html.append(
-            f'<figure><div class="slide"><span class="snum">{i}/{n} · {kind}</span>{inner}</div></figure>')
+        notes = u.get("notes", "")
+        aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
+        sections.append(f'<section class="slide" data-kind="{kind}">{inner}{aside}</section>')
+        log_entries.append((i, u, kind))
 
     fm = _frontmatter(md_text)
-    cover = _hs.cover_slide(fm) if fm.get("presentation") else ""
-    body = cover + "".join(slides_html)
-    return _hs.page(body), n
+    if fm.get("presentation"):                                    # contractually-fixed cover first
+        sections.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm)}</section>')
+
+    # per-slide template-decision log beside the deck (slide-templates.md → Template decision log)
+    style = "preview" if draft else "html"
+    _sm._write_template_log(log_entries, talk_root, style, out_dir / "template-log.md")
+
+    return _hs.page("".join(sections), title=title, subtitle=subtitle), n
 
 
 def main(argv=None) -> int:

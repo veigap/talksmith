@@ -1,0 +1,230 @@
+"""Slide parsing + template classification for the Talksmith deck renderer.
+
+The *input* half of the renderer: it reads one slide's markdown and decides **what it is**.
+`_parse_unit` extracts the catalog signals (title, body, labeled items, images, code);
+`_classify` maps those to a template id from `config/pptx-styles/slide-templates.md`. The
+markdown-cleaning rules live here too (off-slide `### Notes`/`### Sources` skipping, blockquote
+/ strikethrough / empty-bullet handling).
+
+The *output* half — turning a classified unit into styled HTML — lives in `html_style.py`.
+`build_html.py` wires them together. (This module was extracted from the retired Pillow
+`build_preview.py`; only the parse/classify logic survived.)
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+_IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+_HEAD_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+_INLINE_MD_RE = re.compile(r"\*\*|__|~~|`|(?<!\w)[*_](?!\s)")   # bold/italic/code/strikethrough markers
+_BLOCKQUOTE_RE = re.compile(r"^\s*>+\s*")                        # leading `> ` blockquote marker(s)
+
+# Labeled-item signals (detected BEFORE inline-markdown is stripped) — a labeled
+# enumeration renders as cards, never bullets (slide-templates.md universal invariant).
+_EMOJI = r"(?:[^\w\s]️?\s*)?"
+_BOLD_ITEM_RE = re.compile(rf"^\s*[-*+]\s+{_EMOJI}\*\*(.+?)\*\*[:：]?\s*(.*)$")   # - **Label** body
+_H34_RE = re.compile(r"^(#{3,4})\s+(.+?)\s*$")                                     # ### / #### Label
+# H3/H4 sections that are off-slide: presenter notes are CAPTURED (emitted as Reveal speaker
+# notes — `<aside class="notes">`, shown in speaker view, never on the slide face); pure
+# provenance is dropped. This mirrors the native .pptx render (notes → notes pane).
+_NOTES_SECTIONS = {"notes", "speaker notes", "presenter notes", "presenter comments", "comments"}
+_DROP_SECTIONS = {"sources", "source", "provenance"}
+_ORDERED_RE = re.compile(
+    r"^\s*(?:\d+\s*[.)]|paso\s+\w+|step\s+\w+|fase\s+\w+|etapa\s+\w+|caso\s+\w+)\b", re.I)
+_PLAIN_BULLET_RE = re.compile(r"^\s*[-*+•]\s+")
+_EMPTY_BULLET_RE = re.compile(r"^\s*[-*+•]\s*$")                 # a bullet marker with no content ("- ")
+_FENCE_RE = re.compile(r"^\s*```")
+
+
+def _clean_inline(s: str) -> str:
+    """Strip inline markdown emphasis (**bold**, *italic*, `code`, ~~strike~~) and a leading
+    blockquote marker, leaving readable plain text."""
+    return _INLINE_MD_RE.sub("", _BLOCKQUOTE_RE.sub("", s)).strip()
+
+
+def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
+    """Extract the catalog classification signals from a slide unit.
+
+    Returns a dict: title, level (1=divider/H1), body (plain lines, no items),
+    items (list of {label, body}), ordered (bool), images (resolved), has_code,
+    code_lines. Labeled items are detected on the *raw* line (before inline markdown
+    is stripped) so a labeled enumeration is never mistaken for prose/bullets.
+    """
+    title, level, body, images = "", 0, [], []
+    items: list[dict] = []
+    code_lines: list[str] = []
+    notes: list[str] = []              # captured presenter notes → Reveal speaker view
+    in_code = False
+    mode: str | None = None            # None | 'notes' (capture) | 'drop' (discard)
+    cur: dict | None = None            # the item currently accumulating body lines
+
+    def _flush():
+        nonlocal cur
+        if cur is not None:
+            cur["body"] = cur["body"].strip()
+            items.append(cur)
+            cur = None
+
+    for raw in md.splitlines():
+        if _FENCE_RE.match(raw):
+            if mode is None:
+                in_code = not in_code
+            elif mode == "notes":
+                notes.append(raw)
+            continue
+        if in_code:
+            code_lines.append(raw)
+            continue
+        head = _HEAD_RE.match(raw.strip())
+        if head and not title:
+            title = _clean_inline(head.group(2))
+            level = len(head.group(1))
+            continue
+        if mode is None:
+            for im in _IMG_RE.finditer(raw):
+                images.append((im.group(1), im.group(2)))
+        line = _IMG_RE.sub("", raw).rstrip()
+        if not line.strip():
+            continue
+        if _EMPTY_BULLET_RE.match(line):
+            continue                                  # empty bullet ("- ") — not content
+        bold = _BOLD_ITEM_RE.match(line)
+        sub = _H34_RE.match(line)
+        if bold:
+            _flush(); mode = None
+            cur = {"label": _clean_inline(bold.group(1)), "body": _clean_inline(bold.group(2))}
+        elif sub:
+            _flush()
+            low = _clean_inline(sub.group(2)).strip().lower()
+            if low in _NOTES_SECTIONS:
+                mode = "notes"; cur = None            # capture into speaker notes
+            elif low in _DROP_SECTIONS:
+                mode = "drop"; cur = None             # provenance — discard
+            else:
+                mode = None
+                cur = {"label": _clean_inline(sub.group(2)), "body": ""}
+        elif mode == "notes":
+            notes.append(_clean_inline(_PLAIN_BULLET_RE.sub("", line)))
+        elif mode == "drop":
+            continue
+        elif cur is not None and not head:
+            cur["body"] = (cur["body"] + " " + _clean_inline(_PLAIN_BULLET_RE.sub("", line))).strip()
+        elif not head:
+            body.append(_clean_inline(_PLAIN_BULLET_RE.sub("", line)))
+    _flush()
+
+    ordered = any(_ORDERED_RE.match(it["label"]) for it in items) or \
+        any(_ORDERED_RE.match(b) for b in body)
+
+    resolved = []
+    for alt, ref in images:
+        if ref.startswith(("http://", "https://")):
+            resolved.append((alt, None)); continue
+        cand = [asset_dir / ref, talk_root / ref, Path(ref)]
+        resolved.append((alt, next((c for c in cand if c.is_file()), None)))
+
+    return {"title": title, "level": level, "body": body, "items": items,
+            "ordered": ordered, "images": resolved,
+            "has_code": bool(code_lines), "code_lines": code_lines,
+            "notes": " ".join(n for n in notes if n).strip()}
+
+
+def _classify(u: dict) -> str:
+    """Map a parsed unit to a catalog template id (slide-templates.md)."""
+    if u["level"] == 1:
+        return "divider"
+    if u["has_code"]:
+        return "code-example"
+    ni, nimg = len(u["items"]), len(u["images"])
+    words = sum(len(b.split()) for b in u["body"])
+    if nimg >= 4 and ni < 2:
+        return "image-grid"
+    if ni >= 2:
+        if u["ordered"]:
+            return "process"
+        if nimg >= 1:                        # any source image → figures, never concept-breakdown
+            return "figures"
+        return "concept-breakdown"           # labeled set, no source image (renderer adds icons)
+    if ni == 1:
+        return "single-point"
+    if nimg >= 4:
+        return "image-grid"
+    if nimg >= 1:
+        return "content-image"
+    if len(u["body"]) <= 2 and words <= 18 and u["title"]:
+        return "statement"
+    return "fallback"
+
+
+def _signals(u: dict) -> dict:
+    """The classification signals for one unit (mirrors slide-templates.md glossary)."""
+    return {
+        "labeled_items": len(u["items"]),
+        "images": len(u["images"]),
+        "has_code": u["has_code"],
+        "ordered": u["ordered"],
+        "body_words": sum(len(b.split()) for b in u["body"]),
+        "level": u["level"],
+    }
+
+
+# One-line rationale + the near-miss it beat, keyed by template (slide-templates.md).
+_WHY = {
+    "divider": ("H1 / section-break heading.", ""),
+    "code-example": ("fenced code block present — code dominates.", "content+image"),
+    "image-grid": ("≥4 images; the visual variety is the message.", "figures / content+image"),
+    "figures": ("≥2 labeled items, each carrying its own image.", "concept-breakdown"),
+    "process": ("≥2 labeled items with ordinal labels (steps/flow).", "concept-breakdown"),
+    "concept-breakdown": ("≥2 unordered labeled items, no per-item image → card grid.",
+                          "card-row / bullets"),
+    "single-point": ("exactly one labeled point → card/callout, never a bullet.",
+                     "concept-breakdown / content-text"),
+    "content-image": ("1–3 supporting images with leading prose.", "image-grid"),
+    "statement": ("one short dominant claim, no enumeration.", "content-text"),
+    "fallback": ("no template signal fired.", ""),
+}
+
+
+def _log_entry(index: int, u: dict, kind: str) -> str:
+    s = _signals(u)
+    why, ruled = _WHY.get(kind, (kind, ""))
+    flags = []
+    if kind == "fallback":
+        flags.append("fallback — catalog gap, review")
+    if kind == "content-image" and s["body_words"] > 60 and s["images"] == 1:
+        flags.append("prose-heavy — could be content-text/restructure")
+    if s["labeled_items"] == 1 and kind != "single-point":
+        flags.append("single-labeled-item — verify single-point vs concept")
+    sig = " ".join(f"{k}={v}" for k, v in s.items())
+    lines = [
+        f"## Slide {index:02d} — {u['title'] or '(untitled)'}",
+        f"- template: `{kind}`",
+        f"- why: {why}",
+        (f"- ruled_out: {ruled}" if ruled else "- ruled_out: —"),
+        f"- signals: {sig}",
+        f"- flags: {', '.join(flags) if flags else '—'}",
+    ]
+    return "\n".join(lines)
+
+
+def _write_template_log(entries: list, talk: Path, style: str, out_path: Path) -> None:
+    """Persist the per-slide template-decision log (slide-templates.md → Template decision log)."""
+    from collections import Counter
+    tally = Counter(k for _, _, k in entries)
+    fallbacks = tally.get("fallback", 0)
+    head = [
+        f"# Template decision log — {talk.name} · {style} · {len(entries)} slides",
+        "",
+        "Per-slide record of which catalog template was chosen and why, for review and to "
+        "improve `slide-templates.md`. See that file → *Template decision log*.",
+        "",
+        "**Tally:** " + ", ".join(f"{k} ×{n}" for k, n in tally.most_common()),
+        f"**Fallbacks:** {fallbacks}",
+        "",
+        "---",
+        "",
+    ]
+    body = "\n\n".join(_log_entry(i, u, k) for i, u, k in entries)
+    out_path.write_text("\n".join(head) + body + "\n", encoding="utf-8")

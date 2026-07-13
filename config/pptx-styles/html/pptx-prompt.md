@@ -18,13 +18,20 @@ For the native-`pptx` styles see [`../strict/pptx-prompt.md`](../strict/pptx-pro
 ## 1. Substrate — the committed code renderer
 
 `build_html.py --talk talks/<Talk>` → a self-contained `output/html/index.html`. Pipeline:
-`convert.py` → per-slide units → classify each against the shared catalog
-([`../slide-templates.md`](../slide-templates.md), `_classify`) → render the matched
-template's real styling in the strict tokens (palette, Helvetica/Courier, §7/§8/§9 geometry):
-cards, **per-concept Material Symbols icons** (fetched by name via
+`convert.py` → per-slide units (`slide_model._parse_unit`) → classify each against the shared
+catalog ([`../slide-templates.md`](../slide-templates.md), `slide_model._classify`) → render the
+matched template's real styling in the strict tokens (palette, Helvetica/Courier, §7/§8/§9
+geometry): cards, **per-concept Material Symbols icons** (fetched by name via
 [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py), recoloured to
 `#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. A §4 **cover slide** is
 prepended from the frontmatter. SVG images embed inline; PNG/JPG as data-URIs.
+
+The presentation shell is **[Reveal.js](https://revealjs.com/)** (vendored under
+`skills/md-to-deck/vendor/reveal/`, inlined so the deck stays offline + self-contained). Each
+slide is a Reveal `<section>`; our catalog templates render *inside* them as a custom Reveal
+theme aligned with the strict tokens. Reveal owns navigation, deck-to-window scaling,
+transitions, overview, and PDF export; the only custom code is a per-slide content-fit
+(scale-to-fill-width + fit-height — the one thing Reveal/CSS can't do) and the template markup.
 
 ## 2. Template-aware + the same shared bar
 
@@ -35,12 +42,22 @@ them. An optional `<!-- template: X -->` comment under a slide heading **forces*
 over auto-classification. Writes the shared template-decision log to
 `output/html/template-log.md`.
 
-## 3. Presentation & fit
+## 3. Presentation, notes & export (Reveal.js)
 
-The page is a **presentable deck**: a fixed header (section pill + title, anchored — it does
-not move with content) over a content region that **scales to fit 16:9** (nothing clipped),
-and a **present mode** — ▶ full screen, → / ← or click to advance, `F` toggles browser full
-screen, `Esc` exits. Slides are white by design.
+A **presentable Reveal.js deck**: a fixed header (section pill + title, anchored) over a
+content region that fits 16:9 (nothing clipped). Reveal provides the presentation affordances
+out of the box:
+
+- **Navigate** — → / ← / Space / click to advance, `Esc` for the slide overview, `F` full
+  screen. The whole deck scales to any window.
+- **Speaker notes** — presenter comments (source `### Speaker notes`) are captured into
+  `<aside class="notes">` and shown in Reveal's **speaker view** (press `s`), never on the
+  slide face — the native-`.pptx` notes-pane behaviour, in HTML.
+- **PDF export** — open the deck with `?print-pdf` appended to the URL, then Print → Save as
+  PDF (one slide per page). Good for handouts.
+- **Transitions** — a subtle slide transition between steps.
+
+Slides are white by design.
 
 ## 4. Render flow
 

@@ -23,9 +23,11 @@ For the native-`pptx` styles see [`../strict/pptx-prompt.md`](../strict/pptx-pro
 `build_html.py --talk talks/<Talk> --draft` → `talks/<Talk>/output/draft-preview/preview.html`,
 a self-contained styled HTML deck. It is the committed renderer so the preview is reproducible
 and lives in the skill — never hand-rolled per run. Pipeline: `convert.py --draft` → per-slide
-units → classify each (`_classify`) → render the matched template's real styling via the shared
-`html_style` components (cards, per-concept Material Symbols icons via `icon_fetch.py`, callout
-boxes, code surfaces), with a fit-to-16:9 pass and present mode.
+units → classify each (`slide_model._classify`) → render the matched template's real styling via
+the shared `html_style` components (cards, per-concept Material Symbols icons via `icon_fetch.py`,
+callout boxes, code surfaces) inside a **[Reveal.js](https://revealjs.com/)** shell (vendored +
+inlined) — navigation, scaling, transitions, speaker notes (`s`), and PDF export (`?print-pdf`)
+all come from Reveal; a small per-slide content-fit is the only custom code.
 
 ## 2. Template-aware + the shared bar
 
