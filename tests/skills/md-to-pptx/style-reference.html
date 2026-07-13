@@ -255,9 +255,19 @@ footer{margin-top:26px;color:var(--fm);font-size:12.5px}footer code{font-family:
 (function(){
   var figs=[].slice.call(document.querySelectorAll('.deck>figure, .grid>figure'));
   var i=0, root=document.documentElement;
+  function fit(){                                   // scale any slide whose content overflows 16:9
+    figs.forEach(function(f){
+      var st=f.querySelector('.stage'); if(!st) return;
+      st.style.transform='none';
+      if(st.clientHeight<20) return;                // hidden (present mode: non-current slide)
+      var over=st.scrollHeight-st.clientHeight;
+      if(over>1){ var s=Math.max(0.5, st.clientHeight/st.scrollHeight);
+        st.style.transformOrigin='center center'; st.style.transform='scale('+s.toFixed(3)+')'; }
+    });
+  }
   function show(n){ if(!figs.length)return; i=Math.max(0,Math.min(figs.length-1,n));
-    figs.forEach(function(f,k){ f.classList.toggle('cur',k===i); }); var c=document.getElementById('pcount'); if(c)c.textContent=(i+1)+' / '+figs.length; }
-  function present(on){ if(on){ root.setAttribute('data-present',''); show(i); } else { root.removeAttribute('data-present'); } }
+    figs.forEach(function(f,k){ f.classList.toggle('cur',k===i); }); var c=document.getElementById('pcount'); if(c)c.textContent=(i+1)+' / '+figs.length; fit(); }
+  function present(on){ if(on){ root.setAttribute('data-present',''); show(i); } else { root.removeAttribute('data-present'); } setTimeout(fit,0); }
   function fs(){ if(!document.fullscreenElement){ (root.requestFullscreen||function(){})(); } else { (document.exitFullscreen||function(){})(); } }
   document.addEventListener('keydown',function(e){
     var p=root.hasAttribute('data-present');
@@ -273,5 +283,8 @@ footer{margin-top:26px;color:var(--fm);font-size:12.5px}footer code{font-family:
   });
   var b=document.getElementById('present-btn');
   if(b)b.addEventListener('click',function(){ present(true); fs(); });
+  var t; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(fit,120); });
+  document.addEventListener('fullscreenchange',function(){ setTimeout(fit,60); });
+  window.addEventListener('load',fit); if(document.readyState!=='loading'){ setTimeout(fit,0); }
 })();
 </script>
