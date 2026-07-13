@@ -333,6 +333,15 @@ def render_slide(kind, u, section, cache) -> str:
     return _mk(head, f'<div class="leadpoints">{big}<div class="fpoints">{panels}</div></div>')
 
 
+def section_agenda(sections, active: int, heading: str = "") -> str:
+    """A section-divider slide that re-shows the agenda (numbered section list) with the active
+    section accent-highlighted — reshown at each section start (slide-templates.md agenda)."""
+    rows = "".join(
+        f'<div class="agrow {"on" if k == active else ""}"><span class="agn">{k+1}</span>'
+        f'<span>{_esc(s)}</span></div>' for k, s in enumerate(sections))
+    return _mk(_title_block("", heading or "Agenda"), f'<div class="agenda">{rows}</div>')
+
+
 def cover_slide(fm: dict, author_label: str = "Autor:", modified_label: str = "Última modificación:") -> str:
     """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML:
     title top-left, class + author/date lower-left, institution logo bottom-right."""

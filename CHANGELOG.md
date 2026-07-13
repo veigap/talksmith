@@ -12,6 +12,15 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.27.0] — 2026-07-13
+
+### Added
+
+- **The agenda is re-shown at every section start, with the active section highlighted.** The
+  HTML deck parses the canonical section list from the Agenda slide and, at each section-start
+  divider, renders the full numbered agenda with that section accent-highlighted (per
+  `slide-templates.md`). Mid-section `〔divisor〕` sub-openers stay as plain title slides.
+
 ## [0.26.0] — 2026-07-13
 
 ### Changed

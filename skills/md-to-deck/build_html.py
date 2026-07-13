@@ -70,6 +70,27 @@ def _template_hints(raw: str) -> dict:
     return hints
 
 
+_SEC_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
+
+
+def _sections(parsed: list) -> list:
+    """The canonical ordered section list, parsed from the Agenda slide's
+    '**Sections (in delivery order):**' block — used to re-show the agenda at each section start."""
+    for u in parsed:
+        if _norm(u.get("title", "")) == "agenda":
+            out = []
+            for b in u.get("body", []):
+                if re.search(r"sections?\b.*\bdelivery|narrative\s+arc", b, re.I):
+                    continue                                      # header lines, not sections
+                nm = _SEC_SPLIT_RE.split(b, 1)[0]                 # drop the '— description' tail
+                nm = re.sub(r"^\d+[.)]\s*", "", nm).strip()       # drop a leading 'N.'
+                nm = re.sub(r"\s*\([^)]*\bmin\b[^)]*\)\s*$", "", nm).strip()  # drop a trailing '(~N min)' (keep '(2023)')
+                if nm:
+                    out.append(nm)
+            return out
+    return []
+
+
 def _frontmatter(text: str) -> dict:
     m = _FM_RE.match(text)
     out: dict[str, str] = {}
@@ -89,32 +110,46 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
     converted = _convert.convert(md_text, draft=draft)
     units = _convert._split_into_slide_units(converted)
 
-    sections = []
+    parsed = [_sm._parse_unit(unit, talk_root, out_dir) for unit in units]
+    agenda = _sections(parsed)                                    # canonical section list (from the Agenda slide)
+    agenda_norm = [_norm(s) for s in agenda]
+
+    slides_html = []
     log_entries = []
-    section = ""
+    section = ""              # current section name (for the pill)
+    active = -1               # index of the active section (for the re-shown agenda)
     n = len(units)
-    for i, unit in enumerate(units, 1):
-        u = _sm._parse_unit(unit, talk_root, out_dir)
-        kind = hints.get(_norm(u["title"])) or _sm._classify(u)  # author hint overrides
+    for i, u in enumerate(parsed, 1):
+        kind = hints.get(_norm(u["title"])) or _sm._classify(u)   # author hint overrides
         if kind in ("fallback", "content-text") and sum(1 for b in u["body"] if b.count("|") >= 2) >= 2:
             kind = "comparison"                                   # a pipe-table → comparison
         if kind == "divider":
-            section = u["title"] or section
-        inner = _hs.render_slide(kind, u, section, cache)
+            nt = _norm(u["title"])
+            mi = next((j for j, sn in enumerate(agenda_norm)
+                       if sn and (sn == nt or sn in nt or nt in sn)), -1)
+            if agenda and (mi >= 0 or nt == "agenda"):            # section start → re-show the agenda
+                if mi >= 0:
+                    active = mi
+                    section = agenda[mi]
+                inner = _hs.section_agenda(agenda, active, u["title"])
+            else:                                                 # sub-opener / non-section divider → plain title
+                inner = _hs.render_slide(kind, u, "", cache)
+        else:
+            inner = _hs.render_slide(kind, u, section, cache)
         notes = u.get("notes", "")
         aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
-        sections.append(f'<section class="slide" data-kind="{kind}">{inner}{aside}</section>')
+        slides_html.append(f'<section class="slide" data-kind="{kind}">{inner}{aside}</section>')
         log_entries.append((i, u, kind))
 
     fm = _frontmatter(md_text)
     if fm.get("presentation"):                                    # contractually-fixed cover first
-        sections.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm)}</section>')
+        slides_html.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm)}</section>')
 
     # per-slide template-decision log beside the deck (slide-templates.md → Template decision log)
     style = "preview" if draft else "html"
     _sm._write_template_log(log_entries, talk_root, style, out_dir / "template-log.md")
 
-    return _hs.page("".join(sections), title=title, subtitle=subtitle), n
+    return _hs.page("".join(slides_html), title=title, subtitle=subtitle), n
 
 
 def main(argv=None) -> int:
