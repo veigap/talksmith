@@ -84,6 +84,19 @@ The canonical visual reference is [`tests/skills/md-to-deck/`](tests/skills/md-t
 > ```
 > Open the refreshed HTML (Present ▶ for full-screen), confirm no slide fell to `fallback` and every template still reads right, then commit the updated `style-reference.html` alongside your change.
 
+## Adding a new slide type
+
+The HTML pipeline is: **parse → classify → augment → render**, one Jinja template per type. To add a slide type, touch these in order (the catalog is the source of truth; everything else implements it):
+
+1. **Catalog (source of truth)** — add the type to [`config/pptx-styles/slide-templates.md`](config/pptx-styles/slide-templates.md): its **Match** criteria (what content signals select it, and what it is *not*), its **Format** (how it should look), and a line in the *Classification procedure* disambiguator so it's picked deterministically. If it needs a new signal, add it to the *Signal* table. This is the "clearly documented criteria."
+2. **Classify** — teach [`skills/md-to-deck/slide_model.py`](skills/md-to-deck/slide_model.py): `_classify` returns the new id from the parsed signals; extend `_parse_unit` only if a new signal must be extracted from the markdown.
+3. **Template (markup)** — add `skills/md-to-deck/templates/html/<type>.j2`. Content slides wrap their body in the `_macros.j2` `stage(section, title)` call; full-bleed slides (cover/divider/statement) emit their own `.stage cover`.
+4. **Context + registration** — in [`html_style.py`](skills/md-to-deck/html_style.py) `render_slide`, add an `elif kind == "<type>"` branch that computes any derived context (columns, rows, matched icon), and register `"<type>": "<type>.j2"` in `_TMPL`.
+5. **CSS** — add the component classes the template uses to the `CSS` string in `html_style.py` (cqw units; 16:9 fixed).
+6. **Fixture + regen** — add a directive-forced slide (`<!-- template: <type> -->`) to `tests/skills/md-to-deck/final.md`, regenerate `style-reference.html` (command above), eyeball it, commit both.
+7. **PPTX (only if/when PPTX is templated)** — today strict/free-form author `.pptx` from prose via Cowork, so a new type also needs its strict §-recipe in `strict/pptx-prompt.md` and, if deterministically checkable, an audit under `audits/`. (When PPTX moves onto the shared model+templates, this becomes a `templates/pptx/<type>.j2` instead.)
+8. **Version + changelog** — bump `plugin.json`, add a `CHANGELOG.md` entry.
+
 ## Refreshing the plugin so Cowork picks up changes (fast loop, no full reinstall)
 
 The marketplace **is this git repo** ([`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) → `source: "./"`); Cowork (desktop) and the CLI share one install and update via `/plugin update talksmith`. You almost never need the "full" cycle (remove marketplace → reinstall → re-init). Two facts make the loop short:

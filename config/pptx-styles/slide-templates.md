@@ -59,7 +59,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `n_images` | Count of `![alt](path)` refs in the body. |
    | `has_code` | A fenced ```` ``` ```` block is present as body content. |
    | `has_table` | A Markdown pipe-table (`\| … \| … \|` with a `---` separator row) is present. |
-   | `labeled_items` | Count of **labeled** units: a bullet whose lead is bold (`- **Label** body` / `- <emoji> **Label:** body`), **or** an `#### Label` / `### Subhead` immediately followed by a short paragraph. A *labeled* item ≠ a plain `- text` bullet. |
+   | `labeled_items` | Count of **labeled** units: a bullet whose lead is bold (`- **Label** body` / `- <emoji> **Label:** body`), an `#### Label` / `### Subhead` immediately followed by a short paragraph, **or** a **numbered-list line** (`1. …`) when there are ≥2 of them (each line is an ordered step item, label optional). A *labeled* item ≠ a plain `- text` bullet. |
    | `is_ordered` | Any labeled item's label matches an ordinal: `1.`/`2.`, `Paso N`, `Step N`, `Fase N`/`Fase I`, `Etapa …`, `Case A`/`Caso A`, `Phase N`, or the items form a numbered list / a stepwise/decision flow. |
    | `body_len` | Per-item body length in characters, post-Markdown-strip. "Short" ≤ ~80 chars; "prose" > ~80. Judge by the **longest** item. |
    | `two_groups` | The body splits into **two symmetric groups** compared against each other (A-vs-B, before/after, myth/reality), or a pipe-table of `factor \| A \| B` rows. |
@@ -260,14 +260,18 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
 #### `process`
 - **Match:** a **named/ordered sequence** — `1./2./3.`, `Paso N`, `Step N`, `Fase N`,
-  `Etapa`, `Case A/B/C`, a decision flow, or a branching tree. Order carries meaning.
-  **Not:** an unordered concept set (→ `concept-breakdown`).
-- **Format:** **numbered/step cards**. Linear: §7.1 numbered card = outer card + left
-  strip (`#F2EEEE`) + number (Bold) + heading + body, stacked with fixed stride
-  (~0.69 in). Flow/tree: progressively **indented** step rows with small step markers and
-  an optional worked example/panel on the opposite half (as in a decision cascade). The
-  ordinal is the card's number/heading; the description is the body. The label **must not**
-  render as an inline paragraph prefix — the sequence must be visually scannable as steps.
+  `Etapa`, `Case A/B/C`, a decision flow, or a branching tree. Order carries meaning. A
+  **plain numbered list of ≥2 `1. …` lines** also matches (the numbered lines are the steps),
+  with or without bold labels; a *single* numbered line stays prose. **Not:** an unordered
+  concept set (→ `concept-breakdown`).
+- **Format:** **numbered/step cards or a numbered list**, by whether the steps are labeled:
+  - **Labeled steps** (`1. **Label** — body`, `Paso N …`) → §7.1 numbered card strip: outer
+    card + left strip (`#F2EEEE`) + number (Bold) + heading + body.
+  - **Plain steps** (`1. Sentence` with no label) → a **vertical numbered list**: a small
+    outlined number chip + the sentence per row.
+  - An optional **intro lead** (a plain line before the numbered list) renders above the steps.
+  The ordinal is the number; the description is the body. The label **must not** render as an
+  inline paragraph prefix — the sequence must be visually scannable as steps.
 - **Strict recipe:** §7.1 / §7.6. **Provenance:** ref S13 (6 components), S30 (ToT tree),
   S44 (cascade), S47 (5 stages).
 
