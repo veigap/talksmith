@@ -55,7 +55,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   category: CONTENT
   enforcement: CONTROL
   audit: audit_block_coverage.py
-  modes: [strict, free-form]   # preview produces no .pptx to audit — the guarantee holds by construction (build_preview renders every unit)
+  modes: [strict, free-form]   # preview produces no .pptx to audit — the guarantee holds by construction (build_html renders every unit)
   check: "Every block in the source appears as a shape on the rendered slide. Deterministic gate — not walked; any [block-drop] → REGENERATE before FEEDBACK runs."
 
 - id: CONTENT-01
@@ -86,7 +86,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
   category: CONTENT
   enforcement: CONTROL
   audit: audit_notes_coverage.py
-  modes: [strict, free-form]   # preview produces no .pptx; notes are not part of the wireframe deliverable
+  modes: [strict, free-form]   # preview produces no .pptx; notes are not part of the HTML deliverable
   check: "Every `### Notes` block reaches a non-empty notes pane on its slide. Deterministic gate — any [notes-drop] → REGENERATE before FEEDBACK runs. Notes are load-bearing and template-independent."
 ```
 

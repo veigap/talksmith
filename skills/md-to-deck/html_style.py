@@ -125,7 +125,7 @@ def _mk(head, content):
     """A content slide: a **fixed** header (pill + title, never moves) + a content region
     that fits/scales independently. Keeps the title anchored regardless of content."""
     return (f'<div class="stage"><div class="shead">{head}</div>'
-            f'<div class="cbody">{content}</div></div>')
+            f'<div class="cbody"><div class="cfit">{content}</div></div></div>')
 
 
 def render_slide(kind, u, section, cache) -> str:
@@ -292,13 +292,14 @@ figure{margin:0}figcaption{display:flex;gap:10px;align-items:baseline;margin:11p
 .slide{aspect-ratio:16/9;background:var(--slide);border-radius:10px;position:relative;border:1px solid var(--hair);box-shadow:0 1px 0 var(--hair),0 18px 40px -24px rgba(0,0,0,.45);overflow:hidden;container-type:inline-size}
 .snum{position:absolute;right:2.5cqw;bottom:2cqw;font-size:1.8cqw;color:var(--fm);font-family:var(--mono);z-index:2}
 .stage{position:absolute;inset:0;padding:5cqw 5.5cqw;display:flex;flex-direction:column}
-.shead{flex:0 0 auto}
-/* content region: flows from the TOP (never overlaps the header), clipped as a safety;
-   the fit pass scales it down so overflow never actually clips. */
-.cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding-top:2.8cqw;overflow:hidden}
-.cbody>*{margin-top:0!important;margin-bottom:0!important}
-/* single short block (e.g. one callout) may centre in the remaining space */
-.cbody>.callout:only-child,.cbody>.compare:only-child{margin-top:auto!important;margin-bottom:auto!important}
+.shead{flex:0 0 auto;margin-bottom:2.6cqw}
+/* content region (below the fixed header): a positioned box the fit pass solves into.
+   .cfit is widened so that after scaling it always spans the full width (big content,
+   no side voids) while fitting the height, then centred vertically. Short content stays
+   full-width and centred. Never overlaps the header (it lives in its own box). */
+.cbody{flex:1 1 auto;min-height:0;position:relative;overflow:hidden}
+.cfit{position:absolute;top:0;left:0;width:100%;transform-origin:top left}
+.cfit>*{margin-top:0!important;margin-bottom:0!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--ink);font-weight:700;font-size:2.2cqw;letter-spacing:.06em;text-transform:uppercase;padding:.9cqw 2cqw;border-radius:2cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:2.4cqw 0 0;line-height:1.08;text-wrap:balance}
 .stitle.ag{font-size:5cqw}.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
@@ -388,14 +389,26 @@ PRESENT_JS = """<div class="toolbar"><button class="btn" id="present-btn" aria-l
 (function(){
   var figs=[].slice.call(document.querySelectorAll('.deck>figure, .grid>figure'));
   var i=0, root=document.documentElement;
-  function fit(){                                   // scale only the content region; header stays put
+  function fit(){                                   // solve .cfit to fill the region width and fit its height; header stays put
     figs.forEach(function(f){
       var st=f.querySelector('.cbody'); if(!st) return;   // cover/statement/hero have no .cbody
-      st.style.transform='none';
-      if(st.clientHeight<20) return;                // hidden (present mode: non-current slide)
-      var over=st.scrollHeight-st.clientHeight;
-      if(over>1){ var s=Math.max(0.5, st.clientHeight/st.scrollHeight);
-        st.style.transformOrigin='top center'; st.style.transform='scale('+s.toFixed(3)+')'; }
+      var cf=st.querySelector('.cfit'); if(!cf) return;
+      var rw=st.clientWidth, rh=st.clientHeight;
+      if(rh<20||rw<20){ cf.style.cssText='position:absolute;top:0;left:0;width:100%;transform-origin:top left'; return; }
+      // Solve for scale s: laid out at width rw/s, the content's visual height (natural*s) must fit rh.
+      // Widening reflows text shorter, so iterate to convergence (a few passes suffice).
+      var s=1;
+      for(var k=0;k<5;k++){
+        cf.style.transform='none'; cf.style.width=(rw/s)+'px';
+        var h=cf.scrollHeight;                      // natural height at this pre-scale width
+        var ns=Math.max(0.4, Math.min(1, rh/h));    // scale so visual height fits rh; never upscale; floored to avoid runaway widening
+        if(Math.abs(ns-s)<0.005){ s=ns; break; }
+        s=ns;
+      }
+      cf.style.width=(rw/s)+'px';
+      var vh=cf.scrollHeight*s;                      // final visual height
+      cf.style.top=Math.max(0,(rh-vh)/2)+'px';       // centre vertically in the remaining space
+      cf.style.transform='scale('+s.toFixed(4)+')';  // origin top-left → visual width = (rw/s)*s = rw (fills), no side void
     });
   }
   function show(n){ if(!figs.length)return; i=Math.max(0,Math.min(figs.length-1,n));
@@ -418,7 +431,10 @@ PRESENT_JS = """<div class="toolbar"><button class="btn" id="present-btn" aria-l
   if(b)b.addEventListener('click',function(){ present(true); fs(); });
   var t; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(fit,120); });
   document.addEventListener('fullscreenchange',function(){ setTimeout(fit,60); });
-  window.addEventListener('load',fit); if(document.readyState!=='loading'){ setTimeout(fit,0); }
+  function fitSoon(){ requestAnimationFrame(function(){ requestAnimationFrame(fit); }); setTimeout(fit,60); setTimeout(fit,300); }
+  window.addEventListener('load',fitSoon);
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(fitSoon); }
+  if(document.readyState!=='loading'){ fitSoon(); } else { document.addEventListener('DOMContentLoaded',fitSoon); }
 })();
 </script>"""
 

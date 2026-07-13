@@ -12,6 +12,27 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.24.1] — 2026-07-13
+
+### Fixed
+
+- **HTML fit-to-slide reworked — content no longer overflows, clips, or shrinks into a tiny
+  centred block.** The old scaler capped shrink at 0.5 (so busy slides clipped), scaled the
+  region from a top origin (leaving a dead void), and measured `clientHeight` including padding
+  (so tall slides lost their last line). The content region now solves for a scale that fits the
+  height *and* widens the content so it always spans the full width — big cards filling the page
+  instead of a small centred cluster — then centres vertically. Verified across all 29 templates
+  in the test deck (concept 2/4/6, process, stat, comparison, code, content+image,
+  content+cards+image, icon-list): every slide fits with nothing clipped or overlapping the title.
+
+### Changed
+
+- **Docs: the orchestrator's Step 5.5 and the config specs now describe `preview` as the styled
+  HTML render it is** (`build_html.py --draft` → `preview.html`), not the retired Pillow PNG
+  wireframe. Step 8's prerequisite clarifies that `html` renders without Cowork, so it's offered
+  even when the native `.pptx` styles are unavailable. `md-to-deck`'s `style:` list now includes
+  `html` (same renderer as `preview`, reading `final.md`).
+
 ## [0.24.0] — 2026-07-13
 
 ### Changed

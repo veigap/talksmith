@@ -67,7 +67,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 | 3 | Corpus | Librarian: raw sources → `research/corpus/`. | Confirms uploads. |
 | 4 | Draft | Fill `draft.md` in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers / decides / redirects. |
 | 5 | Review | Apply `Presenter feedback` bullets in `draft.md`. Loops. | Edits `draft.md`; appends `- "feedback"` bullets. |
-| 5.5 *(opt)* | Draft preview | Auto-fire a fast, throwaway **wireframe** of `draft.md` (`build_preview.py`, code-rendered PNGs — no `.pptx`/`.pdf`, no Cowork) in the **background** (non-blocking) so it's ready to eyeball when Review ends. | Optionally looks; keeps reviewing meanwhile. |
+| 5.5 *(opt)* | Draft preview | Auto-fire a fast, throwaway **styled HTML deck** of `draft.md` (`build_html.py --draft`, code-rendered `preview.html` — no `.pptx`/`.pdf`, no Cowork) in the **background** (non-blocking) so it's ready to eyeball when Review ends. | Optionally looks; keeps reviewing meanwhile. |
 | 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG; clean `final.md`. | Passive. |
 | 7 | Learnings | **Mandatory.** Promote ≥3× recurring feedback to `learnings.md`; ask promotion + render decisions. | Picks options. |
 | 8 *(opt)* | Render PPTX | Dispatch [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md). Cowork only. | Confirms. |
@@ -222,7 +222,7 @@ Per-mode authoring sequences + the critical-only question budget live in [`edito
 
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
-**On first complete draft, kick the draft preview.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 draft preview** in the background (`build_preview.py` — runs anywhere Pillow is available; see *Step 5.5 — Draft preview*). It runs in parallel and must **not** block the presenter from starting their review.
+**On first complete draft, kick the draft preview.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 draft preview** in the background (`build_html.py --draft` — runs in any session, no Cowork; see *Step 5.5 — Draft preview*). It runs in parallel and must **not** block the presenter from starting their review.
 
 ---
 
@@ -241,11 +241,11 @@ When the presenter signals ready, Step 5 ends. **If a draft preview is available
 
 ## Step 5.5 — Draft preview *(optional, non-blocking)*
 
-A fast, **throwaway wireframe** of the slides rendered straight from `draft.md` so the presenter can eyeball the deck's *shape* — order, roughly what's on each slide — before committing to Polish + the final render. It is a sanity check, **not the deliverable** (the real deck is always Step 8 from `final.md`), and it is deliberately provisional: **individual numbered per-slide PNGs** (`slide-01.png … slide-NN.png`) drawn **by code**. It stays fast by skipping everything expensive — no `.pptx`, no `.pdf`, no native skill, ASCII shown as code-rasterized PNGs (no Illustrator SVG pass), and only **changed slides** re-rendered on each refresh.
+A fast, **throwaway styled HTML deck** of the slides rendered straight from `draft.md` so the presenter can eyeball the deck's *shape and look* — order, roughly what's on each slide, how each template renders — before committing to Polish + the final render. It is a sanity check, **not the deliverable** (the real deck is always Step 8 from `final.md`), and it is deliberately provisional: a single self-contained **`preview.html`** rendered **by code** (the same renderer as the `html` style, `build_html.py --draft`). It stays fast by skipping everything expensive — no `.pptx`, no `.pdf`, no native skill, raw ASCII fences shown as code surfaces (no Illustrator SVG pass). Because it renders in HTML, the styled layer (cards, per-concept icons, callouts, code surfaces) is **fully present**.
 
-**It runs its own light critique loop** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles, per-slide (config per [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md), preview column) — so the presenter gets a quality read early. One honest limit: the code wireframe is deterministic and takes no fix instructions, so the loop **surfaces** findings rather than autonomously restyling — the presenter resolves them via a `draft.md` edit (which re-fires the preview). Layout-conformance is never walked (there's no template). (Free-form, by contrast, is single-pass with no automated critique.)
+**It runs its own light critique loop** — CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles (config per [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md), preview column) — so the presenter gets a quality read early. One honest limit: the code renderer is deterministic and takes no fix instructions, so the loop **surfaces** findings rather than autonomously restyling — the presenter resolves them via a `draft.md` edit (which re-fires the preview). (Free-form, by contrast, is single-pass with no automated critique.)
 
-**Prerequisite: Pillow** (Python imaging). It runs in **any** session — no Cowork needed (that's why it can auto-fire in the background). If Pillow is unavailable, the preview is simply skipped — never block on it.
+**No special prerequisite.** It runs in **any** session — no Cowork, no native skill needed (that's why it can auto-fire in the background). If the render fails for any reason, the preview is simply skipped — never block on it.
 
 ### How it fires — two moments
 
@@ -258,12 +258,12 @@ When the presenter signals ready at the end of Step 5, **before** advancing to S
 
 > Want to take a quick look at a rough draft of the slides before I polish and finalize? *(optional — say skip to go straight to finishing)*
 
-- **If they look:** surface the rendered preview — the numbered per-slide images `talks/<Talk>/output/draft-preview/slide-01.png … slide-NN.png`, in order. Frame it as rough: diagrams show as plain monospace images, styling is provisional, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview (re-rendering only the slides that changed).
+- **If they look:** surface the rendered preview — the styled deck `talks/<Talk>/output/draft-preview/preview.html` (open it; present mode: → / ← to advance, `F` full screen). Frame it as rough: raw diagrams show as plain code surfaces, content is pre-Polish, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the preview.
 - **If they skip, or the preview isn't ready / failed to render:** proceed to Step 6 without ceremony. A failed or unavailable preview is never fatal — it's a convenience.
 
 ### Dispatch
 
-**Render** with the committed renderer [`build_preview.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_preview.py) — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_preview.py --talk talks/<Talk>` (equivalently, dispatch `md-to-deck` with `preview: true`). **Never hand-roll a preview script** — the renderer is committed for exactly this reason. `build_preview.py` owns the *render* (GENERATE): `convert.py --draft --split-dir` pre-processing, the incremental cache (only changed slides re-render), ASCII-to-PNG by code, the per-slide wireframes → numbered `slide-NN.png`. The **critique then runs the same categories/cycle as free-form** (FEEDBACK → REGENERATE, CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles — no CONTROL phase, since preview produces no deck to audit) on those images. Its `[preview i/4]` / `[cycle N/2] …` stage events are **log-only**, suppressed from chat like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). **Show the live preview checklist** while it runs — even as a background render, its 5 items tick so the presenter sees it finish. Never write the preview's paths or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
+**Render** with the committed renderer [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) in draft mode — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft` (equivalently, dispatch `md-to-deck` with `style: preview`). **Never hand-roll a preview script** — the renderer is committed for exactly this reason. `build_html.py --draft` owns the *render* (GENERATE): `convert.py --draft` pre-processing, per-unit classification against the shared catalog, and the styled `preview.html`. The **critique then runs the same categories/cycle as free-form** (FEEDBACK → REGENERATE, CONTENT + AESTHETIC + DISTRIBUTION, ≤2 cycles — no CONTROL phase, since preview produces no deck to audit) on the rendered `preview.html`. Its `[preview]` / `[cycle N/2] …` stage events are **log-only**, suppressed from chat like the Step-8 `[pptx …]` tags (see Step 8 → *Suppression rule*). **Show the live preview checklist** while it runs — even as a background render, its items tick so the presenter sees it finish. Never write the preview's paths or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
 
 **Never let the preview mutate the pipeline.** It reads `draft.md` read-only, writes only under `output/draft-preview/` (git-ignored), and never touches `final.md` or `output/final.pptx`. It does not consume Step-8's style choice — a later Step 8 still asks the style fresh.
 
@@ -305,7 +305,7 @@ Then ask two sequential decisions (independent — promotion preserves for futur
 
 ## Step 8 — Render PPTX *(optional, Cowork only)*
 
-**Prerequisite:** Claude Cowork (native `pptx` skill in registry). If missing, stop and tell the presenter. No CLI fallback.
+**Prerequisite:** the `strict` and `free-form` styles need Claude Cowork (native `pptx` skill in registry); if it's missing, those two can't run (no CLI fallback) — but the **`html`** style is Cowork-independent (code-rendered), so still offer it. If Cowork is missing, tell the presenter the `.pptx` styles are unavailable here and offer `html`.
 
 1. **Ask the style — mandatory, every entry, no default, no exceptions** (only intervention; render runs end-to-end after):
 

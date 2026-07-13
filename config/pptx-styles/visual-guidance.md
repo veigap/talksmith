@@ -76,8 +76,8 @@ them rather than rediscovering them.
 ## How the modes use this
 
 - **GENERATE (all modes).** The renderer designs *from* Part B and must not emit any Part-A
-  violation. Strict/free-form realize it in native `pptx`; the preview wireframe approximates
-  it in Pillow.
+  violation. Strict/free-form realize it in native `pptx`; preview/html realize it
+  deterministically in styled HTML.
 - **CONTROL (pptx modes).** The deterministic subset of Part A is audited (aspect, block,
   notes); a violation fails the build.
 - **FEEDBACK (modes with a critique).** The critique walks [`slide-design.md`](slide-design.md)
