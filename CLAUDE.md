@@ -72,6 +72,14 @@ Every commit **must** record a **functional description** of what changed and wh
 2. In a **separate** scratch directory (never this repo), run `/talksmith:init` and walk through Step 0 → Step 1 to confirm the orchestrator boots and the five agents dispatch correctly.
 3. For skill changes, invoke the skill directly via its slash form (e.g. `/talksmith:ingest <url>`) on a representative input.
 
+## HTML render + the style test — run after ANY style change
+
+Talksmith renders to a **styled static HTML site** as well as `.pptx`: `skills/md-to-pptx/build_html.py` (shared components + tokens in `html_style.py`; content-matched Material Symbols icons via `icon_fetch.py`). Unlike the native `.pptx` render, this is deterministic code — icons, callout boxes, code surfaces, and card strips always render — and it drives both the fast **preview** (from `draft.md`) and an **HTML deliverable** (from `final.md`, with arrow-key + full-screen present mode). An optional `<!-- template: X -->` comment under a slide heading forces that template.
+
+The canonical visual reference **and** regression test is [`tests/skills/md-to-pptx/`](tests/skills/md-to-pptx/): a directive-forced `final.md` with **one slide per template type plus edge cases** (2/3/4/6 concept cards, long titles/bodies, 2/3-col comparison, …) and `pipeline.svg`.
+
+> **After any change to the strict style tokens (`strict/pptx-prompt.md` §1–§17), `html_style.py`, the catalog, or the render, run `python3 tests/skills/md-to-pptx/run.py`.** It regenerates `tests/skills/md-to-pptx/style-reference.html` and **fails** if any forced type falls back, HTML bullets appear, or a styled element (icons / callouts / code surface / card strips / present-mode) goes missing. Open the refreshed HTML to eyeball the result before committing.
+
 ## Refreshing the plugin so Cowork picks up changes (fast loop, no full reinstall)
 
 The marketplace **is this git repo** ([`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) → `source: "./"`); Cowork (desktop) and the CLI share one install and update via `/plugin update talksmith`. You almost never need the "full" cycle (remove marketplace → reinstall → re-init). Two facts make the loop short:
