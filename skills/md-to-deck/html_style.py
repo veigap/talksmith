@@ -1,21 +1,19 @@
-"""Shared HTML styling + slide components for Talksmith's code-rendered outputs.
+"""HTML styling + slide rendering for the Talksmith deck (`build_html.py`).
 
-Two consumers share this module so the look never drifts:
-  - the strict **style reference** (`config/pptx-styles/strict/style-reference/build_reference.py`);
-  - the **HTML presentation** renderer (`build_html.py`) — a static site built from `final.md`.
-
-Both render the catalog templates in the deck's own tokens (palette, Helvetica/Courier,
-§7/§8/§9 geometry) with real Material Symbols icons fetched by name (`icon_fetch.py`) and
-inlined. Unlike the native `.pptx` render, this is deterministic code: icons, callout boxes,
-code surfaces, and card strips always render.
+The theme + tokens (palette, Helvetica/Courier) live in the `CSS` string; the per-slide-type
+**markup lives in Jinja templates** under `templates/html/` (one `.j2` per catalog template).
+This module computes each slide's structured context and renders its template — the split keeps
+markup out of Python. Real Material Symbols icons are matched against the live catalog
+(`icon_fetch.py`) and inlined. Unlike the native `.pptx` render, this is deterministic code:
+icons, callout boxes, code surfaces, and card strips always render.
 
 Public API:
-  CSS                                  the full stylesheet (tokens + components + page frame)
-  icon(name, cache) / chip(name,cache) inline a recoloured Material Symbols SVG
+  CSS                                  the theme stylesheet (tokens + component classes)
+  render_slide(kind, u, section, cache) render a slide's inner HTML via its template
+  cover_slide(fm) / section_agenda(…)  the cover and per-section agenda slides
   icon_for(label, body)                concept → Material Symbols name (matched vs the live catalog)
   load_catalog(cache)                  fetch + index the Material Symbols catalog once
-  render_slide(kind, u, section, cache) one slide's inner HTML for catalog template `kind`
-  page(body, title, subtitle, mode)    wrap slides into a full self-contained HTML document
+  page(body, title, subtitle, mode)    wrap slides into a self-contained Reveal.js document
 """
 
 from __future__ import annotations
@@ -189,178 +187,107 @@ def _embed(alt, path):
 
 
 # --------------------------------------------------------------------------- #
-# per-template slide rendering — `u` is a slide_model._parse_unit dict
+# per-template slide rendering — one Jinja template per slide type in templates/html/.
+# Python computes the structured context (which template, cols, rows, matched icon name);
+# the .j2 files own the *markup*. `u` is a slide_model._parse_unit dict.
 # --------------------------------------------------------------------------- #
 
-def _title_block(section, title):
-    pill = f'<span class="pill">{_esc(section)}</span>' if section else ""
-    t = f'<h2 class="stitle">{_esc(title)}</h2>' if title else ""
-    return pill + t
+from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
+from markupsafe import Markup  # noqa: E402
+
+_ENV = Environment(
+    loader=FileSystemLoader(str(_HERE / "templates" / "html")),
+    autoescape=select_autoescape(enabled_extensions=("j2", "html"), default=True),
+    trim_blocks=True, lstrip_blocks=True)
+_CUR_CACHE = None                          # bound per render so templates can call icon()/chip()
+
+_ENV.globals.update(
+    icon=lambda name: Markup(icon(name, _CUR_CACHE)),
+    chip=lambda name: Markup(chip(name, _CUR_CACHE)),
+    embed=lambda alt, path: Markup(_embed(alt, path)),
+    icon_for=icon_for,
+)
+
+# catalog template id → template file
+_TMPL = {
+    "divider": "divider.j2", "statement": "statement.j2", "closing-hero": "closing-hero.j2",
+    "concept-breakdown": "concept-breakdown.j2", "process": "process.j2", "card-row": "card-row.j2",
+    "icon-list": "icon-list.j2", "code-example": "code-example.j2", "figures": "figures.j2",
+    "image-grid": "image-grid.j2", "content-image": "content-image.j2", "comparison": "comparison.j2",
+    "single-point": "single-point.j2", "callout": "single-point.j2", "agenda": "agenda.j2",
+    "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
+    "closing-cta": "closing-cta.j2", "fallback": "fallback.j2",
+}
 
 
-def _mk(head, content):
-    """A content slide: a fixed header (pill + title, anchored) + a centred content region.
-    Returns the inner `.stage`; build_html wraps it in a Reveal `<section>`."""
-    return (f'<div class="stage"><div class="shead">{head}</div>'
-            f'<div class="cbody"><div class="cfit">{content}</div></div></div>')
+def _render(tmpl: str, cache, **ctx) -> str:
+    global _CUR_CACHE
+    _CUR_CACHE = cache
+    return _ENV.get_template(tmpl).render(**ctx)
 
 
 def render_slide(kind, u, section, cache) -> str:
-    title = u.get("title", "")
-    items = u.get("items", [])
-    body = u.get("body", [])
-    images = u.get("images", [])
-    code = u.get("code_lines", [])
-    lead = f'<p class="lead">{_esc(body[0])}</p>' if body else ""
-    head = _title_block(section, title)
+    """Compute the structured context for a slide, then render its template. All markup lives
+    in templates/html/<kind>.j2; this only decides the template and precomputes derived values."""
+    title, items, body = u.get("title", ""), u.get("items", []), u.get("body", [])
+    images, code = u.get("images", []), u.get("code_lines", [])
+    ctx = dict(section=section, title=title, items=items, body=body, images=images, code=code)
 
-    # ── full-bleed, centred — no fixed header ──
-    if kind == "divider":
-        return f'<div class="stage cover"><div class="stmt"><p class="big">{_esc(title)}</p></div></div>'
-    if kind == "statement":
-        sub = f'<p class="sub">{_esc(body[0])}</p>' if body else ""
-        return f'<div class="stage cover"><div class="stmt"><p class="big">{_esc(title)}</p>{sub}</div></div>'
-    if kind == "closing-hero":
-        sub = f'<span class="qc">{_esc(body[0])}</span>' if body else ""
-        return f'<div class="stage cover"><div class="hero"><span class="qa">{_esc(title)}</span>{sub}</div></div>'
-
-    # ── content templates: fixed header via _mk, body in the fitting region ──
     if kind == "concept-breakdown":
         n = len(items)
-        cols = 1 if n == 1 else (2 if n in (2, 4) else 3)   # 2→2col · 3→row · 4→2×2 · 5–6→3col
-        cs = "".join(
-            f'<div class="ccard">{icon(icon_for(it["label"], it.get("body","")), cache)}'
-            f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return _mk(head, f'<div class="cards c{cols}">{cs}</div>')
-
-    if kind == "process":
-        if any(it.get("label") for it in items):        # labeled steps → numbered card strip
-            cs = "".join(
-                f'<div class="ncard"><div class="strip">{i}</div><div class="nbody">'
-                f'<h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div></div>'
-                for i, it in enumerate(items, 1))
-            return _mk(head, f'<div class="numrow">{cs}</div>')
-        rows = "".join(                                  # plain numbered steps → vertical numbered list
-            f'<div class="steprow"><span class="stepn">{i}</span>'
-            f'<p>{_esc(it.get("body",""))}</p></div>' for i, it in enumerate(items, 1))
-        return _mk(head, f'<div class="steps">{rows}</div>')
-
-    if kind == "card-row":
-        cs = "".join(
-            f'<div class="rcard">{chip(icon_for(it["label"], it.get("body","")), cache)}'
-            f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return _mk(head, f'{lead}<div class="cardrow">{cs}</div>')
-
-    if kind == "icon-list":
-        cs = "".join(
-            f'<div class="ilrow">{icon(icon_for(it["label"], it.get("body","")), cache)}'
-            f'<div><h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div></div>' for it in items)
-        return _mk(head, f'{lead}<div class="iconlist">{cs}</div>')
-
-    if kind == "code-example":
-        codetxt = "<br>".join(_esc(l) for l in code[:18])
-        expl = "".join(f'<p>{_esc(b)}</p>' for b in body[:3])
-        return _mk(head, f'<div class="split"><div class="explain">{expl}</div>'
-                         f'<div class="codebox">{codetxt}</div></div>')
-
-    if kind in ("figures", "image-grid"):
-        if kind == "image-grid" or not items:
-            cs = "".join(_embed(a, p) for a, p in images)
-            return _mk(head, f'<div class="imggrid">{cs}</div>')
-        cs = "".join(f'<div class="figc">{_embed(*(images[k] if k < len(images) else ("","")))}'
-                     f'<h4>{_esc(c["label"])}</h4><p>{_esc(c.get("body",""))}</p></div>'
-                     for k, c in enumerate(items))
-        return _mk(head, f'<div class="figs">{cs}</div>')
-
-    if kind == "content-image":
-        body_html = lead + "".join(f'<p class="lead">{_esc(b)}</p>' for b in body[1:2])
-        pic = _embed(*images[0]) if images else _embed("", None)
-        return _mk(head, f'<div class="ci"><div class="citext">{body_html}</div>{pic}</div>')
-
-    if kind == "comparison":
+        ctx["cols"] = 1 if n == 1 else (2 if n in (2, 4) else 3)   # 2→2col · 3→row · 4→2×2 · 5–6→3col
+    elif kind == "process":
+        ctx["labeled"] = any(it.get("label") for it in items)
+    elif kind in ("figures", "image-grid"):
+        kind = "image-grid" if (kind == "image-grid" or not items) else "figures"
+        ctx["figs"] = [(it, images[k] if k < len(images) else ("", None)) for k, it in enumerate(items)]
+    elif kind == "content-image":
+        ctx["leads"] = body[:2]
+    elif kind == "comparison":
         rows = []
         for ln in body:
             if ln.count("|") >= 2:
                 cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-                if not all(set(c) <= set("-: ") for c in cells):  # skip the --- rule row
+                if not all(set(c) <= set("-: ") for c in cells):    # skip the --- rule row
                     rows.append(cells)
-        if rows:
-            hd = '<div class="chead">' + "".join(f"<span>{_esc(c)}</span>" for c in rows[0]) + "</div>"
-            br = "".join('<div class="crow">' + "".join(f"<span>{_esc(c)}</span>" for c in r) + "</div>"
-                         for r in rows[1:])
-            return _mk(head, f'<div class="compare">{hd}{br}</div>')
+        if not rows:
+            kind = "fallback"                                       # no real table → fall back
+        ctx["rows"] = rows
+    elif kind in ("single-point", "callout"):
+        ctx["item"] = items[0] if items else {"label": "", "body": (body[0] if body else "")}
+        ctx["tone"] = "blue" if kind == "callout" else "pink"
+        ctx["show_lead"] = kind == "single-point"
+    elif kind == "stat":
+        ctx["cols"] = min(len(items), 4) or 1
+    elif kind == "content-text":
+        ctx["big"] = body[0] if body else title
+        ctx["panels"] = [it["label"] + ((": " + it["body"]) if it.get("body") else "") for it in items] \
+            or body[1:]
+    elif kind == "agenda":
+        ctx["sections"] = [it["label"] for it in items] or body
+        ctx["active"] = 0
+        ctx["title"] = title or "Agenda"
 
-    if kind in ("single-point", "callout"):
-        it = items[0] if items else {"label": "", "body": (body[0] if body else "")}
-        tone = "blue" if kind == "callout" else "pink"
-        return _mk(head, f'{lead if kind=="single-point" else ""}'
-                         f'<div class="callout {tone}">{icon(icon_for(it["label"], it.get("body","")), cache)}'
-                         f'<p><b>{_esc(it["label"])}</b> {_esc(it.get("body",""))}</p></div>')
+    if kind == "fallback":
+        ctx["big"] = body[0] if body else ""
+        ctx["points"] = body[1:7] if len(body) > 1 else []
 
-    if kind == "agenda":
-        entries = [it["label"] for it in items] or body
-        rows = "".join(f'<div class="agrow {"on" if k==0 else ""}"><span class="agn">{k+1}</span>'
-                       f'<span>{_esc(e)}</span></div>' for k, e in enumerate(entries))
-        return _mk(_title_block(section, title or "Agenda"), f'<div class="agenda">{rows}</div>')
-
-    if kind == "stat":
-        cols = min(len(items), 4) or 1
-        cells = "".join(f'<div class="stat"><span class="statn">{_esc(it["label"])}</span>'
-                        f'<span class="statl">{_esc(it.get("body",""))}</span></div>' for it in items)
-        return _mk(head, f'<div class="stats" style="grid-template-columns:repeat({cols},1fr)">{cells}</div>')
-
-    if kind == "content-text":
-        big = _esc(body[0]) if body else _esc(title)
-        panels = "".join(f'<div class="ctp">{_esc(it["label"])}{": "+_esc(it["body"]) if it.get("body") else ""}</div>'
-                         for it in items) or "".join(f'<div class="ctp">{_esc(b)}</div>' for b in body[1:])
-        return _mk(_title_block(section, title),
-                   f'<div class="ctext"><p class="big2">{big}</p><div class="ctpanels">{panels}</div></div>')
-
-    if kind == "content+cards+image":
-        cs = "".join(f'<div class="ccard sm">{icon(icon_for(it["label"]), cache)}'
-                     f'<h3>{_esc(it["label"])}</h3><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        pic = _embed(*images[0]) if images else _embed("", None)
-        return _mk(head, f'<div class="cci"><div class="ccicards">{cs}</div>{pic}</div>')
-
-    if kind == "closing-cta":
-        cards = "".join(f'<div class="ctacard">{icon(icon_for(it["label"]), cache)}'
-                        f'<h4>{_esc(it["label"])}</h4><p>{_esc(it.get("body",""))}</p></div>' for it in items)
-        return _mk(head, f'<div class="ctagrid">{cards}</div>')
-
-    # fallback / lead+points — styled, NEVER plain paragraphs: a prominent lead statement +
-    # the remaining lines as accented point panels (the "lead + facts" catalog shape).
-    if not body:
-        return _mk(head, "")
-    if len(body) == 1:
-        return _mk(head, f'<p class="big2">{_esc(body[0])}</p>')
-    big = f'<p class="big2">{_esc(body[0])}</p>'
-    panels = "".join(f'<div class="fpoint">{_esc(b)}</div>' for b in body[1:7])
-    return _mk(head, f'<div class="leadpoints">{big}<div class="fpoints">{panels}</div></div>')
+    return _render(_TMPL.get(kind, "fallback.j2"), cache, **ctx)
 
 
 def section_agenda(sections, active: int, heading: str = "") -> str:
-    """A section-divider slide that re-shows the agenda (numbered section list) with the active
-    section accent-highlighted — reshown at each section start (slide-templates.md agenda)."""
-    rows = "".join(
-        f'<div class="agrow {"on" if k == active else ""}"><span class="agn">{k+1}</span>'
-        f'<span>{_esc(s)}</span></div>' for k, s in enumerate(sections))
-    return _mk(_title_block("", heading or "Agenda"), f'<div class="agenda">{rows}</div>')
+    """A section-divider slide that re-shows the agenda with the active section highlighted."""
+    return _render("agenda.j2", None, sections=sections, active=active, title=heading or "Agenda", section="")
 
 
 def cover_slide(fm: dict, author_label: str = "Autor:", modified_label: str = "Última modificación:") -> str:
-    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML:
-    title top-left, class + author/date lower-left, institution logo bottom-right."""
-    title = _esc(fm.get("presentation", ""))
-    cls = _esc(fm.get("class", ""))
-    author = _esc(fm.get("presenter", ""))
-    date = _esc(fm.get("date", ""))
-    logo = _esc((re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper())
-    return ('<div class="stage cov">'
-            f'<div class="covtop"><h1 class="covt">{title}</h1></div>'
-            f'<div class="covmeta"><p class="covc">{cls}</p>'
-            f'<p class="cova">{author_label} {author}<br>{modified_label} {date}</p></div>'
-            f'<div class="covlogo">{logo}</div>'
-            '</div>')
+    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML."""
+    return _render(
+        "cover.j2", None,
+        title=fm.get("presentation", ""), cls=fm.get("class", ""),
+        author=fm.get("presenter", ""), date=fm.get("date", ""),
+        logo=(re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper(),
+        author_label=author_label, modified_label=modified_label)
 
 
 CSS = r"""

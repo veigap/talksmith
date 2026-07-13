@@ -1,0 +1,7 @@
+{% macro header(section, title) %}
+{% if section %}<span class="pill">{{ section }}</span>{% endif %}
+{% if title %}<h2 class="stitle">{{ title }}</h2>{% endif %}
+{% endmacro %}
+{% macro stage(section, title) %}
+<div class="stage"><div class="shead">{{ header(section, title) }}</div><div class="cbody"><div class="cfit">{{ caller() }}</div></div></div>
+{% endmacro %}

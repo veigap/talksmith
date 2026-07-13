@@ -1,0 +1,8 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title) %}
+<div class="agenda">
+{% for s in sections %}
+<div class="agrow {{ 'on' if loop.index0 == active else '' }}"><span class="agn">{{ loop.index }}</span><span>{{ s }}</span></div>
+{% endfor %}
+</div>
+{% endcall %}

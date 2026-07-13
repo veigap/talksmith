@@ -1,0 +1,6 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title) %}
+<div class="cci"><div class="ccicards">
+{% for it in items %}<div class="ccard sm">{{ icon(icon_for(it.label)) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>{% endfor %}
+</div>{{ embed(images[0][0], images[0][1]) if images else embed("", None) }}</div>
+{% endcall %}

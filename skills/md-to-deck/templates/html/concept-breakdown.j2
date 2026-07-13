@@ -1,0 +1,8 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title) %}
+<div class="cards c{{ cols }}">
+{% for it in items %}
+<div class="ccard">{{ icon(icon_for(it.label, it.body)) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
+{% endfor %}
+</div>
+{% endcall %}

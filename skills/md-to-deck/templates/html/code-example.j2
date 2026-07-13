@@ -1,0 +1,8 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title) %}
+<div class="split"><div class="explain">
+{% for b in body[:3] %}<p>{{ b }}</p>{% endfor %}
+</div><div class="codebox">
+{% for l in code[:18] %}{{ l }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+</div></div>
+{% endcall %}

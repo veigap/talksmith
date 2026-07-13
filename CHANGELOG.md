@@ -12,6 +12,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.29.0] — 2026-07-13
+
+### Changed
+
+- **HTML slide markup moved into Jinja templates — one `.j2` per slide type.** `html_style.py`
+  now computes each slide's structured context and renders `templates/html/<type>.j2`; the markup
+  no longer lives in Python f-strings. Adds a **jinja2** dependency (`pip install jinja2`) for the
+  HTML/preview render. Same visual output (verified against the test deck).
+
+### Removed
+
+- Deleted the dead `freeform_deck.py` (free-form cover/agenda groundwork that was never wired).
+
 ## [0.28.0] — 2026-07-13
 
 ### Added

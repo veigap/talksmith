@@ -20,7 +20,9 @@ against the catalog (`slide_model._classify`) → render its template via `html_
 Usage:
     python3 build_html.py --talk talks/<Talk> [--draft] [-o <out.html>]
 
-Requires network on first run (icon fetch, cached under output/.icons). Output is offline.
+Requires **jinja2** (`pip install jinja2`) — the per-slide-type markup lives in Jinja templates
+under `templates/html/`. Requires network on first run (icon catalog + icon fetch, cached under
+output/.icons); the output HTML is fully offline/self-contained.
 """
 
 from __future__ import annotations
