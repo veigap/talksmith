@@ -35,6 +35,8 @@ _ORDERED_RE = re.compile(
     r"^\s*(?:\d+\s*[.)]|paso\s+\w+|step\s+\w+|fase\s+\w+|etapa\s+\w+|caso\s+\w+)\b", re.I)
 _PLAIN_BULLET_RE = re.compile(r"^\s*[-*+•]\s+")
 _EMPTY_BULLET_RE = re.compile(r"^\s*[-*+•]\s*$")                 # a bullet marker with no content ("- ")
+_NUM_ITEM_RE = re.compile(r"^\s*\d+[.)]\s+(.+)$")               # a numbered step line "1. …" (NOT bullet-prefixed)
+_NUM_LABEL_RE = re.compile(r"^\s*\*\*(.+?)\*\*\s*[—–:\-]*\s*(.*)$")  # "**Label** — body" inside a step
 _FENCE_RE = re.compile(r"^\s*```")
 # Author section-break markers in a title, e.g. `## 1. 〔divisor〕 …` — stripped from the shown
 # title; `divisor`/`backup` force the slide to a divider even at H2 (slide-templates.md §is_divider).
@@ -63,6 +65,10 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
     in_code = False
     mode: str | None = None            # None | 'notes' (capture) | 'drop' (discard)
     cur: dict | None = None            # the item currently accumulating body lines
+    saw_numbered = False
+    # A numbered list (≥2 "1. …" lines) is a step sequence → parse those lines as ordered items.
+    # A single numbered line is left as prose (so it doesn't swallow the lines that follow it).
+    numbered_mode = sum(1 for ln in md.splitlines() if _NUM_ITEM_RE.match(ln)) >= 2
 
     def _flush():
         nonlocal cur
@@ -101,9 +107,17 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
             continue                                  # empty bullet ("- ") — not content
         bold = _BOLD_ITEM_RE.match(line)
         sub = _H34_RE.match(line)
+        num = _NUM_ITEM_RE.match(line) if numbered_mode else None
         if bold:
             _flush(); mode = None
             cur = {"label": _clean_inline(bold.group(1)), "body": _clean_inline(bold.group(2))}
+        elif num:
+            _flush(); mode = None; saw_numbered = True
+            lm = _NUM_LABEL_RE.match(num.group(1))     # "**Label** — body" or a plain sentence
+            if lm:
+                cur = {"label": _clean_inline(lm.group(1)), "body": _clean_inline(lm.group(2))}
+            else:
+                cur = {"label": "", "body": _clean_inline(num.group(1))}
         elif sub:
             _flush()
             low = _clean_inline(sub.group(2)).strip().lower()
@@ -124,7 +138,7 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
             body.append(_clean_inline(_PLAIN_BULLET_RE.sub("", line)))
     _flush()
 
-    ordered = any(_ORDERED_RE.match(it["label"]) for it in items) or \
+    ordered = saw_numbered or any(_ORDERED_RE.match(it["label"]) for it in items) or \
         any(_ORDERED_RE.match(b) for b in body)
 
     resolved = []

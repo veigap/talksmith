@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.28.0] — 2026-07-13
+
+### Added
+
+- **Numbered lists render as steps.** A numbered list (≥2 `1. …` lines) is now recognised as an
+  ordered step sequence: **labeled** steps (`1. **Label** — body`) render as the numbered card
+  strip, **plain** steps (`1. Sentence`) as a clean vertical numbered list (red number chips).
+  Previously these landed on `fallback`. A lone numbered line is left as prose (so it doesn't
+  swallow the lines after it).
+
 ## [0.27.0] — 2026-07-13
 
 ### Added
