@@ -46,7 +46,7 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from audit_block_coverage import (  # noqa: E402
+from block_coverage import (  # noqa: E402
     NS,
     EMOJI_CLASS,
     _slide_paths,

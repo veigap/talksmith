@@ -49,7 +49,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from audit_block_coverage import (  # noqa: E402  (shared pptx machinery)
+from block_coverage import (  # noqa: E402  (shared pptx machinery)
     NS,
     _slide_paths,
     _slide_rels,

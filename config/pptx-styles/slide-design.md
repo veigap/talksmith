@@ -37,7 +37,7 @@ It sits between two shared docs and must stay consistent with both:
 - id:          AESTHETIC-06                      # category-prefixed, stable, order-independent
   category:     AESTHETIC
   enforcement:  FEEDBACK                         # FEEDBACK (visual walk) | CONTROL (deterministic audit)
-  audit:        audit_aspect_ratios.py           # present only when a Python floor backs it
+  audit:        audits/aspect_ratios.py           # present only when a Python floor backs it
   modes:        [strict, free-form, preview]     # default = every mode selecting this category
   check:        "one-line judgement the critic applies"
 ```
@@ -54,7 +54,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
 - id: CONTENT-00
   category: CONTENT
   enforcement: CONTROL
-  audit: audit_block_coverage.py
+  audit: audits/block_coverage.py
   modes: [strict, free-form]   # preview produces no .pptx to audit — the guarantee holds by construction (build_html renders every unit)
   check: "Every block in the source appears as a shape on the rendered slide. Deterministic gate — not walked; any [block-drop] → REGENERATE before FEEDBACK runs."
 
@@ -85,7 +85,7 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
 - id: CONTENT-05
   category: CONTENT
   enforcement: CONTROL
-  audit: audit_notes_coverage.py
+  audit: audits/notes_coverage.py
   modes: [strict, free-form]   # preview produces no .pptx; notes are not part of the HTML deliverable
   check: "Every `### Notes` block reaches a non-empty notes pane on its slide. Deterministic gate — any [notes-drop] → REGENERATE before FEEDBACK runs. Notes are load-bearing and template-independent."
 ```
@@ -128,9 +128,9 @@ in every mode.
 - id: AESTHETIC-04
   category: AESTHETIC
   enforcement: FEEDBACK
-  audit: audit_aspect_ratios.py
+  audit: audits/aspect_ratios.py
   modes: [strict, free-form, preview]
-  check: "Image scale appropriate to role; aspect ratio preserved (no stretching). Dual-enforced in strict/free-form: audit_aspect_ratios.py (CONTROL) catches sub-perceptual stretch, this practice catches gross squashing. In preview (no deck, no CONTROL) only the FEEDBACK half runs. (strict adds a per-slide measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
+  check: "Image scale appropriate to role; aspect ratio preserved (no stretching). Dual-enforced in strict/free-form: audits/aspect_ratios.py (CONTROL) catches sub-perceptual stretch, this practice catches gross squashing. In preview (no deck, no CONTROL) only the FEEDBACK half runs. (strict adds a per-slide measurement protocol — see strict/pptx-prompt.md §20 @AESTHETIC-04.)"
 
 - id: AESTHETIC-06
   category: AESTHETIC
@@ -273,7 +273,7 @@ move into `strict/conformance-patterns.md` (declarative, learnable).
 - id: CONFORMANCE-03
   category: LAYOUT-CONFORMANCE
   enforcement: FEEDBACK
-  audit: audit_cover_fidelity.py, audit_palette_fonts.py
+  audit: audits/cover_fidelity.py, audits/palette_fonts.py
   modes: [strict]
   check: "Theme consistency — template fonts/colours/master layouts honoured; slides 1–2 pixel-equivalent to base-template modulo placeholder text."
 
@@ -292,7 +292,7 @@ move into `strict/conformance-patterns.md` (declarative, learnable).
 - id: CONFORMANCE-06
   category: LAYOUT-CONFORMANCE
   enforcement: CONTROL
-  audit: audit_layout_fit.py
+  audit: audits/layout_fit.py
   modes: [strict]
   check: "Emitted layout == the layout predicted from the source by strict §15.5/§15.6.1. Deterministic."
 ```

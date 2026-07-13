@@ -18,7 +18,7 @@ matches, they fall back (`fallback` below).
 > (when-to-pick rules, capacity thresholds, format-at-the-design-level, the
 > card-not-bullet invariant) lives **here now**. Each spec keeps only what is genuinely
 > substrate-specific: **strict** keeps its exact EMU measurements (base-template
-> pixel-equivalence) and the `audit_layout_fit.py` gate, *realizing* the *Format* below;
+> pixel-equivalence) and the `audits/layout_fit.py` gate, *realizing* the *Format* below;
 > the **preview** keeps its Pillow render functions. Everything else references this file.
 
 Evidence base: three real hand-built decks — the 53-slide `strict/template.pptx`
@@ -33,7 +33,7 @@ no truncation, no dropping, never spilled onto the slide face (per
 [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Speaker notes are the
 talk*). Classification never moves prose from notes onto the slide, and `content-text`'s
 "prose belongs in notes" flag is about *body* prose, not the notes pane. This is enforced
-deterministically by `audit_notes_coverage.py` (CONTROL floor) in every mode that emits a
+deterministically by `audits/notes_coverage.py` (CONTROL floor) in every mode that emits a
 `.pptx`.
 
 ## The universal invariant — cards, not bullets
@@ -100,7 +100,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
 See **Matching examples** below for worked classifications, including the tricky ties.
 
 Strict additionally runs a **deterministic post-emit gate**
-([`audit_layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audit_layout_fit.py)):
+([`audits/layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/layout_fit.py)):
 emitted layout must equal the predicted template or the build fails. Free-form and
 preview use the same classification judgment **without** the hard gate (free-form logs
 its pick to `.layout-log.md`; the preview classifier selects the render function).
@@ -368,7 +368,7 @@ carries a **tally** (count per template) and a **fallback count**; each slide is
 | `signals` | raw detected signals: `labeled_items`, `images`, `has_code`, `ordered`, `body_words`, heading `level`. |
 | `flags` | actionable review items: `fallback` (catalog gap), `restructure-candidate`, `single-point↔concept ambiguous`, `N>cap`. |
 | `notes` | `present` \| `empty` (did the slide carry speaker notes). |
-| `emitted` · `layout_fit` | **strict only:** the §-recipe emitted, and `pass`\|`mismatch` from `audit_layout_fit.py` (emitted == predicted). |
+| `emitted` · `layout_fit` | **strict only:** the §-recipe emitted, and `pass`\|`mismatch` from `audits/layout_fit.py` (emitted == predicted). |
 
 Review the log's `ruled_out` + `flags` after a render: recurring `fallback`s or ambiguity
 flags are the signal that a template's *Match* needs tightening or a new template is missing

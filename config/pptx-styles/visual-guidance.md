@@ -34,15 +34,15 @@ otherwise the FEEDBACK critique flags it as **blocking**, not editorial.
    content; z-order never hides information.
 5. **No image distortion.** Images scale uniformly — the rendered aspect ratio equals the
    source's. No stretching, squishing, or anamorphic "fit to box". (Deterministic:
-   `audit_aspect_ratios.py`.)
+   `audits/aspect_ratios.py`.)
 6. **Legible contrast, always.** Sufficient figure-ground contrast; no low-contrast text
    (light-on-light, dark-on-dark, or text lost in an image).
 7. **Above the legibility floor.** Body text is readable from the back of the room — treat
    ~30 pt as the floor (Kawasaki's 10/20/30). Nothing critical rendered too small to read.
 8. **Inside the safe area.** Content respects safe margins; nothing hugs or crosses the edges.
 9. **No silently dropped content.** Every source block becomes a visible element and every
-   `### Notes` block reaches the notes pane. (Deterministic: `audit_block_coverage.py`,
-   `audit_notes_coverage.py`.)
+   `### Notes` block reaches the notes pane. (Deterministic: `audits/block_coverage.py`,
+   `audits/notes_coverage.py`.)
 10. **No wall of text; no bullet dump for parallel concepts.** A slide is not a document page:
     prose belongs in the notes; a set of parallel labeled concepts is cards/panels, never a
     plain bullet list (the [`slide-templates.md`](slide-templates.md) universal invariant).

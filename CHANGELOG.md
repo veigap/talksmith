@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.29.1] — 2026-07-13
+
+### Changed
+
+- **The seven CONTROL audits moved into `skills/md-to-deck/audits/` with simplified names**
+  (`audit_layout_fit.py` → `audits/layout_fit.py`, etc.); the shared pptx machinery is imported
+  as a sibling. All spec references updated. No behaviour change.
+
 ## [0.29.0] — 2026-07-13
 
 ### Changed
