@@ -6,7 +6,7 @@ Talksmith is a Claude Code plugin that turns that recurring work into a **durabl
 
 > **It's not a slide generator.** You work in chat and plain Markdown (`draft.md` → `final.md`); slides are a *projection* of the Markdown, never the source of truth. *The presentation is the outcome; the knowledge base is the point.*
 
-👉 **New here?** The best introduction to Talksmith is [**a talk about Talksmith — built *with* Talksmith**](tests/examples/talksmith-intro/output/html/index.html): what it is, how to install it, how it works. *(Rendered deck — [generated](tests/examples/talksmith-intro/) from [its `draft.md`](tests/examples/talksmith-intro/draft.md) via the Talksmith workflow.)*
+👉 **New here?** The best introduction to Talksmith is [**a talk about Talksmith — built *with* Talksmith**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/veigap/talksmith/main/tests/examples/talksmith-intro/output/html/index.html): what it is, how to install it, how it works. *(Rendered deck — [generated](tests/examples/talksmith-intro/) from [its `draft.md`](tests/examples/talksmith-intro/draft.md) via the Talksmith workflow.)*
 
 ## Quickstart
 
