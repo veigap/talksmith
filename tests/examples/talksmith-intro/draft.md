@@ -339,7 +339,7 @@ Most people start with Interview and graduate to Agent Draft once the corpus is 
 ---
 
 ## 3. Review is a loop
-<!-- template: content+image -->
+<!-- template: process -->
 
 The differentiator: feedback is applied *and* kept forever — and it's about content, not looks. Second render-driving diagram.
 

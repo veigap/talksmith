@@ -122,6 +122,14 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .steprow{display:flex;gap:2.4cqw;align-items:flex-start}
 .stepn{flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:transparent;border:.3cqw solid var(--red);color:var(--red);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;margin-top:.4cqw}
 .steprow p{margin:0;font-size:2.6cqw;color:var(--body);line-height:1.35}
+.procgrid{display:grid;grid-template-columns:1fr 1.08fr;gap:3cqw;align-items:center}
+.procmain{display:flex;flex-direction:column;gap:2.2cqw;min-width:0}
+.procmain .lead{margin:0;max-width:none}
+.procnum{display:flex;flex-direction:column;gap:1.4cqw}
+.procnum .ncard{min-height:0}
+.procnum .ncard .strip{width:5.2cqw;font-size:2.6cqw}
+.procnum .nbody{padding:1.5cqw 1.8cqw}.procnum .nbody h4{font-size:2.35cqw}.procnum .nbody p{font-size:1.95cqw}
+.procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:100%;height:auto;max-height:38cqw;object-fit:contain}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}

@@ -253,6 +253,26 @@
       ]
     },
     {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "process: plain numbered steps",
+      "lead": "When the steps are ordered but unlabeled, render them as a vertical numbered list:",
+      "steps": [
+        {
+          "body": "Identify the data you are about to share and where it came from."
+        },
+        {
+          "body": "Classify its sensitivity before it leaves your workspace."
+        },
+        {
+          "body": "Choose an approved tool for that classification."
+        },
+        {
+          "body": "Record what was shared so the workflow can be audited later."
+        }
+      ]
+    },
+    {
       "template": "timeline",
       "section": "Ordered & comparison",
       "title": "timeline: a dated milestone sequence",

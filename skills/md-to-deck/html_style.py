@@ -410,6 +410,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang=
         ctx["items"] = steps
         ctx["labeled"] = any(s.get("label") for s in steps)
         ctx["body"] = [lead] if lead else []
+        ctx["images"] = [ri(slide.get("image"))] if slide.get("image") else []
     elif t == "figures":
         ctx["figs"] = [(f, ri(f.get("image"))) for f in slide.get("figures", [])]
     elif t == "image-grid":

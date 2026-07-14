@@ -93,7 +93,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6) | per-card `icon` (else content-matched) |
 | `card-row` | `title`, `cards:[{label,body}]` (3, short) | `lead` |
 | `icon-list` | `title`, `rows:[{label,body}]` (3–5; `body` "" for a bare anaphora line) | `lead` |
-| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label` |
+| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
 | `content-image` | `title`, `image:{src,alt}`, `facts:[{body,label?}]` | `lead`, `layout` (`text-left`\|`image-top`) |
@@ -156,13 +156,21 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 - **Labeled set** (`- **Label** body`, `### Subhead` + paragraph) → `cards` / `rows` / `steps` /
   `figures` `[{label,body}]`, **never plain bullets**. A short unlabeled parallel enumeration (an
   anaphora) → `icon-list` `rows:[{label}]` with `body:""`; drop a row that just repeats the title.
+- **Process ordinals** are renderer chrome, not content. When filling `process.steps`, strip any
+  ordinal/step marker from the extracted `label` or `body`. Then apply the colon lead-in rule:
+  anything before `:` becomes the highlighted `label`, anything after becomes `body`. Examples:
+  `1 · Leave feedback: drop bullets in draft.md` → `label:"Leave feedback"`,
+  `body:"drop bullets in draft.md"`; `1. **Leave feedback** drop bullets...` and
+  `Paso 1: Leave feedback` → `label:"Leave feedback"`. The renderer supplies the visible 1/2/3,
+  so keeping the source ordinal would duplicate it.
 - **Standalone metrics** ($4.44M, 97%, USD 670.000) → `stat` `stats:[{value,caption}]` — the number
   is `value`, the trailing text its `caption`; a lone hero metric → `big-number`.
 - **A pipe table** — two comparable value columns → `comparison` `columns:[{header,cells}]`; a
   label/value table → `concept-breakdown` `cards`.
 - **One image + a little text** → `content-image` (`facts`, `image:{src,alt}`; add
-  `"layout":"image-top"` when the text is very short). ≥4 images → `image-grid`; labeled images →
-  `figures`. A fenced code block → `code-example` (`code`, `explanation`).
+  `"layout":"image-top"` when the text is very short). If the slide is an ordered sequence plus a
+  supporting diagram/example, keep it as `process` and include `image`. ≥4 images → `image-grid`;
+  labeled images → `figures`. A fenced code block → `code-example` (`code`, `explanation`).
 - A short **pull-quote** that is the point → `quote`; a single dominant claim → `statement`
   (`title` + optional `sub`); a lone analogy/tip → `callout` / `single-point`.
 - **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a

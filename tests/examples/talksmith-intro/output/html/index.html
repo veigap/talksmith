@@ -164,6 +164,14 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .steprow{display:flex;gap:2.4cqw;align-items:flex-start}
 .stepn{flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:transparent;border:.3cqw solid var(--red);color:var(--red);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;margin-top:.4cqw}
 .steprow p{margin:0;font-size:2.6cqw;color:var(--body);line-height:1.35}
+.procgrid{display:grid;grid-template-columns:1fr 1.08fr;gap:3cqw;align-items:center}
+.procmain{display:flex;flex-direction:column;gap:2.2cqw;min-width:0}
+.procmain .lead{margin:0;max-width:none}
+.procnum{display:flex;flex-direction:column;gap:1.4cqw}
+.procnum .ncard{min-height:0}
+.procnum .ncard .strip{width:5.2cqw;font-size:2.6cqw}
+.procnum .nbody{padding:1.5cqw 1.8cqw}.procnum .nbody h4{font-size:2.35cqw}.procnum .nbody p{font-size:1.95cqw}
+.procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:100%;height:auto;max-height:38cqw;object-fit:contain}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -371,8 +379,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div>
 
 </div></div></div>
-<aside class="notes">Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min.</aside></section><section class="slide" data-kind="content-image"><div class="stage"><div class="shead"><span class="pill">The workflow in practice</span><h2 class="stitle">Review is a loop</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="citext">
-<p class="lead">You refine draft.md in rounds — leave inline feedback, it&#39;s applied, you review again, until the talk is right.</p><ul class="cifacts"><li><b>1 · Leave feedback</b>: drop plain-text bullets right in draft.md, under each slide&#39;s Presenter feedback — as many as you want, in any editor</li><li><b>2 · Talksmith applies</b>: it stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail</li><li><b>3 · Review and repeat</b>: look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say &#34;final&#34;</li></ul></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+<aside class="notes">Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min.</aside></section><section class="slide" data-kind="process"><div class="stage"><div class="shead"><span class="pill">The workflow in practice</span><h2 class="stitle">Review is a loop</h2></div><div class="cbody"><div class="cfit"><div class="procgrid"><div class="procmain">
+<p class="lead">You refine draft.md in rounds — leave inline feedback, it&#39;s applied, you review again, until the talk is right.</p><div class="procnum">
+<div class="ncard"><div class="strip">1</div><div class="nbody"><h4>Leave feedback</h4><p>Drop plain-text bullets right in draft.md, under each slide&#39;s Presenter feedback — as many as you want, in any editor.</p></div></div>
+<div class="ncard"><div class="strip">2</div><div class="nbody"><h4>Talksmith applies</h4><p>It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail.</p></div></div>
+<div class="ncard"><div class="strip">3</div><div class="nbody"><h4>Review and repeat</h4><p>Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say &#34;final&#34;.</p></div></div>
+</div>
+</div><div class="procmedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
@@ -416,7 +429,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <!-- loop-back arrow: from backlog up to edit, on the right -->
   <path d="M 564 408 H 660 V 50 H 532" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#a)"/>
   <text x="672" y="230" font-size="13" font-weight="600" fill="#059669" transform="rotate(90 672 230)">loop until "final"</text>
-</svg></div></div>
+</svg></div></div></div>
 
 <div class="highlights"><div class="highlight important"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.91-120q-28.91 0-49.41-20.59-20.5-20.59-20.5-49.5t20.59-49.41q20.59-20.5 49.5-20.5t49.41 20.59q20.5 20.59 20.5 49.5t-20.59 49.41q-20.59 20.5-49.5 20.5ZM410-360v-480h140v480H410Z"/></svg></span><p>Every round is about the content, not how it looks — visuals and styling come later at Polish.</p></div></div></div></div></div>
 <aside class="notes">Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min.</aside></section><section class="slide" data-kind="concept-breakdown"><div class="stage"><div class="shead"><span class="pill">The workflow in practice</span><h2 class="stitle">What you end up with</h2></div><div class="cbody"><div class="cfit"><div class="cards c2">

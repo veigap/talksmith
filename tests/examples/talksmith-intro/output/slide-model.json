@@ -225,35 +225,35 @@
       "reveal": "sequential"
     },
     {
-      "template": "content-image",
+      "template": "process",
       "section": "The workflow in practice",
       "title": "Review is a loop",
+      "lead": "You refine draft.md in rounds — leave inline feedback, it's applied, you review again, until the talk is right.",
+      "steps": [
+        {
+          "label": "Leave feedback",
+          "body": "Drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor."
+        },
+        {
+          "label": "Talksmith applies",
+          "body": "It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail."
+        },
+        {
+          "label": "Review and repeat",
+          "body": "Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say \"final\"."
+        }
+      ],
       "image": {
         "src": "images/s4-3-1.svg",
         "alt": "Feedback lifecycle: raw bullet, stamped open, applied, closed, mirrored to the backlog, then loop"
       },
-      "facts": [
-        {
-          "label": "1 · Leave feedback",
-          "body": "drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor"
-        },
-        {
-          "label": "2 · Talksmith applies",
-          "body": "it stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail"
-        },
-        {
-          "label": "3 · Review and repeat",
-          "body": "look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say \"final\""
-        }
-      ],
       "highlights": [
         {
           "kind": "important",
           "body": "Every round is about the content, not how it looks — visuals and styling come later at Polish."
         }
       ],
-      "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min.",
-      "lead": "You refine draft.md in rounds — leave inline feedback, it's applied, you review again, until the talk is right."
+      "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min."
     },
     {
       "template": "concept-breakdown",

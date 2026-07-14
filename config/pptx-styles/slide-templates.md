@@ -345,8 +345,14 @@ precise rules.
   - **Plain steps** (`1. Sentence` with no label) → a **vertical numbered list**: a small
     outlined number chip + the sentence per row.
   - An optional **intro lead** (a plain line before the numbered list) renders above the steps.
-  The ordinal is the number; the description is the body. The label **must not** render as an
-  inline paragraph prefix — the sequence must be visually scannable as steps.
+  - An optional supporting image/diagram/example may sit beside the numbered steps in a split
+    layout; the ordered steps remain the primary structure.
+  The ordinal is the rendered number; **strip it from extracted labels/bodies** (`1 · Leave
+  feedback` → `label:"Leave feedback"`, not `label:"1 · Leave feedback"`). After stripping the
+  ordinal, apply the colon lead-in rule: `1 · Leave feedback: drop bullets in draft.md` →
+  `label:"Leave feedback"`, `body:"drop bullets in draft.md"`. The description is the body. The
+  label **must not** render as an inline paragraph prefix — the sequence must be visually
+  scannable as steps.
 - **Strict recipe:** §7.1 / §7.6. **Provenance:** ref S13 (6 components), S30 (ToT tree),
   S44 (cascade), S47 (5 stages).
 
