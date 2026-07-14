@@ -1,0 +1,8 @@
+<div class="stage"><div class="secag">
+<div class="secaglist">
+{% for s in sections %}
+<div class="secagrow {{ 'on' if loop.index0 == active else '' }}"><span class="secagn">{{ "%02d"|format(loop.index) }}</span><span>{{ s }}</span></div>
+{% endfor %}
+</div>
+<div class="secagnow">{% if active >= 0 %}<span class="secagnum">{{ "%02d"|format(active + 1) }}</span><p class="secagtitle">{{ sections[active] }}</p>{% endif %}</div>
+</div></div>

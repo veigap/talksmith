@@ -12,6 +12,39 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.39.0] — 2026-07-13
+
+### Added
+
+- **`curate.py` — deterministic source normalization for `draft.md` / `final.md`.** Repairs
+  authoring defects that make a slide render oddly, without changing wording. Today it recovers
+  **ordered lists whose `2.`/`3.` markers were dropped** (`1. first` + bare continuation lines →
+  a uniform numbered list). Run it on the *source* so `draft.md` stays the single source of truth
+  (`python3 curate.py talks/<Talk>/draft.md`; `--check` to preview); idempotent.
+- **Dedicated section-separator layout** (`section-agenda.j2`): the numbered section roadmap on
+  the left, the current section as a big number + title on the right — replacing the plain
+  re-shown agenda. Shown at each section start with the active section accented.
+
+### Changed
+
+- **Theme toggle is now a single discreet icon** (moon in Light, sun in Dark) in place of the
+  Light / Dark button pair — same behaviour (persisted, `?deck-theme=`), quieter chrome.
+- **Cover splits the `presentation:` frontmatter line** into a large title + an institution
+  subtitle (on the em/en-dash), instead of cramming both into one heading.
+
+### Removed
+
+- **The standalone `# Agenda` slide is dropped** — the roadmap re-shows at every section start
+  (the dedicated separator above), so a separate agenda slide added nothing. Supersedes the
+  0.37.0 fix that re-populated it.
+
+### Fixed
+
+- **Authored duplicate title-page slides are dropped** (`## Portada` / `Cover` / `Título…`): the
+  cover is synthesized from frontmatter, so a second one authored inside a section is redundant.
+- **A numbered step now ends on a blank line** — a trailing pull-quote or paragraph after a list
+  stays its own block instead of gluing onto the last item.
+
 ## [0.38.0] — 2026-07-13
 
 ### Added

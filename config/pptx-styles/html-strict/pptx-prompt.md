@@ -39,6 +39,12 @@ theme aligned with the strict tokens. Reveal owns navigation, deck-to-window sca
 transitions, overview, speaker notes, and PDF export; the only custom code is a per-slide
 content-fit (scale-to-fill-width + fit-height — the one thing Reveal/CSS can't do).
 
+**Source curation.** `curate.py` deterministically normalizes a `draft.md`/`final.md` in place
+before rendering — repairing authoring defects (today: ordered lists whose `2.`/`3.` markers were
+dropped) without changing wording, so the source stays the single source of truth rather than being
+papered over at render time. Idempotent; run `python3 curate.py talks/<Talk>/draft.md` (`--check`
+to preview).
+
 ## 2. Template-aware + the same shared bar
 
 Every slide honours the shared catalog (**cards, never bullets**), the generic
@@ -62,11 +68,11 @@ out of the box:
 - **PDF export** — open the deck with `?print-pdf` appended to the URL, then Print → Save as
   PDF (one slide per page). Good for handouts.
 - **Transitions** — a subtle slide transition between steps.
-- **Theme toggle** — a **Light / Dark** switcher (top-right, persisted in `localStorage`, also
-  settable with `?deck-theme=dark`). Themes are **token overrides** on our own component CSS —
-  not Reveal's stock themes (those style Reveal's default markup, not our cards/callouts). Add a
-  theme by defining a `:root[data-deck-theme="<name>"]` token block in `templates/html/theme.css`
-  and a button in `page()`. Light is the default.
+- **Theme toggle** — a single **discreet icon** (top-right: moon in Light, sun in Dark; persisted
+  in `localStorage`, also settable with `?deck-theme=dark`). Themes are **token overrides** on our
+  own component CSS — not Reveal's stock themes (those style Reveal's default markup, not our
+  cards/callouts, so they can't restyle the deck coherently). Add a theme by defining a
+  `:root[data-deck-theme="<name>"]` token block in `templates/html/theme.css`. Light is the default.
 
 Slides default to white (Light theme).
 

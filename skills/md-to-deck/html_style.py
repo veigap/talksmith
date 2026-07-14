@@ -297,8 +297,9 @@ def render_slide(kind, u, section, cache) -> str:
 
 
 def section_agenda(sections, active: int, heading: str = "") -> str:
-    """A section-divider slide that re-shows the agenda with the active section highlighted."""
-    return _render("agenda.j2", None, sections=sections, active=active, title=heading or "Agenda", section="")
+    """A section separator that doubles as the roadmap: the ordered section list on the left,
+    the current section (big number + title) on the right, others dimmed."""
+    return _render("section-agenda.j2", None, sections=sections, active=active)
 
 
 _BUNDLED_LOGO = _HERE.parent.parent / "config" / "pptx-styles" / "pptx-free-form" / "cover-logo.png"
@@ -336,10 +337,15 @@ def _cover_logo(fm: dict, talk_root) -> str:
 
 def cover_slide(fm: dict, talk_root=None, author_label: str = "Autor:",
                 modified_label: str = "Última modificación:") -> str:
-    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML."""
+    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML.
+    A `presentation:` that crams the title and an institutional line ("Title — Uni, School")
+    is split on the em/en-dash: the first part is the big title, the rest a smaller subtitle."""
+    parts = re.split(r"\s+[—–]\s+", fm.get("presentation", ""), maxsplit=1)
+    title = parts[0].strip()
+    inst = parts[1].strip() if len(parts) > 1 else ""
     return _render(
         "cover.j2", None,
-        title=fm.get("presentation", ""), cls=fm.get("class", ""),
+        title=title, inst=inst, cls=fm.get("class", ""),
         author=fm.get("presenter", ""), date=fm.get("date", ""),
         logo=Markup(_cover_logo(fm, talk_root)),
         author_label=author_label, modified_label=modified_label)
@@ -405,18 +411,26 @@ def _fonts_css() -> str:
     return "".join(out)
 
 
-# Runtime theme toggle. `_THEME_EARLY` applies the saved/URL theme before Reveal renders (no
-# flash); `_THEME_SWITCH` wires the Light/Dark buttons, persists the choice, and re-layouts Reveal.
+# Runtime theme toggle — one discreet icon button (moon in light, sun in dark). `_THEME_EARLY`
+# applies the saved/URL theme before Reveal renders (no flash); `_THEME_SWITCH` flips it on click,
+# persists the choice, and re-layouts Reveal.
 _THEME_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('deck-theme');"
                 "var t=q||localStorage.getItem('deckTheme')||'light';"
                 "document.documentElement.setAttribute('data-deck-theme',t);}catch(e){}})();")
-_THEME_SWITCH = ("(function(){var root=document.documentElement,box=document.querySelector('.deckthemes');"
-                 "if(!box)return;function set(t){root.setAttribute('data-deck-theme',t);"
+_THEME_SWITCH = ("(function(){var root=document.documentElement,btn=document.querySelector('[data-deck-toggle]');"
+                 "if(!btn)return;function set(t){root.setAttribute('data-deck-theme',t);"
                  "try{localStorage.setItem('deckTheme',t);}catch(e){}"
-                 "Array.prototype.forEach.call(box.querySelectorAll('button'),function(b){b.classList.toggle('on',b.dataset.t===t);});"
                  "if(window.Reveal&&Reveal.layout)Reveal.layout();}"
-                 "set(root.getAttribute('data-deck-theme')||'light');"
-                 "box.addEventListener('click',function(e){var b=e.target.closest('button');if(b)set(b.dataset.t);});})();")
+                 "btn.addEventListener('click',function(){"
+                 "set(root.getAttribute('data-deck-theme')==='dark'?'light':'dark');});})();")
+
+# A small moon (shown in light → click for dark) + sun (shown in dark → click for light).
+_THEME_ICONS = (
+    '<svg class="ic-moon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">'
+    '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+    '<svg class="ic-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/>'
+    '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>')
 
 
 def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
@@ -435,8 +449,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<style>{CSS}</style>\n'
         f'<script>{_THEME_EARLY}</script>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
-        '<div class="deckthemes" role="group" aria-label="Theme">'
-        '<button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>\n'
+        f'<button class="deckthemes" data-deck-toggle type="button" '
+        f'aria-label="Alternar tema claro / oscuro" title="Tema claro / oscuro">{_THEME_ICONS}</button>\n'
         f'<script>{reveal_js}</script>\n'
         f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'

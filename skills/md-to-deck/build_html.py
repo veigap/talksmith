@@ -72,6 +72,11 @@ def _template_hints(raw: str) -> dict:
     return hints
 
 
+# Authored duplicate title pages — a slide whose whole purpose is a second cover
+# (title/subtitle/author). The real cover is synthesized from frontmatter (see render()),
+# so these are always redundant and get dropped, like the standalone Agenda.
+_COVER_DUP = {"portada", "cover", "caratula", "titulo", "title", "title slide", "portada de la charla"}
+
 _SEC_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 
 
@@ -123,11 +128,15 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
     secno = 0                 # running section counter (for the divider's big number)
     n = len(units)
     for i, u in enumerate(parsed, 1):
+        if _norm(u["title"]) in _COVER_DUP:
+            continue                                              # authored duplicate title page — the cover is synthesized
         kind = hints.get(_norm(u["title"])) or _sm._classify(u)   # author hint overrides
         if kind in ("fallback", "content-text") and sum(1 for b in u["body"] if b.count("|") >= 2) >= 2:
             kind = "comparison"                                   # a pipe-table → comparison
         if kind == "divider":
             nt = _norm(u["title"])
+            if nt == "agenda":
+                continue                                          # drop the standalone agenda — it re-shows at each section start
             mi = next((j for j, sn in enumerate(agenda_norm)
                        if sn and (sn == nt or sn in nt or nt in sn)), -1)
             # A section start is: an agenda-matched divider, or — when there's no agenda list —

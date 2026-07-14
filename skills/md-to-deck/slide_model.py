@@ -50,6 +50,48 @@ def _clean_inline(s: str) -> str:
     return _INLINE_MD_RE.sub("", _BLOCKQUOTE_RE.sub("", s)).strip()
 
 
+_LAZY_NUM_RE = re.compile(r"^(\s*)(\d+)[.)]\s+.+$")   # a "1. …" / "1) …" ordered-item line
+
+
+def _recover_ordered(lines: list[str]) -> list[str]:
+    """Curate a numbered list whose continuation items lost their markers.
+
+    Authoring (or a reconcile round-trip) sometimes drops the `2.`/`3.` markers of an
+    ordered list, leaving `1. first` followed by bare continuation lines. The parser
+    already renders those bare lines as *separate* blocks — so they were three items all
+    along — but without the markers they come out as a big numbered lead plus mismatched
+    panels instead of one uniform list. Restore the markers so the slide reads as the
+    ordered list it is. Well-formed lists (real `2.`, `3.` already present) are untouched.
+    """
+    out: list[str] = []
+    i, n = 0, len(lines)
+    while i < n:
+        m = _LAZY_NUM_RE.match(lines[i])
+        out.append(lines[i])
+        if m and int(m.group(2)) == 1:
+            j, run = i + 1, []
+            while j < n:
+                s = lines[j].strip()
+                if not s:
+                    break                                   # blank line ends the list
+                if _LAZY_NUM_RE.match(lines[j]):
+                    run = []                                # already-numbered sibling → well-formed, leave alone
+                    break
+                if (_PLAIN_BULLET_RE.match(lines[j]) or _H34_RE.match(lines[j]) or
+                        _FENCE_RE.match(lines[j]) or _IMG_RE.search(lines[j]) or
+                        s[0] in "*_>#"):
+                    break                                   # a bullet/subhead/code/image/quote is not a lost item
+                run.append(j); j += 1
+            if run:
+                indent = m.group(1)
+                for k, idx in enumerate(run, start=2):
+                    out.append(f"{indent}{k}. {lines[idx].strip()}")
+                i = j
+                continue
+        i += 1
+    return out
+
+
 def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
     """Extract the catalog classification signals from a slide unit.
 
@@ -68,11 +110,14 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
     saw_numbered = False
     # A numbered list (≥2 "1. …" lines) is a step sequence → parse those lines as ordered items.
     # A single numbered line is left as prose (so it doesn't swallow the lines that follow it).
+    # Sources with dropped 2./3. markers are repaired upstream by `curate.py` (deterministic
+    # `_recover_ordered`), not silently here — the source stays the single source of truth.
     numbered_mode = sum(1 for ln in md.splitlines() if _NUM_ITEM_RE.match(ln)) >= 2
 
     def _flush():
         nonlocal cur
         if cur is not None:
+            cur.pop("_num", None)
             cur["body"] = cur["body"].strip()
             items.append(cur)
             cur = None
@@ -102,6 +147,9 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
                 images.append((im.group(1), im.group(2)))
         line = _IMG_RE.sub("", raw).rstrip()
         if not line.strip():
+            if mode is None and cur is not None and cur.get("_num"):
+                _flush()                              # a blank line ends a numbered step, so a trailing
+                                                      # pull-quote / paragraph stays a separate block
             continue
         if _EMPTY_BULLET_RE.match(line):
             continue                                  # empty bullet ("- ") — not content
@@ -115,9 +163,9 @@ def _parse_unit(md: str, talk_root: Path, asset_dir: Path) -> dict:
             _flush(); mode = None; saw_numbered = True
             lm = _NUM_LABEL_RE.match(num.group(1))     # "**Label** — body" or a plain sentence
             if lm:
-                cur = {"label": _clean_inline(lm.group(1)), "body": _clean_inline(lm.group(2))}
+                cur = {"label": _clean_inline(lm.group(1)), "body": _clean_inline(lm.group(2)), "_num": True}
             else:
-                cur = {"label": "", "body": _clean_inline(num.group(1))}
+                cur = {"label": "", "body": _clean_inline(num.group(1)), "_num": True}
         elif sub:
             _flush()
             low = _clean_inline(sub.group(2)).strip().lower()
