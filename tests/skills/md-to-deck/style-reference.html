@@ -141,7 +141,9 @@ footer, header, hgroup, main, menu, nav, section {
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
-.ci.ci-top .imgph{width:100%;height:44cqh}
+/* width-relative height (cqw, like every other component) — cqh is unreliable under an
+   inline-size container and left the caption clipping; this keeps image + caption in view */
+.ci.ci-top .imgph{width:100%;height:30cqw}
 /* the caption under an image-top slide sits in a soft (non-shouty) highlight box */
 .ci.ci-top .citext{align-items:stretch;text-align:center;background:var(--card);border-radius:1.6cqw;padding:2.2cqw 3cqw}
 .ci.ci-top .cifacts li{padding-left:0}.ci.ci-top .cifacts li::before{display:none}

@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.2] — 2026-07-13
+
+### Fixed
+
+- **`content+image` `image-top` no longer clips the caption.** The image band used `cqh`, which is
+  unreliable under an inline-size container, so a two-line caption overflowed the slide. The band is
+  now width-relative (`cqw`, like every other component), keeping image and caption in view.
+
 ## [0.45.1] — 2026-07-13
 
 ### Fixed
