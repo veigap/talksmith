@@ -24,7 +24,7 @@ What it does:
     there; html-strict has no `.pptx`.
 
 Usage:
-    python3 audits/icon_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/icon_coverage.py <slide-model.json> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every slide that should carry icons has at least one; nothing skipped wholesale
@@ -48,21 +48,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from block_coverage import (  # noqa: E402
     NS,
-    EMOJI_CLASS,
     _slide_paths,
     _normalize_title,
     _extract_title,
     _looks_like_agenda,
-    _is_callout_line,
 )
 
 # Icon size band: Material-Symbols icons are placed at ~0.41–0.44 in (§7.2.1 / §17.3).
 # Content images and the cover logo are much larger, so a picture ≤ this is an icon.
 ICON_MAX_EMU = int(0.6 * 914400)
-
-_BOLD_ITEM_RE = re.compile(rf"^\s*[-*+]\s+(?:{EMOJI_CLASS}️?\s*)?\*\*[^*]+\*\*")
-_H34_RE = re.compile(r"^#{3,4}\s+\S")
-_IMG_RE = re.compile(r"!\[[^\]]*\]\(images/[^)]+\)")
 
 
 # --------------------------------------------------------------------------- #
@@ -73,51 +67,31 @@ _IMG_RE = re.compile(r"!\[[^\]]*\]\(images/[^)]+\)")
 class SourceSlide:
     h2_line: int
     h2_title: str
-    labeled_items: int = 0
-    callouts: int = 0
-    images: int = 0
-
-    @property
-    def expected_icons(self) -> int:
-        # concept-breakdown (≥2 labeled items, no source image) → one icon per card
-        concept = self.labeled_items if (self.labeled_items >= 2 and self.images == 0) else 0
-        return concept + self.callouts
+    expected_icons: int = 0
 
 
-def parse_final_md(path: str) -> list[SourceSlide]:
-    lines = open(path, encoding="utf-8").read().splitlines()
-    slides: list[SourceSlide] = []
-    cur: SourceSlide | None = None
-    in_code = False
-    SKIP_H1 = {"thesis", "open questions", "cut material"}
-    in_skip = False
-    for i, line in enumerate(lines, 1):
-        s = line.strip()
-        if s.startswith("```"):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        if s.startswith("# ") and not s.startswith("## "):
-            in_skip = re.sub(r"^\d+\.\s*", "", s[2:].strip().lower()).strip() in SKIP_H1
-            cur = None
-            continue
-        if in_skip:
-            continue
-        if s.startswith("## "):
-            title = re.sub(r"^(?:\d+\.\s*|Slide\s+\d+:\s*|\d+\s+—\s*)", "", s[3:].strip())
-            cur = SourceSlide(h2_line=i, h2_title=title)
-            slides.append(cur)
-            continue
-        if cur is None:
-            continue
-        if _IMG_RE.search(line):
-            cur.images += len(_IMG_RE.findall(line))
-        if _is_callout_line(line):
-            cur.callouts += 1
-        elif _BOLD_ITEM_RE.match(line) or _H34_RE.match(line):
-            cur.labeled_items += 1
-    return slides
+def parse_model(path: str) -> list[SourceSlide]:
+    """Icons a slide should carry, from `slide-model.json` (the template is given — no md
+    parsing, no re-classification): one per card / row / item for the icon-bearing templates,
+    one for a callout or single-point. Matched to the deck by normalized title."""
+    import json
+    model = json.loads(open(path, encoding="utf-8").read())
+    out: list[SourceSlide] = []
+    for idx, s in enumerate(model.get("slides", []), start=1):
+        t = s.get("template", "")
+        if t in ("concept-breakdown", "card-row", "content+cards+image"):
+            n = len(s.get("cards", []))
+        elif t == "icon-list":
+            n = len(s.get("rows", []))
+        elif t == "closing-cta":
+            n = len(s.get("items", []))
+        elif t in ("callout", "single-point"):
+            n = 1
+        else:
+            n = 0
+        title = s.get("title") or s.get("section") or ""
+        out.append(SourceSlide(h2_line=idx, h2_title=title, expected_icons=n))
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -213,15 +187,15 @@ def reconcile(sources, renders):
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("final_md")
+    p.add_argument("model_json", help="slide-model.json (the expected content)")
     p.add_argument("final_pptx")
     p.add_argument("--json", action="store_true")
     p.add_argument("--warn-only", action="store_true")
     args = p.parse_args(argv)
     try:
-        sources = parse_final_md(args.final_md)
-    except (FileNotFoundError, OSError) as e:
-        print(f"audit_icon_coverage: cannot read {args.final_md}: {e}", file=sys.stderr)
+        sources = parse_model(args.model_json)
+    except (FileNotFoundError, OSError, ValueError) as e:
+        print(f"audit_icon_coverage: cannot read {args.model_json}: {e}", file=sys.stderr)
         return 2
     try:
         renders = parse_pptx(args.final_pptx)

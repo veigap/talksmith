@@ -53,7 +53,7 @@ What it does:
     (card-grid vs content+cards+image) report as warnings.
 
 Usage:
-    python3 audits/layout_fit.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/layout_fit.py <slide-model.json> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every matched slide's emitted layout matches its predicted layout
@@ -167,162 +167,31 @@ def _is_emoji_bullet(line: str) -> tuple[bool, bool]:
     return labeled, (emoji_prefix and labeled)
 
 
-def parse_final_md(path: str) -> list[SourceSignals]:
-    lines = open(path, encoding="utf-8").read().splitlines()
-    slides: list[SourceSignals] = []
-    current: SourceSignals | None = None
-    in_code = False
-    code_run_in_current = False
-    table_run_in_current = False
-    bullet_bodies: list[int] = []
-
-    SKIP_H1 = {"thesis", "open questions", "cut material"}
-    in_skip_section = False
-
-    def _finalize_bullet_state():
-        nonlocal bullet_bodies
-        if current and bullet_bodies:
-            current.longest_bullet_body_chars = max(bullet_bodies)
-        bullet_bodies = []
-
-    for i, line in enumerate(lines, start=1):
-        stripped = line.strip()
-        if stripped.startswith("# ") and not stripped.startswith("## "):
-            title = re.sub(r"^\d+\.\s*", "", stripped[2:].strip()).lower()
-            in_skip_section = title in SKIP_H1
-            _finalize_bullet_state()
-            current = None
-            code_run_in_current = False
-            table_run_in_current = False
-            continue
-        if in_skip_section:
-            continue
-        if stripped.startswith("```"):
-            if not in_code:
-                in_code = True
-                if current and not code_run_in_current:
-                    current.code_blocks += 1
-                    code_run_in_current = True
-            else:
-                in_code = False
-            continue
-        if in_code:
-            continue
-        if stripped.startswith("## "):
-            _finalize_bullet_state()
-            title = stripped[3:].strip()
-            title = re.sub(r"^(?:\d+\.\s*|Slide\s+\d+:\s*|\d+\s+—\s*)", "", title)
-            current = SourceSignals(h2_title=title, h2_line=i)
-            slides.append(current)
-            code_run_in_current = False
-            table_run_in_current = False
-            continue
-        if current is None:
-            continue
-        if stripped.startswith("### "):
-            current.h3_subhead_count += 1
-            continue
-        # Image refs
-        n_imgs = len(re.findall(r"!\[[^\]]*\]\([^)]+\)", line))
-        if n_imgs:
-            current.image_count += n_imgs
-        # Pipe tables — count the separator line `|---|---|`
-        if re.match(r"^\s*\|[-:\s|]+\|\s*$", line):
-            if not table_run_in_current:
-                current.pipe_tables += 1
-                table_run_in_current = True
-        elif stripped == "" and table_run_in_current:
-            table_run_in_current = False
-        # Bullets
-        if re.match(r"^\s*-\s+", line):
-            current.bullet_count += 1
-            labeled, emoji_pref = _is_emoji_bullet(line)
-            if labeled:
-                current.labeled_bullet_count += 1
-                body = re.sub(r"^\s*-\s+(?:" + EMOJI_CLASS + r"️?\s*)?\*\*[^*]+\*\*\s*[:：]?\s*",
-                              "", line)
-                bullet_bodies.append(len(body.strip()))
-                if emoji_pref:
-                    current.emoji_prefixed_bullet_count += 1
-            else:
-                # Plain bullet — count body for general bullet density
-                body = re.sub(r"^\s*-\s+", "", line)
-                bullet_bodies.append(len(body.strip()))
-            continue
-        # Paragraph text (very rough — used only for content-text fallback)
-        if stripped and not stripped.startswith(">") and not stripped.startswith("|"):
-            current.paragraph_chars += len(stripped)
-        # Link-list detection (heuristic: line is a markdown link only)
-        if re.match(r"^\s*-\s*\[[^\]]+\]\([^)]+\)\s*$", line):
-            current.has_links_list = True
-
-    _finalize_bullet_state()
-
-    # Predict layouts
-    for i, s in enumerate(slides):
-        s.predict(is_final_h2=(i == len(slides) - 1))
-    return slides
+# template id (from slide-model.json) → the layout vocabulary this audit checks on the
+# emitted side. Templates it cannot check emit "skip" and are ignored (no false mismatches).
+_TEMPLATE_TO_LAYOUT = {
+    "code-example": "code-example", "callout": "callout",
+    "comparison": "card-grid-from-table", "image-grid": "image-grid",
+    "card-row": "card-row", "icon-list": "icon-bullet-list",
+    "concept-breakdown": "card-grid", "content-image": "content+image",
+    "closing-cta": "closing-cta",
+}
 
 
-# --------------------------------------------------------------------------- #
-# final.pptx parsing — emitted layout per slide
-# --------------------------------------------------------------------------- #
+def parse_model(path: str) -> list[SourceSignals]:
+    """Expected layout per slide, from `slide-model.json`: the `template` is given (chosen in the
+    FILL step), so the audit just maps it to the layout it must have emitted — no md re-parsing,
+    no re-classification. Templates outside this audit's checkable set are marked "skip"."""
+    import json
+    model = json.loads(open(path, encoding="utf-8").read())
+    out: list[SourceSignals] = []
+    for i, s in enumerate(model.get("slides", []), start=1):
+        title = s.get("title") or s.get("section") or ""
+        sig = SourceSignals(h2_title=title, h2_line=i)
+        sig.predicted_layout = _TEMPLATE_TO_LAYOUT.get(s.get("template", ""), "skip")
+        out.append(sig)
+    return out
 
-@dataclass
-class RenderEvidence:
-    slide_num: int
-    is_chrome: bool
-    title_text: str
-    pic_count: int = 0
-    pic_paths: list[str] = field(default_factory=list)
-    native_table_count: int = 0
-    buchar_paragraph_count: int = 0
-    literal_bullet_paragraph_count: int = 0
-    code_surface_count: int = 0
-    callout_pink_count: int = 0
-    callout_blue_count: int = 0
-    column1_icon_count: int = 0      # small (<0.5 in) pics in left column → §7.5 marker
-    emitted_layout: str = "unknown"
-
-    def infer(self) -> None:
-        if self.is_chrome:
-            self.emitted_layout = "chrome (cover/agenda/divider)"
-            return
-        # Native table = §11 violation; flag layout as such for visibility
-        if self.native_table_count >= 1:
-            self.emitted_layout = "native-table (§11 violation)"
-            return
-        # Code surface present → code-example
-        if self.code_surface_count >= 1:
-            self.emitted_layout = "code-example"
-            return
-        # Callout shape present (single-bullet emoji-bold pattern) → callout
-        if (self.callout_pink_count + self.callout_blue_count) >= 1 and self.pic_count <= 1:
-            self.emitted_layout = "callout"
-            return
-        # §7.5 icon-bullet list: ≥3 small icons in column-1, paired with headings
-        if self.column1_icon_count >= 3 and self.pic_count == self.column1_icon_count:
-            self.emitted_layout = "icon-bullet-list"
-            return
-        # §7.4 card-row: 3+ small icons (chip variant) AND adjacent card geometry —
-        #   simplified: detect as icon-bullet-list-or-card-row when icons present
-        if self.column1_icon_count >= 3:
-            self.emitted_layout = "card-row-or-icon-bullet-list"
-            return
-        # image-grid: 4+ content pics
-        if self.pic_count >= 4:
-            self.emitted_layout = "image-grid"
-            return
-        # content+image: 1-3 content pics
-        if 1 <= self.pic_count <= 3:
-            self.emitted_layout = "content+image"
-            return
-        # Bullets only → §10 plain bullets
-        if self.buchar_paragraph_count >= 1 or self.literal_bullet_paragraph_count >= 1:
-            self.emitted_layout = "plain-bullets (§10)"
-            return
-        # Default — content-text
-        self.emitted_layout = "content-text"
 
 
 def _slide_paths(zf: zipfile.ZipFile) -> list[str]:
@@ -566,6 +435,8 @@ def reconcile(
 
     mismatches: list[Mismatch] = []
     for s in sources:
+        if s.predicted_layout == "skip":
+            continue  # template this audit does not check
         key = _normalize_title(s.h2_title)
         match = by_title.get(key)
         if match is None:
@@ -612,7 +483,7 @@ def reconcile(
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("final_md")
+    p.add_argument("model_json", help="slide-model.json (the expected content)")
     p.add_argument("final_pptx")
     p.add_argument("--json", action="store_true",
                    help="emit full JSON report on stdout")
@@ -621,9 +492,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     try:
-        sources = parse_final_md(args.final_md)
+        sources = parse_model(args.model_json)
     except (FileNotFoundError, OSError) as e:
-        print(f"audit_layout_fit: cannot read {args.final_md}: {e}", file=sys.stderr)
+        print(f"audit_layout_fit: cannot read {args.model_json}: {e}", file=sys.stderr)
         return 2
     try:
         renders = parse_pptx(args.final_pptx)
@@ -635,7 +506,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({
-            "final_md": args.final_md,
+            "model_json": args.model_json,
             "final_pptx": args.final_pptx,
             "summary": {
                 "source_slides": len(sources),

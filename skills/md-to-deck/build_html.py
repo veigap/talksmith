@@ -5,8 +5,8 @@ the LLM-filled structured model the **`md-to-deck` skill** produces from `final.
 or `draft.md` (live in-progress view). All the *semantic* work — choosing each slide's template
 and decomposing its content into that template's fields — happened in the fill step. **This
 renderer is purely mechanical:** it maps each slide's fields onto its Jinja template
-(`templates/html/*.j2`) and wraps them in the vendored Reveal.js shell. No markdown parsing, no
-classification, no regex. The PPTX renderer consumes the same model.
+(`templates/html/*.j2`) and wraps them in the vendored Reveal.js shell — the `template` and fields
+are given, so the renderer only maps and lays out. The PPTX renderer consumes the same model.
 
 Usage:
     python3 build_html.py --talk talks/<Talk> [--draft] [-o out.html]
@@ -48,15 +48,18 @@ def render(model: dict, talk_root: Path, out_dir: Path):
 
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
+        sid = ""
         if t == "section-agenda":                                 # roadmap: active index from deck.sections
             name = _norm(s.get("title", ""))
             active = next((i for i, sn in enumerate(sections_norm) if sn and sn == name), -1)
             inner = _hs.section_agenda(sections, active)
+            if active >= 0:
+                sid = f' id="sec-{active}"'                        # so roadmap rows can deep-link here
         else:
             inner = _hs.render_model_slide(s, cache, talk_root, out_dir)
         notes = s.get("notes", "")
         aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
-        slides_html.append(f'<section class="slide" data-kind="{t}">{inner}{aside}</section>')
+        slides_html.append(f'<section class="slide"{sid} data-kind="{t}">{inner}{aside}</section>')
 
     title = deck.get("title", talk_root.name if talk_root else "")
     subtitle = " · ".join(x for x in (deck.get("class", ""), deck.get("presenter", "")) if x)

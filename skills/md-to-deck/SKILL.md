@@ -43,8 +43,8 @@ After Step 6 (Polish) completes and the presenter picks **Render** from the term
 
 `html-strict` runs in **two steps: FILL, then RENDER.** The semantics live in the fill step (an
 LLM decomposition); the render is a mechanical, committed script. **Never hand-roll a renderer, and
-never re-add markdown parsing/classification to the renderer** — that regex path was removed on
-purpose.
+keep the renderer mechanical** — it maps model fields to templates and must not classify or parse
+markdown.
 
 **Step 1 — FILL `slide-model.json` (the semantic step, LLM).** Read `final.md` (or `draft.md` for
 the live view) and produce `output/slide-model.json` conforming to
@@ -58,8 +58,8 @@ the ordered section list) and one object per slide. For **each** slide you:
   columns, honouring the universal invariant (labeled sets → cards, never bullets);
 - lift every `### Speaker notes` block **verbatim** into `notes` (never onto the slide face), and
   set `section` to the section the slide belongs to.
-This replaces the old brittle regex classifier — the judgment is the LLM's, against a fixed field
-contract. Write to `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
+The judgment is the LLM's, against a fixed field contract. Write to
+`talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
 
 **Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)
 loads the model and maps each slide's fields onto its Jinja template — no parsing, no classification:
@@ -128,23 +128,14 @@ The rest of this file (Path A) does not apply to `html-strict`.
 
 0. **Resolve style** (see *Style resolution*). Cache `<spec_path>` (verify it exists for the style) and `<base_template_path>` (verify for the two `.pptx` styles). Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>).`
 1. **Verify prerequisites** (table above). Stop on any failure.
-2. **Pre-process `final.md` with [`convert.py`](convert.py)** → the intermediate the pptx skill consumes:
+2. **FILL `slide-model.json`** — the shared semantic step, identical to Path B's ([`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)). An LLM decomposes `final.md` into `output/slide-model.json`: per slide it picks the `template` against [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md), decomposes the body into that template's required fields, lifts `### Speaker notes` into `notes`, sets `section`, and drops scaffolding (`# Thesis` / `# Open questions` / `# Cut material`, `### Sources`, `### Presenter feedback`). HTML and PPTX author from this same structured model, so a slide looks the same in both.
 
-   ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/convert.py \
-     talks/<Talk>/final.md -o talks/<Talk>/output/final.<style>.intermediate.md
-   ```
+   > **Author from the model ONLY; never re-parse `final.md`.** The model has already resolved every field — `template`, structured content, `notes`, `section`.
 
-   `convert.py` drops YAML frontmatter, HTML comments, and the `# Thesis` / `# Open questions` / `# Cut material` sections; strips numeric heading prefixes (`## 2. Why X` → `## Why X`); per H2, drops `### Content`'s label (keeps body), drops `### Sources`, renames `### Speaker notes` → `### Notes`, and drops any `### Presenter feedback`; preserves `![alt](images/...)` refs and `---` rules.
+   **Per-mode paths.** Everywhere below, `output/final.pptx`, `output/.critique/` resolve to the per-style forms `output/final.<style>.pptx`, `output/.critique/<style>/`. The `slide-model.json` is shared (one per Talk). After a successful render the per-style deck is also copied to the canonical `output/final.pptx`.
 
-   > **Hard rule — author from the intermediate ONLY; never re-parse `final.md`.** `convert.py` has already resolved every field. A renderer that parses `final.md` directly will miss `### Notes` (only in the intermediate) and spill `### Sources` / speaker notes / section goals into the slide body — the exact bug this pre-processing prevents.
-
-   **Per-mode paths.** Everywhere below, `output/final.pptx`, `output/final.intermediate.md`, `output/.critique/` resolve to the per-style forms `output/final.<style>.pptx`, `output/final.<style>.intermediate.md`, `output/.critique/<style>/`. After a successful render the per-style deck is also copied to the canonical `output/final.pptx`.
-
-2.5. **Classify each slide against the catalog.** Walk each H2 in the intermediate and classify it per [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) → *Classification procedure* — one best-fit template (or `fallback`), cards not bullets. Record + check by mode:
-   - **pptx-strict** — apply the §15.6 pre-emit audit; emit one `[pptx audit N/M]` line per slide (chosen template + inputs). Re-checked deterministically at CONTROL by `audits/layout_fit.py`.
-   - **pptx-free-form** — record the chosen id in the `.layout-log.md` sidecar (`<spec_path>` §3.1); no gate.
-3. **Render** by invoking the pptx skill against the **7-stage workflow** in `<spec_path>` §19.3 (for strict: open base-template as working copy → cover §4 → agenda §5 → discard slides 3–15 → content slides §15/§6–§9/§13 → dividers §5.6 → backgrounds §1 → speaker notes). Pass: the intermediate, the image paths, the base template, the icon library, and the visual spec. All substantive rules live in `<spec_path>` and are not duplicated here.
+2.5. **Template is decided in FILL.** Each slide's `template` is set in `slide-model.json`, per the catalog. **pptx-strict** re-checks it deterministically at CONTROL (`audits/layout_fit.py`, model vs emitted).
+3. **Render** by invoking the pptx skill against the **7-stage workflow** in `<spec_path>` §19.3 (for strict: open base-template as working copy → cover §4 → agenda §5 → discard slides 3–15 → content slides §15/§6–§9/§13 → dividers §5.6 → backgrounds §1 → speaker notes). Pass: **`slide-model.json`**, the image paths, the base template, the icon library, and the visual spec — each slide is authored from its model fields. All substantive rules live in `<spec_path>` and are not duplicated here.
 
    **Acceptance bar:** open the rendered deck next to `<base_template_path>` — slides 1–2 must be pixel-equivalent modulo placeholder text. Author-from-scratch = failure.
 4. **Verify `output/final.<style>.pptx` exists and is non-empty, then copy it to the canonical `output/final.pptx`** (what the reverse pipeline reads). The suffixed deck persists for comparison. **When `style == pptx-strict`,** snapshot the as-generated geometry baseline for the learning loop:
@@ -158,13 +149,13 @@ The rest of this file (Path A) does not apply to `html-strict`.
 5. **CONTROL — deterministic audits** (a non-zero exit is a render failure: surface the FAIL lines verbatim, repair, re-render). Run against `output/final.pptx`:
    - `audits/aspect_ratios.py` *(floor)* — every `<p:pic>`'s rendered `cx:cy` matches its source's intrinsic ratio (1% tolerance). Catches non-uniform scaling.
    - `audits/cover_fidelity.py` *(floor)* — slide 1 is byte-equivalent to `<base_template_path>` slide 1 modulo the four cover slots.
-   - `audits/block_coverage.py` *(floor)* — every source callout/image block survived into the deck (no silent drops on busy slides).
-   - `audits/notes_coverage.py` *(floor)* — every `### Notes` block reached a non-empty notes pane (notes are load-bearing, template-independent).
+   - `audits/block_coverage.py` *(floor)* — every model slide's structured blocks (cards/rows/stats/figures/image) survived into the deck (no silent drops on busy slides).
+   - `audits/notes_coverage.py` *(floor)* — every model slide that carries `notes` reached a non-empty notes pane (notes are load-bearing, template-independent).
    - `audits/palette_fonts.py` *(**pptx-strict only**)* — every color/font is in the strict §2/§3.1 set.
-   - `audits/layout_fit.py` *(**pptx-strict only**)* — the emitted layout equals the layout predicted from the source signals (§15.5/§15.6.1); catches picking a plainer layout than the content warrants.
-   - `audits/icon_coverage.py` *(**pptx-strict only**)* — a concept-breakdown/callout slide that should carry icons rendered at least one (catches a silently skipped §17 icon-fetch).
+   - `audits/layout_fit.py` *(**pptx-strict only**)* — the emitted layout equals the layout expected for the slide's model `template`; catches emitting a plainer layout than the model calls for.
+   - `audits/icon_coverage.py` *(**pptx-strict only**)* — a concept-breakdown/callout slide whose model carries icon-bearing fields rendered at least one icon (catches a silently skipped §17 icon-fetch).
 
-   Free-form runs the four floor audits only. Each is a standalone CLI: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/<name>.py talks/<Talk>/output/final.pptx [talks/<Talk>/final.md]`.
+   Free-form runs the four floor audits only. Each is a standalone CLI, comparing the deck against the model: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/<name>.py talks/<Talk>/output/final.pptx [talks/<Talk>/output/slide-model.json]`.
 6. **Render per-slide critique PNGs** to `output/.critique/<style>/slide-NN.png` so the FEEDBACK sub-agent walks actual pixels. Priority: (1) the pptx skill's slide-to-image endpoint if it has one; (2) `libreoffice --headless --convert-to pdf` then `pdftoppm -r 150 -png`. If both fail the deck is still valid — report `slide_previews: failed: <reason>` and continue (visual critique can't run, but the `.pptx` is unaffected).
 7. **FEEDBACK / REGENERATE** per mode (see *Render flow*). **pptx-strict** runs the multi-cycle critique loop; **pptx-free-form** is single-pass (presenter reviews afterward).
 8. **Report:** `style: <mode>`, slide count, images resolved, and each audit's result (`aspect_audit`, `cover_fidelity`, `block_coverage`, `notes_coverage`, and — strict — `palette_fonts`, `layout_fit`, `icon_coverage` — each `ok | N fail | skipped:non-strict`), `slide_previews: <count|failed>`, plus any warnings from the pptx skill.
@@ -185,19 +176,18 @@ talks/<Talk>/
 ├── final.md                              # source for this skill (cleaned by Polish)
 ├── images/                               # populated by illustrator + editor (Step 6)
 └── output/
+    ├── slide-model.json                 # the structured model (FILL step) — HTML + PPTX both render from it
+    ├── slide-model.draft.json            # in-progress model (html-strict --draft live view)
     ├── final.pptx                        # canonical deliverable — a copy of the most recent .pptx render
     ├── final.pptx-strict.pptx            # per-mode .pptx render, persists for comparison
-    ├── final.pptx-strict.template-log.md # per-mode template-decision log (beside its .pptx)
     ├── final.pptx-free-form.pptx
-    ├── final.pptx-free-form.template-log.md
-    ├── final.<style>.intermediate.md     # per-mode transient pre-processed file (convert.py)
     ├── .critique/                        # critique-only slide previews for the .pptx modes (git-ignored)
     │   ├── pptx-strict/slide-NN.png
     │   └── pptx-free-form/slide-NN.png
-    └── html/                             # html-strict deck — index.html + template-log.md + .icons/ (build_html.py; final.md deliverable OR draft.md live view)
+    └── html/                             # html-strict deck — index.html + .icons/ (build_html.py; final or draft model)
 ```
 
-**Per-mode isolation.** Each `.pptx` render writes a suffixed deck `output/final.<style>.pptx` (with its intermediate, `.critique/<style>/` PNGs, and `final.<style>.template-log.md`), so strict and free-form renders coexist. The latest is copied to the canonical `output/final.pptx`; the suffixed files persist. The template-decision log records per slide which catalog template was chosen and why (schema: `slide-templates.md` → *Template decision log*). `html-strict` writes only under `output/html/`.
+**Per-mode isolation.** Each `.pptx` render writes a suffixed deck `output/final.<style>.pptx` (with its `.critique/<style>/` PNGs), so strict and free-form renders coexist; the latest is copied to the canonical `output/final.pptx`. Each slide's chosen `template` lives in the shared `slide-model.json`. `html-strict` writes only under `output/html/`.
 
 ## Progress reporting (log-only)
 

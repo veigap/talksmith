@@ -92,9 +92,8 @@ binding, base-template pixel-equivalence) lives in that mode's `pptx-prompt.md` 
 
 ## TEMPLATE
 
-The critique is **template-aware**: it receives each slide's classified template id (from
-GENERATE — strict's pre-emit audit line, free-form's `.layout-log.md`, or the html-strict
-classifier) and reviews the slide against **that template's *Format* in
+The critique is **template-aware**: it receives each slide's `template` (from `slide-model.json`,
+the shared FILL-step output) and reviews the slide against **that template's *Format* in
 [`slide-templates.md`](slide-templates.md)**, not a generic notion of "looks good." Walked
 in every mode.
 

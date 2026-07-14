@@ -30,10 +30,9 @@ pill/callout tints) with **IBM Plex Sans/Mono** (vendored, inlined as `@font-fac
 cards, **per-concept Material Symbols icons** (matched to each concept against the live catalog,
 fetched by name via [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py),
 recoloured to `#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. The **cover** is
-synthesized from the model's `deck` object. SVG images embed inline; PNG/JPG as data-URIs. There is
-**no markdown parsing or regex classifier in the renderer** — it approximates the strict templates'
-*shapes* in CSS (container-query `cqw` units on a fixed 16:9), not the native `.pptx` §7/§8/§9 EMU
-geometry.
+synthesized from the model's `deck` object. SVG images embed inline; PNG/JPG as data-URIs. It
+approximates the strict templates' *shapes* in CSS (container-query `cqw` units on a fixed 16:9),
+not the native `.pptx` §7/§8/§9 EMU geometry.
 
 The presentation shell is **[Reveal.js](https://revealjs.com/)** (vendored under
 `skills/md-to-deck/vendor/reveal/`, inlined so the deck stays offline + self-contained). Each

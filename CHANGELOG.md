@@ -12,6 +12,31 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.44.0] — 2026-07-13
+
+### Changed
+
+- **PPTX now authors from the shared `slide-model.json`**, the same structured model the HTML
+  render uses — the FILL step (LLM decomposition of `final.md`) replaces the `convert.py` prose
+  intermediate, so a slide looks the same in HTML and PPTX. The template per slide is decided in
+  FILL; there is no separate per-render template log.
+- **The CONTROL audits validate against `slide-model.json`** instead of re-parsing `final.md`:
+  `block_coverage`, `notes_coverage`, `icon_coverage`, and `layout_fit` now read the model's given
+  `template` + fields (each takes `slide-model.json` as its first argument). This removes the
+  brittle markdown re-parsing they carried.
+- **Agenda / roadmap items are clickable** — each section row deep-links to that section's slide
+  (Reveal anchor navigation).
+
+### Fixed
+
+- **`content+image` `image-top` layout** — the image now fills a prominent top band with the text
+  beneath, instead of a tiny centered graphic.
+
+### Removed
+
+- **`convert.py`** — the markdown→prose pre-processor for the PPTX path; superseded by the FILL
+  step producing `slide-model.json`.
+
 ## [0.43.0] — 2026-07-13
 
 ### Changed

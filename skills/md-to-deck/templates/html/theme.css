@@ -99,8 +99,8 @@
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
+.ci.ci-top .imgph{width:100%;height:46cqh}
 .ci.ci-top .citext{align-items:center;text-align:center}
-.ci.ci-top figure,.ci.ci-top img,.ci.ci-top svg{max-height:44cqh;margin:0 auto}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
@@ -148,7 +148,8 @@
 /* section separator — roadmap list (left) + the current section big (right) */
 .secag{margin:auto 0;display:grid;grid-template-columns:1.05fr .95fr;gap:5cqw;align-items:center}
 .secaglist{display:flex;flex-direction:column;gap:1.5cqw}
-.secagrow{display:flex;gap:2.2cqw;align-items:baseline;font-size:2.7cqw;color:var(--fm);font-weight:600}
+.secagrow{display:flex;gap:2.2cqw;align-items:baseline;font-size:2.7cqw;color:var(--fm);font-weight:600;text-decoration:none;transition:color .12s}
+.secagrow:hover{color:var(--ink)}.secagrow:hover .secagn{color:var(--red)}
 .secagrow .secagn{font-family:var(--mono);font-size:2cqw;color:var(--hair);min-width:3.2cqw}
 .secagrow.on{color:var(--ink);font-weight:800}.secagrow.on .secagn{color:var(--red)}
 .secagnow{text-align:right}

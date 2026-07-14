@@ -1,4 +1,4 @@
-"""Audit that every load-bearing block in `final.md` appears as a
+"""Audit that every load-bearing block in `slide-model.json` appears as a
 corresponding shape in the rendered `final.pptx`.
 
 Why this exists:
@@ -47,7 +47,7 @@ What it does:
       from matching since they have no source H2.
 
 Usage:
-    python3 audits/block_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/block_coverage.py <slide-model.json> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  no drops detected
@@ -101,72 +101,20 @@ class SourceSlide:
     image_lines: list[int] = field(default_factory=list)
 
 
-def _is_callout_line(line: str) -> bool:
-    """Detect the three callout shapes used in Talksmith final.md."""
-    s = line.lstrip()
-    # 1. single-bullet `- <emoji> **<bold>** …` (a 1-item bullet with
-    #    emoji + bold lead reads as emphasis, not enumeration —
-    #    renderer must promote to callout per §15; colon may be inside
-    #    the bold or absent; handles VS16 selector after combined emoji
-    #    glyphs like `⚙️` = U+2699 U+FE0F)
-    if re.match(rf"-\s+{EMOJI_CLASS}️?\s+\*\*[^*]+\*\*", s):
-        return True
-    # 2. blockquote `> **<bold>** …`
-    if re.match(r">\s+\*\*[^*]+\*\*", s):
-        return True
-    # 3. admonition `> [!callout]` / `> [!note]` / `> [!warning]` …
-    if re.match(r">\s+\[!\w+\]", s):
-        return True
-    return False
-
-
-def parse_final_md(path: str) -> list[SourceSlide]:
-    lines = open(path, encoding="utf-8").read().splitlines()
+def parse_model(path: str) -> list[SourceSlide]:
+    """Expected callout/image blocks per slide, read straight from `slide-model.json` — the
+    structured model already enumerates them, so there is no markdown to parse. Images = an
+    `image` field + `images[]` + each `figures[].image`; a callout block = a `callout`-template
+    slide. Matched to the deck by normalized title (its `title`, or `section` for dividers)."""
+    import json
+    model = json.loads(open(path, encoding="utf-8").read())
     slides: list[SourceSlide] = []
-    current: SourceSlide | None = None
-    in_code = False
-
-    # Sections to skip entirely (per convert.py — these never become slides).
-    SKIP_H1 = {"thesis", "open questions", "cut material"}
-    in_skip_section = False
-
-    for i, line in enumerate(lines, start=1):
-        stripped = line.strip()
-        # H1 — section header (or skip-section marker)
-        if stripped.startswith("# ") and not stripped.startswith("## "):
-            title = stripped[2:].strip().lower()
-            # Strip leading numeric prefix
-            title = re.sub(r"^\d+\.\s*", "", title).strip()
-            in_skip_section = title in SKIP_H1
-            current = None
-            continue
-        if in_skip_section:
-            continue
-        # Fenced code toggle
-        if stripped.startswith("```"):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        # H2 — slide
-        if stripped.startswith("## "):
-            title = stripped[3:].strip()
-            # Strip the `N. ` / `Slide N: ` prefix
-            title = re.sub(r"^(?:\d+\.\s*|Slide\s+\d+:\s*|\d+\s+—\s*)", "", title)
-            current = SourceSlide(h2_line=i, h2_title=title)
-            slides.append(current)
-            continue
-        if current is None:
-            continue
-        # Image refs (count one per line occurrence)
-        for _ in re.finditer(r"!\[[^\]]*\]\(images/[^)]+\)", line):
-            current.images += 1
-            current.image_lines.append(i)
-        # Callout detection
-        if _is_callout_line(line):
-            current.callouts += 1
-            current.callout_lines.append(i)
-
+    for idx, s in enumerate(model.get("slides", []), start=1):
+        images = (1 if s.get("image") else 0) + len(s.get("images", []))
+        images += sum(1 for f in s.get("figures", []) if f.get("image"))
+        callouts = 1 if s.get("template") == "callout" else 0
+        title = s.get("title") or s.get("section") or ""
+        slides.append(SourceSlide(h2_line=idx, h2_title=title, callouts=callouts, images=images))
     return slides
 
 
@@ -409,7 +357,7 @@ def reconcile(
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("final_md")
+    p.add_argument("model_json", help="slide-model.json (the expected content)")
     p.add_argument("final_pptx")
     p.add_argument("--json", action="store_true",
                    help="emit full JSON report on stdout")
@@ -418,9 +366,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     try:
-        sources = parse_final_md(args.final_md)
-    except (FileNotFoundError, OSError) as e:
-        print(f"audit_block_coverage: cannot read {args.final_md}: {e}",
+        sources = parse_model(args.model_json)
+    except (FileNotFoundError, OSError, ValueError) as e:
+        print(f"audit_block_coverage: cannot read {args.model_json}: {e}",
               file=sys.stderr)
         return 2
     try:
@@ -434,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({
-            "final_md": args.final_md,
+            "model_json": args.model_json,
             "final_pptx": args.final_pptx,
             "summary": {
                 "source_slides": len(sources),

@@ -1,5 +1,5 @@
-"""Audit that every `### Notes` block in `final.md` reaches a non-empty
-notes pane on the corresponding slide of the rendered `.pptx`.
+"""Audit that every slide carrying `notes` in `slide-model.json` reaches a
+non-empty notes pane on the corresponding slide of the rendered `.pptx`.
 
 Why this exists:
     Speaker notes are load-bearing (the prose the slide replaces — see
@@ -27,7 +27,7 @@ What it does:
     (no false positives).
 
 Usage:
-    python3 audits/notes_coverage.py <final.md> <final.pptx> [--json] [--warn-only]
+    python3 audits/notes_coverage.py <slide-model.json> <final.pptx> [--json] [--warn-only]
 
 Exit codes:
     0  every source slide with notes has a non-empty notes pane
@@ -70,53 +70,18 @@ class SourceSlide:
     has_notes: bool = False
 
 
-def parse_final_md(path: str) -> list[SourceSlide]:
-    lines = open(path, encoding="utf-8").read().splitlines()
-    slides: list[SourceSlide] = []
-    current: SourceSlide | None = None
-    in_code = False
-    in_notes = False
-
-    # Sections skipped entirely (per convert.py — never become slides).
-    SKIP_H1 = {"thesis", "open questions", "cut material"}
-    in_skip_section = False
-
-    for i, line in enumerate(lines, start=1):
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        # H1 — section header (or skip marker); ends any current slide/notes.
-        if stripped.startswith("# ") and not stripped.startswith("## "):
-            title = re.sub(r"^\d+\.\s*", "", stripped[2:].strip().lower()).strip()
-            in_skip_section = title in SKIP_H1
-            current = None
-            in_notes = False
-            continue
-        if in_skip_section:
-            continue
-        # H2 — new slide.
-        if stripped.startswith("## "):
-            title = re.sub(r"^(?:\d+\.\s*|Slide\s+\d+:\s*|\d+\s+—\s*)", "",
-                           stripped[3:].strip())
-            current = SourceSlide(h2_line=i, h2_title=title)
-            slides.append(current)
-            in_notes = False
-            continue
-        if current is None:
-            continue
-        # `### Notes` block start (convert.py normalizes `### Speaker notes` → `### Notes`).
-        m = re.match(r"^#{3}\s+(.*)$", stripped)
-        if m:
-            in_notes = m.group(1).strip().lower() in ("notes", "speaker notes")
-            continue
-        # Any non-empty line inside the notes block marks the slide as carrying notes.
-        if in_notes and stripped:
-            current.has_notes = True
-
-    return slides
+def parse_model(path: str) -> list[SourceSlide]:
+    """Which slides carry notes, read straight from `slide-model.json`: a slide's `notes` field
+    (lifted verbatim during FILL) is non-empty. Matched to the deck by normalized title (its
+    `title`, or `section` for dividers). No markdown to parse."""
+    import json
+    model = json.loads(open(path, encoding="utf-8").read())
+    out: list[SourceSlide] = []
+    for idx, s in enumerate(model.get("slides", []), start=1):
+        title = s.get("title") or s.get("section") or ""
+        out.append(SourceSlide(h2_line=idx, h2_title=title,
+                               has_notes=bool((s.get("notes") or "").strip())))
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -249,7 +214,7 @@ def reconcile(sources: list[SourceSlide],
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("final_md")
+    p.add_argument("model_json", help="slide-model.json (the expected content)")
     p.add_argument("final_pptx")
     p.add_argument("--json", action="store_true", help="emit full JSON report on stdout")
     p.add_argument("--warn-only", action="store_true",
@@ -257,9 +222,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     try:
-        sources = parse_final_md(args.final_md)
-    except (FileNotFoundError, OSError) as e:
-        print(f"audit_notes_coverage: cannot read {args.final_md}: {e}", file=sys.stderr)
+        sources = parse_model(args.model_json)
+    except (FileNotFoundError, OSError, ValueError) as e:
+        print(f"audit_notes_coverage: cannot read {args.model_json}: {e}", file=sys.stderr)
         return 2
     try:
         renders = parse_pptx(args.final_pptx)
@@ -272,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({
-            "final_md": args.final_md,
+            "model_json": args.model_json,
             "final_pptx": args.final_pptx,
             "summary": {
                 "source_slides": len(sources),

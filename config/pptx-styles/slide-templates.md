@@ -389,33 +389,6 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
 ---
 
-## Template decision log (per-render deliverable)
-
-Every render writes a companion **template-decision log** next to its output — a Markdown
-record of *which template each slide got and why* — so decisions are auditable, the catalog
-can be improved from real renders, and `pptx-learn` has a rationale to mine. It is
-**descriptive only** — writing it never changes the render.
-
-- **strict / free-form:** `talks/<Talk>/output/final.<style>.template-log.md`.
-- **html-strict:** `talks/<Talk>/output/html/template-log.md` (written by `build_html.py`).
-
-It supersedes free-form's earlier `.layout-log.md` (same idea, standardized shape). Header
-carries a **tally** (count per template) and a **fallback count**; each slide is one entry:
-
-| Field | Content |
-|---|---|
-| `template` | the catalog id chosen (or `fallback`). |
-| `why` | the signal / discriminator that decided it, one line. *(strict / free-form logs only — the html-strict deterministic log omits this; the per-template rationale is defined **once** here, not restated per render.)* |
-| `ruled_out` | the near-miss template(s) and why not — **the key ambiguity signal** for improving the catalog. *(strict / free-form only, as above.)* |
-| `signals` | raw detected signals: `labeled_items`, `images`, `has_code`, `ordered`, `body_words`, heading `level`. |
-| `flags` | actionable review items: `fallback` (catalog gap), `restructure-candidate`, `single-point↔concept ambiguous`, `N>cap`. |
-| `notes` | `present` \| `empty` (did the slide carry speaker notes). |
-| `emitted` · `layout_fit` | **strict only:** the §-recipe emitted, and `pass`\|`mismatch` from `audits/layout_fit.py` (emitted == predicted). |
-
-Review the log's `ruled_out` + `flags` after a render: recurring `fallback`s or ambiguity
-flags are the signal that a template's *Match* needs tightening or a new template is missing
-(exactly how the dry-run against the security deck surfaced the 1–2-item gap).
-
 ## Matching examples — worked classifications
 
 Each shows a slide's Markdown, the template it classifies to, and **why** (which signals
