@@ -12,6 +12,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.54.0] — 2026-07-14
+
+### Changed
+
+- **`/talksmith:init` now also writes a `.gitignore`.** Alongside the `CLAUDE.md` stub, it appends a
+  marked Talksmith ignore block to the working directory's `.gitignore` — regenerable render
+  `output/`, icon/critique caches (`.icons/`, `images/.critique/`), `__pycache__`, `.DS_Store`, and
+  `.claude/settings.local.json` — so build artifacts never get committed to the shared subject repo.
+  It's **idempotent and non-destructive**: it only appends if its marker isn't already present and
+  leaves any existing entries untouched. The talk *source* (`draft.md` / `final.md` / `memory.md` /
+  `research/corpus/` / `images/` / `config/`) stays tracked. Existing working directories can re-run
+  `/talksmith:init` to pick it up — the re-run is safe.
+
 ## [0.53.0] — 2026-07-14
 
 ### Added
