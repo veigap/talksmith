@@ -492,6 +492,14 @@ _THEME_SWITCH = ("(function(){var root=document.documentElement,btn=document.que
                  "btn.addEventListener('click',function(){"
                  "set(root.getAttribute('data-deck-theme')==='dark'?'light':'dark');});})();")
 
+# Idle-UI: the nav arrows + slide number (styled to hide by default via CSS) only appear while the
+# pointer is moving — `html.deck-ui` is added on pointer activity and dropped after a short idle.
+_IDLE_UI = ("(function(){var root=document.documentElement,t;"
+            "function show(){root.classList.add('deck-ui');clearTimeout(t);"
+            "t=setTimeout(function(){root.classList.remove('deck-ui');},2000);}"
+            "['pointermove','mousedown','touchstart','wheel'].forEach(function(ev){"
+            "document.addEventListener(ev,show,{passive:true});});})();")
+
 # A small moon (shown in light → click for dark) + sun (shown in dark → click for light).
 _THEME_ICONS = (
     '<svg class="ic-moon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">'
@@ -523,4 +531,5 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
         f'<script>{_THEME_SWITCH}</script>\n'
+        f'<script>{_IDLE_UI}</script>\n'
     )

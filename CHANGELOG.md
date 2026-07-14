@@ -12,6 +12,13 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.46.3] — 2026-07-14
+
+### Added
+
+- **Auto-hiding nav.** The nav arrows and slide number now sit centered along the bottom and fade
+  out when idle, reappearing on pointer activity (a small idle-UI script toggles `html.deck-ui`).
+
 ## [0.46.2] — 2026-07-14
 
 ### Fixed

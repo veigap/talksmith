@@ -57,16 +57,24 @@ footer, header, hgroup, main, menu, nav, section {
 .reveal .slides>section.slide{background:var(--slide)}
 .reveal ::selection{background:var(--pill)}
 .reveal .progress{color:var(--red)}
-/* Nav arrows — centered along the bottom (override reveal's bottom-right cross).
+/* Nav cluster — small arrows with the slide number centered between them, along the bottom.
    This deck has no vertical slides, so up/down are hidden and left/right sit side by side.
-   Reveal sets display:block inline on .controls, hence !important on display. */
+   Reveal sets display:block inline on .controls, hence !important on display. The slide number
+   is a separate element, so it's centered in the gap the arrows leave (wide enough for "NN / NN").
+   The cluster auto-hides: it only shows while the pointer is moving (html.deck-ui, toggled by
+   the idle-UI script), fading out after a short idle. */
 .reveal .controls{color:var(--red);display:flex!important;flex-direction:row;
-  justify-content:center;align-items:center;gap:1.6em;
-  top:auto;left:0;right:0;bottom:20px;width:100%;height:auto;font-size:13px}
+  justify-content:center;align-items:center;gap:10em;
+  top:auto;left:0;right:0;bottom:24px;width:100%;height:auto;font-size:8px;
+  opacity:0;transition:opacity .3s ease;pointer-events:none}
 .reveal .controls .navigate-left,.reveal .controls .navigate-right{
-  position:relative;left:auto;right:auto;top:auto;bottom:auto;margin:0;transform:none}
+  position:relative;left:auto;right:auto;top:auto;bottom:auto;margin:0;transform:none;pointer-events:none}
 .reveal .controls .navigate-up,.reveal .controls .navigate-down{display:none}
-.reveal .slide-number{background:transparent;color:var(--fm);font-family:var(--mono);font-size:15px;right:12px;bottom:10px}
+.reveal .slide-number{background:transparent;color:var(--fm);font-family:var(--mono);
+  font-size:14px;left:50%;right:auto;transform:translateX(-50%);bottom:31px;
+  opacity:0;transition:opacity .3s ease}
+html.deck-ui .reveal .controls,html.deck-ui .reveal .slide-number{opacity:1}
+html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .navigate-right{pointer-events:auto}
 /* ---- slide templates (our practices, unchanged) ---- */
 .stage{position:relative;height:100%;padding:5cqw 5.5cqw;display:flex;flex-direction:column}
 .shead{flex:0 0 auto;margin-bottom:2.6cqw}
@@ -576,3 +584,4 @@ Reveal.initialize({
   Reveal.on('resize', function(){ setTimeout(fitAll, 60); });
 });</script>
 <script>(function(){var root=document.documentElement,btn=document.querySelector('[data-deck-toggle]');if(!btn)return;function set(t){root.setAttribute('data-deck-theme',t);try{localStorage.setItem('deckTheme',t);}catch(e){}if(window.Reveal&&Reveal.layout)Reveal.layout();}btn.addEventListener('click',function(){set(root.getAttribute('data-deck-theme')==='dark'?'light':'dark');});})();</script>
+<script>(function(){var root=document.documentElement,t;function show(){root.classList.add('deck-ui');clearTimeout(t);t=setTimeout(function(){root.classList.remove('deck-ui');},2000);}['pointermove','mousedown','touchstart','wheel'].forEach(function(ev){document.addEventListener(ev,show,{passive:true});});})();</script>
