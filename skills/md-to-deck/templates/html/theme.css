@@ -14,8 +14,25 @@
 .reveal .slides>section{height:100%;padding:0;container-type:inline-size}
 .reveal .slides>section.slide{background:var(--slide)}
 .reveal ::selection{background:var(--pill)}
-.reveal .progress{color:var(--red)}.reveal .controls{color:var(--red)}
-.reveal .slide-number{background:transparent;color:var(--fm);font-family:var(--mono);font-size:15px;right:12px;bottom:10px}
+.reveal .progress{color:var(--red)}
+/* Nav cluster — small arrows with the slide number centered between them, along the bottom.
+   This deck has no vertical slides, so up/down are hidden and left/right sit side by side.
+   Reveal sets display:block inline on .controls, hence !important on display. The slide number
+   is a separate element, so it's centered in the gap the arrows leave (wide enough for "NN / NN").
+   The cluster auto-hides: it only shows while the pointer is moving (html.deck-ui, toggled by
+   the idle-UI script), fading out after a short idle. */
+.reveal .controls{color:var(--red);display:flex!important;flex-direction:row;
+  justify-content:center;align-items:center;gap:10em;
+  top:auto;left:0;right:0;bottom:24px;width:100%;height:auto;font-size:8px;
+  opacity:0;transition:opacity .3s ease;pointer-events:none}
+.reveal .controls .navigate-left,.reveal .controls .navigate-right{
+  position:relative;left:auto;right:auto;top:auto;bottom:auto;margin:0;transform:none;pointer-events:none}
+.reveal .controls .navigate-up,.reveal .controls .navigate-down{display:none}
+.reveal .slide-number{background:transparent;color:var(--fm);font-family:var(--mono);
+  font-size:14px;left:50%;right:auto;transform:translateX(-50%);bottom:31px;
+  opacity:0;transition:opacity .3s ease}
+html.deck-ui .reveal .controls,html.deck-ui .reveal .slide-number{opacity:1}
+html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .navigate-right{pointer-events:auto}
 /* ---- slide templates (our practices, unchanged) ---- */
 .stage{position:relative;height:100%;padding:5cqw 5.5cqw;display:flex;flex-direction:column}
 .shead{flex:0 0 auto;margin-bottom:2.6cqw}
@@ -101,6 +118,7 @@
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
+.cifacts b{font-weight:800;color:var(--ink)}   /* the colon lead-in label */
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
 /* highlights — optional emphasized takeaways / comments, one or more, in a soft accent band */
 .highlights{margin-top:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
@@ -112,7 +130,8 @@
 .ci.ci-top .imgph{width:100%}
 .ci.ci-top .imgph img,.ci.ci-top .imgph svg{max-height:32cqw}
 /* the caption under an image-top slide sits in a soft (non-shouty) highlight box */
-.ci.ci-top .citext{align-items:stretch;text-align:center;background:var(--card);border-radius:1.6cqw;padding:2.2cqw 3cqw}
+/* the image-top caption uses the same soft red-accent box as a highlight */
+.ci.ci-top .citext{align-items:stretch;text-align:left;background:var(--card);border-left:.6cqw solid var(--red);border-radius:.8cqw;padding:1.5cqw 2cqw;color:var(--ink);font-size:2.4cqw}
 .ci.ci-top .cifacts li{padding-left:0}.ci.ci-top .cifacts li::before{display:none}
 .ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}

@@ -12,6 +12,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.46.2] — 2026-07-14
+
+### Fixed
+
+- **Colon lead-in labels render bold.** The reset neutralizes the default `<b>`, so a fact's label
+  (`.cifacts b`, e.g. **PII**: …) showed unbolded while elements with an explicit weight didn't. Fact
+  labels now carry an explicit weight + dark ink, so the `Label:` lead-in reads as emphasized.
+
+### Changed
+
+- **The image-top caption uses the same soft red-accent box as a `highlight`** — consistent emphasis
+  styling for the text under an `image-top` `content+image` slide.
+
 ## [0.46.1] — 2026-07-14
 
 ### Fixed
