@@ -72,7 +72,7 @@ Slides are where knowledge goes to die.
 
 ### Speaker notes
 
-Open cold with this line on screen. Pause. Then ask for a show of hands: "Who has rebuilt a talk they'd already given, from scratch, because finding the old material was harder than redoing it?" ~2 min.
+The claim behind the line: in a deck-first workflow, all the expensive work — reading the sources, deciding the framing, choosing what to cut — happens *outside* the artifact and is discarded when the deck ships. What survives is a set of compressed fragments that can't be queried, diffed, or safely reused, because the context that made them true is gone. The deck isn't a knowledge container; it's a lossy projection of one that was never saved.
 
 ### Presenter feedback
 
@@ -102,7 +102,7 @@ What starting from scratch costs, in three numbers:
 
 ### Speaker notes
 
-Numbers are illustrative from the instructor survey — say so. The third stat sets up the compounding argument. ~2 min.
+What's behind each number. 6 hrs: rebuilding a class you already gave means recreating the structure and re-finding sources — the search usually costs more than the redo, so people redo. ~0%: slide fragments carry no provenance or context, so even when found they can't be safely reused — you can't tell if a claim is still true or where it came from. 3×: a single well-kept source (a paper, a case) typically serves an intro class, an advanced class, and a workshop — but only if it's kept somewhere findable. The numbers are illustrative; the mechanism — search cost exceeding redo cost — is the real point.
 
 ### Presenter feedback
 
@@ -128,7 +128,7 @@ The pain, broken into the pieces Talksmith picks off one by one.
 
 ### Speaker notes
 
-Four cards, one per pain — each maps to a Talksmith answer you'll show later: corpus, Markdown source, one-repo-per-subject, and the feedback audit trail. ~2 min.
+The four pains share one root cause: the deck is the only artifact that survives preparation, and a deck is write-only. Scattered sources make search cost exceed redo cost. Deck-trapped knowledge can't be queried or diffed, so it can't be verified or updated. Cold starts happen because nothing structured carries over between overlapping classes. And decision rationale (why this slide, why not that one) lives only in memory, so the same debates repeat. Fix the artifact — make the surviving thing a queryable knowledge base — and all four resolve.
 
 ### Presenter feedback
 
@@ -162,7 +162,7 @@ What a session actually looks like — the agent greets you and takes over.
 
 ### Speaker notes
 
-Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min.
+What's actually on screen: a normal Claude Code (Cowork) session in a subject repo. The repo's CLAUDE.md stub — written once by /talksmith:init — loads the Talksmith orchestrator at session start; the greeting, the workflow chart, and the new-vs-resume prompt are the orchestrator introducing itself. 'Resume' works because every talk keeps a memory.md progress log — the agent reads it and continues from the last completed step. The Progress and Context panels are standard Cowork UI: they show which files the agent is reading and what it's doing, so the work is observable rather than a black box.
 
 ### Presenter feedback
 
@@ -186,7 +186,7 @@ Kill the wrong mental model before it forms: this is not "AI makes slides."
 
 ### Speaker notes
 
-Three-column comparison. Land on the last column. The point: same inputs, completely different thing to *own* afterward. ~3 min.
+The taxonomy that matters. A deck generator optimizes producing the artifact: prompt in, slides out — nothing durable remains, and the next talk starts from zero. A RAG chatbot indexes the raw pile and re-retrieves per question — useful for lookup, but nothing is ever synthesized or curated, and there's no outline to iterate on. Talksmith compiles: sources are restructured once into uniform corpus records, the outline is drafted thesis-first from them, and slides are rendered on demand from the outline. The durable asset is the compiled base; slides are a by-product.
 
 ### Presenter feedback
 
@@ -212,7 +212,7 @@ Anchor the idea in a name the audience may already trust.
 
 ### Speaker notes
 
-Let the quote sit. This is the conceptual license for everything Talksmith does. ~1 min.
+The pattern being quoted: instead of re-reading raw documents on every request (retrieval), have the agent maintain a synthesized, cross-linked knowledge base it updates as sources arrive — analogous to compiling source code once and running the binary many times. Talksmith is an implementation of this: the Librarian compiles each raw source into a uniform Markdown corpus record (metadata, claims, quotes, citations), and every downstream step reads the records, not the originals.
 
 ### Presenter feedback
 
@@ -249,7 +249,7 @@ Make the knowledge-base idea concrete with a picture — and note the picture it
 
 ### Speaker notes
 
-Walk left to right once, then stop talking and let the diagram breathe. Then: "I drew that as rough ASCII in my outline — Talksmith rendered the SVG." Segue to 2.4. ~3 min.
+The ownership boundaries are the design. Raw sources (research/) are immutable ground truth — the agent reads them but never rewrites them, so provenance is always checkable. The wiki (research/corpus/) is agent-owned synthesis: uniform, cross-linked Markdown records the agent keeps current — humans read it but don't have to maintain it. Projections (final.md, then HTML or .pptx) are derived and disposable — regenerate them anytime, delete them without loss. Each layer can be trusted precisely because of who is *not* allowed to write it.
 
 ### Presenter feedback
 
@@ -273,7 +273,7 @@ The wow moment, stated plainly and demonstrated by the slide before it.
 
 ### Speaker notes
 
-This is the single most surprising feature for newcomers — give it its own beat. Optionally flip to the raw ASCII in the source to prove it. ~2 min.
+How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering.
 
 ### Presenter feedback
 
@@ -308,7 +308,7 @@ The whole arc in one picture — reuse the plugin's own diagram.
 
 ### Speaker notes
 
-This image is the plugin's own workflow diagram — a Markdown image ref, not ASCII, so it's used verbatim (no re-render). ~3 min.
+The shape of the workflow: setup happens once per talk (profile the audience, frame the thesis, collect and compile sources into the corpus); the middle is a loop (draft, review with inline feedback, repeat until right); rendering comes last and is optional. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.
 
 ### Presenter feedback
 
@@ -332,7 +332,7 @@ Three modes, one line each.
 
 ### Speaker notes
 
-Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min.
+The three drafting modes produce the same draft.md — they differ in who moves first. Interview: the agent asks structured questions (audience, arc, emphasis) and builds the outline from your answers — best for a first talk or a blank corpus. Agent Draft: the agent proposes a complete thesis-first outline from the corpus, and you react — best once the corpus is rich, since every slide arrives pre-grounded in sources. Presenter Outline: you supply the section and slide titles, and the agent fills the bodies from the corpus — best when the talk already exists in your head.
 
 ### Presenter feedback
 
@@ -380,7 +380,7 @@ You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you
 
 ### Speaker notes
 
-Meta-moment: open THIS talk's `draft.md` and show the real feedback bullets. Audiences love a tool that eats its own dog food. ~4 min.
+How feedback actually flows: you write plain-text bullets under any slide's 'Presenter feedback' heading, in any editor. Talksmith stamps each bullet [open] with a date, makes the change, then closes it in place with a one-line resolution — so draft.md accumulates a decision trail: what was asked, what was done, when. Closed items are mirrored to a backlog file, and recurring feedback gets promoted into learnings.md as standing editorial rules that every future talk inherits. This is the direct answer to 'no record of decisions' from the opening section.
 
 ### Presenter feedback
 
@@ -407,7 +407,7 @@ The concrete artifacts, so it isn't abstract.
 
 ### Speaker notes
 
-Four cards. Stress that `draft.md` survives Polish untouched — `final.md` is always re-derivable. ~2 min.
+The durable/derived split: draft.md and research/corpus/ are the assets — they accumulate and are never regenerated. final.md is derived: Polish copies draft.md, strips the feedback machinery, renders diagrams, and produces the delivery-ready file — deleting it loses nothing, because the next Polish re-derives it. memory.md is the progress log: which step is done, what's pending — it's what lets a session stop anywhere and a later session (or a teammate) resume without re-explaining.
 
 ### Presenter feedback
 
@@ -434,7 +434,60 @@ The same `final.md` renders to any of these — pick per audience:
 
 ### Speaker notes
 
-Tie back to "slides are a projection": one source, many deliverables — and you're viewing the HTML output live. ~1 min.
+The render paths from one final.md: the HTML deck is a single self-contained file (Reveal.js, fonts and scripts inlined) that works offline and shares as a link; the native .pptx comes in two styles — strict (conforms to an institutional template) and free-form — for venues that require PowerPoint; PDF comes from the HTML deck's print view, for handouts. Because all three are projections, presentation-day format changes are a re-render, not a rebuild.
+
+### Presenter feedback
+
+---
+
+## 6. Presenting the HTML deck: shortcuts
+<!-- template: icon-list -->
+
+Show that the HTML deliverable is a real presentation tool, not just a web page — live, on this very deck.
+
+### Content
+
+The deck is a Reveal.js app — these come with the framework (try them now):
+
+- **Navigate** → / ← / Space. The URL hash (#/12) makes every slide a shareable deep link.
+- **Overview** O or Esc — a zoomed-out grid of the whole deck; click a slide to jump.
+- **Speaker view** S — presenter window with current + next slide, your notes, and a timer.
+- **Fullscreen** F to go fullscreen; Esc returns.
+
+### Sources
+
+- corpus/readme.md
+
+### Speaker notes
+
+What the framework provides and why it matters: navigation is keyboard-first (arrows/Space), and the URL hash tracks the slide — so #/12 is a deep link you can send, bookmark, or open on stage. Overview (O) shows the whole deck as a grid for orientation and jumping. Speaker view (S) opens a second, synchronized window — current slide, next slide, these notes, and a timer — put it on the laptop while the audience sees the deck. Fullscreen is F. All of it ships with Reveal.js; none of it needed custom code.
+
+### Presenter feedback
+
+---
+
+## 7. Presenting the HTML deck: the buttons
+<!-- template: icon-list -->
+
+Finish the tour with the Talksmith chrome — the affordances presenters reach for without keyboard shortcuts.
+
+### Content
+
+Five discreet buttons top-right (they fade in when the pointer moves, and never print):
+
+- **Light / dark** Flips the theme; a link can force it with ?deck-theme=dark.
+- **Animations** Transitions and fragments off, for a static read-through.
+- **Export to PDF** Opens the print view with your theme and style, and fires the print dialog.
+- **Fullscreen** Same as pressing F.
+- **Style** Token-only skins — fonts, colors, background — layout untouched; ?deck-style= per link.
+
+### Sources
+
+- corpus/readme.md
+
+### Speaker notes
+
+What each button does under the hood: light/dark swaps the CSS token set and persists the choice in the browser (a link can pin it with ?deck-theme=dark). Animations toggles Reveal's fragments and transitions — useful for reading a deck straight through. Export to PDF opens the print-layout view carrying the active theme and style, then fires the print dialog — 'Save as PDF' finishes it. Fullscreen mirrors the F key. Style switches between token-only skins: fonts, colors, and backgrounds change; layout never does, because every component reads the same design tokens. The cluster hides while idle and is excluded from print.
 
 ### Presenter feedback
 
@@ -467,7 +520,7 @@ Who's actually doing the work.
 
 ### Speaker notes
 
-You never dispatch these by hand — the orchestrator does, and narrates in plain outcomes. ~3 min.
+The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language.
 
 ### Presenter feedback
 
@@ -504,7 +557,7 @@ Every artifact is a plain `.md` file: diffable, versionable, portable across ren
 
 ### Speaker notes
 
-The round-trip is what makes Markdown-as-source safe: you never lose edits made downstream. ~3 min.
+Why plain text is the load-bearing choice: Markdown makes every artifact diffable (each change is a reviewable git diff), portable (the same outline renders to HTML or .pptx), and durable (no tool lock-in). The reverse pipeline closes the loop: a deck edited in PowerPoint or Keynote can be read back, diffed against final.md, and reconciled into draft.md — simple edits land automatically, ambiguous ones are routed for judgment. That round-trip is the guarantee that no downstream edit is ever lost, which is what makes 'the deck is disposable' safe to say.
 
 ### Presenter feedback
 
@@ -535,7 +588,7 @@ Make the trade-off explicit and honest.
 
 ### Speaker notes
 
-Be honest that binary decks are more WYSIWYG — but that's the projection's job, not the source's. ~2 min.
+The honest trade-off: a binary deck gives direct WYSIWYG control — PowerPoint is a better pixel editor than any text file. The cost is that the format is opaque to version control (a .pptx diff is meaningless), locked to one application, and traps the content. The resolution isn't to argue pixels don't matter — it's to move them to the right layer: the source stays plain text (diffable, greppable, portable), and pixel-perfection is the renderer's job, applied at projection time.
 
 ### Presenter feedback
 
@@ -559,7 +612,7 @@ Show the same corpus rendered several ways.
 
 ### Speaker notes
 
-Four thumbnails of the *same* talk in different renders — the projection point, made visual. ~2 min.
+Four renders of the same source, shown side by side: strict .pptx (conforms to an institutional template — placement, colors, typography follow the template's rules), free-form .pptx (the renderer designs each slide freely), the HTML deck, and its PDF export. Same outline, same content, four presentations — the visual proof of 'the deck is a projection.' Restyling a talk for a new venue is a parameter change, not an editing session.
 
 ### Presenter feedback
 
@@ -580,7 +633,7 @@ Land the payoff on a single number.
 
 ### Speaker notes
 
-The hero metric of the whole talk. Say it, then move to close. ~1 min.
+The unit of accumulation is the subject, not the talk. One repo holds the profile (audience, duration, language — set once), the corpus, the learnings, and every talk's outline for that subject. Renderers can change, semesters roll over, teammates rotate — the base persists because it's plain text in git. 'Per subject' is also the scaling advice: the subject you teach most often compounds fastest.
 
 ### Presenter feedback
 
@@ -604,7 +657,7 @@ Show the compounding across real time.
 
 ### Speaker notes
 
-Dated milestone sequence — this is the emotional payoff of "compounds across classes and co-teachers." ~2 min.
+The compounding mechanics, milestone by milestone: seeding — the first class compiles its sources into corpus records, the one-time cost. Cross-teammate reuse — because the repo is shared, Alice's indexed sources answer Bob's questions without Bob re-reading anything. Learnings — feedback that recurs ('shorter titles', 'always cite the case') is promoted to learnings.md and applied automatically to every future draft. Onboarding — a new teammate clones the repo and inherits the corpus, the rules, and every past decision trail on day one.
 
 ### Presenter feedback
 
@@ -633,7 +686,7 @@ _(divider — no body)_
 
 ### Speaker notes
 
-Quick breath before the live demo. ~15 sec.
+Transition into the hands-on part: everything so far was the model; what follows is the mechanical setup — three commands, then a running session.
 
 ### Presenter feedback
 
@@ -664,7 +717,7 @@ Hi Talksmith
 
 ### Speaker notes
 
-Do this live if there's a projector. `/talksmith:init` writes exactly one file — a thin `CLAUDE.md` stub. Commit and push it; teammates who clone the repo are set up automatically. ~4 min.
+What each command actually does. The two /plugin commands register the marketplace and install the plugin — once per machine; updates arrive with /plugin update. /talksmith:init runs once per subject repo and writes exactly one file: a thin CLAUDE.md stub that loads the Talksmith orchestrator at session start — commit it, and every teammate who clones the repo is set up with zero steps. 'Hi Talksmith' in a fresh session triggers the orchestrator's introduction: it detects existing talks and offers to start or resume.
 
 ### Presenter feedback
 
@@ -691,7 +744,7 @@ The setup as an ordered path, so nobody loses the thread.
 
 ### Speaker notes
 
-Ordered steps — emphasize that steps 1–3 happen once per repo, step 4 every session. ~2 min.
+The scopes are the point of this slide: create the repo once per subject (it's the shared, versioned home for everything the subject accumulates); install the plugin once per machine; initialize once per repo; and only the greeting repeats, once per session. Everything after the greeting is the workflow itself — there is no separate configuration surface to maintain.
 
 ### Presenter feedback
 
@@ -717,7 +770,7 @@ Orient them in the folder they'll be committing to.
 
 ### Speaker notes
 
-Tie back to the thesis: this folder is where the compounding lives. ~3 min.
+What each entry is for. profile.md holds the subject's constants — audience, duration, language — set once and inherited by every talk, so you never re-answer them. learnings.md is the team's editorial taste made executable: standing rules grown from recurring feedback, applied to every future draft. logo.* brands every render (a neutral placeholder if absent). talks/ holds one folder per class — its corpus, images, outline, and outputs. knowledge-library/ is the cross-talk topic index the Global-Librarian curates from finished talks, so material outlives the talk that produced it.
 
 ### Presenter feedback
 
@@ -745,7 +798,7 @@ A check-for-understanding before we walk the workflow.
 
 ### Speaker notes
 
-Let the room vote by hands before the reveal. The "aha" is that even PowerPoint edits flow back to the Markdown. ~2 min.
+Why draft.md is the answer: final.md is derived from it at every Polish, and the rendered deck is derived from final.md — both are projections. Edits made downstream (even in PowerPoint) are reconciled back into draft.md by the reverse pipeline, so truth always flows to the source, never the copy. The wrong answers are instructive: the edited .pptx is the most recent artifact but not the source; final.md is closer but still regenerable. One file is authoritative precisely so that everything else can be safely thrown away.
 
 ### Presenter feedback
 
@@ -768,7 +821,7 @@ Stop rebuilding talks from scratch. Build a knowledge base that compounds, and l
 
 ### Speaker notes
 
-Mirror the opening hook: the blank page is a choice, and you can stop choosing it. ~2 min.
+The three claims, compressed: (1) the durable asset of talk preparation is the knowledge base — sources compiled once, decisions recorded — and the deck is its disposable projection; (2) adoption is deliberately thin — three commands, then everything happens in chat and one Markdown file; (3) the by-products that usually cost extra (audit trail, consistent diagrams, multi-format output) fall out of the model for free.
 
 ### Presenter feedback
 
@@ -791,7 +844,7 @@ One clear next action.
 
 ### Speaker notes
 
-Leave the install command on screen during Q&A. ~10 min buffer. ~1 min to deliver.
+Practical starting advice: pick the subject you teach or present most often — highest repetition means fastest compounding. The first session's real work is seeding the corpus: drop in the papers, notes, and past materials you already have; everything after that gets cheaper. The install command stays on screen for Q&A.
 
 ### Presenter feedback
 
@@ -812,7 +865,7 @@ Build a talk from what you already know.
 
 ### Speaker notes
 
-Full-bleed closing line. Hold it during applause / into Q&A. ~15 sec.
+The thesis in one line: the understanding you already have is the raw material; Talksmith compiles it into a base that every future talk draws from. The blank page was never necessary — it was just the default artifact.
 
 ### Presenter feedback
 

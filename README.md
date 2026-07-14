@@ -53,6 +53,23 @@ Committed examples and canonical shapes for every artifact the workflow produces
 
 The `schemas/` files are *canonical empty forms* — the shape each artifact takes. The `tests/` files are real, filled examples. Open [`style-reference.html`](https://veigap.github.io/talksmith/tests/skills/md-to-deck/style-reference.html) in a browser (Present ▶ for full screen) to see the rendered deck, one slide per template type.
 
+### Presenting the HTML deck
+
+The HTML deliverable is a self-contained [Reveal.js](https://revealjs.com/) app — a single file, works offline. Everything a presenter needs:
+
+| Action | How |
+|---|---|
+| Navigate | `→` `←` `Space` — the URL hash (`#/12`) makes every slide a shareable deep link |
+| Overview | `O` (or `Esc`) — zoomed-out grid of the deck; click a slide to jump |
+| Speaker view | `S` — presenter window with current + next slide, your notes, and a timer (allow the pop-up) |
+| Fullscreen | `F`, or the ⤢ button |
+| Export to PDF | the ⇩ button — opens the print view carrying the active theme/style and fires the print dialog (or open the deck with `?print-pdf` yourself) |
+| Light / dark | the moon button, or force per link with `?deck-theme=dark` |
+| Animations on/off | the rings button — fragments and transitions off for a static read-through |
+| Deck style | the palette button — token-only skins (fonts, colors, background; layout untouched), or per link with `?deck-style=iae` |
+
+The buttons sit top-right, fade in on pointer movement, and never appear in print/PDF.
+
 ## Install
 
 Each presenter installs the plugin once; the **subject repo** — a Git repository shared by the team — is set up once and cloned by everyone who teaches the subject.

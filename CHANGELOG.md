@@ -37,8 +37,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   address bar shares the exact look; defaults clear their param. Opening such a link applies it
   on load.
 
+- **Viewer-actions documentation.** New README section "Presenting the HTML deck" — a compact
+  table of everything a presenter can do (Reveal built-ins: navigation, overview, speaker view,
+  fullscreen, `?print-pdf`; plus the Talksmith button cluster and its `?deck-theme=` /
+  `?deck-style=` URL params). The `talksmith-intro` example talk gained two matching slides
+  ("Presenting the HTML deck: shortcuts / the buttons") in its workflow section.
+
 ### Changed
 
+- **Intro talk: presenter notes are now documentation.** All 29 slide notes in `talksmith-intro`
+  were rewritten to go deep on the concept each slide presents — the mechanism behind the claim,
+  what each number/artifact/command actually is, the trade-offs and the why — so the notes read
+  as the full explanation the slide is a projection of, not stage directions.
 - **Icons now follow the active accent.** Material icons are inlined as `currentColor` and
   tinted by CSS tokens, so the selectable styles (and any future palette change) recolor every
   icon; chip icons stay white on the accent disc.

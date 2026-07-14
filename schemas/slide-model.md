@@ -9,7 +9,7 @@ renderers are then **purely mechanical**: `build_html.py` (HTML / Reveal.js) and
 both **load this JSON and render fields** — no classification, no regex, no `final.md` parsing.
 
 > **Why.** Classification and information-breakdown are semantic judgments. Encoding them as
-> Python regex heuristics (`slide_model.py`) is brittle and never-ending — every deck surfaces a
+> Python regex heuristics (the since-removed `slide_model.py` parser) is brittle and never-ending — every deck surfaces a
 > new edge case. Moving that work to the LLM, against a **fixed per-type field contract**, makes it
 > robust and keeps the renderers deterministic and shared across HTML and PPTX.
 
