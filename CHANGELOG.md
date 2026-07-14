@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.42.0] — 2026-07-13
+
+### Added
+
+- **`schemas/slide-model.md` — the structured slide-model contract.** Defines `slide-model.json`,
+  the intermediate representation between `final.md` and the renderers: a deck object plus one
+  object per slide carrying its `template` and the **fields that template requires** (e.g. `stat`
+  → `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`). Groundwork for
+  moving classification + information-breakdown out of brittle regex (`slide_model.py`) and into an
+  LLM decomposition step in the `md-to-deck` skill, with the HTML and PPTX renderers reading fields
+  mechanically. Schema only in this release; the fill step and renderer rewiring follow.
+
 ## [0.41.0] — 2026-07-13
 
 ### Added
