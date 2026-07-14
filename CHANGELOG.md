@@ -12,6 +12,26 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.43.0] — 2026-07-13
+
+### Changed
+
+- **The HTML render is now model-driven, not parser-driven.** `build_html.py` renders from
+  `slide-model.json` (the LLM-filled structured model — [`schemas/slide-model.md`](schemas/slide-model.md)):
+  `html_style.render_model_slide` maps each slide's fields onto its Jinja template. **All
+  classification and information-breakdown moved out of regex and into the LLM fill step** in the
+  `md-to-deck` skill, which decomposes `final.md` into per-slide `{template, …fields…, notes}`. The
+  same model is the shared IR for the PPTX renderer. The `md-to-deck` skill and the html-strict spec
+  now document the two-step **FILL → RENDER** flow.
+- **New `content+image` `image-top` layout** — image on top, short text below (a model `layout` field).
+
+### Removed
+
+- **The regex classifier/parser is gone** — `slide_model.py` (`_classify`, `_parse_unit`, the metric/
+  anaphora/marker heuristics) and `curate.py` (marker recovery) were deleted; the renderer no longer
+  parses markdown. The brittle per-edge-case heuristics they accreted are superseded by the LLM fill
+  step against a fixed field contract.
+
 ## [0.42.0] — 2026-07-13
 
 ### Added

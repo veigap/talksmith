@@ -1,0 +1,163 @@
+{
+  "deck": {
+    "title": "Talksmith",
+    "institution": "visual test deck",
+    "class": "One slide per template · with edge cases",
+    "presenter": "Talksmith",
+    "date": "2026-07-13",
+    "logo": null,
+    "sections": ["Enumeration templates", "Statement, stat & comparison", "Visual, code & prose", "Frame templates"]
+  },
+  "slides": [
+    { "template": "section-agenda", "title": "Enumeration templates" },
+    { "template": "divider", "title": "A plain sub-opener" },
+
+    { "template": "concept-breakdown", "section": "Enumeration templates",
+      "title": "Concept-breakdown · 3 cards",
+      "cards": [
+        { "label": "Contexto", "body": "Cuánta información dar sin saturar la ventana." },
+        { "label": "Costo", "body": "Menos tokens innecesarios, sin perder lo crítico." },
+        { "label": "Claridad", "body": "Instrucciones sin ambigüedad para reducir errores." }
+      ] },
+    { "template": "concept-breakdown", "section": "Enumeration templates",
+      "title": "Concept-breakdown · 4 cards (2×2), long bodies",
+      "cards": [
+        { "label": "Alucinaciones", "body": "El modelo predice texto plausible; no verifica hechos, así que puede afirmar algo falso con total seguridad." },
+        { "label": "No-determinismo", "body": "El mismo prompt puede producir respuestas distintas entre corridas." },
+        { "label": "Ventana de contexto", "body": "Hay un límite de cuánto texto entra; lo que se sale, se olvida." },
+        { "label": "Sesgo de datos", "body": "Aprende de datos con sesgos y los reproduce si no se los controla." }
+      ] },
+    { "template": "card-row", "section": "Enumeration templates",
+      "title": "Card-row · 3 short cards", "lead": "Tres piezas, una línea cada una:",
+      "cards": [
+        { "label": "Ingesta", "body": "Fuentes crudas al corpus." },
+        { "label": "Composición", "body": "Draft en cards, no bullets." },
+        { "label": "Render", "body": "HTML y PPTX desde el modelo." }
+      ] },
+    { "template": "icon-list", "section": "Enumeration templates",
+      "title": "Icon-list · filas con prosa", "lead": "Cada fila lleva su ícono:",
+      "rows": [
+        { "label": "Clasificá antes de pegar", "body": "Sabé qué nivel de dato estás por mandar." },
+        { "label": "Mínimo privilegio", "body": "Dale a cada herramienta sólo lo que necesita." },
+        { "label": "Verificá la salida", "body": "No confíes ciegamente en lo que devuelve." }
+      ] },
+    { "template": "icon-list", "section": "Enumeration templates",
+      "title": "No hubo hackers",
+      "rows": [
+        { "label": "No hubo malware." },
+        { "label": "No hubo intrusión." },
+        { "label": "El dato salió por la puerta de adelante." }
+      ] },
+    { "template": "process", "section": "Enumeration templates",
+      "title": "Process · 3 steps",
+      "steps": [
+        { "label": "Ingest", "body": "Recolectar y normalizar las fuentes." },
+        { "label": "Compose", "body": "Estructurar el draft en cards." },
+        { "label": "Render", "body": "Generar HTML y PPTX desde el modelo." }
+      ] },
+    { "template": "timeline", "section": "Enumeration templates",
+      "title": "Timeline · hitos",
+      "milestones": [
+        { "label": "Abril 2023", "body": "Samsung habilita ChatGPT a ingeniería." },
+        { "label": "Mayo 2023", "body": "Se detecta la fuga de código interno." },
+        { "label": "2025", "body": "El costo promedio de una brecha llega a USD 4,44M." }
+      ] },
+    { "template": "single-point", "section": "Enumeration templates",
+      "title": "Single-point · un solo beat",
+      "point": { "label": "La regla de oro", "body": "Si no lo pondrías en un mail a toda la empresa, no lo pegues en una IA." } },
+
+    { "template": "section-agenda", "title": "Statement, stat & comparison" },
+
+    { "template": "statement", "section": "Statement, stat & comparison",
+      "title": "Un mensaje corto y contundente", "sub": "que cabe en una sola línea." },
+    { "template": "statement", "section": "Statement, stat & comparison",
+      "title": "Título muy largo que debe envolver con elegancia y seguir leyéndose como una sola afirmación fuerte" },
+    { "template": "stat", "section": "Statement, stat & comparison",
+      "title": "Stat · 3 métricas", "lead": "Lo que esto cuesta, en tres números:",
+      "stats": [
+        { "value": "$4.44M", "caption": "costo promedio global de una brecha (IBM 2025)" },
+        { "value": "$670K", "caption": "extra cuando hay shadow AI" },
+        { "value": "18%", "caption": "de empleados pega datos en herramientas GenAI" }
+      ] },
+    { "template": "big-number", "section": "Statement, stat & comparison",
+      "title": "Big-number · métrica hero", "number": "97%", "caption": "de las brechas con IA fueron en organizaciones sin controles de acceso." },
+    { "template": "comparison", "section": "Statement, stat & comparison",
+      "title": "Comparison · 3 columnas",
+      "columns": [
+        { "header": "Consumo", "cells": ["Datos usados para entrenar", "Sin garantías", "Cuenta personal"] },
+        { "header": "Enterprise", "cells": ["Datos aislados", "Contrato + DPA", "SSO corporativo"] },
+        { "header": "API", "cells": ["Control total", "Sin retención", "Claves rotadas"] }
+      ] },
+    { "template": "comparison", "section": "Statement, stat & comparison",
+      "title": "Comparison · 2 columnas (mito vs realidad)",
+      "columns": [
+        { "header": "Mito", "cells": ["Un ataque siempre viene de afuera", "Hace falta malware"] },
+        { "header": "Realidad", "cells": ["A veces sos vos incumpliendo lo prometido", "El dato sale por la puerta de adelante"] }
+      ] },
+    { "template": "pros-cons", "section": "Statement, stat & comparison",
+      "title": "Pros-cons · consumo vs enterprise",
+      "pros": ["Aislamiento de datos", "Contrato y DPA", "SSO y auditoría"],
+      "cons": ["Datos pueden entrenar el modelo", "Sin garantías contractuales", "Cuenta personal sin control"] },
+    { "template": "quote", "section": "Statement, stat & comparison",
+      "quote": "Una falla de seguridad no siempre tiene un atacante. A veces sos vos incumpliendo lo que prometiste.",
+      "attribution": "tesis de la charla" },
+
+    { "template": "section-agenda", "title": "Visual, code & prose" },
+
+    { "template": "content-image", "section": "Visual, code & prose",
+      "title": "Content + image", "lead": "El pipeline de un vistazo:",
+      "facts": ["Ingesta → Composición → Render", "Un modelo, dos salidas", "HTML y PPTX comparten el mismo JSON"],
+      "image": { "src": "images/pipeline.svg", "alt": "pipeline" } },
+    { "template": "content-image", "section": "Visual, code & prose",
+      "title": "Content + image (imagen arriba, texto corto)", "layout": "image-top",
+      "facts": ["El texto es breve, así que la imagen domina."],
+      "image": { "src": "images/pipeline.svg", "alt": "pipeline" } },
+    { "template": "figures", "section": "Visual, code & prose",
+      "title": "Figures · 3 con diagrama",
+      "figures": [
+        { "image": { "src": "images/pipeline.svg", "alt": "a" }, "label": "Ingesta", "body": "Fuentes al corpus." },
+        { "image": { "src": "images/pipeline.svg", "alt": "b" }, "label": "Composición", "body": "Draft en cards." },
+        { "image": { "src": "images/pipeline.svg", "alt": "c" }, "label": "Render", "body": "HTML y PPTX." }
+      ] },
+    { "template": "image-grid", "section": "Visual, code & prose",
+      "title": "Image-grid · 6 muestras",
+      "images": [
+        { "src": "images/pipeline.svg", "alt": "1" }, { "src": "images/pipeline.svg", "alt": "2" },
+        { "src": "images/pipeline.svg", "alt": "3" }, { "src": "images/pipeline.svg", "alt": "4" },
+        { "src": "images/pipeline.svg", "alt": "5" }, { "src": "images/pipeline.svg", "alt": "6" }
+      ] },
+    { "template": "content+cards+image", "section": "Visual, code & prose",
+      "title": "Content + cards + image",
+      "cards": [
+        { "label": "Determinista", "body": "El render no improvisa." },
+        { "label": "Compartido", "body": "HTML y PPTX, un modelo." }
+      ],
+      "image": { "src": "images/pipeline.svg", "alt": "pipeline" } },
+    { "template": "code-example", "section": "Visual, code & prose",
+      "title": "Code-example · caching",
+      "explanation": ["Marcá el bloque de sistema como cacheable.", "Las corridas siguientes reutilizan el prefijo y bajan el costo."],
+      "language": "python",
+      "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)" },
+    { "template": "callout", "section": "Visual, code & prose",
+      "title": "Callout · analogía",
+      "callout": { "label": "Pensalo así", "body": "Pegar datos en una IA de consumo es como dejar un documento en una fotocopiadora pública." },
+      "tone": "pink" },
+    { "template": "content-text", "section": "Visual, code & prose",
+      "title": "Content-text · último recurso",
+      "big": "A veces sólo hay una afirmación y un par de matices.",
+      "panels": ["No es la forma preferida — es la red de seguridad.", "Si aparece seguido, reestructurá el contenido en cards."] },
+
+    { "template": "section-agenda", "title": "Frame templates" },
+
+    { "template": "closing-hero", "section": "Frame templates", "title": "¿Preguntas?", "body": "Gracias por escuchar." },
+    { "template": "closing-cta", "section": "Frame templates",
+      "title": "Recursos",
+      "items": [
+        { "label": "Fundamentals", "body": "aitutorial.dev/foundations" },
+        { "label": "Structured prompts", "body": "aitutorial.dev/structured" },
+        { "label": "Repo", "body": "github.com/austral/talksmith" }
+      ] },
+    { "template": "fallback", "section": "Frame templates",
+      "title": "Fallback", "big": "Cuando nada matchea, se registra el fallback." }
+  ]
+}

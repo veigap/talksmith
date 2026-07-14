@@ -2,6 +2,7 @@
 .venv
 talks/*/output/
 tests/skills/*/output/
+.icons/
 talks/*/images/.critique/
 __pycache__/
 *.pyc

@@ -19,18 +19,21 @@ For the native-`pptx` styles see [`../pptx-strict/pptx-prompt.md`](../pptx-stric
 
 ## 1. Substrate — the committed code renderer
 
-`build_html.py --talk talks/<Talk>` → a self-contained `output/html/index.html`. Pipeline:
-`convert.py` → per-slide units (`slide_model._parse_unit`) → classify each against the shared
-catalog ([`../slide-templates.md`](../slide-templates.md), `slide_model._classify`) → render the
-matched template's markup (one Jinja template per type, `templates/html/*.j2`) in the strict
-**palette** (`#DA1B2E` accent, pill/callout tints) with **IBM Plex Sans/Mono** (vendored, inlined
-as `@font-face` data-URIs): cards, **per-concept Material Symbols icons** (matched to each concept
-against the live catalog, then fetched by name via
-[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py), recoloured to
-`#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. A §4 **cover slide** is
-prepended from the frontmatter. SVG images embed inline; PNG/JPG as data-URIs. It approximates the
-strict templates' *shapes* in CSS (container-query `cqw` units on a fixed 16:9), not the native
-`.pptx` §7/§8/§9 EMU geometry.
+Two steps: **FILL** then **RENDER**. First an **LLM decomposes `final.md` into `slide-model.json`**
+([`../../../schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)) — per slide it
+picks the `template` against the shared catalog ([`../slide-templates.md`](../slide-templates.md))
+and decomposes the body into that template's required fields (this is the only semantic step).
+Then `build_html.py --talk talks/<Talk>` **renders that model mechanically** → a self-contained
+`output/html/index.html`: `html_style.render_model_slide` maps each slide's fields onto its Jinja
+template (one per type, `templates/html/*.j2`) in the strict **palette** (`#DA1B2E` accent,
+pill/callout tints) with **IBM Plex Sans/Mono** (vendored, inlined as `@font-face` data-URIs):
+cards, **per-concept Material Symbols icons** (matched to each concept against the live catalog,
+fetched by name via [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py),
+recoloured to `#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. The **cover** is
+synthesized from the model's `deck` object. SVG images embed inline; PNG/JPG as data-URIs. There is
+**no markdown parsing or regex classifier in the renderer** — it approximates the strict templates'
+*shapes* in CSS (container-query `cqw` units on a fixed 16:9), not the native `.pptx` §7/§8/§9 EMU
+geometry.
 
 The presentation shell is **[Reveal.js](https://revealjs.com/)** (vendored under
 `skills/md-to-deck/vendor/reveal/`, inlined so the deck stays offline + self-contained). Each
@@ -38,12 +41,6 @@ slide is a Reveal `<section>`; our catalog templates render *inside* them as a c
 theme aligned with the strict tokens. Reveal owns navigation, deck-to-window scaling,
 transitions, overview, speaker notes, and PDF export; the only custom code is a per-slide
 content-fit (scale-to-fill-width + fit-height — the one thing Reveal/CSS can't do).
-
-**Source curation.** `curate.py` deterministically normalizes a `draft.md`/`final.md` in place
-before rendering — repairing authoring defects (today: ordered lists whose `2.`/`3.` markers were
-dropped) without changing wording, so the source stays the single source of truth rather than being
-papered over at render time. Idempotent; run `python3 curate.py talks/<Talk>/draft.md` (`--check`
-to preview).
 
 ## 2. Template-aware + the same shared bar
 

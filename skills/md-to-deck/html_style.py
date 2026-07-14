@@ -9,8 +9,8 @@ callout boxes, code surfaces, and card strips always render.
 
 Public API:
   CSS                                  the theme stylesheet, loaded from templates/html/theme.css
-  render_slide(kind, u, section, cache) render a slide's inner HTML via its template
-  cover_slide(fm) / section_agenda(…)  the cover and per-section agenda slides
+  render_model_slide(slide, cache, ...)  render a slide-model.json slide via its template
+  cover_from_deck(deck) / section_agenda(…)  the cover and per-section roadmap slides
   icon_for(label, body)                concept → Material Symbols name (matched vs the live catalog)
   load_catalog(cache)                  fetch + index the Material Symbols catalog once
   page(body, title, subtitle, mode)    wrap slides into a self-contained Reveal.js document
@@ -25,7 +25,6 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 from icon_fetch import fetch_icon, fetch_catalog  # noqa: E402
-import slide_model as _sm            # noqa: E402  (shared signal regexes, e.g. _METRIC_RE)
 
 ACCENT = "DA1B2E"
 _DEFAULT_ICON = "bolt"
@@ -228,95 +227,6 @@ def _render(tmpl: str, cache, **ctx) -> str:
     return _ENV.get_template(tmpl).render(**ctx)
 
 
-def render_slide(kind, u, section, cache) -> str:
-    """Compute the structured context for a slide, then render its template. All markup lives
-    in templates/html/<kind>.j2; this only decides the template and precomputes derived values."""
-    title, items, body = u.get("title", ""), u.get("items", []), u.get("body", [])
-    images, code = u.get("images", []), u.get("code_lines", [])
-    ctx = dict(section=section, title=title, items=items, body=body, images=images, code=code)
-
-    if kind == "concept-breakdown":
-        n = len(items)
-        ctx["cols"] = 1 if n == 1 else (2 if n in (2, 4) else 3)   # 2→2col · 3→row · 4→2×2 · 5–6→3col
-    elif kind == "process":
-        ctx["labeled"] = any(it.get("label") for it in items)
-    elif kind in ("figures", "image-grid"):
-        kind = "image-grid" if (kind == "image-grid" or not items) else "figures"
-        ctx["figs"] = [(it, images[k] if k < len(images) else ("", None)) for k, it in enumerate(items)]
-    elif kind == "content-image":
-        ctx["lead"] = body[0] if body else ""     # first line leads
-        ctx["facts"] = body[1:]                    # the rest are supporting facts — never dropped
-    elif kind == "comparison":
-        rows = []
-        for ln in body:
-            if ln.count("|") >= 2:
-                cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-                if not all(set(c) <= set("-: ") for c in cells):    # skip the --- rule row
-                    rows.append(cells)
-        if not rows:
-            kind = "fallback"                                       # no real table → fall back
-        ctx["rows"] = rows
-    elif kind in ("single-point", "callout"):
-        ctx["item"] = items[0] if items else {"label": "", "body": (body[0] if body else "")}
-        ctx["tone"] = "blue" if kind == "callout" else "pink"
-        ctx["show_lead"] = kind == "single-point"
-    elif kind == "stat":
-        # Build stat cards: metric-labeled items keep their label/body; a body line carrying a
-        # metric becomes a card (metric = the big number, the rest = its caption). Non-metric
-        # body (a lead like "en tres números:") sits above the cards.
-        cards = [dict(it) for it in items if _sm._METRIC_RE.match((it.get("label") or "").strip())]
-        used = set()
-        for b in body:
-            m = _sm._METRIC_RE.search(b)
-            if m:
-                cards.append({"label": b[m.start():m.end()].strip(" ~"),
-                              "body": (b[:m.start()] + " " + b[m.end():]).strip(" :—–-~")})
-                used.add(b)
-        ctx["items"] = cards or items
-        ctx["cols"] = min(len(ctx["items"]), 4) or 1
-        ctx["lead"] = "" if items else next((b for b in body if b not in used), "")
-    elif kind == "content-text":
-        ctx["big"] = body[0] if body else title
-        ctx["panels"] = [it["label"] + ((": " + it["body"]) if it.get("body") else "") for it in items] \
-            or body[1:]
-    elif kind == "icon-list" and not items and body:
-        # anaphora / plain enumeration → one icon row per line; drop a line that repeats the title
-        tnorm = re.sub(r"[^\w]+", "", title.lower())
-        rows = [b for b in body if re.sub(r"[^\w]+", "", b.lower()) != tnorm] or body
-        ctx["items"] = [{"label": b, "body": ""} for b in rows]
-        ctx["body"] = []                          # the lines are the rows, not a lead
-    elif kind == "divider":
-        no = u.get("_number")
-        ctx["number"] = f"{no:02d}" if isinstance(no, int) else None
-    elif kind == "quote":
-        # body[0] = the quotation; an attribution line (starts with — / – / -) is peeled off
-        qs = [b for b in body] or [title]
-        attr = ""
-        if len(qs) > 1 and re.match(r"^\s*[—–-]\s*\S", qs[-1]):
-            attr = re.sub(r"^\s*[—–-]\s*", "", qs[-1]); qs = qs[:-1]
-        ctx["quote"] = " ".join(qs).strip('"“”«»')
-        ctx["attribution"] = attr
-    elif kind == "timeline":
-        # items: label = date/milestone, body = detail (falls back to plain numbered/labeled items)
-        ctx["items"] = items
-    elif kind == "big-number":
-        ctx["number"] = body[0] if body else title
-        ctx["caption"] = body[1] if len(body) > 1 else ""
-        ctx["more"] = body[2:]
-    elif kind == "pros-cons":
-        ctx["items"] = items          # expect 2: the pro group then the con group
-    elif kind == "agenda":
-        ctx["sections"] = [it["label"] for it in items] or body
-        ctx["active"] = 0
-        ctx["title"] = title or "Agenda"
-
-    if kind == "fallback":
-        ctx["big"] = body[0] if body else ""
-        ctx["points"] = body[1:7] if len(body) > 1 else []
-
-    return _render(_TMPL.get(kind, "fallback.j2"), cache, **ctx)
-
-
 def section_agenda(sections, active: int, heading: str = "") -> str:
     """A section separator that doubles as the roadmap: the ordered section list on the left,
     the current section (big number + title) on the right, others dimmed."""
@@ -356,20 +266,102 @@ def _cover_logo(fm: dict, talk_root) -> str:
     return f'<span class="covlogotext">{_esc(txt)}</span>'
 
 
-def cover_slide(fm: dict, talk_root=None, author_label: str = "Autor:",
-                modified_label: str = "Última modificación:") -> str:
-    """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML.
-    A `presentation:` that crams the title and an institutional line ("Title — Uni, School")
-    is split on the em/en-dash: the first part is the big title, the rest a smaller subtitle."""
-    parts = re.split(r"\s+[—–]\s+", fm.get("presentation", ""), maxsplit=1)
-    title = parts[0].strip()
-    inst = parts[1].strip() if len(parts) > 1 else ""
+def _resolve_img(img, talk_root, asset_dir):
+    """Resolve a model `{src,alt}` image to `(alt, Path|None)` for embed()."""
+    if not img:
+        return ("", None)
+    src, alt = (img.get("src") or ""), (img.get("alt") or "")
+    if not src or src.startswith(("http://", "https://")):
+        return (alt, None)
+    cands = ([asset_dir / src] if asset_dir else []) + ([Path(talk_root) / src] if talk_root else []) + [Path(src)]
+    return (alt, next((c for c in cands if c.is_file()), None))
+
+
+def cover_from_deck(deck: dict, talk_root=None, author_label: str = "Autor:",
+                    modified_label: str = "Última modificación:") -> str:
+    """The contractually-fixed cover, built from the model's `deck` object."""
+    fm = {"logo": deck.get("logo") or "", "class": deck.get("class", ""),
+          "presentation": deck.get("title", "")}
     return _render(
         "cover.j2", None,
-        title=title, inst=inst, cls=fm.get("class", ""),
-        author=fm.get("presenter", ""), date=fm.get("date", ""),
+        title=deck.get("title", ""), inst=deck.get("institution", ""),
+        cls=deck.get("class", ""), author=deck.get("presenter", ""), date=deck.get("date", ""),
         logo=Markup(_cover_logo(fm, talk_root)),
         author_label=author_label, modified_label=modified_label)
+
+
+def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> str:
+    """Render one `slide-model.json` slide: map its template's fields onto the Jinja template's
+    context. All semantics were resolved by the LLM fill step — this is a pure field mapping."""
+    t = slide.get("template", "fallback")
+    ctx = {"section": slide.get("section", ""), "title": slide.get("title", "")}
+    ri = lambda im: _resolve_img(im, talk_root, asset_dir)
+    lead = slide.get("lead", "")
+    if t == "divider":
+        ctx["number"] = slide.get("number")
+    elif t == "statement":
+        ctx["body"] = [slide["sub"]] if slide.get("sub") else []
+    elif t == "concept-breakdown":
+        cards = slide.get("cards", [])
+        ctx["items"] = cards
+        n = len(cards)
+        ctx["cols"] = 1 if n == 1 else (2 if n in (2, 4) else 3)
+    elif t == "card-row":
+        ctx["items"], ctx["body"] = slide.get("cards", []), ([lead] if lead else [])
+    elif t == "icon-list":
+        ctx["items"], ctx["body"] = slide.get("rows", []), ([lead] if lead else [])
+    elif t == "process":
+        steps = slide.get("steps", [])
+        ctx["items"] = steps
+        ctx["labeled"] = any(s.get("label") for s in steps)
+        ctx["body"] = [lead] if lead else []
+    elif t == "figures":
+        ctx["figs"] = [(f, ri(f.get("image"))) for f in slide.get("figures", [])]
+    elif t == "image-grid":
+        ctx["images"] = [ri(i) for i in slide.get("images", [])]
+    elif t == "content-image":
+        ctx["lead"], ctx["facts"] = lead, slide.get("facts", [])
+        ctx["images"] = [ri(slide.get("image"))]
+        ctx["layout"] = slide.get("layout", "text-left")
+    elif t == "content+cards+image":
+        ctx["items"], ctx["images"] = slide.get("cards", []), [ri(slide.get("image"))]
+    elif t == "comparison":
+        cols = slide.get("columns", [])
+        rows = [[c.get("header", "") for c in cols]]
+        maxn = max((len(c.get("cells", [])) for c in cols), default=0)
+        for i in range(maxn):
+            rows.append([(c.get("cells", [])[i] if i < len(c.get("cells", [])) else "") for c in cols])
+        ctx["rows"] = rows
+    elif t == "stat":
+        stats = slide.get("stats", [])
+        ctx["items"] = [{"label": s.get("value", ""), "body": s.get("caption", "")} for s in stats]
+        ctx["cols"], ctx["lead"] = (min(len(stats), 4) or 1), lead
+    elif t == "big-number":
+        ctx["number"], ctx["caption"], ctx["more"] = slide.get("number", ""), slide.get("caption", ""), []
+    elif t == "quote":
+        ctx["quote"], ctx["attribution"] = slide.get("quote", ""), slide.get("attribution", "")
+    elif t == "timeline":
+        ctx["items"] = [{"label": m.get("label", ""), "body": m.get("body", "")} for m in slide.get("milestones", [])]
+    elif t == "pros-cons":
+        ctx["items"] = [{"label": "Ventajas", "body": " · ".join(slide.get("pros", []))},
+                        {"label": "Riesgos", "body": " · ".join(slide.get("cons", []))}]
+    elif t in ("single-point", "callout"):
+        ctx["item"] = slide.get("point") or slide.get("callout") or {"label": "", "body": ""}
+        ctx["tone"] = slide.get("tone", "blue" if t == "callout" else "pink")
+        ctx["show_lead"] = False
+    elif t == "code-example":
+        code = slide.get("code", "")
+        ctx["code"] = code.splitlines() if isinstance(code, str) else code
+        ctx["body"] = slide.get("explanation", [])
+    elif t == "content-text":
+        ctx["big"], ctx["panels"] = slide.get("big", ""), slide.get("panels", [])
+    elif t == "closing-hero":
+        ctx["body"] = [slide["body"]] if slide.get("body") else []
+    elif t == "closing-cta":
+        ctx["items"] = slide.get("items", [])
+    elif t == "fallback":
+        ctx["big"] = slide.get("big", "") or slide.get("title", "")
+    return _render(_TMPL.get(t, "fallback.j2"), cache, **ctx)
 
 
 # The theme stylesheet lives in its own file (static CSS, no interpolation) — read at import,

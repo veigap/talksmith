@@ -41,17 +41,54 @@ After Step 6 (Polish) completes and the presenter picks **Render** from the term
 
 ## Path B — `html-strict` (code render)
 
-The whole render is one committed script, [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py). **Never hand-roll a renderer** — that is the anti-pattern this file exists to prevent.
+`html-strict` runs in **two steps: FILL, then RENDER.** The semantics live in the fill step (an
+LLM decomposition); the render is a mechanical, committed script. **Never hand-roll a renderer, and
+never re-add markdown parsing/classification to the renderer** — that regex path was removed on
+purpose.
+
+**Step 1 — FILL `slide-model.json` (the semantic step, LLM).** Read `final.md` (or `draft.md` for
+the live view) and produce `output/slide-model.json` conforming to
+[`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md): a `deck` object (cover +
+the ordered section list) and one object per slide. For **each** slide you:
+- **classify** it against the catalog [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)
+  (its *Match* rules) — set `template`;
+- **decompose** the body into exactly that template's **required fields** (e.g. `stat` →
+  `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`; `comparison` →
+  `columns:[{header,cells}]`) — splitting a metric from its caption, grouping symmetric blocks into
+  columns, honouring the universal invariant (labeled sets → cards, never bullets);
+- lift every `### Speaker notes` block **verbatim** into `notes` (never onto the slide face), and
+  set `section` to the section the slide belongs to.
+This replaces the old brittle regex classifier — the judgment is the LLM's, against a fixed field
+contract. Write to `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
+
+**Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)
+loads the model and maps each slide's fields onto its Jinja template — no parsing, no classification:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk>          # final.md → deliverable
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft  # draft.md → live view
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk>          # output/slide-model.json → deliverable
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft  # output/slide-model.draft.json → live view
 ```
 
-- **Pipeline.** `convert.py` (drops scaffolding; `--draft` accepts a pre-Polish `draft.md`) → per-slide units → classify each (`slide_model._classify`, `<!-- template: X -->` overrides) → render the matched template's markup from `templates/html/<type>.j2` via `html_style` (cards, per-concept Material Symbols icons matched against the live catalog and inlined by `icon_fetch.py`, callout boxes, code surfaces) → wrap in a vendored, inlined **[Reveal.js](https://revealjs.com/)** shell → one self-contained `output/html/index.html`. Also writes `output/html/template-log.md` and caches icons under `output/html/.icons/`.
-- **Presentation.** Reveal owns navigation (→ / ← / click), deck-to-window scaling, slide overview (`Esc`), transitions, full screen (`F`), **speaker notes** (source `### Speaker notes` → `<aside class="notes">`, shown with `s`), and **PDF export** (open the deck with `?print-pdf`, then Print → Save as PDF). The only custom presentation code is a per-slide content-fit (scale-to-fill-width + fit-height). Fonts are IBM Plex Sans/Mono (vendored, inlined).
-- **Prerequisites.** Python 3 + `jinja2` (`pip install jinja2`); network on the first run (Material Symbols catalog + icon fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a render error, report the live view is unavailable — never fatal.
-- **Critique.** A light **FEEDBACK → surface** loop, ≤ 2 cycles, walking CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION ([`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md)) on the rendered `index.html`. **No CONTROL phase** — no `.pptx` to parse; block-coverage holds by construction (every unit is rendered). The deterministic renderer takes no fix instructions, so findings **surface** to the presenter, who resolves them by editing the source md and re-firing (per the `html-strict` column of [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md)).
+The **same `slide-model.json` is the shared IR for PPTX** — both renderers read fields, so a slide
+looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see Path A.)
+
+- **Render mechanics.** Each template's markup is `templates/html/<type>.j2`, rendered by
+  `html_style.render_model_slide` (cards, per-concept Material Symbols icons matched against the
+  live catalog and inlined by `icon_fetch.py`, callout boxes, code surfaces), wrapped in a
+  vendored, inlined **[Reveal.js](https://revealjs.com/)** shell → one self-contained
+  `output/html/index.html`. Icons cache under `.icons/` (gitignored).
+- **Presentation.** Reveal owns navigation (→ / ← / click), deck-to-window scaling, slide overview
+  (`Esc`), transitions, full screen (`F`), **speaker notes** (`notes` → `<aside class="notes">`,
+  shown with `s`), and **PDF export** (`?print-pdf` → Print → Save as PDF). The only custom code is
+  a per-slide content-fit. A discreet Light/Dark toggle (moon/sun) is top-right. Fonts are IBM Plex
+  Sans/Mono (vendored, inlined).
+- **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
+  fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a
+  render error, report the live view is unavailable — never fatal.
+- **Critique.** A light **FEEDBACK → surface** loop, ≤ 2 cycles, walking CONTENT + TEMPLATE +
+  AESTHETIC + DISTRIBUTION ([`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md))
+  on the rendered `index.html`. A finding is fixed by **re-filling the model** (adjust a slide's
+  template or fields), then re-rendering — the render itself takes no fix instructions.
 
 The rest of this file (Path A) does not apply to `html-strict`.
 

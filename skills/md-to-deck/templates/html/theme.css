@@ -98,6 +98,9 @@
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
+.ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
+.ci.ci-top .citext{align-items:center;text-align:center}
+.ci.ci-top figure,.ci.ci-top img,.ci.ci-top svg{max-height:44cqh;margin:0 auto}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
