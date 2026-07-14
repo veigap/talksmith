@@ -405,6 +405,20 @@ def _fonts_css() -> str:
     return "".join(out)
 
 
+# Runtime theme toggle. `_THEME_EARLY` applies the saved/URL theme before Reveal renders (no
+# flash); `_THEME_SWITCH` wires the Light/Dark buttons, persists the choice, and re-layouts Reveal.
+_THEME_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('deck-theme');"
+                "var t=q||localStorage.getItem('deckTheme')||'light';"
+                "document.documentElement.setAttribute('data-deck-theme',t);}catch(e){}})();")
+_THEME_SWITCH = ("(function(){var root=document.documentElement,box=document.querySelector('.deckthemes');"
+                 "if(!box)return;function set(t){root.setAttribute('data-deck-theme',t);"
+                 "try{localStorage.setItem('deckTheme',t);}catch(e){}"
+                 "Array.prototype.forEach.call(box.querySelectorAll('button'),function(b){b.classList.toggle('on',b.dataset.t===t);});"
+                 "if(window.Reveal&&Reveal.layout)Reveal.layout();}"
+                 "set(root.getAttribute('data-deck-theme')||'light');"
+                 "box.addEventListener('click',function(e){var b=e.target.closest('button');if(b)set(b.dataset.t);});})();")
+
+
 def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
     """Assemble the full self-contained Reveal.js deck: vendored CSS/JS inlined, our theme
     layered on top, slides as <section>s. Presentation, navigation, scaling, transitions,
@@ -419,8 +433,12 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<style>{_fonts_css()}</style>\n'
         f'<style>{reveal_css}</style>\n'
         f'<style>{CSS}</style>\n'
+        f'<script>{_THEME_EARLY}</script>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
+        '<div class="deckthemes" role="group" aria-label="Theme">'
+        '<button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>\n'
         f'<script>{reveal_js}</script>\n'
         f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
+        f'<script>{_THEME_SWITCH}</script>\n'
     )

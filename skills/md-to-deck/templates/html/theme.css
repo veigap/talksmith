@@ -1,10 +1,11 @@
 :root{--red:#DA1B2E;--pill:#F9D2D6;--call-pink:#F7BBC1;--call-blue:#B8E6F5;--card:#F2EEEE;
 --ink:#1F1E1E;--body:#3B3535;--code-bg:#F2F2F2;--kw:#D73A49;--st:#005CC5;--cm:#6A737D;--slide:#fff;
+--chip-ink:#1F1E1E;
 --page:#E8E4E1;--panel:#FBFAF9;--fi:#2A2626;--fm:#6E6663;--hair:#D8D2CE;
 --sans:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono","Courier New",ui-monospace,monospace;}
-@media(prefers-color-scheme:dark){:root{--page:#191615;--panel:#221E1D;--fi:#EFEAE7;--fm:#A69D98;--hair:#332D2B;}}
-:root[data-theme=light]{--page:#E8E4E1;--panel:#FBFAF9;--fi:#2A2626;--fm:#6E6663;--hair:#D8D2CE;}
-:root[data-theme=dark]{--page:#191615;--panel:#221E1D;--fi:#EFEAE7;--fm:#A69D98;--hair:#332D2B;}
+/* selectable deck theme (runtime toggle) — a token override; every component reads the tokens */
+:root[data-deck-theme=dark]{--slide:#18181c;--ink:#F4F2F0;--body:#C7C2BE;--card:#26262c;--code-bg:#1e1e24;
+--page:#0c0c0e;--panel:#1c1c22;--fi:#F4F2F0;--fm:#9a938e;--hair:#2c2c33;--st:#79B8FF;--cm:#8a929c;--kw:#FF7B72;}
 *{box-sizing:border-box}html,body{margin:0;background:var(--page)}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
@@ -24,7 +25,7 @@
 .cbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden}
 .cfit{width:100%;transform-origin:top left;display:flex;flex-direction:column;gap:3cqw}
 .cfit>*{margin-top:0!important;margin-bottom:0!important}
-.pill{align-self:flex-start;background:var(--pill);color:var(--ink);font-weight:700;font-size:1.8cqw;letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.4cqw;border-radius:.7cqw}
+.pill{align-self:flex-start;background:var(--pill);color:var(--chip-ink);font-weight:700;font-size:1.8cqw;letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.4cqw;border-radius:.7cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:2.4cqw 0 0;line-height:1.08;text-wrap:balance}
 .stitle.ag{font-size:5cqw}.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
 .ic{display:block}.ic svg{width:100%;height:100%;display:block}
@@ -59,7 +60,7 @@
 .callout{display:flex;gap:2cqw;align-items:flex-start;border-radius:2cqw;padding:2.4cqw 2.8cqw;margin-top:2.6cqw}
 .callout.pink{background:var(--call-pink)}.callout.blue{background:var(--call-blue)}
 .callout .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto}.callout p{margin:0;font-size:2.6cqw;color:#000;line-height:1.35}
-.callout.blue p{color:var(--ink)}.callout b{font-weight:800}.fig{color:var(--red);font-weight:800}
+.callout.blue p{color:var(--chip-ink)}.callout b{font-weight:800}.fig{color:var(--red);font-weight:800}
 .cards{display:grid;gap:2.2cqw;margin-top:auto}.cards.c1{grid-template-columns:1fr}.cards.c2{grid-template-columns:1fr 1fr}.cards.c3{grid-template-columns:repeat(3,1fr)}
 .ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .ccard .ic{width:5.8cqw;height:5.8cqw}.ccard h3{margin:0;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
@@ -72,7 +73,7 @@
 .ilrow{display:flex;gap:2.4cqw;align-items:flex-start}.ilrow .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto;margin-top:.4cqw}
 .ilrow h4{margin:0 0 .6cqw;font-size:2.9cqw;font-weight:800;color:var(--ink)}.ilrow p{margin:0;font-size:2.4cqw;color:var(--body);line-height:1.3}
 .numrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
-.ncard{background:#fff;border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}
+.ncard{background:var(--slide);border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}
 .ncard .strip{background:var(--card);width:6cqw;display:grid;place-items:center;font-weight:800;color:var(--body);font-size:3.2cqw;flex:0 0 auto}
 .ncard .nbody{padding:2.2cqw}.ncard h4{margin:0 0 .8cqw;font-size:2.7cqw;color:var(--ink);font-weight:800}.ncard p{margin:0;font-size:2.15cqw;color:var(--body);line-height:1.3}
 /* plain numbered steps (no per-step label) — a vertical numbered list */
@@ -97,7 +98,7 @@
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
-.codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:#000;overflow:hidden}
+.codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}
 .codebox .kw{color:var(--kw)}.codebox .st{color:var(--st)}.codebox .cm{color:var(--cm)}
 .ctext{margin:auto 0}.big2{font-size:4cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;text-wrap:balance}
 /* fallback / lead+points — a lead statement + accented point panels (never plain paragraphs) */
@@ -129,3 +130,9 @@
 .pccol p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.35}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
+/* runtime theme switcher — small control, hidden in PDF export */
+.deckthemes{position:fixed;top:12px;right:14px;z-index:60;display:flex;gap:4px;background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:3px;font-family:var(--sans)}
+.deckthemes button{font:600 12px var(--sans);border:0;border-radius:6px;padding:5px 10px;background:transparent;color:var(--fm);cursor:pointer}
+.deckthemes button.on{background:var(--red);color:#fff}
+.reveal.print-pdf ~ .deckthemes,html.print-pdf .deckthemes{display:none}
+@media print{.deckthemes{display:none}}

@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.38.0] — 2026-07-13
+
+### Added
+
+- **Runtime Light / Dark theme toggle** in the HTML deck — a switcher (top-right, persisted in
+  `localStorage`, also `?deck-theme=dark`). Themes are token overrides on our own component CSS
+  (Reveal's stock themes don't restyle our cards/callouts), so a new theme is a
+  `:root[data-deck-theme="<name>"]` block in `theme.css` + a button. Made pill/callout/code/card
+  colors theme-aware so the dark theme reads correctly.
+
 ## [0.37.0] — 2026-07-13
 
 ### Fixed

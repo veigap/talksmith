@@ -62,8 +62,13 @@ out of the box:
 - **PDF export** — open the deck with `?print-pdf` appended to the URL, then Print → Save as
   PDF (one slide per page). Good for handouts.
 - **Transitions** — a subtle slide transition between steps.
+- **Theme toggle** — a **Light / Dark** switcher (top-right, persisted in `localStorage`, also
+  settable with `?deck-theme=dark`). Themes are **token overrides** on our own component CSS —
+  not Reveal's stock themes (those style Reveal's default markup, not our cards/callouts). Add a
+  theme by defining a `:root[data-deck-theme="<name>"]` token block in `templates/html/theme.css`
+  and a button in `page()`. Light is the default.
 
-Slides are white by design.
+Slides default to white (Light theme).
 
 ## 4. Render flow
 
