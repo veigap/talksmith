@@ -12,6 +12,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.36.0] — 2026-07-13
+
+### Changed
+
+- **`md-to-deck/SKILL.md` fully rewritten** so the three render modes are peers: **Path A —
+  native `.pptx`** (`pptx-strict`/`pptx-free-form`, via the official pptx skill, Cowork-only) and
+  **Path B — `html-strict`** (code-rendered HTML/Reveal.js, Cowork-independent). Consolidated the
+  audit suite into one CONTROL list (marking floor vs strict-only), fixed all remaining stale IDs,
+  removed the preview/incremental-cache leftovers and the pptx-only framing at the top; 431 → 220
+  lines. Orchestrator section references realigned.
+
 ## [0.35.1] — 2026-07-13
 
 ### Fixed
