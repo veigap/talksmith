@@ -16,8 +16,8 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ### Changed
 
-- **The section pill on content slides is 30% smaller** (`1.8cqw` → `1.26cqw`) — the section label
-  above each slide's title reads as a quieter, more subordinate tag.
+- **The section pill on content slides is 30% smaller and sits closer to the title** (`1.8cqw` →
+  `1.26cqw`; title top margin `2.4cqw` → `1.1cqw`) — a quieter section tag tight above the title.
 
 ## [0.45.2] — 2026-07-13
 
