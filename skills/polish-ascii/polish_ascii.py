@@ -524,10 +524,15 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         if not lines[start_idx].lstrip().startswith("```") or lines[end_idx].strip() != "```":
             print(f"error: stale plan — {b['slide_id']} line {start_idx + 1} no longer opens an ASCII fence; re-run `scan` (final.md changed since the plan was captured)", file=sys.stderr)
             raise SystemExit(3)
+        # Neutralize any `-->` inside the ASCII so it can't close the `<!-- ascii-source: … -->`
+        # comment early (which would leak the rest of the diagram into the visible body, and throw
+        # off the doc-only comment-range scan). The `.ascii` sidecar keeps the exact source; this
+        # echo is provenance for whoever reads final.md, so an escaped arrow is fine.
+        source_lines = [ln.replace("-->", "--&gt;") for ln in b["ascii"]["payload"].splitlines()]
         rewrite_lines = [
             f"![{alt}](images/{svg_basename})",
             "<!-- ascii-source:",
-            *b["ascii"]["payload"].splitlines(),
+            *source_lines,
             "-->",
         ]
         lines[start_idx:end_idx + 1] = rewrite_lines
@@ -649,18 +654,40 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         print("error: plan missing 'final_path' field — re-run `scan` to regenerate", file=sys.stderr)
         return 2
     final_path = Path(final_path_str).resolve()
+    # A plan carries absolute paths captured at `scan` time. If final.md isn't where the plan says,
+    # the plan is stale or from a different session/mount — fail loudly instead of emitting args
+    # that point at a path that no longer exists.
+    if not final_path.exists():
+        print(f"error: plan's final.md not found: {final_path} — the plan is stale or from a different "
+              f"session/mount; re-run `scan` in this session", file=sys.stderr)
+        return 2
     images_dir = (final_path.parent / "images").resolve()
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     repo_root = Path(args.repo_root).resolve() if args.repo_root else None
 
+    # Pre-flight: every renderable block needs its `.ascii` sidecar (written by `extract`). Check them
+    # all before writing any args, so a missing sidecar is a loud precondition error — never a silent
+    # args file pointing at a file that isn't there.
+    renderables = [b for b in plan.get("blocks", [])
+                   if not b.get("documentation_only") and b.get("render")]
+    skipped = len(plan.get("blocks", [])) - len(renderables)
+
+    def _stem(b: dict) -> str:
+        bn = b["render"]["svg_basename"]
+        return (bn if bn.endswith(".svg") else f"{bn}.svg")[:-4]
+
+    missing = [(b.get("slide_id", ""), images_dir / f"{_stem(b)}.ascii")
+               for b in renderables if not (images_dir / f"{_stem(b)}.ascii").exists()]
+    if missing:
+        print("error: missing .ascii sidecar(s) — run `extract` before `prepare-render-args`:", file=sys.stderr)
+        for sid, p in missing:
+            print(f"  {sid} → {p}", file=sys.stderr)
+        return 2
+
     written = 0
-    skipped = 0
-    for b in plan.get("blocks", []):
+    for b in renderables:
         sid = b.get("slide_id", "")
-        if b.get("documentation_only") or not b.get("render"):
-            skipped += 1
-            continue
         basename = b["render"]["svg_basename"]
         if not basename.endswith(".svg"):
             basename = f"{basename}.svg"

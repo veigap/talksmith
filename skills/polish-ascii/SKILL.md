@@ -185,6 +185,8 @@ For each block with `render` non-null:
    <ascii.payload>
    -->
    ```
+   Any `-->` inside `<ascii.payload>` (e.g. `A --> B` arrows) is escaped to `--&gt;` in the echo, so it can't close the `<!-- ascii-source: … -->` comment early and leak the rest of the diagram into the visible body. The `.ascii` sidecar keeps the exact, un-escaped source; this echo is provenance only.
+
    Do **not** modify the note region (lines `note.start_line` … `note.end_line`). It stays where it was, directly after the new image reference + `ascii-source` echo.
 
 Blocks are processed bottom-up so line numbers stay valid through the pass. The skill writes `final.md` atomically (write to `.tmp`, then `os.replace`). `draft.md` is **never** touched.
@@ -201,5 +203,5 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 ## Exit codes
 
 - `0` — success.
-- `2` — malformed input (missing file, plan JSON missing required fields, line numbers out of range).
+- `2` — malformed input (missing file, plan JSON missing required fields, line numbers out of range). Also `prepare-render-args` when the plan's `final.md` is absent (stale plan / different session mount) or a renderable block's `.ascii` sidecar is missing (run `extract` first) — it validates both up front and writes **no** args on failure, rather than silently emitting args that point at nothing.
 - `3` — `cleanup` / `apply` aborted on a **stale plan**: `final.md` changed since `scan`, so a block's recorded line numbers no longer bracket an ASCII fence. Nothing is written (the guard runs before the single atomic write). Re-run `scan` and redo the annotate/extract/cleanup pass.

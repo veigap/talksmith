@@ -14,6 +14,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ## [0.54.0] — 2026-07-14
 
+### Fixed
+
+- **Polish no longer leaks ASCII into the slide body when a diagram uses `-->` arrows.** The
+  `ascii-source` provenance echo spliced the raw ASCII into an `<!-- … -->` HTML comment, so the
+  first `-->` in the art (e.g. `A --> B`) closed the comment early and the rest showed as visible
+  text. `polish-ascii` `cleanup`/`apply` now escapes `-->` to `--&gt;` in the echo (the `.ascii`
+  sidecar keeps the exact source). Reproduced on every Polish run before this.
+- **`polish-ascii prepare-render-args` fails loud instead of emitting invalid render args.** It now
+  validates that the plan's `final.md` exists (catches a stale plan carrying paths from a previous
+  session/mount) and that every renderable block's `.ascii` sidecar is present (catches a skipped
+  `extract`), erroring (exit 2) with the offending paths and writing **no** args, rather than
+  silently fanning out inputs that point at nothing.
+
 ### Changed
 
 - **`/talksmith:init` now also writes a `.gitignore`.** Alongside the `CLAUDE.md` stub, it appends a
