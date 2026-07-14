@@ -1,0 +1,9 @@
+/* deck style "terminal" — token overrides only (fonts + palette + background); layout never
+   changes because every component reads the tokens. Light set + dark override so the
+   light/dark toggle composes. Discovered by build: drop a <name>.css here to add a style. */
+:root[data-deck-style=terminal]{--red:#0B8457;--pill:#CDEBDA;--call-pink:#D8EFE2;--call-blue:#CBE8EE;--card:#EDF3EE;
+--ink:#14211A;--body:#39493F;--code-bg:#E7F0E9;--slide:#FAFDFB;--chip-ink:#14211A;
+--page:#E1E9E3;--panel:#F2F7F3;--fi:#1B2A21;--fm:#5F7367;--hair:#C8D6CC;
+--sans:"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;--mono:"SF Mono",Menlo,Consolas,monospace;}
+:root[data-deck-style=terminal][data-deck-theme=dark]{--red:#2ECC8F;--slide:#101613;--ink:#DCEDE2;--body:#A6BCAD;--card:#1B2620;--code-bg:#16211B;
+--page:#090D0B;--panel:#141D18;--fi:#DCEDE2;--fm:#7E9486;--hair:#26332C;}

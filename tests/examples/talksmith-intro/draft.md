@@ -347,9 +347,9 @@ The differentiator: feedback is applied *and* kept forever — and it's about co
 
 You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you review again, until the talk is right.
 
-- **1 · Leave feedback** Drop plain-text bullets right in `draft.md`, under each slide's `### Presenter feedback` — as many as you want, in any editor.
-- **2 · Talksmith applies** It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail.
-- **3 · Review and repeat** Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say "final".
+1. **Leave feedback** Drop plain-text bullets right in `draft.md`, under each slide's `### Presenter feedback` — as many as you want, in any editor.
+2. **Talksmith applies** It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail.
+3. **Review and repeat** Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say "final".
 
 **Important:** Every round is about the **content**, not how it looks — visuals and styling come later at Polish.
 

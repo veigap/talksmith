@@ -1,0 +1,9 @@
+/* deck style "editorial" — token overrides only (fonts + palette + background); layout never
+   changes because every component reads the tokens. Light set + dark override so the
+   light/dark toggle composes. Discovered by build: drop a <name>.css here to add a style. */
+:root[data-deck-style=editorial]{--red:#9C3A2E;--pill:#F0DCC4;--call-pink:#EFCDB6;--call-blue:#CEDFDA;--card:#F1EAE0;
+--ink:#241F1B;--body:#4C433B;--code-bg:#F0EAE0;--slide:#FBF6EC;--chip-ink:#241F1B;
+--page:#E8E0D2;--panel:#F5EFE3;--fi:#2B2621;--fm:#7C7062;--hair:#D8CDBB;
+--sans:Charter,Georgia,"Times New Roman",serif;--mono:"Courier New",Courier,monospace;}
+:root[data-deck-style=editorial][data-deck-theme=dark]{--slide:#201B16;--ink:#F2ECDF;--body:#CCC1AF;--card:#2E2720;--code-bg:#292218;
+--page:#141110;--panel:#241E18;--fi:#F2ECDF;--fm:#9A8C79;--hair:#3B332A;}

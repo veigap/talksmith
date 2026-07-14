@@ -18,6 +18,7 @@ Public API:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -166,13 +167,14 @@ def icon_for(label: str, body: str = "") -> str:
     return _DEFAULT_ICON
 
 
-def _svg(name: str, cache, white: bool = False):
+def _svg(name: str, cache):
     p = fetch_icon(name, cache, color=ACCENT)
     if not p:
-        return '<svg viewBox="0 -960 960 960"><circle cx="480" cy="-480" r="360" fill="#DA1B2E"/></svg>'
+        return '<svg viewBox="0 -960 960 960"><circle cx="480" cy="-480" r="360" fill="currentColor"/></svg>'
     s = p.read_text()
-    if white:
-        s = s.replace(f'fill="#{ACCENT}"', 'fill="#FFFFFF"', 1)
+    # inline as currentColor so CSS drives the tint (accent token via .ic, white inside .chip)
+    # and the selectable deck styles recolor every icon without re-fetching
+    s = s.replace(f'fill="#{ACCENT}"', 'fill="currentColor"', 1)
     s = re.sub(r'\swidth="\d+"', '', s, 1)
     s = re.sub(r'\sheight="\d+"', '', s, 1)
     return s
@@ -183,7 +185,7 @@ def icon(name, cache):
 
 
 def chip(name, cache):
-    return f'<span class="chip">{_svg(name, cache, white=True)}</span>'
+    return f'<span class="chip">{_svg(name, cache)}</span>'
 
 
 def _esc(s: str) -> str:
@@ -545,6 +547,8 @@ _FONT_FACES = [
     ("IBM Plex Sans", 600, "plex-sans-600.woff2"),
     ("IBM Plex Sans", 700, "plex-sans-700.woff2"),
     ("IBM Plex Mono", 500, "plex-mono-500.woff2"),
+    # variable font (weight range) for the `business` deck style — OFL, latin subset
+    ("Montserrat", "100 900", "montserrat-var.woff2"),
 ]
 
 
@@ -567,9 +571,15 @@ def _fonts_css() -> str:
 _THEME_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('deck-theme');"
                 "var t=q||localStorage.getItem('deckTheme')||'light';"
                 "document.documentElement.setAttribute('data-deck-theme',t);}catch(e){}})();")
+# On selection the choice is also written into the URL (history.replaceState), so copying the
+# address bar shares the exact look; defaults (light / default style) clear their param.
+_URL_SYNC = ("window.deckUrlSync=function(k,v,d){try{var u=new URL(location);"
+             "if(v===d)u.searchParams.delete(k);else u.searchParams.set(k,v);"
+             "history.replaceState(null,'',u);}catch(e){}};")
 _THEME_SWITCH = ("(function(){var root=document.documentElement,btn=document.querySelector('[data-deck-toggle]');"
                  "if(!btn)return;function set(t){root.setAttribute('data-deck-theme',t);"
                  "try{localStorage.setItem('deckTheme',t);}catch(e){}"
+                 "deckUrlSync('deck-theme',t,'light');"
                  "if(window.Reveal&&Reveal.layout)Reveal.layout();}"
                  "btn.addEventListener('click',function(){"
                  "set(root.getAttribute('data-deck-theme')==='dark'?'light':'dark');});})();")
@@ -607,6 +617,82 @@ _ANIM_ICONS = (
     'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/>'
     '<circle cx="15" cy="15" r="6"/><line x1="3" y1="21" x2="21" y2="3"/></svg>')
 
+# PDF export — opens the deck's Reveal `?print-pdf` view in a new tab (carrying the current
+# theme so the export matches what's on screen) where `_PDF_AUTOPRINT` fires the browser's
+# print dialog once Reveal signals `pdf-ready`; the presenting tab is left untouched.
+_PDF_SWITCH = ("(function(){var btn=document.querySelector('[data-deck-pdf]');"
+               "if(!btn)return;btn.addEventListener('click',function(){"
+               "var t=document.documentElement.getAttribute('data-deck-theme')||'light';"
+               "var s=document.documentElement.getAttribute('data-deck-style');"
+               "var u=location.pathname+'?print-pdf&deck-theme='+t+(s?'&deck-style='+s:'');"
+               "var w=window.open(u,'_blank');if(!w)location.href=u;});})();")
+_PDF_AUTOPRINT = ("(function(){if(!/print-pdf/.test(location.search))return;"
+                  "if(window.Reveal&&Reveal.on)Reveal.on('pdf-ready',function(){"
+                  "setTimeout(function(){window.print();},200);});})();")
+# a document sheet with a down arrow.
+_PDF_ICON = (
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/>'
+    '<path d="M14 3v5h5"/><path d="M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>')
+
+# Fullscreen — the Fullscreen API on the whole document (same as Reveal's built-in `F` shortcut,
+# which stays available); the enter/exit icon swap is pure CSS via `:root:fullscreen`.
+_FULL_SWITCH = ("(function(){var btn=document.querySelector('[data-deck-full]');"
+                "if(!btn)return;btn.addEventListener('click',function(){"
+                "if(document.fullscreenElement){document.exitFullscreen();}"
+                "else{document.documentElement.requestFullscreen();}});})();")
+# expand arrows (enter) / collapse arrows (exit).
+_FULL_ICONS = (
+    '<svg class="ic-fs-in" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>'
+    '<svg class="ic-fs-out" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>')
+
+# Runtime style cycler — deck-wide font/color/background skins. Each style is its own CSS file
+# under templates/html/styles/<name>.css (a `:root[data-deck-style=…]` token-override block plus
+# its dark variant), discovered here and inlined by page() — add a style by adding a file.
+# Layout is untouched because every component reads the tokens. Same contract as the theme
+# toggle: `?deck-style=` URL param, localStorage, button. Cycle order = sorted filenames.
+_STYLES_DIR = _HERE / "templates" / "html" / "styles"
+_STYLE_FILES = sorted(_STYLES_DIR.glob("*.css")) if _STYLES_DIR.is_dir() else []
+STYLE_CSS = "\n".join(p.read_text(encoding="utf-8") for p in _STYLE_FILES)
+_STYLES = ["default"] + [p.stem for p in _STYLE_FILES]
+_STYLE_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('deck-style');"
+                "var s=q||localStorage.getItem('deckStyle')||'default';"
+                "if(s!=='default')document.documentElement.setAttribute('data-deck-style',s);}catch(e){}})();")
+# The style is *selected* from a small popover (one entry per discovered style, "default" =
+# reset) and then stays — no cycling, so a stray click never changes the look.
+_STYLE_SWITCH = ("(function(){var L=" + json.dumps(_STYLES) + ";"
+                 "var root=document.documentElement,btn=document.querySelector('[data-deck-style-toggle]');"
+                 "if(!btn)return;"
+                 "var menu=document.createElement('div');menu.className='deckstylemenu';"
+                 "L.forEach(function(s){var it=document.createElement('button');it.type='button';"
+                 "it.className='dsitem';it.textContent=s;it.setAttribute('data-style',s);"
+                 "it.addEventListener('click',function(e){e.stopPropagation();set(s);close();});"
+                 "menu.appendChild(it);});document.body.appendChild(menu);"
+                 "function mark(){var cur=root.getAttribute('data-deck-style')||'default';"
+                 "menu.querySelectorAll('.dsitem').forEach(function(it){"
+                 "it.classList.toggle('on',it.getAttribute('data-style')===cur);});"
+                 "btn.title='Style: '+cur;}"
+                 "function set(s){if(s==='default')root.removeAttribute('data-deck-style');"
+                 "else root.setAttribute('data-deck-style',s);"
+                 "try{localStorage.setItem('deckStyle',s);}catch(e){}"
+                 "deckUrlSync('deck-style',s,'default');"
+                 "mark();if(window.Reveal&&Reveal.layout)Reveal.layout();}"
+                 "function close(){menu.classList.remove('open');}"
+                 "btn.addEventListener('click',function(e){e.stopPropagation();mark();"
+                 "menu.classList.toggle('open');});"
+                 "document.addEventListener('click',close);mark();})();")
+# a painter's palette.
+_STYLE_ICON = (
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M12 3a9 9 0 1 0 0 18 3 3 0 0 0 2.2-5 3 3 0 0 1 2.2-5H19a2 2 0 0 0 2-2c0-3.5-4-6-9-6z"/>'
+    '<circle cx="7.5" cy="10.5" r=".8"/><circle cx="12" cy="7.5" r=".8"/><circle cx="16.5" cy="10" r=".8"/></svg>')
+
 
 def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
     """Assemble the full self-contained Reveal.js deck: vendored CSS/JS inlined, our theme
@@ -622,17 +708,30 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<style>{_fonts_css()}</style>\n'
         f'<style>{reveal_css}</style>\n'
         f'<style>{CSS}</style>\n'
+        f'<style>{STYLE_CSS}</style>\n'
         f'<script>{_THEME_EARLY}</script>\n'
         f'<script>{_ANIM_EARLY}</script>\n'
+        f'<script>{_STYLE_EARLY}</script>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
         f'<button class="deckanim" data-deck-anim-toggle type="button" '
         f'aria-label="Toggle animations" title="Animations">{_ANIM_ICONS}</button>\n'
+        f'<button class="deckpdf" data-deck-pdf type="button" '
+        f'aria-label="Export to PDF" title="Export to PDF">{_PDF_ICON}</button>\n'
+        f'<button class="deckfull" data-deck-full type="button" '
+        f'aria-label="Toggle fullscreen" title="Fullscreen">{_FULL_ICONS}</button>\n'
+        f'<button class="deckstyle" data-deck-style-toggle type="button" '
+        f'aria-label="Cycle deck style" title="Style">{_STYLE_ICON}</button>\n'
         f'<button class="deckthemes" data-deck-toggle type="button" '
         f'aria-label="Alternar tema claro / oscuro" title="Tema claro / oscuro">{_THEME_ICONS}</button>\n'
         f'<script>{reveal_js}</script>\n'
         f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
+        f'<script>{_URL_SYNC}</script>\n'
         f'<script>{_THEME_SWITCH}</script>\n'
         f'<script>{_ANIM_SWITCH}</script>\n'
+        f'<script>{_PDF_SWITCH}</script>\n'
+        f'<script>{_PDF_AUTOPRINT}</script>\n'
+        f'<script>{_FULL_SWITCH}</script>\n'
+        f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
     )

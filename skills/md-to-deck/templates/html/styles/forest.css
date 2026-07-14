@@ -1,0 +1,9 @@
+/* deck style "forest" — token overrides only (fonts + palette + background); layout never
+   changes because every component reads the tokens. Light set + dark override so the
+   light/dark toggle composes. Discovered by build: drop a <name>.css here to add a style. */
+:root[data-deck-style=forest]{--red:#3E6B34;--pill:#DCE8CF;--call-pink:#E6E9C8;--call-blue:#CFE4D6;--card:#EDEFE3;
+--ink:#1F241A;--body:#454D3B;--code-bg:#EAEDDD;--slide:#FCFCF5;--chip-ink:#1F241A;
+--page:#E4E5D6;--panel:#F3F4E9;--fi:#272E20;--fm:#6D755E;--hair:#CFD3BD;
+--sans:"Gill Sans","Trebuchet MS",Verdana,sans-serif;--mono:"Courier New",ui-monospace,monospace;}
+:root[data-deck-style=forest][data-deck-theme=dark]{--red:#8FBF6A;--slide:#151A11;--ink:#EAEEDD;--body:#B8BFA6;--card:#232A1C;--code-bg:#1D2417;
+--page:#0B0E08;--panel:#1A2014;--fi:#EAEEDD;--fm:#8B937A;--hair:#2F3826;}

@@ -12,6 +12,41 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.53.0] — 2026-07-14
+
+### Added
+
+- **HTML deck: PDF export button.** New button in the top-right chrome (below the animations
+  toggle) that opens the deck's Reveal `?print-pdf` view in a new tab — carrying the active
+  theme and style — and auto-opens the browser's print dialog once Reveal signals the print
+  layout is ready ("Save as PDF" from there). Falls back to same-tab navigation when pop-ups
+  are blocked.
+- **HTML deck: fullscreen button.** Below the PDF button; toggles the Fullscreen API on the
+  whole document (Reveal's `F` shortcut still works), with a pure-CSS enter/exit icon swap.
+- **HTML deck: six selectable styles.** `editorial` (serif, warm paper), `terminal`
+  (monospace, green), `ocean` (Avenir, blue), `forest` (Gill Sans, green on warm paper),
+  `sunset` (Futura, orange), and `business` — a corporate business-school look (inspired by
+  iae.edu.ar): royal blue #1724A9 on clean white surfaces and **Montserrat**, vendored as an
+  OFL variable woff2 so the deck stays self-contained — token-only overrides of fonts,
+  colors, and backgrounds; layout
+  is untouched. Each composes with the light/dark toggle. **Each style is its own CSS file**
+  under `templates/html/styles/<name>.css`, discovered and inlined at build — add a style by
+  adding a file. Selected from a small **picker popover** on the palette button (one entry per
+  style, "default" resets) — a deliberate choice that sticks; no accidental cycling. **Selecting
+  a style or theme also writes it into the URL** (`?deck-style=…&deck-theme=…`), so copying the
+  address bar shares the exact look; defaults clear their param. Opening such a link applies it
+  on load.
+
+### Changed
+
+- **Icons now follow the active accent.** Material icons are inlined as `currentColor` and
+  tinted by CSS tokens, so the selectable styles (and any future palette change) recolor every
+  icon; chip icons stay white on the accent disc.
+- **Example talk: "Review is a loop" now renders as numbered steps.** Converted to the `process`
+  template — real numbered chips (1/2/3) for the three feedback rounds — alongside the loop
+  diagram, using process's new optional image slot. (The style reference still exercises both
+  process variants; nothing was dropped.)
+
 ## [0.52.2] — 2026-07-14
 
 ### Changed

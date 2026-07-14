@@ -1,0 +1,9 @@
+/* deck style "ocean" — token overrides only (fonts + palette + background); layout never
+   changes because every component reads the tokens. Light set + dark override so the
+   light/dark toggle composes. Discovered by build: drop a <name>.css here to add a style. */
+:root[data-deck-style=ocean]{--red:#0B6BCB;--pill:#CFE4F9;--call-pink:#D8E7F8;--call-blue:#C4E9F2;--card:#EBF1F7;
+--ink:#12222F;--body:#3A4C5C;--code-bg:#E9F0F6;--slide:#FBFDFF;--chip-ink:#12222F;
+--page:#DFE8EF;--panel:#F1F6FA;--fi:#182A38;--fm:#607482;--hair:#C6D5E0;
+--sans:"Avenir Next",Avenir,"Segoe UI","Helvetica Neue",sans-serif;--mono:Menlo,Consolas,ui-monospace,monospace;}
+:root[data-deck-style=ocean][data-deck-theme=dark]{--red:#4FA3E8;--slide:#0F171F;--ink:#E2EDF6;--body:#A9BCCB;--card:#1A2733;--code-bg:#15212C;
+--page:#080D12;--panel:#131E28;--fi:#E2EDF6;--fm:#7F94A6;--hair:#243441;}

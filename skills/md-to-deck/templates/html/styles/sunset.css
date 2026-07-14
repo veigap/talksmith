@@ -1,0 +1,9 @@
+/* deck style "sunset" — token overrides only (fonts + palette + background); layout never
+   changes because every component reads the tokens. Light set + dark override so the
+   light/dark toggle composes. Discovered by build: drop a <name>.css here to add a style. */
+:root[data-deck-style=sunset]{--red:#E85D04;--pill:#FFE0C2;--call-pink:#FFD9BD;--call-blue:#FBE3CF;--card:#F8ECE0;
+--ink:#31200F;--body:#5C4630;--code-bg:#F6EADC;--slide:#FFFAF3;--chip-ink:#31200F;
+--page:#F0E2D1;--panel:#FBF3E8;--fi:#3A2814;--fm:#8D7458;--hair:#E0CDB6;
+--sans:Futura,"Century Gothic","Trebuchet MS",sans-serif;--mono:Menlo,"Courier New",monospace;}
+:root[data-deck-style=sunset][data-deck-theme=dark]{--red:#FF9E4F;--slide:#1D150D;--ink:#F6E9DA;--body:#CDB8A0;--card:#2C2115;--code-bg:#251B10;
+--page:#110C07;--panel:#221910;--fi:#F6E9DA;--fm:#A18868;--hair:#3C2F20;}

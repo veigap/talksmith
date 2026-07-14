@@ -1,0 +1,10 @@
+/* deck style "business" — corporate business-school look (inspired by iae.edu.ar): Montserrat
+   (vendored variable font, OFL) with royal blue #1724A9 used for accents only, on clean white
+   surfaces — white slide, near-white cards/panels, light neutral page, gray secondary text.
+   Token overrides only; layout never changes. */
+:root[data-deck-style=business]{--red:#1724A9;--pill:#E4E8F8;--call-pink:#EDEFFC;--call-blue:#E3EDF9;--card:#F6F7FA;
+--ink:#0E1220;--body:#4A4F60;--code-bg:#F4F6F9;--slide:#FFFFFF;--chip-ink:#0E1220;
+--page:#EEF0F4;--panel:#FFFFFF;--fi:#151A2C;--fm:#80849A;--hair:#DFE2E9;
+--sans:Montserrat,"Trebuchet MS","Segoe UI",sans-serif;--mono:Menlo,Consolas,ui-monospace,monospace;}
+:root[data-deck-style=business][data-deck-theme=dark]{--red:#8892F0;--slide:#12141F;--ink:#EDEFF7;--body:#B4B9CC;--card:#1D2130;--code-bg:#181C2A;
+--page:#0A0C13;--panel:#161927;--fi:#EDEFF7;--fm:#848CA6;--hair:#272C3F;}

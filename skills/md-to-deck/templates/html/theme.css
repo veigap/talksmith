@@ -6,6 +6,8 @@
 /* selectable deck theme (runtime toggle) — a token override; every component reads the tokens */
 :root[data-deck-theme=dark]{--slide:#18181c;--ink:#F4F2F0;--body:#C7C2BE;--card:#26262c;--code-bg:#1e1e24;
 --page:#0c0c0e;--panel:#1c1c22;--fi:#F4F2F0;--fm:#9a938e;--hair:#2c2c33;}
+/* selectable deck styles (?deck-style= / cycle button) live in styles/<name>.css — one file
+   per style, discovered and inlined at build (html_style.py). Add a style by adding a file. */
 *{box-sizing:border-box}html,body{margin:0;background:var(--page)}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
@@ -45,7 +47,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .pill{align-self:flex-start;background:var(--pill);color:var(--chip-ink);font-weight:700;font-size:1.26cqw;letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.4cqw;border-radius:.7cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:1.1cqw 0 0;line-height:1.08;text-wrap:balance}
 .lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
-.ic{display:block}.ic svg{width:100%;height:100%;display:block}
+.ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 /* section divider — big red section number + title, with an accent rule */
@@ -106,7 +108,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ccard p{margin:0;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw}.ccard.sm .ic{width:5cqw;height:5cqw}
 .cardrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
-.chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);display:grid;place-items:center;flex:0 0 auto}
+.chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
 .chip svg{width:62%;height:62%}.rcard h3{margin:0;font-size:2.8cqw;font-weight:800;color:var(--ink)}.rcard p{margin:0;font-size:2.2cqw;color:var(--body);line-height:1.3}
 .iconlist{margin-top:2.4cqw;display:flex;flex-direction:column;gap:2.2cqw}
 .ilrow{display:flex;gap:2.4cqw;align-items:flex-start}.ilrow .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto;margin-top:.4cqw}
@@ -217,6 +219,37 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 :root[data-deck-anim=off] .deckanim .ic-anim-off{display:block}
 .reveal.print-pdf ~ .deckanim,html.print-pdf .deckanim{display:none}
 @media print{.deckanim{display:none}}
+/* PDF export — sits below the animations toggle; opens the ?print-pdf view */
+.deckpdf{position:fixed;top:88px;right:14px;z-index:60;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--hair);border-radius:50%;background:transparent;color:var(--fm);cursor:pointer;opacity:.5;transition:opacity .15s,background .15s}
+.deckpdf:hover{opacity:1;background:var(--panel)}
+.reveal.print-pdf ~ .deckpdf,html.print-pdf .deckpdf{display:none}
+@media print{.deckpdf{display:none}}
+/* fullscreen toggle — below PDF export; icon swap is pure CSS via :root:fullscreen */
+.deckfull{position:fixed;top:126px;right:14px;z-index:60;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--hair);border-radius:50%;background:transparent;color:var(--fm);cursor:pointer;opacity:.5;transition:opacity .15s,background .15s}
+.deckfull:hover{opacity:1;background:var(--panel)}
+.deckfull .ic-fs-out{display:none}
+:root:fullscreen .deckfull .ic-fs-in{display:none}
+:root:fullscreen .deckfull .ic-fs-out{display:block}
+.reveal.print-pdf ~ .deckfull,html.print-pdf .deckfull{display:none}
+@media print{.deckfull{display:none}}
+/* deck-style cycler — below fullscreen */
+.deckstyle{position:fixed;top:164px;right:14px;z-index:60;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--hair);border-radius:50%;background:transparent;color:var(--fm);cursor:pointer;opacity:.5;transition:opacity .15s,background .15s}
+.deckstyle:hover{opacity:1;background:var(--panel)}
+.reveal.print-pdf ~ .deckstyle,html.print-pdf .deckstyle{display:none}
+@media print{.deckstyle{display:none}}
+/* style picker popover — opens beside the palette button; a style is *selected*, it never
+   cycles. Picking "default" resets to the base look. */
+.deckstylemenu{position:fixed;top:164px;right:52px;z-index:61;display:none;flex-direction:column;gap:2px;
+  min-width:110px;padding:6px;border:1px solid var(--hair);border-radius:10px;background:var(--panel);
+  box-shadow:0 6px 24px rgba(0,0,0,.14)}
+.deckstylemenu.open{display:flex}
+.dsitem{border:0;background:transparent;color:var(--fi);font-family:var(--sans);font-size:12.5px;
+  text-align:left;text-transform:capitalize;padding:5px 9px;border-radius:7px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dsitem:hover{background:var(--card)}
+.dsitem.on::after{content:"✓";color:var(--red);font-weight:700}
+.reveal.print-pdf ~ .deckstylemenu,html.print-pdf .deckstylemenu{display:none}
+@media print{.deckstylemenu{display:none}}
 /* section separator — roadmap list (left) + the current section big (right) */
 .secag{margin:auto 0;display:grid;grid-template-columns:1.05fr .95fr;gap:5cqw;align-items:center}
 .secaglist{display:flex;flex-direction:column;gap:1.5cqw}

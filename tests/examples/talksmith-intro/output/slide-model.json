@@ -232,15 +232,15 @@
       "steps": [
         {
           "label": "Leave feedback",
-          "body": "Drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor."
+          "body": "drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor"
         },
         {
           "label": "Talksmith applies",
-          "body": "It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail."
+          "body": "it stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail"
         },
         {
           "label": "Review and repeat",
-          "body": "Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say \"final\"."
+          "body": "look again, add more feedback, go around once more — as many rounds as it takes until you say \"final\""
         }
       ],
       "image": {
