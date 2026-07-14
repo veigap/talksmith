@@ -92,7 +92,7 @@ The HTML pipeline is: **parse → classify → augment → render**, one Jinja t
 2. **Classify** — teach [`skills/md-to-deck/slide_model.py`](skills/md-to-deck/slide_model.py): `_classify` returns the new id from the parsed signals; extend `_parse_unit` only if a new signal must be extracted from the markdown.
 3. **Template (markup)** — add `skills/md-to-deck/templates/html/<type>.j2`. Content slides wrap their body in the `_macros.j2` `stage(section, title)` call; full-bleed slides (cover/divider/statement) emit their own `.stage cover`.
 4. **Context + registration** — in [`html_style.py`](skills/md-to-deck/html_style.py) `render_slide`, add an `elif kind == "<type>"` branch that computes any derived context (columns, rows, matched icon), and register `"<type>": "<type>.j2"` in `_TMPL`.
-5. **CSS** — add the component classes the template uses to the `CSS` string in `html_style.py` (cqw units; 16:9 fixed).
+5. **CSS** — add the component classes the template uses to `templates/html/theme.css` (cqw units; 16:9 fixed).
 6. **Fixture + regen** — add a directive-forced slide (`<!-- template: <type> -->`) to `tests/skills/md-to-deck/final.md`, regenerate `style-reference.html` (command above), eyeball it, commit both.
 7. **PPTX (only if/when PPTX is templated)** — today strict/free-form author `.pptx` from prose via Cowork, so a new type also needs its strict §-recipe in `pptx-strict/pptx-prompt.md` and, if deterministically checkable, an audit under `audits/`. (When PPTX moves onto the shared model+templates, this becomes a `templates/pptx/<type>.j2` instead.)
 8. **Version + changelog** — bump `plugin.json`, add a `CHANGELOG.md` entry.
