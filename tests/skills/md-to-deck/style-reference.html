@@ -215,7 +215,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ctpanels{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:3cqw}.ctp{background:var(--card);border-radius:1.6cqw;padding:2.4cqw;font-size:2.2cqw;color:var(--body);font-weight:600}
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
-.hero{margin:auto 0;display:flex;flex-direction:column;gap:2cqw}.qa{font-size:16cqw;font-weight:800;color:var(--ink);line-height:.9;letter-spacing:-.02em}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:9cqw;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
 /* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
 .quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
 .quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
@@ -689,7 +689,16 @@ function fitContent(cb){
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
-function fitAll(scope){ (scope||document).querySelectorAll('.reveal .slides section .cbody').forEach(fitContent); }
+function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
+  var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
+  cf.style.transform='none';
+  var cs=getComputedStyle(st), availH=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  var h=cf.scrollHeight;
+  if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
+}
+function fitAll(scope){ var r=(scope||document);
+  r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
+  r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
 Reveal.initialize({
   width:1280, height:720, margin:0.04, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,

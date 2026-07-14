@@ -79,18 +79,16 @@
       "template": "content-image",
       "section": "What is Talksmith?",
       "title": "This is how you'll work — day to day",
-      "layout": "image-top",
+      "layout": "text-left",
       "image": {
         "src": "images/claude.png",
         "alt": "Talksmith introducing itself in Claude — the workflow chart and a new-vs-resume prompt"
       },
       "facts": [
-        {
-          "body": "You talk to Talksmith in chat; it introduces itself, shows the workflow, and lists your talks in progress."
-        },
-        {
-          "body": "Everything happens here — start a new talk, or resume one under talks/. No slide editor."
-        }
+        { "label": "It's all chat", "body": "no new UI, no slide editor to learn" },
+        { "label": "New or resume", "body": "start a fresh talk, or pick up one under talks/ where you left off" },
+        { "label": "Drop & review", "body": "add sources, answer a few questions, leave feedback bullets — it does the rest" },
+        { "label": "Always in view", "body": "the Progress and Context panels show what it's reading and doing" }
       ],
       "notes": "Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min."
     },

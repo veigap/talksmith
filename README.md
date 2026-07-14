@@ -6,7 +6,7 @@ Talksmith is a Claude Code plugin that turns that recurring work into a **durabl
 
 > **It's not a slide generator.** You work in chat and plain Markdown (`draft.md` → `final.md`); slides are a *projection* of the Markdown, never the source of truth. *The presentation is the outcome; the knowledge base is the point.*
 
-👉 **New here?** The best introduction to Talksmith is [**a talk about Talksmith — built *with* Talksmith**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/veigap/talksmith/main/tests/examples/talksmith-intro/output/html/index.html): what it is, how to install it, how it works. *(Rendered deck — [generated](tests/examples/talksmith-intro/) from [its `draft.md`](tests/examples/talksmith-intro/draft.md) via the Talksmith workflow.)*
+👉 **New here?** The best introduction to Talksmith is [**a talk about Talksmith — built *with* Talksmith**](https://veigap.github.io/talksmith/tests/examples/talksmith-intro/output/html/index.html): what it is, how to install it, how it works. *(Rendered deck — [generated](tests/examples/talksmith-intro/) from [its `draft.md`](tests/examples/talksmith-intro/draft.md) via the Talksmith workflow.)*
 
 ## Quickstart
 
@@ -49,9 +49,9 @@ Committed examples and canonical shapes for every artifact the workflow produces
 | corpus record | one uniform `.md` per source | [shape](schemas/corpus-record.md) |
 | `profile.md` | subject / audience config | [shape](schemas/profile.md) |
 | `learnings.md` | durable editorial rules | [shape](schemas/learnings.md) |
-| **rendered deck** | HTML / Reveal.js projection of `final.md` | [style-reference.html](tests/skills/md-to-deck/style-reference.html) |
+| **rendered deck** | HTML / Reveal.js projection of `final.md` | [style-reference.html](https://veigap.github.io/talksmith/tests/skills/md-to-deck/style-reference.html) |
 
-The `schemas/` files are *canonical empty forms* — the shape each artifact takes. The `tests/` files are real, filled examples. Open [`style-reference.html`](tests/skills/md-to-deck/style-reference.html) in a browser (Present ▶ for full screen) to see the rendered deck, one slide per template type.
+The `schemas/` files are *canonical empty forms* — the shape each artifact takes. The `tests/` files are real, filled examples. Open [`style-reference.html`](https://veigap.github.io/talksmith/tests/skills/md-to-deck/style-reference.html) in a browser (Present ▶ for full screen) to see the rendered deck, one slide per template type.
 
 ## Install
 

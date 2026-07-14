@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="360" viewBox="0 0 920 360" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="920" height="360" fill="#ffffff"/>
+
+  <!-- Box 1: RAW SOURCES -->
+  <rect x="24" y="70" width="240" height="200" rx="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="144" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#334155" letter-spacing="1">RAW SOURCES</text>
+  <text x="56" y="140" font-size="15" fill="#475569">papers, PDFs</text>
+  <text x="56" y="168" font-size="15" fill="#475569">chat exports</text>
+  <text x="56" y="196" font-size="15" fill="#475569">notes, URLs</text>
+  <text x="144" y="248" text-anchor="middle" font-size="12" fill="#94a3b8">read, never rewritten</text>
+
+  <!-- Box 2: THE WIKI -->
+  <rect x="340" y="70" width="240" height="200" rx="14" fill="#fdeaec" stroke="#DA1B2E" stroke-width="2"/>
+  <text x="460" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#DA1B2E" letter-spacing="1">THE WIKI</text>
+  <text x="372" y="138" font-size="14" fill="#475569" font-family="monospace">corpus/*.md</text>
+  <text x="372" y="164" font-size="14" fill="#475569" font-family="monospace">memory.md</text>
+  <text x="372" y="190" font-size="14" fill="#475569" font-family="monospace">draft.md &#8594; final.md</text>
+  <text x="372" y="216" font-size="14" fill="#475569" font-family="monospace">learnings.md</text>
+  <text x="460" y="252" text-anchor="middle" font-size="12" fill="#94a3b8">compiled once, kept updated</text>
+
+  <!-- Box 3: PROJECTIONS -->
+  <rect x="656" y="70" width="240" height="200" rx="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="776" y="102" text-anchor="middle" font-size="16" font-weight="700" fill="#334155" letter-spacing="1">PROJECTIONS</text>
+  <text x="688" y="146" font-size="15" fill="#475569" font-family="monospace">final.md</text>
+  <text x="688" y="180" font-size="15" fill="#475569">HTML deck</text>
+  <text x="688" y="208" font-size="15" fill="#475569">.pptx</text>
+  <text x="776" y="248" text-anchor="middle" font-size="12" fill="#94a3b8">rebuilt on demand</text>
+
+  <!-- arrows -->
+  <line x1="266" y1="170" x2="336" y2="170" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="301" y="158" text-anchor="middle" font-size="12" fill="#64748b">ingest</text>
+  <line x1="582" y1="170" x2="652" y2="170" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="617" y="158" text-anchor="middle" font-size="12" fill="#64748b">render</text>
+</svg>

@@ -104,6 +104,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   `images/logo.*` → the repo's `config/logo.*` → bundled placeholder → institution text. The
   strict/free-form PPTX specs now treat the logo *slot* as fixed and the *image* as repo-supplied.
 
+### Fixed
+
+- **Full-bleed HTML slides no longer overflow.** `quote`, `statement`, and `closing-hero` emit their
+  own full-bleed `.stage cover` and were skipping the content fit pass (which only ran on
+  `stage()`-macro slides), so long text overflowed. Added a `fitCover()` shrink-to-fit pass for them
+  (`html_style.py`), and right-sized the oversized closing-hero title (`.qa` 16cqw → 9cqw, with more
+  margin) so it reads proportionate to the rest of the deck.
+
 ### Removed
 
 - **Institution branding removed from the plugin.** The Universidad Austral logo no longer ships:

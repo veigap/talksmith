@@ -22,7 +22,7 @@ date: 2026-07-14
 - [closed] 2026-07-10 — "Make it explicit that this is NOT a slide generator, up front."
   Resolution: Added slide 1.2 contrasting Talksmith with deck generators; echoed the line in the thesis.
 - [closed] 2026-07-14 — "Say early that diagrams are auto-generated from the content — it's a wow moment."
-  Resolution: Added it to 'Why it matters' and gave it its own slide (2.4), rendered from the ASCII in this draft.
+  Resolution: Added it to 'Why it matters' and gave it its own slide (2.5), rendered from the ASCII in this draft.
 
 ---
 
@@ -140,7 +140,33 @@ Four cards, one per pain — each maps to a Talksmith answer you'll show later: 
 
 ---
 
-## 1. Not a slide generator
+## 1. This is how you'll work — day to day
+<!-- template: content-image -->
+
+What a session actually looks like — the agent greets you and takes over.
+
+### Content
+
+![Talksmith introducing itself in Claude](images/claude.png)
+
+- **It's all chat:** no new UI, no slide editor to learn.
+- **New or resume:** start a fresh talk, or pick up one under `talks/` where you left off.
+- **Drop & review:** add sources, answer a few questions, leave feedback bullets — it does the rest.
+- **Always in view:** the Progress and Context panels show what it's reading and doing.
+
+### Sources
+
+- corpus/readme.md
+
+### Speaker notes
+
+Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min.
+
+### Presenter feedback
+
+---
+
+## 2. Not a slide generator
 <!-- template: comparison -->
 
 Kill the wrong mental model before it forms: this is not "AI makes slides."
@@ -167,7 +193,7 @@ Three-column comparison. Land on the last column. The point: same inputs, comple
 
 ---
 
-## 2. Compilation over retrieval
+## 3. Compilation over retrieval
 <!-- template: quote -->
 
 Anchor the idea in a name the audience may already trust.
@@ -190,7 +216,7 @@ Let the quote sit. This is the conceptual license for everything Talksmith does.
 
 ---
 
-## 3. The three layers
+## 4. The three layers
 <!-- template: content+image -->
 
 Make the knowledge-base idea concrete with a picture — and note the picture itself was auto-generated.
@@ -230,7 +256,7 @@ Walk left to right once, then stop talking and let the diagram breathe. Then: "I
 
 ---
 
-## 4. Your diagrams draw themselves
+## 5. Your diagrams draw themselves
 <!-- template: single-point -->
 
 The wow moment, stated plainly and demonstrated by the slide before it.
@@ -610,31 +636,7 @@ Do this live if there's a projector. `/talksmith:init` writes exactly one file �
 
 ---
 
-## 3. What "Hi Talksmith" looks like
-<!-- template: content-image -->
-
-The payoff of the three commands — the agent greets you and takes over.
-
-### Content
-
-![Talksmith introducing itself in Claude](images/claude.png)
-
-- Say "Hi Talksmith" and it introduces itself, shows the workflow, and lists your talks in progress.
-- From here it's all chat — start a new talk, or resume one under `talks/`.
-
-### Sources
-
-- corpus/readme.md
-
-### Speaker notes
-
-Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min.
-
-### Presenter feedback
-
----
-
-## 4. From nothing to running
+## 3. From nothing to running
 <!-- template: process -->
 
 The setup as an ordered path, so nobody loses the thread.
@@ -658,7 +660,7 @@ Ordered steps — emphasize that steps 1–3 happen once per repo, step 4 every 
 
 ---
 
-## 5. What lives in the repo
+## 4. What lives in the repo
 <!-- template: icon-list -->
 
 Orient them in the folder they'll be committing to.
@@ -684,7 +686,7 @@ Tie back to the thesis: this folder is where the compounding lives. ~3 min.
 
 ---
 
-## 6. Quick check
+## 5. Quick check
 <!-- template: quiz -->
 
 A check-for-understanding before we walk the workflow.
@@ -781,7 +783,7 @@ Full-bleed closing line. Hold it during applause / into Q&A. ~15 sec.
 
 # Open questions
 
-- Should there be a 20-minute "lightning" cut? Candidate sections to drop: 4 (Behind the scenes) and slides 2.2 (quote) and 3.4 (artifacts).
+- Should there be a 20-minute "lightning" cut? Candidate sections to drop: 4 (Behind the scenes) and slides 2.3 (quote) and 3.4 (artifacts).
 - Do we need a live-demo fallback if the room has no internet for `/plugin install`? (Pre-recorded 60s clip?)
 - The `image-grid` slide (4.4) needs four real render thumbnails captured before delivery — placeholder paths for now.
 
