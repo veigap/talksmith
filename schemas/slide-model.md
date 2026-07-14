@@ -84,20 +84,60 @@ when the content warrants. Field names are the contract — the renderers read e
 | `closing-cta` | `title`, `items:[{label,body}]` | — |
 
 The universal invariant still holds: **a parallel labeled set becomes `cards`/`rows`/`figures`,
-never a plain bullet list.** Template choice + field decomposition is governed by
+never a plain bullet list.** Template *choice* is governed by the catalog
 [`../config/pptx-styles/slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)
-(the *Match* / *Format* per template) — the LLM applies that catalog to produce this JSON.
+(its *Match* rules); how to decompose a slide into the chosen template's fields is *Filling the
+model* below.
 
-## How it's produced and consumed
+## Filling the model (the FILL step — the one semantic step)
 
-1. **Fill (LLM, `md-to-deck` skill).** `final.md` → `slide-model.json`. For each `## slide`, pick
-   the `template` per the catalog, decompose the body into that template's fields, and lift every
-   `### Speaker notes` block into `notes`. This is the only semantic step.
-2. **Render (deterministic, shared).** `build_html.py` renders each slide via its Jinja template
-   keyed by `template`, reading the fields directly. The PPTX renderer consumes the same JSON. No
-   renderer parses `final.md` or classifies.
-3. **Validate.** A slide whose fields don't satisfy its template's required set is a fill error —
-   surfaced, not silently rendered as `fallback`.
+The `md-to-deck` skill (an LLM) turns `final.md` into `slide-model.json`. **Which** template each
+slide gets is governed entirely by the catalog
+[`../config/pptx-styles/slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)
+(its *Match* rules + *Classification procedure*) — this file does not restate classification. What
+follows is only **how to build the deck object and decompose a slide's body into the chosen
+template's fields.**
+
+**The `deck` object.** From the frontmatter: split `presentation:` on the em/en-dash into `title`
+(before) and `institution` (after); take `class`, `presenter`, `date`; `logo: null` (the renderer
+resolves it). `sections` = the ordered section list read from the Agenda slide's "**Sections (in
+delivery order):**" block (drop each item's "— description" tail and any "(~N min)", keep "(2023)").
+
+**Walking the body.** In document order:
+- **Drop scaffolding entirely:** the `# Thesis` / `# Open questions` / `# Cut material` sections,
+  the standalone `# Agenda` slide (it only feeds `deck.sections`), every `### Sources` and
+  `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers.
+- **An H1 that names a `deck.sections` entry** → a `section-agenda` slide (`title` = the section
+  name, number stripped) — the roadmap. A `〔divisor〕` sub-opener (or an H1 that is not a real
+  section) → a plain `divider`.
+- **An H2** → a content slide: strip its leading `N. `, **classify it against the catalog** to set
+  `template`, decompose `### Content`'s body into that template's required fields (below), and set
+  `section` to the current section.
+- **`### Speaker notes`** → lifted **verbatim** into the slide's `notes` (never onto the slide
+  face). Keep image `src` paths exactly as written (`images/…`).
+
+**Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
+- **Labeled set** (`- **Label** body`, `### Subhead` + paragraph) → `cards` / `rows` / `steps` /
+  `figures` `[{label,body}]`, **never plain bullets**. A short unlabeled parallel enumeration (an
+  anaphora) → `icon-list` `rows:[{label}]` with `body:""`; drop a row that just repeats the title.
+- **Standalone metrics** ($4.44M, 97%, USD 670.000) → `stat` `stats:[{value,caption}]` — the number
+  is `value`, the trailing text its `caption`; a lone hero metric → `big-number`.
+- **A pipe table** — two comparable value columns → `comparison` `columns:[{header,cells}]`; a
+  label/value table → `concept-breakdown` `cards`.
+- **One image + a little text** → `content-image` (`facts`, `image:{src,alt}`; add
+  `"layout":"image-top"` when the text is very short). ≥4 images → `image-grid`; labeled images →
+  `figures`. A fenced code block → `code-example` (`code`, `explanation`).
+- A short **pull-quote** that is the point → `quote`; a single dominant claim → `statement`
+  (`title` + optional `sub`); a lone analogy/tip → `callout` / `single-point`.
+
+**Validate.** Every slide's fields must satisfy its template's required set (table above); a slide
+that doesn't is a fill error to fix, not a silent `fallback`.
+
+## Rendering (deterministic, shared)
+
+`build_html.py` (HTML) and the PPTX renderer both load `slide-model.json` and render each slide via
+its template keyed by `template`, reading the fields directly — **no renderer parses `final.md` or
+classifies.**
 
 ## Canonical empty form
 
