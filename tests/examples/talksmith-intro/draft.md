@@ -408,6 +408,33 @@ Four cards. Stress that `draft.md` survives Polish untouched — `final.md` is a
 
 ---
 
+## 5. One source, three outputs
+<!-- template: card-row -->
+
+Sell the projection idea concretely: the same source ships in three formats.
+
+### Content
+
+The same `final.md` renders to any of these — pick per audience:
+
+- **HTML deck** A self-contained Reveal.js deck — present in the browser or share a link.
+- **PowerPoint** A native `.pptx` (strict or free-form) for Keynote / PowerPoint.
+- **PDF** Export the HTML deck to PDF for handouts.
+
+**Note:** you're looking at one right now — this deck was rendered from its `draft.md` with Talksmith.
+
+### Sources
+
+- corpus/readme.md
+
+### Speaker notes
+
+Tie back to "slides are a projection": one source, many deliverables — and you're viewing the HTML output live. ~1 min.
+
+### Presenter feedback
+
+---
+
 # 4. Behind the scenes
 
 **Goal of this section:** Pay off the curiosity — the five agents and the Markdown substrate — now that the audience knows what they're for.
@@ -462,6 +489,8 @@ Every artifact is a plain `.md` file: diffable, versionable, portable across ren
      └─ pptx-merge ◄─ pptx-diff ◄─ pptx-extract
 ```
 <!-- ascii-note: forward + reverse pipeline — top row left-to-right, reverse row right-to-left back into draft.md -->
+
+**Note:** the reverse path is optional — you only need it when you've edited the deck *outside* the cycle (e.g. tweaked the `.pptx` in PowerPoint).
 
 ### Sources
 

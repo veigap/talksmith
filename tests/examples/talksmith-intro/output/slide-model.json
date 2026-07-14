@@ -273,6 +273,33 @@
       "notes": "draft.md survives Polish untouched — final.md is always re-derivable. ~2 min."
     },
     {
+      "template": "card-row",
+      "section": "The workflow in practice",
+      "title": "One source, three outputs",
+      "lead": "The same final.md renders to any of these — pick per audience:",
+      "cards": [
+        {
+          "label": "HTML deck",
+          "body": "a self-contained Reveal.js deck — present in the browser or share a link."
+        },
+        {
+          "label": "PowerPoint",
+          "body": "a native .pptx (strict or free-form) for Keynote / PowerPoint."
+        },
+        {
+          "label": "PDF",
+          "body": "export the HTML deck to PDF for handouts."
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "note",
+          "body": "You're looking at one right now — this deck was rendered from its draft.md with Talksmith."
+        }
+      ],
+      "notes": "Tie back to 'slides are a projection': one source, many deliverables — and you're viewing the HTML output live. ~1 min."
+    },
+    {
       "template": "section-agenda",
       "title": "Behind the scenes"
     },
@@ -327,7 +354,13 @@
         "src": "images/s5-2-1.svg",
         "alt": "Forward pipeline draft.md to final.md to pptx, and the reverse pipeline back into draft.md"
       },
-      "notes": "The round-trip is what makes Markdown-as-source safe: you never lose downstream edits. ~3 min."
+      "notes": "The round-trip is what makes Markdown-as-source safe: you never lose downstream edits. ~3 min.",
+      "highlights": [
+        {
+          "kind": "note",
+          "body": "The reverse path is optional — you only need it when you've edited the deck outside the cycle (e.g. tweaked the .pptx in PowerPoint)."
+        }
+      ]
     },
     {
       "template": "pros-cons",

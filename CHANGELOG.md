@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.52.1] — 2026-07-14
+
+### Changed
+
+- **Example talk (`talksmith-intro`).** Added a "One source, three outputs" slide after "What you
+  end up with" — HTML deck / PowerPoint / PDF from the same `final.md` — with a note that the deck
+  you're viewing is itself one of those outputs, rendered from its `draft.md`. Added a note to the
+  "It's Markdown all the way down" slide clarifying the reverse pipeline is optional (only when you
+  edit the deck outside the cycle). Re-rendered the sample.
+
 ## [0.52.0] — 2026-07-14
 
 ### Added
