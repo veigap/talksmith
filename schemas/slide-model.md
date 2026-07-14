@@ -48,9 +48,18 @@ deliverable; `draft.md` → live in-progress view).
   section list that drives the section-separator roadmap; the cover slide is synthesized from
   `deck`, never authored as a slide.
 - **`slides`** — ordered. Every slide object has **`template`** (one of the ids below), and may
-  carry **`section`** (the section it belongs to, for the pill) and **`notes`** (speaker notes,
-  verbatim → Reveal `<aside class="notes">` / the PPTX notes pane, **never** on the slide face).
-  Beyond those, each template requires exactly the fields in its row.
+  carry **`section`** (the section it belongs to, for the pill), **`notes`** (speaker notes,
+  verbatim → Reveal `<aside class="notes">` / the PPTX notes pane, **never** on the slide face), and
+  **`highlights`** (see below). Beyond those, each template requires exactly the fields in its row.
+- **`highlights`** — an **optional** common field on any content slide: a list of one or more
+  emphasized takeaways / comments, rendered in a soft highlight band under the slide body. Each
+  entry is a string **or** `{label, body}` (the `label` renders bold before a colon). Use it for a
+  key line that deserves emphasis — e.g. the takeaway a diagram builds to — instead of dropping or
+  burying it.
+- **Never drop content.** Every load-bearing line in the source must be *translated* into the
+  model — as a field value, a card/row/step, a fact, or a `highlights` entry. Do not omit a line
+  because it looks redundant with an image or another slide; move it to `highlights` if it's a
+  comment or takeaway, but keep it.
 
 ## Per-template field contract
 
@@ -68,7 +77,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label` |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `content-image` | `title`, `image:{src,alt}`, `facts:[str]` | `lead`, `layout` (`text-left`\|`image-top`) |
+| `content-image` | `title`, `image:{src,alt}`, `facts:[{body,label?}]` | `lead`, `layout` (`text-left`\|`image-top`) |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead` |
 | `comparison` | `title`, `columns:[{header,cells:[str]}]` (2–3) | — |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
@@ -129,6 +138,13 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `figures`. A fenced code block → `code-example` (`code`, `explanation`).
 - A short **pull-quote** that is the point → `quote`; a single dominant claim → `statement`
   (`title` + optional `sub`); a lone analogy/tip → `callout` / `single-point`.
+- **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a
+  colon), split it into `{label, body}` yourself — the renderer bolds `label` and never parses the
+  colon. This applies to `content-image` `facts` and `highlights` (both accept `{label, body}`), and
+  matches how `cards`/`rows`/`steps` already carry an explicit `label`.
+- **Highlights over dropping.** If a line is a comment or the key takeaway (often what a diagram
+  builds to, e.g. "PII es un subconjunto de Personal Data"), put it in the slide's `highlights`
+  rather than omitting it — content is never dropped (see the top-level rule).
 - **Icons vs. emoji.** Icon-bearing templates (`concept-breakdown`, `card-row`, `icon-list`,
   `content+cards+image`, `closing-cta`, `callout`, `single-point`) show one icon per item. The
   fill **may suggest** a per-item `icon` (a Material Symbols name), choosing a **distinct** one per

@@ -12,6 +12,27 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.46.0] — 2026-07-14
+
+### Added
+
+- **Highlights band.** Any content slide may carry an optional `highlights` list (one or more
+  emphasized takeaways / comments), rendered in a soft red-accent band under the body. Each entry
+  is a string or `{label,body}`. It's the home for a key line — e.g. the takeaway a diagram builds
+  to — so content is never dropped for being "redundant."
+- **Explicit labeled lines.** `content-image` `facts` (and `highlights`) accept `{label,body}`; the
+  label renders bold before a colon. **The fill detects the label** (splits `Label: rest`) — the
+  renderer no longer parses the colon.
+
+### Changed
+
+- **`schemas/slide-model.md` documents the "never drop content" rule** (every source line is
+  translated — as a field, card, fact, or highlight) and the labeled-line / highlights contracts.
+- **Renderer stays mechanical:** removed the `emphlabel` colon-parsing heuristic from `html_style`
+  (that detection is the fill's job); the render is pure field-mapping.
+- The style reference now exercises highlights, labeled facts, and a **tall image** (to catch the
+  content-image crop regression).
+
 ## [0.45.5] — 2026-07-14
 
 ### Removed

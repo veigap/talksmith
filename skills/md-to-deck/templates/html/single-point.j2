@@ -1,5 +1,5 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title) %}
+{% call m.stage(section, title, highlights) %}
 {% if show_lead and body %}<p class="lead">{{ body[0] }}</p>{% endif %}
 <div class="callout {{ tone }}">{{ icon(item.icon) }}<p><b>{{ item.label }}</b> {{ item.body }}</p></div>
 {% endcall %}

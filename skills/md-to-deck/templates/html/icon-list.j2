@@ -1,5 +1,5 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title) %}
+{% call m.stage(section, title, highlights) %}
 {% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
 <div class="iconlist">
 {% for it in items %}

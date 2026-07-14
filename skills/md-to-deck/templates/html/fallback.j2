@@ -1,5 +1,5 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title) %}
+{% call m.stage(section, title, highlights) %}
 {% if points %}
 <div class="leadpoints"><p class="big2">{{ big }}</p><div class="fpoints">
 {% for p in points %}<div class="fpoint">{{ p }}</div>{% endfor %}

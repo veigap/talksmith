@@ -318,6 +318,13 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = "Autor:",
 _ICON_ITEM_KINDS = {"concept-breakdown", "card-row", "icon-list", "content+cards+image", "closing-cta"}
 
 
+def _labeled(items) -> list:
+    """Normalize a list whose entries are strings or `{label,body}` dicts into `{label,body}`.
+    The LLM decides whether an entry has a `label` (the emphasized lead before a colon) — the
+    renderer never parses text to find one."""
+    return [x if isinstance(x, dict) else {"label": "", "body": x} for x in (items or [])]
+
+
 def _resolve_item_icons(items: list) -> None:
     """Resolve each item's icon in place. The fill may **suggest** an `icon` (a Material Symbols
     name) per item, choosing distinct ones; those are reserved first, then any item without a
@@ -334,7 +341,10 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     context. All semantics were resolved by the LLM fill step — this is a pure field mapping."""
     _reset_slide_icons()                   # icons don't repeat within a slide
     t = slide.get("template", "fallback")
-    ctx = {"section": slide.get("section", ""), "title": slide.get("title", "")}
+    # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
+    # `stage` macro — available to every content template (nothing in the source is ever dropped).
+    ctx = {"section": slide.get("section", ""), "title": slide.get("title", ""),
+           "highlights": _labeled(slide.get("highlights"))}
     ri = lambda im: _resolve_img(im, talk_root, asset_dir)
     lead = slide.get("lead", "")
     if t == "divider":
@@ -360,7 +370,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     elif t == "image-grid":
         ctx["images"] = [ri(i) for i in slide.get("images", [])]
     elif t == "content-image":
-        ctx["lead"], ctx["facts"] = lead, slide.get("facts", [])
+        ctx["lead"], ctx["facts"] = lead, _labeled(slide.get("facts"))
         ctx["images"] = [ri(slide.get("image"))]
         ctx["layout"] = slide.get("layout", "text-left")
     elif t == "content+cards+image":

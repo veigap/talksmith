@@ -1,5 +1,5 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title) %}
+{% call m.stage(section, title, highlights) %}
 <div class="imggrid">
 {% for im in images %}{{ embed(im[0], im[1]) }}{% endfor %}
 </div>

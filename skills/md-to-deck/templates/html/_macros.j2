@@ -2,6 +2,8 @@
 {% if section %}<span class="pill">{{ section }}</span>{% endif %}
 {% if title %}<h2 class="stitle">{{ title }}</h2>{% endif %}
 {% endmacro %}
-{% macro stage(section, title) %}
-<div class="stage"><div class="shead">{{ header(section, title) }}</div><div class="cbody"><div class="cfit">{{ caller() }}</div></div></div>
+{% macro stage(section, title, highlights=none) %}
+<div class="stage"><div class="shead">{{ header(section, title) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
+{% if highlights %}<div class="highlights">{% for h in highlights %}<div class="highlight">{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</div>{% endfor %}</div>{% endif %}
+</div></div></div>
 {% endmacro %}
