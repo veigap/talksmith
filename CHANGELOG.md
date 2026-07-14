@@ -12,6 +12,15 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.52.2] — 2026-07-14
+
+### Changed
+
+- **License is now MIT (permissive), consistent everywhere.** The `LICENSE` file was Unlicense
+  while the plugin manifest declared MIT — reconciled to **MIT** across the `LICENSE` file,
+  `README.md`, `.claude-plugin/plugin.json`, and `.claude-plugin/marketplace.json`. Use, modify, and
+  distribute freely, including commercially.
+
 ## [0.52.1] — 2026-07-14
 
 ### Changed

@@ -124,4 +124,4 @@ Paulo Gustavo Veiga — [@veigap](https://github.com/veigap)
 
 ## License
 
-[Unlicense](LICENSE) — released into the public domain.
+[MIT](LICENSE) — a permissive license: use, modify, and distribute freely, including commercially.
