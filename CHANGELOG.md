@@ -12,6 +12,15 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.5] — 2026-07-14
+
+### Removed
+
+- **The html-strict render has no critique/FEEDBACK cycle.** `html-strict` is now a single-pass
+  GENERATE — the deck is produced and the presenter reviews it (resolving anything by editing the
+  source, which re-fills the model, then re-rendering). Updated the render-modes matrix, the
+  html-strict spec, and SKILL.md.
+
 ## [0.45.4] — 2026-07-14
 
 ### Fixed

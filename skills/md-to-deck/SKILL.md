@@ -85,10 +85,9 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
 - **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
   fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a
   render error, report the live view is unavailable — never fatal.
-- **Critique.** A light **FEEDBACK → surface** loop, ≤ 2 cycles, walking CONTENT + TEMPLATE +
-  AESTHETIC + DISTRIBUTION ([`slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md))
-  on the rendered `index.html`. A finding is fixed by **re-filling the model** (adjust a slide's
-  template or fields), then re-rendering — the render itself takes no fix instructions.
+- **No critique loop.** `html-strict` is a single-pass GENERATE — no automated FEEDBACK/critique
+  cycles. The presenter reviews the deck and resolves anything by editing the source (which re-fills
+  the model) and re-rendering.
 
 The rest of this file (Path A) does not apply to `html-strict`.
 
@@ -193,7 +192,7 @@ talks/<Talk>/
 
 Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one bracketed stage line per phase**; the orchestrator drives a live checklist from them and **never relays the raw tags to chat** (per [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Suppression rule*). Tag namespaces the skill owns: `[pptx`, `[cycle`, `[html`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`. Any of these reaching chat verbatim is a leak.
 
-**Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` / `[cycle N/2] <PHASE>`.
+**Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` (single pass, no cycles).
 
 **Checklists** (orchestrator shows these, ticking `[ ]`→`[⟳]`→`[✓]`, `[—]` skipped, `[✗]` failed):
 

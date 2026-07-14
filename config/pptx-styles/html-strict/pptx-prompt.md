@@ -74,10 +74,10 @@ Slides default to white (Light theme).
 
 ## 4. Render flow
 
-`html-strict` is **GENERATE → FEEDBACK (≤2, `walk-design`) → surface**, per the `html-strict` column of
+`html-strict` is **GENERATE only** — no automated critique loop, per the `html-strict` column of
 [`../render-modes.md`](../render-modes.md) — the single source of truth; this spec does not
 restate it. **No CONTROL phase** (it produces no `.pptx`, so the deck-parsing audits don't
-apply; block-coverage holds by construction — every unit is rendered). REGENERATE **surfaces**
-findings (the code renderer takes no per-slide fix instructions; the presenter resolves them
-by editing `final.md` and re-rendering). The canonical `test` fixture that exercises every
-template lives at `tests/skills/md-to-deck/`.
+apply; block-coverage holds by construction — every slide in the model is rendered). The presenter
+reviews the deck and resolves anything by editing the source (which re-fills the model) and
+re-rendering. The canonical `test` fixture that exercises every template lives at
+`tests/skills/md-to-deck/`.

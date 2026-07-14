@@ -39,9 +39,9 @@ performed). To change a format's behavior, edit its cell here — one place.
 |---|---|---|---|
 | **GENERATE** (render) | `native-render` | `native-render` | `html-render` |
 | **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` |
-| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `walk-design` |
-| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | `surface` |
-| **Cycle cap** | 3 | — (single pass) | 2 |
+| **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `no-critique` |
+| **REGENERATE** (on findings) | `auto-regenerate` | — (n/a) | — (n/a) |
+| **Cycle cap** | 3 | — (single pass) | — (single pass) |
 | **Scope** | whole deck | whole deck | whole deck |
 | **Deliverable** | `output/final.pptx-strict.pptx` (+ canonical) | `output/final.pptx-free-form.pptx` (+ canonical) | `output/html/index.html` (+ `.icons/`) |
 | **Needs Cowork?** | yes (native `pptx` skill) | yes (native `pptx` skill) | no (HTML by code) |
@@ -69,8 +69,7 @@ the FILL-step output that every mode renders from.
 
 **FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-design.md`](slide-design.md))
 - `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `pptx-strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).
-- `walk-design` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION** (never layout-conformance — the HTML render has no strict base-template, but it *does* realize catalog templates, so TEMPLATE is walked).
-- `no-critique` — no automated critique. The renderer designs freely and the **presenter reviews after delivery** (the `slide-design.md` practices are a handy self-review checklist for that human pass).
+- `no-critique` — no automated critique. The renderer produces the deck and the **presenter reviews after delivery** (the `slide-design.md` practices are a handy self-review checklist for that human pass). Both `pptx-free-form` and `html-strict` use this — html-strict is a single-pass GENERATE with no feedback loop.
 
 **REGENERATE** (disposition of FEEDBACK findings)
 - `auto-regenerate` — the skill composes per-slide edit instructions and re-renders the touched slides, up to the cycle cap; objective defects are fixed, editorial-judgement calls get `defer because <reason>` and surface in the closing report.
