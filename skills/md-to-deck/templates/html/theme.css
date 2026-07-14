@@ -92,7 +92,9 @@
 .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .figc{display:flex;flex-direction:column;gap:1cqw}.figc h4{margin:.6cqw 0 0;font-size:2.6cqw;font-weight:800;color:var(--ink)}.figc p{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.25}
 .imgph{background:repeating-linear-gradient(45deg,#eee,#eee 6px,#e4e4e4 6px,#e4e4e4 12px);border:1px solid #ddd;border-radius:1.4cqw;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.imgph span{font-family:var(--mono);font-size:1.9cqw;color:#999}
-.imgph.svg,.imgph.has{background:#fff;border:1px solid var(--card)}.imgph.svg svg,.imgph.has img{width:100%;height:100%;display:block;object-fit:contain}
+/* a real image sizes to its own aspect ratio (never cropped) — the placeholder keeps 16:9 */
+.imgph.svg,.imgph.has{background:#fff;border:1px solid var(--card);aspect-ratio:auto;overflow:visible}
+.imgph.svg svg,.imgph.has img{width:100%;height:auto;max-height:42cqw;display:block;object-fit:contain}
 .imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;margin-top:auto}
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
@@ -101,7 +103,8 @@
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
 /* width-relative height (cqw, like every other component) — cqh is unreliable under an
    inline-size container and left the caption clipping; this keeps image + caption in view */
-.ci.ci-top .imgph{width:100%;height:30cqw}
+.ci.ci-top .imgph{width:100%}
+.ci.ci-top .imgph img,.ci.ci-top .imgph svg{max-height:32cqw}
 /* the caption under an image-top slide sits in a soft (non-shouty) highlight box */
 .ci.ci-top .citext{align-items:stretch;text-align:center;background:var(--card);border-radius:1.6cqw;padding:2.2cqw 3cqw}
 .ci.ci-top .cifacts li{padding-left:0}.ci.ci-top .cifacts li::before{display:none}

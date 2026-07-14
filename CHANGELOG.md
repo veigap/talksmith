@@ -12,6 +12,15 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.4] — 2026-07-14
+
+### Fixed
+
+- **Content images are no longer cropped.** A real image was forced to `height:100%` inside a fixed
+  16:9 container, which defeated `object-fit:contain` and clipped the bottom (e.g. the diagram
+  captions on "PII vs. Personal Data" and "Las dos caras"). Real images now size to their own
+  aspect ratio (`height:auto`, capped by `max-height`) and always show in full.
+
 ## [0.45.3] — 2026-07-14
 
 ### Changed
