@@ -129,6 +129,13 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `figures`. A fenced code block → `code-example` (`code`, `explanation`).
 - A short **pull-quote** that is the point → `quote`; a single dominant claim → `statement`
   (`title` + optional `sub`); a lone analogy/tip → `callout` / `single-point`.
+- **Icons vs. emoji.** Icon-bearing templates (`concept-breakdown`, `card-row`, `icon-list`,
+  `content+cards+image`, `closing-cta`, `callout`, `single-point`) show one icon per item. The
+  fill **may suggest** a per-item `icon` (a Material Symbols name), choosing a **distinct** one per
+  item; when none is given the renderer content-matches — and never repeats an icon within a slide
+  either way. Because an icon stands in for the emoji, **strip leading/inline emoji from the labels
+  and bodies of those slides** — keeping both is redundant. (Emoji on a non-icon template, e.g. a
+  `statement`, may stay.)
 
 **Validate.** Every slide's fields must satisfy its template's required set (table above); a slide
 that doesn't is a fill error to fix, not a silent `fallback`.

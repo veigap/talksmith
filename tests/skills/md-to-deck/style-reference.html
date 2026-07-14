@@ -125,7 +125,7 @@ footer, header, hgroup, main, menu, nav, section {
 .stepn{flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:transparent;border:.3cqw solid var(--red);color:var(--red);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;margin-top:.4cqw}
 .steprow p{margin:0;font-size:2.6cqw;color:var(--body);line-height:1.35}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
-.chead,.crow{display:grid;grid-template-columns:1fr 1.2fr 1.2fr;gap:1.6cqw;align-items:center}
+.chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
 .crow{font-size:2.3cqw;color:var(--body)}.crow>span{background:var(--card);padding:1.4cqw 1.8cqw;border-radius:1.2cqw}.crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2.4cqw;margin-top:auto}
@@ -141,8 +141,11 @@ footer, header, hgroup, main, menu, nav, section {
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
-.ci.ci-top .imgph{width:100%;height:46cqh}
-.ci.ci-top .citext{align-items:center;text-align:center}
+.ci.ci-top .imgph{width:100%;height:44cqh}
+/* the caption under an image-top slide sits in a soft (non-shouty) highlight box */
+.ci.ci-top .citext{align-items:stretch;text-align:center;background:var(--card);border-radius:1.6cqw;padding:2.2cqw 3cqw}
+.ci.ci-top .cifacts li{padding-left:0}.ci.ci-top .cifacts li::before{display:none}
+.ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
@@ -265,11 +268,11 @@ footer, header, hgroup, main, menu, nav, section {
 </div></div></div>
 </section><section class="slide" data-kind="big-number"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Big-number · métrica hero</h2></div><div class="cbody"><div class="cfit"><div class="bignumwrap"><p class="bignum">97%</p><p class="bigcap">de las brechas con IA fueron en organizaciones sin controles de acceso.</p></div>
 </div></div></div>
-</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 3 columnas</h2></div><div class="cbody"><div class="cfit"><div class="compare">
+</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 3 columnas</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:3">
 <div class="chead"><span>Consumo</span><span>Enterprise</span><span>API</span></div>
 <div class="crow"><span>Datos usados para entrenar</span><span>Datos aislados</span><span>Control total</span></div><div class="crow"><span>Sin garantías</span><span>Contrato + DPA</span><span>Sin retención</span></div><div class="crow"><span>Cuenta personal</span><span>SSO corporativo</span><span>Claves rotadas</span></div></div>
 </div></div></div>
-</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare">
+</section><section class="slide" data-kind="comparison"><div class="stage"><div class="shead"><span class="pill">Statement, stat &amp; comparison</span><h2 class="stitle">Comparison · 2 columnas (mito vs realidad)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2">
 <div class="chead"><span>Mito</span><span>Realidad</span></div>
 <div class="crow"><span>Un ataque siempre viene de afuera</span><span>A veces sos vos incumpliendo lo prometido</span></div><div class="crow"><span>Hace falta malware</span><span>El dato sale por la puerta de adelante</span></div></div>
 </div></div></div>
@@ -457,7 +460,7 @@ footer, header, hgroup, main, menu, nav, section {
 </svg></div></div>
 </div></div></div>
 </section><section class="slide" data-kind="content+cards+image"><div class="stage"><div class="shead"><span class="pill">Visual, code &amp; prose</span><h2 class="stitle">Content + cards + image</h2></div><div class="cbody"><div class="cfit"><div class="cci"><div class="ccicards">
-<div class="ccard sm"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m393-165 279-335H492l36-286-253 366h154l-36 255Zm-73 85 40-280H160l360-520h80l-40 320h240L400-80h-80Zm154-396Z"/></svg></span><h3>Determinista</h3><p>El render no improvisa.</p></div><div class="ccard sm"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m393-165 279-335H492l36-286-253 366h154l-36 255Zm-73 85 40-280H160l360-520h80l-40 320h240L400-80h-80Zm154-396Z"/></svg></span><h3>Compartido</h3><p>HTML y PPTX, un modelo.</p></div></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+<div class="ccard sm"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M600-280H250v-60h207q-23.03-22.86-37.02-50.43Q406-418 402-450H180v-60h222.04Q407-542 421-569.5t36-50.5H160v-60h440q83 0 141.5 58.5T800-480q0 83-58.5 141.5T600-280Zm99-100.76q41-40.77 41-99Q740-538 699.24-579q-40.77-41-99-41Q542-620 501-579.24q-41 40.77-41 99Q460-422 500.76-381q40.77 41 99 41Q658-340 699-380.76ZM160-280v-60h60v60h-60Z"/></svg></span><h3>Determinista</h3><p>El render no improvisa.</p></div><div class="ccard sm"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M320-242 80-482l242-242 43 43-199 199 197 197-43 43Zm318 2-43-43 199-199-197-197 43-43 240 240-242 242Z"/></svg></span><h3>Compartido</h3><p>HTML y PPTX, un modelo.</p></div></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -491,7 +494,7 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
 </div>
 <div class="secagnow"><span class="secagnum">04</span><p class="secagtitle">Frame templates</p></div>
 </div></div></section><section class="slide" data-kind="closing-hero"><div class="stage cover"><div class="hero"><p class="steyebrow">Frame templates</p><span class="qa">¿Preguntas?</span><span class="qc">Gracias por escuchar.</span></div></div></section><section class="slide" data-kind="closing-cta"><div class="stage"><div class="shead"><span class="pill">Frame templates</span><h2 class="stitle">Recursos</h2></div><div class="cbody"><div class="cfit"><div class="ctagrid">
-<div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m393-165 279-335H492l36-286-253 366h154l-36 255Zm-73 85 40-280H160l360-520h80l-40 320h240L400-80h-80Zm154-396Z"/></svg></span><h4>Fundamentals</h4><p>aitutorial.dev/foundations</p></div><div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M120-510v-330h330v330H120Zm0 390v-330h330v330H120Zm390-390v-330h330v330H510Zm0 390v-330h330v330H510ZM180-570h210v-210H180v210Zm390 0h210v-210H570v210Zm0 390h210v-210H570v210Zm-390 0h210v-210H180v210Zm390-390Zm0 180Zm-180 0Zm0-180Z"/></svg></span><h4>Structured prompts</h4><p>aitutorial.dev/structured</p></div><div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m393-165 279-335H492l36-286-253 366h154l-36 255Zm-73 85 40-280H160l360-520h80l-40 320h240L400-80h-80Zm154-396Z"/></svg></span><h4>Repo</h4><p>github.com/austral/talksmith</p></div></div>
+<div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M216-357h100q20.65 0 35.33-14.67Q366-386.35 366-407v-146q0-20.65-14.67-35.33Q336.65-603 316-603H216v246Zm50-50v-146h50v146h-50Zm166 50h102v-50h-82v-52h52v-43h-52v-51h82v-50H432.47q-13.47 0-21.97 8.5Q402-586 402-573v185.6q0 13.4 8.5 21.9Q419-357 432-357Zm255.61-9.5Q698-375 702-388l66-215h-52l-53 170-53-170h-52l66 215q4 13 14.39 21.5T663-358q14.22 0 24.61-8.5ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm0-600v600-600Z"/></svg></span><h4>Fundamentals</h4><p>aitutorial.dev/foundations</p></div><div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M120-510v-330h330v330H120Zm0 390v-330h330v330H120Zm390-390v-330h330v330H510Zm0 390v-330h330v330H510ZM180-570h210v-210H180v210Zm390 0h210v-210H570v210Zm0 390h210v-210H570v210Zm-390 0h210v-210H180v210Zm390-390Zm0 180Zm-180 0Zm0-180Z"/></svg></span><h4>Structured prompts</h4><p>aitutorial.dev/structured</p></div><div class="ctacard"><span class="ic"><svg fill="#DA1B2E" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m393-165 279-335H492l36-286-253 366h154l-36 255Zm-73 85 40-280H160l360-520h80l-40 320h240L400-80h-80Zm154-396Z"/></svg></span><h4>Repo</h4><p>github.com/austral/talksmith</p></div></div>
 </div></div></div>
 </section><section class="slide" data-kind="fallback"><div class="stage"><div class="shead"><span class="pill">Frame templates</span><h2 class="stitle">Fallback</h2></div><div class="cbody"><div class="cfit"><p class="big2">Cuando nada matchea, se registra el fallback.</p></div></div></div>
 </section></div></div>

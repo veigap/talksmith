@@ -120,26 +120,42 @@ def _expand(toks: set[str]) -> set[str]:
     return out
 
 
+# Icons already placed on the current slide — an icon is never repeated within one slide
+# (reset per slide in render_model_slide). When the best match is taken, fall to the next-best.
+_USED_ICONS: set[str] = set()
+
+
+def _reset_slide_icons() -> None:
+    _USED_ICONS.clear()
+
+
 def icon_for(label: str, body: str = "") -> str:
     """Content-match a concept to a Material Symbols icon using the live catalog. The concept
     **label** drives the choice; the body only nudges ties (so "Seguridad" → shield even if its
-    body happens to mention "credenciales")."""
+    body happens to mention "credenciales"). **No icon repeats within a slide** — if the top match
+    is already used here, the next-best unused one is returned."""
     ltoks = _expand(_tokens(label))
     btoks = _expand(_tokens(body)) - ltoks
     if not _CAT_INDEX:                     # offline / not loaded → regex seed on the label
         t = _strip_accents(f"{label} {body}".lower())
         for pat, name in _SEED:
-            if re.search(pat, t):
+            if re.search(pat, t) and name not in _USED_ICONS:
+                _USED_ICONS.add(name)
                 return name
         return _DEFAULT_ICON
-    best, best_score, best_pop = _DEFAULT_ICON, 0, -1.0
+    scored = []
     for name, tset, pop in _CAT_INDEX:
         score = 3 * len(ltoks & tset) + len(btoks & tset)   # label weighted 3×, body 1×
         if name in ltoks:
             score += 6                     # exact name hit in the label is decisive
-        if score > best_score or (score == best_score and score > 0 and pop > best_pop):
-            best, best_score, best_pop = name, score, pop
-    return best if best_score > 0 else _DEFAULT_ICON
+        if score > 0:
+            scored.append((score, pop, name))
+    scored.sort(key=lambda x: (-x[0], -x[1]))
+    for _, _, name in scored:              # highest score first, skipping icons already on this slide
+        if name not in _USED_ICONS:
+            _USED_ICONS.add(name)
+            return name
+    return scored[0][2] if scored else _DEFAULT_ICON
 
 
 def _svg(name: str, cache, white: bool = False):
@@ -290,9 +306,25 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = "Autor:",
         author_label=author_label, modified_label=modified_label)
 
 
+# Templates whose markup places a matched icon next to each item / the point.
+_ICON_ITEM_KINDS = {"concept-breakdown", "card-row", "icon-list", "content+cards+image", "closing-cta"}
+
+
+def _resolve_item_icons(items: list) -> None:
+    """Resolve each item's icon in place. The fill may **suggest** an `icon` (a Material Symbols
+    name) per item, choosing distinct ones; those are reserved first, then any item without a
+    suggestion is content-matched — and `icon_for` won't reuse an icon already on this slide."""
+    for it in items:
+        if it.get("icon"):
+            _USED_ICONS.add(it["icon"])
+    for it in items:
+        it["icon"] = it.get("icon") or icon_for(it.get("label", ""), it.get("body", ""))
+
+
 def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> str:
     """Render one `slide-model.json` slide: map its template's fields onto the Jinja template's
     context. All semantics were resolved by the LLM fill step — this is a pure field mapping."""
+    _reset_slide_icons()                   # icons don't repeat within a slide
     t = slide.get("template", "fallback")
     ctx = {"section": slide.get("section", ""), "title": slide.get("title", "")}
     ri = lambda im: _resolve_img(im, talk_root, asset_dir)
@@ -332,6 +364,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
         for i in range(maxn):
             rows.append([(c.get("cells", [])[i] if i < len(c.get("cells", [])) else "") for c in cols])
         ctx["rows"] = rows
+        ctx["ncols"] = len(cols) or 1
     elif t == "stat":
         stats = slide.get("stats", [])
         ctx["items"] = [{"label": s.get("value", ""), "body": s.get("caption", "")} for s in stats]
@@ -361,6 +394,10 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
         ctx["items"] = slide.get("items", [])
     elif t == "fallback":
         ctx["big"] = slide.get("big", "") or slide.get("title", "")
+    if t in _ICON_ITEM_KINDS and ctx.get("items"):
+        _resolve_item_icons(ctx["items"])
+    elif t in ("single-point", "callout") and ctx.get("item"):
+        _resolve_item_icons([ctx["item"]])
     return _render(_TMPL.get(t, "fallback.j2"), cache, **ctx)
 
 

@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(section, title) %}
-<div class="compare">
+<div class="compare" style="--cc:{{ ncols }}">
 <div class="chead">{% for c in rows[0] %}<span>{{ c }}</span>{% endfor %}</div>
 {% for r in rows[1:] %}<div class="crow">{% for c in r %}<span>{{ c }}</span>{% endfor %}</div>{% endfor %}
 </div>

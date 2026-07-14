@@ -12,6 +12,28 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.0] — 2026-07-13
+
+### Added
+
+- **Icons never repeat within a slide.** The renderer content-matches a distinct icon to each item
+  of an icon-bearing template and won't reuse one already placed on that slide. The **fill may also
+  suggest** a per-item `icon` (a Material Symbols name); suggestions are honoured and reserved first.
+
+### Changed
+
+- **Emoji removal is a FILL rule, not a render transform** (documented in `schemas/slide-model.md`
+  alongside the rest of the FILL decomposition contract): when a slide gets an icon-bearing
+  template, the fill strips leading/inline emoji from its labels/bodies — the matched icon stands
+  in for the emoji.
+
+### Fixed
+
+- **`comparison` no longer leaves an empty 3rd column** — it used a hard-coded 3-column grid; now it
+  uses the actual number of columns, so a 2-column comparison fills the width.
+- **`content+image` `image-top`** — the caption under the image now sits in a soft (non-shouty)
+  highlight box.
+
 ## [0.44.0] — 2026-07-13
 
 ### Changed

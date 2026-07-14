@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(section, title) %}
 <div class="ctagrid">
-{% for it in items %}<div class="ctacard">{{ icon(icon_for(it.label)) }}<h4>{{ it.label }}</h4><p>{{ it.body }}</p></div>{% endfor %}
+{% for it in items %}<div class="ctacard">{{ icon(it.icon) }}<h4>{{ it.label }}</h4><p>{{ it.body }}</p></div>{% endfor %}
 </div>
 {% endcall %}
