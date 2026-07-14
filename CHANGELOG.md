@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.41.0] — 2026-07-13
+
+### Added
+
+- **Stat slides are auto-detected.** A slide whose payload is standalone metrics — number
+  bullets (`$4.44M`, `$670K`) or metric-labeled items (`**97%** …`) — now renders as a `stat`
+  slide (big numbers + captions) instead of being hijacked into `content+image` by a stray graphic
+  or flattened into a card grid. A bare integer (a year, a count) is deliberately *not* treated as
+  a metric.
+
 ## [0.40.0] — 2026-07-13
 
 ### Added

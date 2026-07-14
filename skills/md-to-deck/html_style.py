@@ -25,6 +25,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 from icon_fetch import fetch_icon, fetch_catalog  # noqa: E402
+import slide_model as _sm            # noqa: E402  (shared signal regexes, e.g. _METRIC_RE)
 
 ACCENT = "DA1B2E"
 _DEFAULT_ICON = "bolt"
@@ -260,7 +261,20 @@ def render_slide(kind, u, section, cache) -> str:
         ctx["tone"] = "blue" if kind == "callout" else "pink"
         ctx["show_lead"] = kind == "single-point"
     elif kind == "stat":
-        ctx["cols"] = min(len(items), 4) or 1
+        # Build stat cards: metric-labeled items keep their label/body; a body line carrying a
+        # metric becomes a card (metric = the big number, the rest = its caption). Non-metric
+        # body (a lead like "en tres números:") sits above the cards.
+        cards = [dict(it) for it in items if _sm._METRIC_RE.match((it.get("label") or "").strip())]
+        used = set()
+        for b in body:
+            m = _sm._METRIC_RE.search(b)
+            if m:
+                cards.append({"label": b[m.start():m.end()].strip(" ~"),
+                              "body": (b[:m.start()] + " " + b[m.end():]).strip(" :—–-~")})
+                used.add(b)
+        ctx["items"] = cards or items
+        ctx["cols"] = min(len(ctx["items"]), 4) or 1
+        ctx["lead"] = "" if items else next((b for b in body if b not in used), "")
     elif kind == "content-text":
         ctx["big"] = body[0] if body else title
         ctx["panels"] = [it["label"] + ((": " + it["body"]) if it.get("body") else "") for it in items] \

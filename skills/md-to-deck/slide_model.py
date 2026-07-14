@@ -38,6 +38,13 @@ _EMPTY_BULLET_RE = re.compile(r"^\s*[-*+•]\s*$")                 # a bullet ma
 _NUM_ITEM_RE = re.compile(r"^\s*\d+[.)]\s+(.+)$")               # a numbered step line "1. …" (NOT bullet-prefixed)
 _NUM_LABEL_RE = re.compile(r"^\s*\*\*(.+?)\*\*\s*[—–:\-]*\s*(.*)$")  # "**Label** — body" inside a step
 _FENCE_RE = re.compile(r"^\s*```")
+# A prominent metric: a currency amount, a percentage, or a number with a magnitude suffix.
+# Deliberately NOT a bare integer — that would match years ("IBM 2025") and counts.
+_METRIC_RE = re.compile(
+    r"[~≈><≥≤+]?\s*(?:USD?|US\$|€|\$)\s*\d[\d.,]*\s*(?:MM?|K|B|bn|mil(?:l(?:ones)?)?)?"
+    r"|[~≈><≥≤+]?\s*\d[\d.,]*\s*%"
+    r"|[~≈><≥≤+]?\s*\d[\d.,]*\s*(?:MM?|K|millones|mil)\b",
+    re.I)
 # Author section-break markers in a title, e.g. `## 1. 〔divisor〕 …` — stripped from the shown
 # title; `divisor`/`backup` force the slide to a divider even at H2 (slide-templates.md §is_divider).
 _MARKER_RE = re.compile(r"〔([^〕]*)〕")
@@ -210,6 +217,14 @@ def _classify(u: dict) -> str:
         return "code-example"
     ni, nimg = len(u["items"]), len(u["images"])
     words = sum(len(b.split()) for b in u["body"])
+    # Standalone metrics are the payload → a stat slide, ahead of image/card layouts. Two shapes:
+    # ≥2 metric-labeled items ("**97%** …"), or ≥2 body lines that ARE a metric ("$4.44M"). Every
+    # labeled item must be a metric (so a card set with one numeric label isn't hijacked). A bare
+    # integer is not a metric (see _METRIC_RE — it would match years / counts).
+    metric_items = [it for it in u["items"] if _METRIC_RE.match((it.get("label") or "").strip())]
+    metric_body = [b for b in u["body"] if _METRIC_RE.match(b)]
+    if (len(metric_items) + len(metric_body)) >= 2 and len(metric_items) == ni:
+        return "stat"
     if nimg >= 4 and ni < 2:
         return "image-grid"
     if ni >= 2:
