@@ -52,10 +52,20 @@ deliverable; `draft.md` → live in-progress view).
   verbatim → Reveal `<aside class="notes">` / the PPTX notes pane, **never** on the slide face), and
   **`highlights`** (see below). Beyond those, each template requires exactly the fields in its row.
 - **`highlights`** — an **optional** common field on any content slide: a list of one or more
-  emphasized takeaways / comments, rendered in a soft highlight band under the slide body. Each
-  entry is a string **or** `{label, body}` (the `label` renders bold before a colon). Use it for a
-  key line that deserves emphasis — e.g. the takeaway a diagram builds to — instead of dropping or
-  burying it.
+  emphasized lines, rendered in an accented band under the slide body. Each entry is a string **or**
+  `{body, label?, kind?}` (the `label` renders bold before a colon). Use it for a line that deserves
+  emphasis — e.g. the takeaway a diagram builds to — instead of dropping or burying it. The **fill
+  picks the `kind`** (it's a semantic choice, like a callout's tone); each kind has its own accent
+  colour + icon. Defaults to `takeaway`.
+
+  | `kind` | The job the line does | e.g. |
+  |---|---|---|
+  | `takeaway` *(default)* | the point to remember — thesis / summary | "Si se llevan un solo slide, es este." |
+  | `important` | a risk / critical caveat / a "don't" | "Nunca pegues credenciales en un prompt." |
+  | `definition` | a term being defined | "DPA: el contrato de tratamiento obligatorio (Art. 28)." |
+  | `example` | an illustration / concrete scenario | "Ej.: pegar la lista de clientes en un chatbot gratuito." |
+  | `quote` | a pull-quote / cited line (rendered italic) | "Una falla de seguridad no siempre tiene un atacante." |
+  | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
 - **Never drop content.** Every load-bearing line in the source must be *translated* into the
   model — as a field value, a card/row/step, a fact, or a `highlights` entry. Do not omit a line
   because it looks redundant with an image or another slide; move it to `highlights` if it's a
@@ -85,6 +95,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `quote` | `quote` | `attribution`, `section` |
 | `timeline` | `title`, `milestones:[{label,body}]` | per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
+| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `explanation` (extra reveal) |
 | `single-point` | `title`, `point:{label,body}` | — |
 | `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title` |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |

@@ -12,6 +12,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.47.0] — 2026-07-14
+
+### Added
+
+- **Highlight kinds.** A `highlights` entry can carry a `kind` — `takeaway` (default), `important`,
+  `definition`, `example`, `quote`, or `note` — each with its own accent colour + icon (quote renders
+  italic). The **fill picks the kind** (a semantic choice, like a callout's tone); documented in
+  `schemas/slide-model.md`. The style reference demos all six.
+- **`quiz` template.** A question with optional lettered choices shown up front and the answer
+  revealed on next-nav (a Reveal fragment) — for the vote-first "rompemitos" dynamic.
+
 ## [0.46.3] — 2026-07-14
 
 ### Added

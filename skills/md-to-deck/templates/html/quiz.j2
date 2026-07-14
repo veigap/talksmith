@@ -1,0 +1,18 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(section, title, highlights) %}
+<div class="quiz">
+<p class="quiz-q">{{ question }}</p>
+{% if options %}
+<ol class="quiz-opts">
+{% for o in options %}<li>{{ o }}</li>{% endfor %}
+</ol>
+{% endif %}
+{# The answer is a Reveal fragment: the question (and options) show immediately, the answer
+   fades up on the next navigation — the deck's own native animation, no custom JS. #}
+<div class="quiz-ans fragment fade-up">
+<span class="quiz-lab">{{ icon("check_circle") }}Respuesta</span>
+<p class="quiz-a">{{ answer }}</p>
+{% if explanation %}<p class="quiz-exp">{{ explanation }}</p>{% endif %}
+</div>
+</div>
+{% endcall %}

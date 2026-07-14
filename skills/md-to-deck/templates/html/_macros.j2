@@ -4,6 +4,6 @@
 {% endmacro %}
 {% macro stage(section, title, highlights=none) %}
 <div class="stage"><div class="shead">{{ header(section, title) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
-{% if highlights %}<div class="highlights">{% for h in highlights %}<div class="highlight">{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</div>{% endfor %}</div>{% endif %}
+{% if highlights %}<div class="highlights">{% for h in highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
 </div></div></div>
 {% endmacro %}

@@ -241,7 +241,8 @@ _TMPL = {
     "single-point": "single-point.j2", "callout": "single-point.j2", "agenda": "agenda.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
     "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",
-    "big-number": "big-number.j2", "pros-cons": "pros-cons.j2", "fallback": "fallback.j2",
+    "big-number": "big-number.j2", "pros-cons": "pros-cons.j2", "quiz": "quiz.j2",
+    "fallback": "fallback.j2",
 }
 
 
@@ -325,6 +326,28 @@ def _labeled(items) -> list:
     return [x if isinstance(x, dict) else {"label": "", "body": x} for x in (items or [])]
 
 
+# highlight kinds → a fixed Material Symbols icon (the accent colour is set in CSS per kind).
+_HL_ICON = {
+    "note": "sticky_note_2", "example": "lightbulb", "definition": "menu_book",
+    "quote": "format_quote", "important": "priority_high", "takeaway": "flag",
+}
+
+
+def _highlights(items) -> list:
+    """Normalize the `highlights` list into `{kind, icon, label, body}`. The **fill** picks each
+    entry's `kind` (one of _HL_ICON); the renderer maps it to its icon + accent style. Defaults to
+    `takeaway`. Entries may be a string or `{body, label?, kind?}`."""
+    out = []
+    for x in (items or []):
+        h = x if isinstance(x, dict) else {"body": x}
+        kind = (h.get("kind") or "takeaway").lower()
+        if kind not in _HL_ICON:
+            kind = "takeaway"
+        out.append({"label": h.get("label", ""), "body": h.get("body", ""),
+                    "kind": kind, "icon": _HL_ICON[kind]})
+    return out
+
+
 def _resolve_item_icons(items: list) -> None:
     """Resolve each item's icon in place. The fill may **suggest** an `icon` (a Material Symbols
     name) per item, choosing distinct ones; those are reserved first, then any item without a
@@ -344,7 +367,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
     ctx = {"section": slide.get("section", ""), "title": slide.get("title", ""),
-           "highlights": _labeled(slide.get("highlights"))}
+           "highlights": _highlights(slide.get("highlights"))}
     ri = lambda im: _resolve_img(im, talk_root, asset_dir)
     lead = slide.get("lead", "")
     if t == "divider":
@@ -396,6 +419,13 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     elif t == "pros-cons":
         ctx["items"] = [{"label": "Ventajas", "body": " · ".join(slide.get("pros", []))},
                         {"label": "Riesgos", "body": " · ".join(slide.get("cons", []))}]
+    elif t == "quiz":
+        # question + optional choices show immediately; the answer is revealed on next-nav
+        # (a Reveal fragment in the template). explanation is optional extra revealed text.
+        ctx["question"] = slide.get("question", "") or slide.get("title", "")
+        ctx["options"] = slide.get("options", [])
+        ctx["answer"] = slide.get("answer", "")
+        ctx["explanation"] = slide.get("explanation", "")
     elif t in ("single-point", "callout"):
         ctx["item"] = slide.get("point") or slide.get("callout") or {"label": "", "body": ""}
         ctx["tone"] = slide.get("tone", "blue" if t == "callout" else "pink")

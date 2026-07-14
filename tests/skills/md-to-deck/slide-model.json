@@ -202,7 +202,10 @@
         }
       ],
       "highlights": [
-        "Cada cifra lleva su fuente en la lámina."
+        {
+          "body": "Cada cifra lleva su fuente en la lámina.",
+          "kind": "note"
+        }
       ]
     },
     {
@@ -280,6 +283,21 @@
       ]
     },
     {
+      "template": "quiz",
+      "section": "Statement, stat & comparison",
+      "title": "Quiz · fuga de datos",
+      "question": "Un empleado pega código propietario en ChatGPT (cuenta gratuita). ¿Qué es lo más correcto?",
+      "options": [
+        "Nada: OpenAI nunca mira esos datos",
+        "Puede usarse para entrenar el modelo salvo que se desactive",
+        "Se borra automáticamente a las 24 horas",
+        "Queda cifrado de extremo a extremo y es inaccesible"
+      ],
+      "answer": "B — en la cuenta de consumo, las conversaciones pueden usarse para entrenar salvo opt-out.",
+      "explanation": "Por eso importa la versión enterprise: aislamiento de datos, contrato/DPA y controles de retención.",
+      "notes": "Slide de quiz: deja pensar a la audiencia antes de avanzar; la respuesta se revela al pasar."
+    },
+    {
       "template": "quote",
       "section": "Statement, stat & comparison",
       "quote": "Una falla de seguridad no siempre tiene un atacante. A veces sos vos incumpliendo lo que prometiste.",
@@ -316,9 +334,13 @@
       "highlights": [
         {
           "label": "Nunca recortado",
-          "body": "la línea roja del fondo del diagrama tiene que verse entera."
+          "body": "la línea roja del fondo del diagrama tiene que verse entera.",
+          "kind": "important"
         },
-        "Un modelo, dos salidas."
+        {
+          "body": "Un modelo, dos salidas.",
+          "kind": "takeaway"
+        }
       ]
     },
     {
@@ -333,6 +355,44 @@
         "src": "images/pipeline.svg",
         "alt": "pipeline"
       }
+    },
+    {
+      "template": "content-text",
+      "section": "Visual, code & prose",
+      "title": "Highlights · los 6 tipos",
+      "big": "Un highlight lleva un kind — el fill lo elige:",
+      "panels": [],
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "label": "Takeaway",
+          "body": "la idea para llevar (por defecto)."
+        },
+        {
+          "kind": "important",
+          "label": "Important",
+          "body": "un riesgo, un límite o un 'no'."
+        },
+        {
+          "kind": "definition",
+          "label": "Definition",
+          "body": "un término que se define."
+        },
+        {
+          "kind": "example",
+          "label": "Example",
+          "body": "un caso concreto o escenario."
+        },
+        {
+          "kind": "quote",
+          "body": "\"Una cita textual — se muestra en itálica.\""
+        },
+        {
+          "kind": "note",
+          "label": "Note",
+          "body": "un aside o contexto menor."
+        }
+      ]
     },
     {
       "template": "figures",

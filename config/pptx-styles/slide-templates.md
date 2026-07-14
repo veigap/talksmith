@@ -186,6 +186,23 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   large bold (≤~35 words), then a muted `— attribution` line. No cards, no header pill body.
 - **Provenance:** gov deck testimonial slides; common in Gamma-style decks.
 
+#### `quiz` (question → revealed answer)
+- **Match:** the slide **poses a question and then answers it** — a quiz/check-for-understanding
+  or a myth-as-question. Signals: a `### Content` (or title) that is a question, an explicit
+  `<!-- template: quiz -->` hint, or a body split into a prompt + its resolution (often
+  "Pregunta … Respuesta …", multiple-choice options A/B/C/D, or "¿…? → …"). **Not:** a bare
+  assertion with no question (→ `statement`); a quoted line (→ `quote`); a list of parallel
+  facts (→ enumeration templates).
+- **Format:** section pill + optional topic title; the **question set large** (Bold, ~24–28 pt),
+  optional **lettered choices** (A/B/C/D) beneath, then a distinct **answer panel** — light-pink
+  `#F9D2D6`, red left-accent, an uppercase red "RESPUESTA" label — carrying the answer (Bold) and
+  an optional one-line explanation. **In the HTML deck the answer panel is a Reveal fragment:**
+  the question (and choices) render immediately and the answer is revealed on the *next*
+  navigation using Reveal's native `fade-up` — so the audience can think before the reveal.
+- **Strict recipe:** none yet. `.pptx` is static (no reveal), so render the answer panel visible
+  in place — same layout, just always shown. **Provenance:** the *seguridad-governance-ai* deck
+  (a quiz per page).
+
 ### Enumeration templates — unordered labeled sets (cards, never bullets)
 
 > The three below share the signal "lead + 3–5 labeled parallel items." Pick by **body
