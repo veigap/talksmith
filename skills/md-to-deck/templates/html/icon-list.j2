@@ -3,7 +3,7 @@
 {% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
 <div class="iconlist">
 {% for it in items %}
-<div class="ilrow">{{ icon(it.icon) }}<div><h4>{{ it.label }}</h4>{% if it.body %}<p>{{ it.body }}</p>{% endif %}</div></div>
+<div class="ilrow{{ ' solo' if not it.body else '' }}">{{ icon(it.icon) }}<div><h4>{{ it.label }}</h4>{% if it.body %}<p>{{ it.body }}</p>{% endif %}</div></div>
 {% endfor %}
 </div>
 {% endcall %}

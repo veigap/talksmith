@@ -72,6 +72,8 @@
 .chip svg{width:62%;height:62%}.rcard h3{margin:0;font-size:2.8cqw;font-weight:800;color:var(--ink)}.rcard p{margin:0;font-size:2.2cqw;color:var(--body);line-height:1.3}
 .iconlist{margin-top:2.4cqw;display:flex;flex-direction:column;gap:2.2cqw}
 .ilrow{display:flex;gap:2.4cqw;align-items:flex-start}.ilrow .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto;margin-top:.4cqw}
+/* a label-only row (no body) centers the icon with its single line of text */
+.ilrow.solo{align-items:center}.ilrow.solo .ic{margin-top:0}.ilrow.solo h4{margin:0}
 .ilrow h4{margin:0 0 .6cqw;font-size:2.9cqw;font-weight:800;color:var(--ink)}.ilrow p{margin:0;font-size:2.4cqw;color:var(--body);line-height:1.3}
 .numrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .ncard{background:var(--slide);border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}

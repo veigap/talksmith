@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.46.1] — 2026-07-14
+
+### Fixed
+
+- **icon-list label-only rows now align the icon with the text.** A row with no `body` (a bare
+  label, e.g. "Sin NDA" / "No hubo hackers") kept the icon top-aligned and a dangling label margin,
+  so the icon sat higher than its single line of text. Such rows now center the icon vertically.
+
 ## [0.46.0] — 2026-07-14
 
 ### Added
