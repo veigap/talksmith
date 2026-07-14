@@ -1,6 +1,7 @@
 {
   "deck": {
     "title": "Talksmith",
+    "lang": "en",
     "institution": "build a talk from what you already know",
     "class": "Intro — what it is, how to install it, how to use it",
     "presenter": "Paulo Veiga (@veigap)",
@@ -70,7 +71,8 @@
           "body": "Why is this slide here? Why was that one cut? The reasoning evaporates."
         }
       ],
-      "notes": "Four cards, one per pain — each maps to a Talksmith answer you'll show later. ~2 min."
+      "notes": "Four cards, one per pain — each maps to a Talksmith answer you'll show later. ~2 min.",
+      "reveal": "sequential"
     },
     {
       "template": "section-agenda",

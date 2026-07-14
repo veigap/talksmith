@@ -12,6 +12,23 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.52.0] — 2026-07-14
+
+### Added
+
+- **Animations on/off toggle in the HTML deck.** A discreet icon button below the light/dark toggle
+  (top-right) turns the reveal animations off — every fragment shows at once and slide transitions
+  are disabled — for viewers who prefer a static deck. Enabled by default; the choice persists in
+  `localStorage`. Sequential reveal is also applied to `concept-breakdown` (the example's slide 5).
+
+### Fixed
+
+- **Renderer chrome labels are now language-aware.** The cover's author / last-modified lines, the
+  `pros-cons` column headers, and the `quiz` answer label were hardcoded Spanish, so an English deck
+  showed "Autor" / "Última modificación" / "Ventajas" / "Riesgos" / "Respuesta". They now localize
+  from a new `deck.lang` field (default `en`; sourced from the profile's *Presentation language*).
+  Spanish decks set `lang: "es"` and keep the Spanish chrome.
+
 ## [0.51.0] — 2026-07-14
 
 ### Added

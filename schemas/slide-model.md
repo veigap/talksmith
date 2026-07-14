@@ -22,6 +22,7 @@ deliverable; `draft.md` → live in-progress view).
 {
   "deck": {
     "title": "Inteligencia Artificial: de lo conceptual a lo práctico",
+    "lang": "es",
     "institution": "Máster en Management, Escuela de Negocios (ejemplo)",
     "class": "Seguridad e IA para Managers",
     "presenter": "Nombre Apellido, Profesor",
@@ -43,7 +44,10 @@ deliverable; `draft.md` → live in-progress view).
 }
 ```
 
-- **`deck`** — cover + deck-wide data. `logo: null` → the renderer resolves it (frontmatter
+- **`deck`** — cover + deck-wide data. **`lang`** (`"en"` default, or `"es"`, …; from the profile's
+  *Presentation language*) localizes the **renderer-emitted chrome labels** — the cover's
+  author/last-modified lines, the `pros-cons` column headers, and the `quiz` answer label — so an
+  English deck never shows Spanish chrome. It does **not** translate authored content. `logo: null` → the renderer resolves it (frontmatter
   `logo:` → the Talk's `images/logo.*` → the subject repo's `config/logo.*` (set once at repo
   setup) → the bundled neutral placeholder — the plugin ships no institution branding). `sections` is the ordered
   section list that drives the section-separator roadmap; the cover slide is synthesized from
@@ -124,7 +128,8 @@ follows is only **how to build the deck object and decompose a slide's body into
 template's fields.**
 
 **The `deck` object.** From the frontmatter: split `presentation:` on the em/en-dash into `title`
-(before) and `institution` (after); take `class`, `presenter`, `date`; `logo: null` (the renderer
+(before) and `institution` (after); take `class`, `presenter`, `date`; set `lang` from the profile's
+*Presentation language* (`en` if absent); `logo: null` (the renderer
 resolves it). `sections` = the ordered section list read from the Agenda slide's "**Sections (in
 delivery order):**" block (drop each item's "— description" tail and any "(~N min)", keep "(2023)").
 

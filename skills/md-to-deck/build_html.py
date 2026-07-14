@@ -39,6 +39,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     cache = out_dir / ".icons"
     _hs.load_catalog(cache)
     deck = model.get("deck", {})
+    lang = deck.get("lang", "en")
     sections = deck.get("sections", [])
     sections_norm = [_norm(s) for s in sections]
 
@@ -56,7 +57,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
             if active >= 0:
                 sid = f' id="sec-{active}"'                        # so roadmap rows can deep-link here
         else:
-            inner = _hs.render_model_slide(s, cache, talk_root, out_dir)
+            inner = _hs.render_model_slide(s, cache, talk_root, out_dir, lang)
         notes = s.get("notes", "")
         aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
         slides_html.append(f'<section class="slide"{sid} data-kind="{t}">{inner}{aside}</section>')

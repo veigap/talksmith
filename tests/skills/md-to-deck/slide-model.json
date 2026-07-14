@@ -1,6 +1,7 @@
 {
   "deck": {
     "title": "Talksmith Style Reference",
+    "lang": "es",
     "institution": "md-to-deck visual regression deck",
     "class": "One example of every slide template, plus layout edge cases",
     "presenter": "Talksmith",
@@ -449,12 +450,30 @@
       "section": "Visual & data",
       "title": "image-grid: four or more images as one composite",
       "images": [
-        { "src": "images/pipeline.svg", "alt": "Grid sample 1" },
-        { "src": "images/pipeline.svg", "alt": "Grid sample 2" },
-        { "src": "images/pipeline.svg", "alt": "Grid sample 3" },
-        { "src": "images/pipeline.svg", "alt": "Grid sample 4" },
-        { "src": "images/pipeline.svg", "alt": "Grid sample 5" },
-        { "src": "images/pipeline.svg", "alt": "Grid sample 6" }
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 1"
+        },
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 2"
+        },
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 3"
+        },
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 4"
+        },
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 5"
+        },
+        {
+          "src": "images/pipeline.svg",
+          "alt": "Grid sample 6"
+        }
       ]
     },
     {

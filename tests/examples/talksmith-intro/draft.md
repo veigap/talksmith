@@ -110,6 +110,7 @@ Numbers are illustrative from the instructor survey — say so. The third stat s
 
 ## 3. Four problems, one root cause
 <!-- template: concept-breakdown -->
+<!-- reveal: sequential -->
 
 The pain, broken into the pieces Talksmith picks off one by one.
 

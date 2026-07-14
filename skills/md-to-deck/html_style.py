@@ -310,9 +310,21 @@ def _resolve_img(img, talk_root, asset_dir):
     return (alt, next((c for c in cands if c.is_file()), None))
 
 
-def cover_from_deck(deck: dict, talk_root=None, author_label: str = "Autor:",
-                    modified_label: str = "Última modificación:") -> str:
+# Chrome labels the renderer emits (not authored content) — localized by `deck.lang` (default en).
+_LABELS = {
+    "en": {"author": "Author:", "modified": "Last modified:", "pros": "Pros", "cons": "Cons", "answer": "Answer"},
+    "es": {"author": "Autor:", "modified": "Última modificación:", "pros": "Ventajas", "cons": "Riesgos", "answer": "Respuesta"},
+}
+
+
+def _labels(lang) -> dict:
+    return _LABELS.get((lang or "en").strip().lower()[:2], _LABELS["en"])
+
+
+def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
+                    modified_label: str = None) -> str:
     """The contractually-fixed cover, built from the model's `deck` object."""
+    L = _labels(deck.get("lang", "en"))
     fm = {"logo": deck.get("logo") or "", "class": deck.get("class", ""),
           "presentation": deck.get("title", "")}
     return _render(
@@ -320,7 +332,7 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = "Autor:",
         title=deck.get("title", ""), inst=deck.get("institution", ""),
         cls=deck.get("class", ""), author=deck.get("presenter", ""), date=deck.get("date", ""),
         logo=Markup(_cover_logo(fm, talk_root)),
-        author_label=author_label, modified_label=modified_label)
+        author_label=author_label or L["author"], modified_label=modified_label or L["modified"])
 
 
 # Templates whose markup places a matched icon next to each item / the point.
@@ -367,10 +379,11 @@ def _resolve_item_icons(items: list) -> None:
         it["icon"] = it.get("icon") or icon_for(it.get("label", ""), it.get("body", ""))
 
 
-def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> str:
+def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang="en") -> str:
     """Render one `slide-model.json` slide: map its template's fields onto the Jinja template's
     context. All semantics were resolved by the LLM fill step — this is a pure field mapping."""
     _reset_slide_icons()                   # icons don't repeat within a slide
+    L = _labels(lang)                      # renderer-emitted chrome labels (localized)
     t = slide.get("template", "fallback")
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
@@ -426,8 +439,8 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     elif t == "timeline":
         ctx["items"] = [{"label": m.get("label", ""), "body": m.get("body", "")} for m in slide.get("milestones", [])]
     elif t == "pros-cons":
-        ctx["items"] = [{"label": "Ventajas", "body": " · ".join(slide.get("pros", []))},
-                        {"label": "Riesgos", "body": " · ".join(slide.get("cons", []))}]
+        ctx["items"] = [{"label": slide.get("pro_label") or L["pros"], "body": " · ".join(slide.get("pros", []))},
+                        {"label": slide.get("con_label") or L["cons"], "body": " · ".join(slide.get("cons", []))}]
     elif t == "quiz":
         # question + optional choices show immediately; the answer (and the highlight on the
         # correct choice) reveal together on next-nav (Reveal fragments). Optional image at right.
@@ -436,7 +449,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
         ctx["options"] = opts
         ctx["answer"] = slide.get("answer", "")
         ctx["explanation"] = slide.get("explanation", "")
-        ctx["answer_label"] = slide.get("answer_label", "Respuesta")
+        ctx["answer_label"] = slide.get("answer_label") or L["answer"]
         ctx["image"] = ri(slide.get("image")) if slide.get("image") else None
         # `correct` selects the choice highlighted on reveal: an option string, a 1-based
         # index, or a letter (A/B/C…). -1 → no option highlighted.
@@ -503,12 +516,16 @@ function fitCover(st){                       // full-bleed text slides (quote/st
 function fitAll(scope){ var r=(scope||document);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
+window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configure){
+  Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
+  if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
 Reveal.initialize({
   width:1280, height:720, margin:0.04, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
   keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();
+  try{deckAnim(document.documentElement.getAttribute('data-deck-anim')||'on');}catch(e){}
   Reveal.on('slidechanged', function(e){ if(e.currentSlide) fitAll(e.currentSlide); });
   Reveal.on('resize', function(){ setTimeout(fitAll, 60); });
 });"""
@@ -572,6 +589,23 @@ _THEME_ICONS = (
     'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/>'
     '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>')
 
+# Runtime animations toggle — enabled by default; off makes every fragment show at once and
+# turns off slide transitions (`deckAnim` in _REVEAL_INIT). `_ANIM_EARLY` sets the icon state.
+_ANIM_EARLY = ("(function(){try{var a=localStorage.getItem('deckAnim')||'on';"
+               "document.documentElement.setAttribute('data-deck-anim',a);}catch(e){}})();")
+_ANIM_SWITCH = ("(function(){var root=document.documentElement,btn=document.querySelector('[data-deck-anim-toggle]');"
+                "if(!btn)return;btn.addEventListener('click',function(){"
+                "var nx=(root.getAttribute('data-deck-anim')==='off')?'on':'off';"
+                "root.setAttribute('data-deck-anim',nx);try{localStorage.setItem('deckAnim',nx);}catch(e){}"
+                "if(window.deckAnim)deckAnim(nx);});})();")
+# animations on = two overlapping rings; off = the same with a slash.
+_ANIM_ICONS = (
+    '<svg class="ic-anim-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" aria-hidden="true"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>'
+    '<svg class="ic-anim-off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/>'
+    '<circle cx="15" cy="15" r="6"/><line x1="3" y1="21" x2="21" y2="3"/></svg>')
+
 
 def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
     """Assemble the full self-contained Reveal.js deck: vendored CSS/JS inlined, our theme
@@ -588,12 +622,16 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<style>{reveal_css}</style>\n'
         f'<style>{CSS}</style>\n'
         f'<script>{_THEME_EARLY}</script>\n'
+        f'<script>{_ANIM_EARLY}</script>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
+        f'<button class="deckanim" data-deck-anim-toggle type="button" '
+        f'aria-label="Toggle animations" title="Animations">{_ANIM_ICONS}</button>\n'
         f'<button class="deckthemes" data-deck-toggle type="button" '
         f'aria-label="Alternar tema claro / oscuro" title="Tema claro / oscuro">{_THEME_ICONS}</button>\n'
         f'<script>{reveal_js}</script>\n'
         f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
         f'<script>{_THEME_SWITCH}</script>\n'
+        f'<script>{_ANIM_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
     )
