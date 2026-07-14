@@ -142,7 +142,7 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
                 section = re.sub(r"^\d+[.)]\s*", "", u["title"])
                 secno += 1
                 number = secno
-            if agenda and mi >= 0:                                # re-show the agenda at a real section start
+            if agenda and (mi >= 0 or nt == "agenda"):            # the Agenda slide, or a section start → the agenda list
                 inner = _hs.section_agenda(agenda, active, u["title"])
             else:                                                 # no agenda list, or a sub-opener → styled section title
                 u["_number"] = number                             # None for sub-openers (no number shown)
@@ -157,7 +157,7 @@ def render(md_text: str, talk_root: Path, out_dir: Path, draft: bool, title: str
 
     fm = _frontmatter(md_text)
     if fm.get("presentation"):                                    # contractually-fixed cover first
-        slides_html.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm)}</section>')
+        slides_html.insert(0, f'<section class="slide cover-slide">{_hs.cover_slide(fm, talk_root)}</section>')
 
     # per-slide template-decision log beside the deck (slide-templates.md → Template decision log)
     _sm._write_template_log(log_entries, talk_root, "html", out_dir / "template-log.md")

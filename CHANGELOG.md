@@ -12,6 +12,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.37.0] — 2026-07-13
+
+### Fixed
+
+- **HTML cover shows a real institution logo**, not a 3-letter text stand-in. Resolution order:
+  frontmatter `logo:` → the Talk's `images/logo|cover-logo.*` → the bundled institution logo →
+  text initials only if no image is found (embedded self-contained).
+- **The `# Agenda` slide renders the actual agenda list again** (numbered sections), not an empty
+  "Agenda" title — the `nt == "agenda"` case had been dropped in the section-enrichment refactor.
+
 ## [0.36.1] — 2026-07-13
 
 ### Fixed

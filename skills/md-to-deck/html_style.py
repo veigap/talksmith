@@ -301,13 +301,47 @@ def section_agenda(sections, active: int, heading: str = "") -> str:
     return _render("agenda.j2", None, sections=sections, active=active, title=heading or "Agenda", section="")
 
 
-def cover_slide(fm: dict, author_label: str = "Autor:", modified_label: str = "Última modificación:") -> str:
+_BUNDLED_LOGO = _HERE.parent.parent / "config" / "pptx-styles" / "pptx-free-form" / "cover-logo.png"
+
+
+def _cover_logo(fm: dict, talk_root) -> str:
+    """The cover's institution logo, embedded self-contained. Resolution order: frontmatter
+    `logo:` → the Talk's `images/logo|cover-logo` → the bundled institution logo → a text
+    stand-in from the class name (only if no image is found)."""
+    import base64
+    cands = []
+    lf = (fm.get("logo") or "").strip()
+    if lf:
+        cands += ([Path(talk_root) / lf] if talk_root else []) + [Path(lf)]
+    if talk_root:
+        for stem in ("logo", "cover-logo"):
+            for ext in (".svg", ".png", ".jpg", ".jpeg"):
+                cands.append(Path(talk_root) / "images" / f"{stem}{ext}")
+    cands.append(_BUNDLED_LOGO)
+    for c in cands:
+        try:
+            if not c.is_file():
+                continue
+            if c.suffix.lower() == ".svg":
+                svg = re.sub(r"<\?xml.*?\?>", "", c.read_text(encoding="utf-8"), flags=re.DOTALL).strip()
+                return f'<span class="covlogoimg">{svg}</span>'
+            mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg"}.get(c.suffix.lower().lstrip("."), "image/png")
+            b64 = base64.b64encode(c.read_bytes()).decode("ascii")
+            return f'<img class="covlogoimg" alt="logo" src="data:{mime};base64,{b64}">'
+        except OSError:
+            continue
+    txt = (re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper()
+    return f'<span class="covlogotext">{_esc(txt)}</span>'
+
+
+def cover_slide(fm: dict, talk_root=None, author_label: str = "Autor:",
+                modified_label: str = "Última modificación:") -> str:
     """The contractually-fixed cover — same recipe as free-form §2 / strict §4, in HTML."""
     return _render(
         "cover.j2", None,
         title=fm.get("presentation", ""), cls=fm.get("class", ""),
         author=fm.get("presenter", ""), date=fm.get("date", ""),
-        logo=(re.sub(r"[^A-Za-z]", "", fm.get("class", ""))[:3] or "•").upper(),
+        logo=Markup(_cover_logo(fm, talk_root)),
         author_label=author_label, modified_label=modified_label)
 
 
