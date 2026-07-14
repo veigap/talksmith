@@ -12,6 +12,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.36.1] — 2026-07-13
+
+### Fixed
+
+- **Debug audit of the html-strict path (spec vs code):** the `html-strict` spec + the
+  `render-modes` `html-render` action def said the HTML deck renders in Helvetica/Courier and
+  omitted Reveal/Jinja/notes/PDF — corrected to IBM Plex Sans/Mono, the Reveal.js shell, per-type
+  Jinja templates, catalog-matched icons, and softened the overstated "§7/§8/§9 EMU geometry"
+  claim (HTML approximates the shapes in CSS). Small cover fix: the class line no longer hugs a
+  long multi-line title.
+
 ## [0.36.0] — 2026-07-13
 
 ### Changed

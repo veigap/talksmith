@@ -1,4 +1,4 @@
-# PPTX style: html-strict (static-site deliverable)
+# Render style: html-strict (static HTML / Reveal.js deliverable)
 
 `html-strict` is a **first-class render style** whose deliverable is a **styled static HTML /
 Reveal.js site**, not a `.pptx`. It is the code-generated renderer
@@ -22,18 +22,22 @@ For the native-`pptx` styles see [`../pptx-strict/pptx-prompt.md`](../pptx-stric
 `build_html.py --talk talks/<Talk>` → a self-contained `output/html/index.html`. Pipeline:
 `convert.py` → per-slide units (`slide_model._parse_unit`) → classify each against the shared
 catalog ([`../slide-templates.md`](../slide-templates.md), `slide_model._classify`) → render the
-matched template's real styling in the strict tokens (palette, Helvetica/Courier, §7/§8/§9
-geometry): cards, **per-concept Material Symbols icons** (fetched by name via
+matched template's markup (one Jinja template per type, `templates/html/*.j2`) in the strict
+**palette** (`#DA1B2E` accent, pill/callout tints) with **IBM Plex Sans/Mono** (vendored, inlined
+as `@font-face` data-URIs): cards, **per-concept Material Symbols icons** (matched to each concept
+against the live catalog, then fetched by name via
 [`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py), recoloured to
 `#DA1B2E`, inlined), callout boxes, code surfaces, numbered strips. A §4 **cover slide** is
-prepended from the frontmatter. SVG images embed inline; PNG/JPG as data-URIs.
+prepended from the frontmatter. SVG images embed inline; PNG/JPG as data-URIs. It approximates the
+strict templates' *shapes* in CSS (container-query `cqw` units on a fixed 16:9), not the native
+`.pptx` §7/§8/§9 EMU geometry.
 
 The presentation shell is **[Reveal.js](https://revealjs.com/)** (vendored under
 `skills/md-to-deck/vendor/reveal/`, inlined so the deck stays offline + self-contained). Each
 slide is a Reveal `<section>`; our catalog templates render *inside* them as a custom Reveal
 theme aligned with the strict tokens. Reveal owns navigation, deck-to-window scaling,
-transitions, overview, and PDF export; the only custom code is a per-slide content-fit
-(scale-to-fill-width + fit-height — the one thing Reveal/CSS can't do) and the template markup.
+transitions, overview, speaker notes, and PDF export; the only custom code is a per-slide
+content-fit (scale-to-fill-width + fit-height — the one thing Reveal/CSS can't do).
 
 ## 2. Template-aware + the same shared bar
 

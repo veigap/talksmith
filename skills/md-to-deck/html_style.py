@@ -359,7 +359,7 @@ CSS = r"""
 .stage.cov{padding:5.8cqw 5.4cqw 4cqw;justify-content:flex-start}
 .covtop{min-height:22cqw;display:flex;align-items:flex-start}
 .covt{font-size:5.6cqw;font-weight:800;color:var(--ink);margin:0;line-height:1.07;letter-spacing:-.02em}
-.covmeta{max-width:74%}
+.covmeta{max-width:74%;margin-top:1.8cqw}
 .covc{font-size:2.6cqw;font-weight:700;color:var(--ink);margin:0}
 .cova{font-size:2.05cqw;color:var(--body);margin:1.6cqw 0 0;line-height:1.5}
 .stage.cov .covlogo{position:absolute;right:5.4cqw;bottom:4cqw;width:13cqw;height:10.5cqw;border:2px solid var(--card);border-radius:1.5cqw;display:grid;place-items:center;font-weight:800;color:var(--red);font-size:3.2cqw}
