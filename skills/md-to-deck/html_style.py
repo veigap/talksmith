@@ -28,6 +28,10 @@ from icon_fetch import fetch_icon, fetch_catalog  # noqa: E402
 
 ACCENT = "DA1B2E"
 _DEFAULT_ICON = "bolt"
+# Neutral, distinct icons used (in order) when a label content-matches nothing — so unmatched
+# items on a slide still get *different* icons instead of all falling to the same default.
+_FALLBACK_ICONS = ["check_circle", "chevron_right", "star", "flag", "label",
+                   "done", "arrow_forward", "adjust", "circle", "info"]
 
 # The icon *choice* comes from the live Material Symbols catalog (fetch_catalog) — not a hardcoded
 # icon map. This is only a thin **Spanish → English** bridge so a Spanish concept word can match
@@ -155,7 +159,11 @@ def icon_for(label: str, body: str = "") -> str:
         if name not in _USED_ICONS:
             _USED_ICONS.add(name)
             return name
-    return scored[0][2] if scored else _DEFAULT_ICON
+    for name in _FALLBACK_ICONS:           # no match (or all matches used) → a distinct neutral icon
+        if name not in _USED_ICONS:
+            _USED_ICONS.add(name)
+            return name
+    return _DEFAULT_ICON
 
 
 def _svg(name: str, cache, white: bool = False):

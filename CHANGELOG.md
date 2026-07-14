@@ -12,6 +12,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.1] — 2026-07-13
+
+### Fixed
+
+- **No-repeat icons now holds for unmatched labels too.** A label that content-matched nothing fell
+  to the same default icon (`bolt`) without deduping, so e.g. two negative sentences on one slide
+  shared an icon. Unmatched items now draw from a distinct neutral fallback pool.
+
 ## [0.45.0] — 2026-07-13
 
 ### Added
