@@ -209,6 +209,10 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Match:** lead + **3–5** labeled items, **at least one body > ~80 chars** (2–4
   sentences each). Parallel prose explanations ("three strengths", "four limitations").
   Pick by the **longest** item; never split one group across `card-row` and `icon-list`.
+  **Also** the home for a short **anaphora / unlabeled parallel enumeration** — 2–5 short
+  parallel lines under a title with no labels, images or code (e.g. "No hubo hackers. No
+  hubo malware. No hubo intrusión.") — each line becomes one icon row (a line that merely
+  repeats the title is dropped). This keeps such slides from falling to `fallback`.
 - **Format:** section pill + title (may wrap 2 lines) + full-width lead + a **vertical
   stack of N rows**. Stride = `(canvas_h − 3.10 − 0.30)/N` (N=3→0.74, 4→0.56, 5→0.44 in).
   Each row = line-art `#DA1B2E` icon (no chip, content-matched, **different per row**) at
@@ -401,8 +405,8 @@ carries a **tally** (count per template) and a **fallback count**; each slide is
 | Field | Content |
 |---|---|
 | `template` | the catalog id chosen (or `fallback`). |
-| `why` | the signal / discriminator that decided it, one line. |
-| `ruled_out` | the near-miss template(s) and why not — **the key ambiguity signal** for improving the catalog. |
+| `why` | the signal / discriminator that decided it, one line. *(strict / free-form logs only — the html-strict deterministic log omits this; the per-template rationale is defined **once** here, not restated per render.)* |
+| `ruled_out` | the near-miss template(s) and why not — **the key ambiguity signal** for improving the catalog. *(strict / free-form only, as above.)* |
 | `signals` | raw detected signals: `labeled_items`, `images`, `has_code`, `ordered`, `body_words`, heading `level`. |
 | `flags` | actionable review items: `fallback` (catalog gap), `restructure-candidate`, `single-point↔concept ambiguous`, `N>cap`. |
 | `notes` | `present` \| `empty` (did the slide carry speaker notes). |

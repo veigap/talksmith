@@ -12,6 +12,30 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.40.0] — 2026-07-13
+
+### Added
+
+- **Short anaphora / unlabeled enumerations now render as an `icon-list`** instead of falling to
+  `fallback`. A slide that is 2–5 short parallel lines under a title (no labels, images or code —
+  e.g. "No hubo hackers. No hubo malware. No hubo intrusión.") becomes one icon row per line. A
+  line that merely repeats the slide title is dropped, so a title echoed by its first line no
+  longer shows twice.
+- **The style-reference exercises the section separator** (roadmap) and a plain sub-opener divider,
+  so both are covered by the committed visual test.
+
+### Fixed
+
+- **`content+image` no longer drops content.** It rendered only the first two body lines; a slide
+  with several stat lines beside an image silently lost the rest. Now the first line leads and
+  every remaining fact renders beneath it.
+
+### Changed
+
+- **Per-template rationale lives once in `slide-templates.md`.** The duplicated `_WHY` table in
+  code is gone; the html-strict decision log records the chosen template, raw signals, and review
+  flags, and points to the catalog for the "why."
+
 ## [0.39.0] — 2026-07-13
 
 ### Added

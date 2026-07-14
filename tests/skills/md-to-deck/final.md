@@ -5,7 +5,25 @@ presenter: Talksmith
 date: 2026-07-13
 ---
 
+# Agenda
+
+**Sections (in delivery order):**
+
+- Enumeration templates — cards, lists, steps
+- Statement, stat & comparison — claims & numbers
+- Visual, code & prose — images, code, fallback
+- Frame templates — cover, agenda, dividers, closing
+
+---
+
 # 1. Enumeration templates
+
+---
+
+## 〔divisor〕 Sub-opener · plain section title
+<!-- template: divider -->
+
+Un divisor sin número — el separador liviano dentro de una sección.
 
 ---
 
@@ -304,7 +322,7 @@ Todos hicimos algo parecido alguna vez.
 
 ---
 
-## Agenda
+## Roadmap de la charla
 <!-- template: agenda -->
 
 - **Fundamentos** Los modelos base.

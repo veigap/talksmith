@@ -1,6 +1,7 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(section, title) %}
 <div class="ci"><div class="citext">
-{% for b in leads %}<p class="lead">{{ b }}</p>{% endfor %}
+{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
+{% if facts %}<ul class="cifacts">{% for f in facts %}<li>{{ f }}</li>{% endfor %}</ul>{% endif %}
 </div>{{ embed(images[0][0], images[0][1]) if images else embed("", None) }}</div>
 {% endcall %}

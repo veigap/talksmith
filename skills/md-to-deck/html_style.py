@@ -243,7 +243,8 @@ def render_slide(kind, u, section, cache) -> str:
         kind = "image-grid" if (kind == "image-grid" or not items) else "figures"
         ctx["figs"] = [(it, images[k] if k < len(images) else ("", None)) for k, it in enumerate(items)]
     elif kind == "content-image":
-        ctx["leads"] = body[:2]
+        ctx["lead"] = body[0] if body else ""     # first line leads
+        ctx["facts"] = body[1:]                    # the rest are supporting facts — never dropped
     elif kind == "comparison":
         rows = []
         for ln in body:
@@ -264,6 +265,12 @@ def render_slide(kind, u, section, cache) -> str:
         ctx["big"] = body[0] if body else title
         ctx["panels"] = [it["label"] + ((": " + it["body"]) if it.get("body") else "") for it in items] \
             or body[1:]
+    elif kind == "icon-list" and not items and body:
+        # anaphora / plain enumeration → one icon row per line; drop a line that repeats the title
+        tnorm = re.sub(r"[^\w]+", "", title.lower())
+        rows = [b for b in body if re.sub(r"[^\w]+", "", b.lower()) != tnorm] or body
+        ctx["items"] = [{"label": b, "body": ""} for b in rows]
+        ctx["body"] = []                          # the lines are the rows, not a lead
     elif kind == "divider":
         no = u.get("_number")
         ctx["number"] = f"{no:02d}" if isinstance(no, int) else None

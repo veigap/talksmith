@@ -226,6 +226,13 @@ def _classify(u: dict) -> str:
         return "content-image"
     if len(u["body"]) <= 2 and words <= 18 and u["title"]:
         return "statement"
+    # A few short parallel lines under a title (no labels, images or code) — an anaphora /
+    # enumeration like "No hubo hackers. No hubo malware. No hubo intrusión." Render as an
+    # icon-list (icon + line per row), not a prose fallback. Most lines must be short (a long
+    # paragraph stays fallback); the render synthesizes the rows from the lines.
+    short = [b for b in u["body"] if len(b.split()) <= 9]
+    if u["title"] and 2 <= len(u["body"]) <= 5 and len(short) >= len(u["body"]) - 1 and len(short) >= 2:
+        return "icon-list"
     return "fallback"
 
 
@@ -241,26 +248,11 @@ def _signals(u: dict) -> dict:
     }
 
 
-# One-line rationale + the near-miss it beat, keyed by template (slide-templates.md).
-_WHY = {
-    "divider": ("H1 / section-break heading.", ""),
-    "code-example": ("fenced code block present — code dominates.", "content+image"),
-    "image-grid": ("≥4 images; the visual variety is the message.", "figures / content+image"),
-    "figures": ("≥2 labeled items, each carrying its own image.", "concept-breakdown"),
-    "process": ("≥2 labeled items with ordinal labels (steps/flow).", "concept-breakdown"),
-    "concept-breakdown": ("≥2 unordered labeled items, no per-item image → card grid.",
-                          "card-row / bullets"),
-    "single-point": ("exactly one labeled point → card/callout, never a bullet.",
-                     "concept-breakdown / content-text"),
-    "content-image": ("1–3 supporting images with leading prose.", "image-grid"),
-    "statement": ("one short dominant claim, no enumeration.", "content-text"),
-    "fallback": ("no template signal fired.", ""),
-}
-
-
 def _log_entry(index: int, u: dict, kind: str) -> str:
+    # The per-template "why it applies" rationale is NOT restated here — it lives once in
+    # slide-templates.md (this log's header points there). We log only what's computed from the
+    # slide: the chosen template, the raw signals, and any review flags.
     s = _signals(u)
-    why, ruled = _WHY.get(kind, (kind, ""))
     flags = []
     if kind == "fallback":
         flags.append("fallback — catalog gap, review")
@@ -271,9 +263,7 @@ def _log_entry(index: int, u: dict, kind: str) -> str:
     sig = " ".join(f"{k}={v}" for k, v in s.items())
     lines = [
         f"## Slide {index:02d} — {u['title'] or '(untitled)'}",
-        f"- template: `{kind}`",
-        f"- why: {why}",
-        (f"- ruled_out: {ruled}" if ruled else "- ruled_out: —"),
+        f"- template: `{kind}`  (rationale → slide-templates.md)",
         f"- signals: {sig}",
         f"- flags: {', '.join(flags) if flags else '—'}",
     ]
