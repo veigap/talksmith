@@ -115,7 +115,35 @@ prescriptive layout — regions, counts, sizing, spacing, and what is forbidden)
 (strict encodes them as `sz="pt*100"`; html-strict scales them to its 1280×720 canvas).
 Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
-### Frame templates
+### Concept families — the two-level view
+
+The catalog is **two levels**. Every slide first belongs to a **family** — *what it is
+doing* — and within that family the specific template is a **sub-category** chosen by **one
+signal** (count, body length, dates, colour, image-pairing). Classify by picking the family
+first, then reading that single discriminator; the detailed *Match*/*Format* for each
+sub-category follows, grouped by family.
+
+| Family — what the slide does | Sub-categories | Picks the sub-category by |
+|---|---|---|
+| **Frame** — structure, not content | `cover` · `agenda` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
+| **One claim / emphasis** — a single message | `statement` · `quote` · `quiz` · `callout` | attributed/voiced → `quote`; question→answer → `quiz`; an aside *inside* another slide → `callout`; else `statement` |
+| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `card-row` · `icon-list` · `concept-breakdown` | **count + body length**: 1 item → `single-point`; lead + 3–5 short → `card-row`; lead + 3–5 prose → `icon-list`; any other 2+ set → `concept-breakdown` |
+| **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
+| **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
+| **Two groups** — A vs B | `comparison` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; a neutral compare → `comparison` |
+| **Visual** — images carry the content | `content+image` · `content+cards+image` · `figures` · `image-grid` | 1–3 supporting → `content+image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
+| **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
+
+The signal *definitions* are in *Classification procedure* above; the row-level tie-breaks
+are in *Disambiguation quick-reference* below. This overview is the map; those two are the
+precise rules.
+
+> **Optional reveal.** Any enumeration slide (`stat`, `card-row`, `concept-breakdown`, `icon-list`)
+> may carry `reveal: sequential` — set from an author `<!-- reveal: sequential -->` hint — so its
+> items appear **one at a time** in the HTML deck (Reveal fragments). The `.pptx` render is static
+> and shows them all at once.
+
+### Frame — structure, not a content choice
 
 #### `cover`
 - **Match:** slide 1 only; frontmatter present, no H2. Not a content choice.
@@ -147,7 +175,7 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Strict recipe:** none yet (new); emit as an oversized §3 title on a blank body.
   **Provenance:** gov S57 (111.5 pt "Q&A").
 
-### Statement / emphasis templates
+### One claim / emphasis
 
 #### `statement`
 - **Match:** the slide's message is **one bold claim, myth/reality, or short quote** —
@@ -207,10 +235,11 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   in place — same layout, just always shown. **Provenance:** the *seguridad-governance-ai* deck
   (a quiz per page).
 
-### Enumeration templates — unordered labeled sets (cards, never bullets)
+### Labeled set — parallel labeled concepts (cards, never bullets)
 
-> The three below share the signal "lead + 3–5 labeled parallel items." Pick by **body
-> length** and **count**; all forbid plain bullets.
+> The sub-categories below are all "a set of parallel labeled items." Pick by **count** and
+> **body length**: exactly 1 → `single-point`; lead + 3–5 short → `card-row`; lead + 3–5
+> prose → `icon-list`; any other 2+ set → `concept-breakdown`. All forbid plain bullets.
 
 #### `card-row`
 - **Match:** lead paragraph + **3–5** labeled items (`- **Label** body`, `#### Label`+para,
@@ -281,6 +310,10 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 - **Strict recipe:** §7.2 single card or §8 callout. **Provenance:** gov S36/38/42–47
   (many "one claim + one beat" slides).
 
+### Metrics — standalone numbers
+
+> Numbers are the payload. One hero figure → `big-number`; a set of 2–4 → `stat`.
+
 #### `stat`
 - **Match:** the payload is **2–4 standalone metrics/figures** — big numbers with labels
   (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`).
@@ -298,7 +331,7 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   supporting line. Left-aligned, vertically centred.
 - **Provenance:** impact / headline-stat slides; common in Gamma-style decks.
 
-### Ordered templates
+### Ordered sequence
 
 #### `process`
 - **Match:** a **named/ordered sequence** — `1./2./3.`, `Paso N`, `Step N`, `Fase N`,
@@ -326,7 +359,7 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   date/milestone (mono accent) + a one-line detail. Time flows top→bottom.
 - **Provenance:** roadmap / history slides; common in Gamma-style decks.
 
-### Comparison
+### Two groups — A vs B
 
 #### `comparison`
 - **Match:** **two symmetric groups** set against each other — A-vs-B, before/after,
@@ -346,7 +379,7 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   con in the **pink** tint with an `error`/`dangerous` mark; each = label + a short body.
 - **Provenance:** trade-off / decision slides; common in Gamma-style decks.
 
-### Visual templates
+### Visual — images carry the content
 
 #### `content+image`
 - **Match:** one main claim supported by **1–3** `![]()` images; the prose leads, the
@@ -383,7 +416,7 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   per-image text. **Not** for a list of items that merely each have an icon (→ `icon-list`).
 - **Strict recipe:** §13 image-grid. **Provenance:** ref S10/31/33–38/44, gov S40/43.
 
-### Special / last-resort
+### Verbatim / last-resort
 
 #### `code-example`
 - **Match:** a fenced code block is the **primary** content (worked snippet, API shape,

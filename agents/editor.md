@@ -93,6 +93,21 @@ The orchestrator picks one of three modes; the Editor's authoring sequence insid
 
 **Common to all modes.** Cite sources by filename when proposing content; surface Step-3 inconsistencies on the affected slide; move dropped content to `Cut material` (never silently delete); record the chosen mode in `memory.md`.
 
+**Draft with the slide taxonomy in mind.** As you shape each slide, think in the **concept families** of the slide-template catalog ([`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)) — *what is this slide doing?* — and write its `Content` so it maps cleanly to one:
+- a **set of parallel points** → labeled items (`- **Label** body`) — renders as cards, **never a bare bullet list** (the universal invariant holds from the first draft);
+- **standalone numbers** → a metrics slide (one hero figure, or 2–4);
+- a **single dominant claim** → one line (a statement/quote), not a paragraph;
+- **two things weighed** against each other → two symmetric groups;
+- an **ordered or dated sequence** → numbered steps / a timeline;
+- an **image (or ASCII diagram) that *is* the point** → a visual slide with a short lead.
+
+You don't **have** to tag templates — the render classifies each slide from its content — but **when you have a clear intent for a slide, you may record it** as an optional metadata line right under the slide's `##` heading:
+
+- `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `card-row`), for when the content is ambiguous or you specifically want that treatment;
+- `<!-- reveal: sequential -->` — on an enumeration slide, ask the render to reveal the items one at a time.
+
+The render honours these hints; without them it classifies from content. **They are optional, never required** — add one only where the intent actually matters. Writing each slide to fit *some* category (hinted or not) keeps the deck varied and prevents "title + a wall of bullets" mush; when a slide resists every category, it's usually carrying two ideas — split it.
+
 **Step 5 — apply feedback (to `draft.md`).** Delegate all mechanical bookkeeping to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill — it owns detection (`find-open`), stamping, closing, mirroring, the sanity check, and the Step-6 (c) `rescue-open` pass. The editor (LLM) **only** authors three things per bullet: the content fix in the slide, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through the skill — do **not** read `draft.md` end-to-end during a normal Review round.
 
 Per-round loop:

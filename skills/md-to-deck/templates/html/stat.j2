@@ -2,6 +2,6 @@
 {% call m.stage(section, title, highlights) %}
 {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
 <div class="stats" style="grid-template-columns:repeat({{ cols }},1fr)">
-{% for it in items %}<div class="stat"><span class="statn">{{ it.label }}</span><span class="statl">{{ it.body }}</span></div>{% endfor %}
+{% for it in items %}<div class="stat{{ ' fragment fade-up' if reveal == 'sequential' else '' }}"><span class="statn">{{ it.label }}</span><span class="statl">{{ it.body }}</span></div>{% endfor %}
 </div>
 {% endcall %}

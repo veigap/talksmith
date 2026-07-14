@@ -3,7 +3,7 @@
 {% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
 <div class="cardrow">
 {% for it in items %}
-<div class="rcard">{{ chip(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
+<div class="rcard{{ ' fragment fade-up' if reveal == 'sequential' else '' }}">{{ chip(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

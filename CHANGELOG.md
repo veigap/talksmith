@@ -12,6 +12,31 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.51.0] — 2026-07-14
+
+### Added
+
+- **Sequential reveal for enumeration slides.** A `stat`, `card-row`, `concept-breakdown`, or
+  `icon-list` slide can carry `reveal: sequential` so its items appear **one at a time** in the HTML
+  deck (Reveal fragments; the `.pptx` render is static and shows all at once). Fragments keep their
+  layout space, so the content-fit still measures correctly.
+- **Optional author hints in `draft.md`.** The Editor may — when it has a specific intent for a
+  slide — write `<!-- template: <type> -->` (pin the slide type) or `<!-- reveal: sequential -->`
+  under a slide's heading. Optional, never required. Polish copies them through to `final.md`
+  verbatim, and the `md-to-deck` FILL honours them when mapping to `slide-model.json` (they are the
+  only HTML comments read rather than dropped).
+
+### Changed
+
+- **Slide-template catalog reorganized into a two-level taxonomy.** `slide-templates.md` now groups
+  the templates into **7 concept families** (labeled-set, two-groups, ordered-sequence, metrics,
+  one-claim, visual, verbatim, + frame) with a top-of-catalog overview showing, per family, the one
+  signal that picks the sub-category. **No template ids, Match rules, or disambiguators changed** —
+  pure clarity; classification is byte-identical.
+- **The Editor drafts with the slide taxonomy in mind.** [`editor.md`](agents/editor.md) Step 4 now
+  tells the Editor to shape each slide's content to a concept family (a parallel set → cards, metrics
+  → numbers, one claim → a line, …), reinforcing the cards-not-bullets invariant from the first draft.
+
 ## [0.50.1] — 2026-07-14
 
 ### Fixed

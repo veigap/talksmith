@@ -45,7 +45,8 @@
           "caption": "times the same source serves different classes — if you keep it"
         }
       ],
-      "notes": "Numbers are illustrative. The third one sets up the compounding argument. ~2 min."
+      "notes": "Numbers are illustrative. The third one sets up the compounding argument. ~2 min.",
+      "reveal": "sequential"
     },
     {
       "template": "concept-breakdown",
@@ -85,10 +86,22 @@
         "alt": "Talksmith introducing itself in Claude — the workflow chart and a new-vs-resume prompt"
       },
       "facts": [
-        { "label": "It's all chat", "body": "no new UI, no slide editor to learn" },
-        { "label": "New or resume", "body": "start a fresh talk, or pick up one under talks/ where you left off" },
-        { "label": "Drop & review", "body": "add sources, answer a few questions, leave feedback bullets — it does the rest" },
-        { "label": "Always in view", "body": "the Progress and Context panels show what it's reading and doing" }
+        {
+          "label": "It's all chat",
+          "body": "no new UI, no slide editor to learn"
+        },
+        {
+          "label": "New or resume",
+          "body": "start a fresh talk, or pick up one under talks/ where you left off"
+        },
+        {
+          "label": "Drop & review",
+          "body": "add sources, answer a few questions, leave feedback bullets — it does the rest"
+        },
+        {
+          "label": "Always in view",
+          "body": "the Progress and Context panels show what it's reading and doing"
+        }
       ],
       "notes": "Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min."
     },
@@ -206,7 +219,8 @@
           "body": "You give titles; it fills them."
         }
       ],
-      "notes": "Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min."
+      "notes": "Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min.",
+      "reveal": "sequential"
     },
     {
       "template": "content-image",

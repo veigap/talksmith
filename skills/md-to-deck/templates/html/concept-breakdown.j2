@@ -2,7 +2,7 @@
 {% call m.stage(section, title, highlights) %}
 <div class="cards c{{ cols }}">
 {% for it in items %}
-<div class="ccard">{{ icon(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
+<div class="ccard{{ ' fragment fade-up' if reveal == 'sequential' else '' }}">{{ icon(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

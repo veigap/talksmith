@@ -67,6 +67,10 @@ deliverable; `draft.md` → live in-progress view).
   | `example` | an illustration / concrete scenario | "Ej.: pegar la lista de clientes en un chatbot gratuito." |
   | `quote` | a pull-quote / cited line (rendered italic) | "Una falla de seguridad no siempre tiene un atacante." |
   | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
+- **`reveal`** — an **optional** field on an **enumeration** slide (`stat`, `card-row`,
+  `concept-breakdown`, `icon-list`): `"reveal": "sequential"` makes its items appear **one at a
+  time** in the HTML deck (Reveal fragments; the `.pptx` render, being static, shows them all at
+  once). Set it from an author `<!-- reveal: sequential -->` hint in `draft.md`/`final.md`.
 - **Never drop content.** Every load-bearing line in the source must be *translated* into the
   model — as a field value, a card/row/step, a fact, or a `highlights` entry. Do not omit a line
   because it looks redundant with an image or another slide; move it to `highlights` if it's a
@@ -127,13 +131,19 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 **Walking the body.** In document order:
 - **Drop scaffolding entirely:** the `# Thesis` / `# Open questions` / `# Cut material` sections,
   the standalone `# Agenda` slide (it only feeds `deck.sections`), every `### Sources` and
-  `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers.
+  `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers. **Exception — honour author
+  directives:** a `<!-- template: <type> -->` comment pins that slide's `template` (skip
+  classification), and `<!-- reveal: sequential -->` sets its `reveal` field. These are the only
+  HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
+  Polish only strips `Presenter feedback` and rewrites ASCII fences — so the hint the author wrote
+  while drafting is exactly what reaches this FILL step.)
 - **An H1 that names a `deck.sections` entry** → a `section-agenda` slide (`title` = the section
   name, number stripped) — the roadmap. A `〔divisor〕` sub-opener (or an H1 that is not a real
   section) → a plain `divider`.
 - **An H2** → a content slide: strip its leading `N. `, **classify it against the catalog** to set
-  `template`, decompose `### Content`'s body into that template's required fields (below), and set
-  `section` to the current section.
+  `template` (**unless a `<!-- template: … -->` hint pins it**), decompose `### Content`'s body into
+  that template's required fields (below), set `section` to the current section, and carry a
+  `<!-- reveal: … -->` hint into `reveal`.
 - **`### Speaker notes`** → lifted **verbatim** into the slide's `notes` (never onto the slide
   face). Keep image `src` paths exactly as written (`images/…`).
 

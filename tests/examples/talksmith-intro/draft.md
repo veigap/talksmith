@@ -83,6 +83,7 @@ Open cold with this line on screen. Pause. Then ask for a show of hands: "Who ha
 
 ## 2. The cost of the blank page
 <!-- template: stat -->
+<!-- reveal: sequential -->
 
 The problem in three numbers, so it isn't just a vibe.
 
@@ -314,6 +315,7 @@ This image is the plugin's own workflow diagram — a Markdown image ref, not AS
 
 ## 2. Draft your way
 <!-- template: card-row -->
+<!-- reveal: sequential -->
 
 Three modes, one line each.
 

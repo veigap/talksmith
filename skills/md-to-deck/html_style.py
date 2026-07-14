@@ -375,7 +375,8 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
     ctx = {"section": slide.get("section", ""), "title": slide.get("title", ""),
-           "highlights": _highlights(slide.get("highlights"))}
+           "highlights": _highlights(slide.get("highlights")),
+           "reveal": slide.get("reveal", "")}   # "sequential" → items appear one at a time (Reveal fragments)
     ri = lambda im: _resolve_img(im, talk_root, asset_dir)
     lead = slide.get("lead", "")
     if t == "divider":
