@@ -4,8 +4,15 @@
 <div class="procgrid"><div class="procmain">
 {% endif %}
 {% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
+{% if images %}
+<div class="procsteps">
+{% for it in items %}
+<div class="steprow"><span class="stepn">{{ loop.index }}</span><p>{% if it.label %}<b>{{ it.label }}</b>: {% endif %}{{ it.body }}</p></div>
+{% endfor %}
+</div>
+{% else %}
 {% if labeled %}
-<div class="{{ 'procnum' if images else 'numrow' }}">
+<div class="numrow">
 {% for it in items %}
 <div class="ncard"><div class="strip">{{ loop.index }}</div><div class="nbody"><h4>{{ it.label }}</h4><p>{{ it.body }}</p></div></div>
 {% endfor %}
@@ -16,6 +23,7 @@
 <div class="steprow"><span class="stepn">{{ loop.index }}</span><p>{{ it.body }}</p></div>
 {% endfor %}
 </div>
+{% endif %}
 {% endif %}
 {% if images %}
 </div><div class="procmedia">{{ embed(images[0][0], images[0][1]) }}</div></div>

@@ -125,10 +125,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .procgrid{display:grid;grid-template-columns:1fr 1.08fr;gap:3cqw;align-items:center}
 .procmain{display:flex;flex-direction:column;gap:2.2cqw;min-width:0}
 .procmain .lead{margin:0;max-width:none}
-.procnum{display:flex;flex-direction:column;gap:1.4cqw}
-.procnum .ncard{min-height:0}
-.procnum .ncard .strip{width:5.2cqw;font-size:2.6cqw}
-.procnum .nbody{padding:1.5cqw 1.8cqw}.procnum .nbody h4{font-size:2.35cqw}.procnum .nbody p{font-size:1.95cqw}
+.procsteps{display:flex;flex-direction:column;gap:1.6cqw}
+.procsteps .steprow p{font-size:2.25cqw}.procsteps .steprow p b{font-weight:800;color:var(--ink)}
 .procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:100%;height:auto;max-height:38cqw;object-fit:contain}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
