@@ -12,6 +12,13 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.45.3] — 2026-07-14
+
+### Changed
+
+- **The section pill on content slides is 30% smaller** (`1.8cqw` → `1.26cqw`) — the section label
+  above each slide's title reads as a quieter, more subordinate tag.
+
 ## [0.45.2] — 2026-07-13
 
 ### Fixed
