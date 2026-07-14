@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="340" viewBox="0 0 880 340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#DA1B2E"/>
+    </marker>
+  </defs>
+  <rect width="880" height="340" fill="#ffffff"/>
+
+  <text x="40" y="52" font-size="14" font-weight="700" fill="#334155" letter-spacing="1">FORWARD</text>
+  <!-- forward row -->
+  <g>
+    <rect x="40" y="70" width="200" height="56" rx="12" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+    <text x="140" y="104" text-anchor="middle" font-size="15" font-family="monospace" fill="#047857">draft.md</text>
+    <rect x="336" y="70" width="200" height="56" rx="12" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="436" y="104" text-anchor="middle" font-size="15" font-family="monospace" fill="#475569">final.md</text>
+    <rect x="632" y="70" width="208" height="56" rx="12" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="736" y="104" text-anchor="middle" font-size="15" font-family="monospace" fill="#475569">output/final.pptx</text>
+    <line x1="240" y1="98" x2="332" y2="98" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#a)"/>
+    <line x1="536" y1="98" x2="628" y2="98" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#a)"/>
+  </g>
+
+  <text x="736" y="150" text-anchor="middle" font-size="12" fill="#94a3b8">you edit in Keynote / PowerPoint</text>
+
+  <text x="40" y="222" font-size="14" font-weight="700" fill="#DA1B2E" letter-spacing="1">REVERSE</text>
+  <!-- reverse row -->
+  <g>
+    <rect x="632" y="240" width="208" height="56" rx="12" fill="#fdeaec" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="736" y="274" text-anchor="middle" font-size="14" font-family="monospace" fill="#DA1B2E">pptx-extract</text>
+    <rect x="360" y="240" width="176" height="56" rx="12" fill="#fdeaec" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="448" y="274" text-anchor="middle" font-size="14" font-family="monospace" fill="#DA1B2E">pptx-diff</text>
+    <rect x="96" y="240" width="176" height="56" rx="12" fill="#fdeaec" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="184" y="274" text-anchor="middle" font-size="14" font-family="monospace" fill="#DA1B2E">pptx-merge</text>
+    <line x1="632" y1="268" x2="540" y2="268" stroke="#DA1B2E" stroke-width="2.5" marker-end="url(#r)"/>
+    <line x1="360" y1="268" x2="276" y2="268" stroke="#DA1B2E" stroke-width="2.5" marker-end="url(#r)"/>
+  </g>
+
+  <!-- connect pptx down to reverse, and merge back up to draft -->
+  <path d="M 736 126 V 238" fill="none" stroke="#DA1B2E" stroke-width="2.5" marker-end="url(#r)"/>
+  <path d="M 184 240 V 154 H 140 V 128" fill="none" stroke="#DA1B2E" stroke-width="2.5" marker-end="url(#r)"/>
+  <text x="150" y="196" font-size="12" fill="#DA1B2E">back into source</text>
+</svg>

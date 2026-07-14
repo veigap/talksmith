@@ -1,11 +1,11 @@
 :root{--red:#DA1B2E;--pill:#F9D2D6;--call-pink:#F7BBC1;--call-blue:#B8E6F5;--card:#F2EEEE;
---ink:#1F1E1E;--body:#3B3535;--code-bg:#F2F2F2;--kw:#D73A49;--st:#005CC5;--cm:#6A737D;--slide:#fff;
+--ink:#1F1E1E;--body:#3B3535;--code-bg:#F2F2F2;--slide:#fff;
 --chip-ink:#1F1E1E;
 --page:#E8E4E1;--panel:#FBFAF9;--fi:#2A2626;--fm:#6E6663;--hair:#D8D2CE;
 --sans:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono","Courier New",ui-monospace,monospace;}
 /* selectable deck theme (runtime toggle) — a token override; every component reads the tokens */
 :root[data-deck-theme=dark]{--slide:#18181c;--ink:#F4F2F0;--body:#C7C2BE;--card:#26262c;--code-bg:#1e1e24;
---page:#0c0c0e;--panel:#1c1c22;--fi:#F4F2F0;--fm:#9a938e;--hair:#2c2c33;--st:#79B8FF;--cm:#8a929c;--kw:#FF7B72;}
+--page:#0c0c0e;--panel:#1c1c22;--fi:#F4F2F0;--fm:#9a938e;--hair:#2c2c33;}
 *{box-sizing:border-box}html,body{margin:0;background:var(--page)}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
@@ -44,7 +44,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cfit>*{margin-top:0!important;margin-bottom:0!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--chip-ink);font-weight:700;font-size:1.26cqw;letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.4cqw;border-radius:.7cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:1.1cqw 0 0;line-height:1.08;text-wrap:balance}
-.stitle.ag{font-size:5cqw}.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
+.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
 .ic{display:block}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
@@ -71,27 +71,35 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .covlogoimg{max-width:100%;max-height:100%;object-fit:contain;display:block}
 .covlogoimg svg{max-width:100%;max-height:100%;display:block}
 .covlogotext{width:13cqw;height:10.5cqw;border:2px solid var(--card);border-radius:1.5cqw;display:grid;place-items:center;font-weight:800;color:var(--red);font-size:3.2cqw}
-.agenda{margin-top:3cqw;display:flex;flex-direction:column;gap:1.6cqw}
-.agrow{display:flex;align-items:center;gap:2.4cqw;font-size:3cqw;color:var(--body);font-weight:600}
-.agn{width:4.4cqw;height:4.4cqw;border-radius:50%;background:var(--card);color:var(--body);display:grid;place-items:center;font-size:2.4cqw;font-weight:800;flex:0 0 auto}
-.agrow.on{color:var(--ink);font-weight:800}.agrow.on .agn{background:var(--red);color:#fff}
 .callout{display:flex;gap:2cqw;align-items:flex-start;border-radius:2cqw;padding:2.4cqw 2.8cqw;margin-top:2.6cqw}
 .callout.pink{background:var(--call-pink)}.callout.blue{background:var(--call-blue)}
 .callout .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto}.callout p{margin:0;font-size:2.6cqw;color:#000;line-height:1.35}
-.callout.blue p{color:var(--chip-ink)}.callout b{font-weight:800}.fig{color:var(--red);font-weight:800}
-/* quiz — question (+ optional lettered choices) shown up front; the answer panel is a Reveal
-   fragment that fades up on next-nav. The answer sits on the always-light --pill, so its text
-   uses the constant --chip-ink (never the theme --ink) to stay legible in both themes. */
-.quiz{display:flex;flex-direction:column;gap:3cqw}
+.callout.blue p{color:var(--chip-ink)}.callout b{font-weight:800}
+/* quiz — question (+ optional carded choices) shown up front; on next-nav the correct choice
+   restyles itself (accent fill + check, via a Reveal *custom* fragment) in the same step the
+   answer panel fades up. Optional image sits at the right (contained, never cropped). The answer
+   panel and the highlighted choice sit on the always-light --pill / --red, so their text uses the
+   constant --chip-ink / #fff (never the theme --ink) to stay legible in both themes. */
+.quiz{display:flex;flex-direction:column}
+.quiz-body{display:flex;flex-direction:column;gap:3cqw;min-width:0}
+.quiz.quiz-split{display:grid;grid-template-columns:1.45fr 1fr;gap:4.5cqw;align-items:center}
+.quiz-media{display:flex;align-items:center;justify-content:center}
+.quiz-media .imgph{width:100%}
+.quiz-media .imgph.has img,.quiz-media .imgph.svg svg{width:100%;height:auto;max-height:46cqw;object-fit:contain}
 .quiz-q{margin:0;font-size:3.9cqw;font-weight:800;color:var(--ink);line-height:1.16;text-wrap:balance}
-.quiz-opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.7cqw;counter-reset:opt}
-.quiz-opts li{counter-increment:opt;display:flex;align-items:flex-start;gap:1.8cqw;font-size:2.5cqw;font-weight:600;color:var(--body);line-height:1.3}
-.quiz-opts li::before{content:counter(opt,upper-alpha);flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:var(--card);color:var(--ink);font-weight:800;font-size:2cqw;display:grid;place-items:center;margin-top:-.1cqw}
-.quiz-ans{border-radius:2cqw;background:var(--pill);padding:2.6cqw 2.8cqw;border-left:.9cqw solid var(--red)}
+.quiz-opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.5cqw;counter-reset:opt}
+.quiz-opts li{counter-increment:opt;display:flex;align-items:center;gap:1.8cqw;font-size:2.4cqw;font-weight:600;color:var(--body);line-height:1.25;
+  border:.18cqw solid var(--hair);border-radius:1.6cqw;padding:1.3cqw 1.8cqw;background:var(--slide);transition:border-color .3s ease,background-color .3s ease,color .3s ease}
+.quiz-opts li::before{content:counter(opt,upper-alpha);flex:0 0 auto;width:3.4cqw;height:3.4cqw;border-radius:50%;background:var(--card);color:var(--ink);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;transition:background-color .3s ease,color .3s ease}
+/* the correct choice, once revealed */
+.quiz-opts li.correct.visible{border-color:var(--red);background:var(--pill);color:var(--chip-ink);font-weight:800}
+.quiz-opts li.correct.visible::before{background:var(--red);color:#fff}
+.quiz-opts li.correct.visible::after{content:"✓";margin-left:auto;color:var(--red);font-weight:800;font-size:2.6cqw;line-height:1}
+.quiz-ans{border-radius:2cqw;background:var(--pill);padding:2.4cqw 2.8cqw;border-left:.9cqw solid var(--red)}
 .quiz-lab{display:inline-flex;align-items:center;gap:1cqw;margin-bottom:1.2cqw;font-size:1.9cqw;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .quiz-lab .ic{width:2.6cqw;height:2.6cqw}
-.quiz-a{margin:0;font-size:2.9cqw;font-weight:800;color:var(--chip-ink);line-height:1.2}
-.quiz-exp{margin:1.4cqw 0 0;font-size:2.3cqw;font-weight:400;color:var(--chip-ink);opacity:.78;line-height:1.4}
+.quiz-a{margin:0;font-size:2.8cqw;font-weight:800;color:var(--chip-ink);line-height:1.2}
+.quiz-exp{margin:1.4cqw 0 0;font-size:2.2cqw;font-weight:400;color:var(--chip-ink);opacity:.78;line-height:1.4}
 .cards{display:grid;gap:2.2cqw;margin-top:auto}.cards.c1{grid-template-columns:1fr}.cards.c2{grid-template-columns:1fr 1fr}.cards.c3{grid-template-columns:repeat(3,1fr)}
 .ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .ccard .ic{width:5.8cqw;height:5.8cqw}.ccard h3{margin:0;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
@@ -157,7 +165,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}
-.codebox .kw{color:var(--kw)}.codebox .st{color:var(--st)}.codebox .cm{color:var(--cm)}
 .ctext{margin:auto 0}.big2{font-size:4cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;text-wrap:balance}
 /* fallback / lead+points — a lead statement + accented point panels (never plain paragraphs) */
 .leadpoints{display:flex;flex-direction:column;gap:2.6cqw}
@@ -166,7 +173,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ctpanels{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:3cqw}.ctp{background:var(--card);border-radius:1.6cqw;padding:2.4cqw;font-size:2.2cqw;color:var(--body);font-weight:600}
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
-.hero{margin:auto 0;display:flex;flex-direction:column;gap:2cqw}.qa{font-size:16cqw;font-weight:800;color:var(--ink);line-height:.9;letter-spacing:-.02em}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:9cqw;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
 /* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
 .quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
 .quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}

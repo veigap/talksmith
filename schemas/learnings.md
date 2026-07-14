@@ -12,9 +12,9 @@ Holds the rules that future Talks should inherit as soft defaults — earned thr
 
 | Reader | Read when | What for |
 |---|---|---|
-| Orchestrator | Entering Step 7 (Learnings) | Scan existing entries to (a) avoid proposing duplicate promotions and (b) look up the entry id assigned to a freshly promoted pattern (used in the Move pass). **Read-only** — never writes the file directly. |
+| Orchestrator | Entering Step 8 (Learnings) | Scan existing entries to (a) avoid proposing duplicate promotions and (b) look up the entry id assigned to a freshly promoted pattern (used in the Move pass). **Read-only** — never writes the file directly. |
 | Composer role | Every drafting milestone in Step 4 (after thesis, after agenda, after each section in Mode A; after the full draft in Modes B/C) | Apply each entry as a soft rule when critiquing the draft. Cite by entry title in punch-list items: `(learnings.md: <entry-title>)`. |
-| Editor role | Step 7 only — when performing a Promote pass for a pattern to record | **Sole writer** of this file. Append-only — never edit or delete prior entries. |
+| Editor role | Step 8 only — when performing a Promote pass for a pattern to record | **Sole writer** of this file. Append-only — never edit or delete prior entries. |
 
 No other agent and no other orchestrator step loads this file.
 
@@ -45,7 +45,7 @@ The Editor role generates a stable `entry id` per promotion (incrementing intege
    - **Promote** — append a new entry here.
    - **Move** — relocate the contributing backlog rows from `feedback-backlog.md` to [`config/feedback-processed.md`](config/feedback-processed.md), stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes this file directly. See *Step 7* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
+The orchestrator never writes this file directly. See *Step 8* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
 
 ## Canonical empty form
 
@@ -56,6 +56,6 @@ The orchestrator never writes this file directly. See *Step 7* in [`${CLAUDE_PLU
 
 ## Entries
 
-<!-- Editor role appends promoted learnings below this line during the Step 7 Promote pass. -->
+<!-- Editor role appends promoted learnings below this line during the Step 8 Promote pass. -->
 ```
 

@@ -213,7 +213,7 @@ def _embed(alt, path):
 # --------------------------------------------------------------------------- #
 # per-template slide rendering — one Jinja template per slide type in templates/html/.
 # Python computes the structured context (which template, cols, rows, matched icon name);
-# the .j2 files own the *markup*. `u` is a slide_model._parse_unit dict.
+# the .j2 files own the *markup*.
 # --------------------------------------------------------------------------- #
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
@@ -238,7 +238,7 @@ _TMPL = {
     "concept-breakdown": "concept-breakdown.j2", "process": "process.j2", "card-row": "card-row.j2",
     "icon-list": "icon-list.j2", "code-example": "code-example.j2", "figures": "figures.j2",
     "image-grid": "image-grid.j2", "content-image": "content-image.j2", "comparison": "comparison.j2",
-    "single-point": "single-point.j2", "callout": "single-point.j2", "agenda": "agenda.j2",
+    "single-point": "single-point.j2", "callout": "single-point.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
     "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",
     "big-number": "big-number.j2", "pros-cons": "pros-cons.j2", "quiz": "quiz.j2",
@@ -258,13 +258,16 @@ def section_agenda(sections, active: int, heading: str = "") -> str:
     return _render("section-agenda.j2", None, sections=sections, active=active)
 
 
-_BUNDLED_LOGO = _HERE.parent.parent / "config" / "pptx-styles" / "pptx-free-form" / "cover-logo.png"
+# The bundled fallback is a neutral, unbranded placeholder — the plugin ships no institution
+# branding. A subject repo supplies its own logo (see resolution order below).
+_BUNDLED_LOGO = _HERE.parent.parent / "config" / "pptx-styles" / "placeholder-logo.png"
 
 
 def _cover_logo(fm: dict, talk_root) -> str:
     """The cover's institution logo, embedded self-contained. Resolution order: frontmatter
-    `logo:` → the Talk's `images/logo|cover-logo` → the bundled institution logo → a text
-    stand-in from the class name (only if no image is found)."""
+    `logo:` → the Talk's `images/logo|cover-logo` → the subject repo's `config/logo.*`
+    (set once at repo setup) → the bundled neutral placeholder → a text stand-in from the
+    class name (only if no image is found)."""
     import base64
     cands = []
     lf = (fm.get("logo") or "").strip()
@@ -274,6 +277,11 @@ def _cover_logo(fm: dict, talk_root) -> str:
         for stem in ("logo", "cover-logo"):
             for ext in (".svg", ".png", ".jpg", ".jpeg"):
                 cands.append(Path(talk_root) / "images" / f"{stem}{ext}")
+        # Repo-level institution logo, shared by every Talk in the subject repo
+        # (talk_root is `talks/<Talk>`, so the repo root is two levels up).
+        repo_root = Path(talk_root).parent.parent
+        for ext in (".svg", ".png", ".jpg", ".jpeg"):
+            cands.append(repo_root / "config" / f"logo{ext}")
     cands.append(_BUNDLED_LOGO)
     for c in cands:
         try:
@@ -420,12 +428,28 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None) -> st
         ctx["items"] = [{"label": "Ventajas", "body": " · ".join(slide.get("pros", []))},
                         {"label": "Riesgos", "body": " · ".join(slide.get("cons", []))}]
     elif t == "quiz":
-        # question + optional choices show immediately; the answer is revealed on next-nav
-        # (a Reveal fragment in the template). explanation is optional extra revealed text.
+        # question + optional choices show immediately; the answer (and the highlight on the
+        # correct choice) reveal together on next-nav (Reveal fragments). Optional image at right.
+        opts = slide.get("options", [])
         ctx["question"] = slide.get("question", "") or slide.get("title", "")
-        ctx["options"] = slide.get("options", [])
+        ctx["options"] = opts
         ctx["answer"] = slide.get("answer", "")
         ctx["explanation"] = slide.get("explanation", "")
+        ctx["answer_label"] = slide.get("answer_label", "Respuesta")
+        ctx["image"] = ri(slide.get("image")) if slide.get("image") else None
+        # `correct` selects the choice highlighted on reveal: an option string, a 1-based
+        # index, or a letter (A/B/C…). -1 → no option highlighted.
+        corr, ci = slide.get("correct"), -1
+        if isinstance(corr, bool):
+            pass
+        elif isinstance(corr, int):
+            ci = corr - 1 if corr >= 1 else corr
+        elif isinstance(corr, str) and corr:
+            if len(corr) == 1 and corr.upper().isalpha():
+                ci = ord(corr.upper()) - 65
+            else:
+                ci = next((k for k, o in enumerate(opts) if str(o).strip() == corr.strip()), -1)
+        ctx["correct_index"] = ci if 0 <= ci < len(opts) else -1
     elif t in ("single-point", "callout"):
         ctx["item"] = slide.get("point") or slide.get("callout") or {"label": "", "body": ""}
         ctx["tone"] = slide.get("tone", "blue" if t == "callout" else "pink")
@@ -468,7 +492,16 @@ function fitContent(cb){
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
-function fitAll(scope){ (scope||document).querySelectorAll('.reveal .slides section .cbody').forEach(fitContent); }
+function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
+  var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
+  cf.style.transform='none';
+  var cs=getComputedStyle(st), availH=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  var h=cf.scrollHeight;
+  if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
+}
+function fitAll(scope){ var r=(scope||document);
+  r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
+  r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
 Reveal.initialize({
   width:1280, height:720, margin:0.04, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,

@@ -26,10 +26,10 @@ Everything the presenter owns is created on demand by the workflow, not scaffold
 |---|---|---|
 | `CLAUDE.md` | This stub. | `/talksmith:init` |
 | `config/profile.md` | Subject-level profile (Subject, Audience, Language, …). | Editor · Step 0.5 |
-| `config/learnings.md` | Promoted editorial rules. | Editor · Step 7 |
-| `config/feedback-backlog.md` · `config/feedback-processed.md` | Cross-Talk feedback log + archive. | Editor · Steps 5 / 7 |
+| `config/learnings.md` | Promoted editorial rules. | Editor · Step 8 |
+| `config/feedback-backlog.md` · `config/feedback-processed.md` | Cross-Talk feedback log + archive. | Editor · Steps 5 / 8 |
 | `talks/<folder>/` | One folder per Talk (`draft.md`, `final.md`, `memory.md`, `research/`, `images/`, `output/`). | Orchestrator · Step 1 |
-| `knowledge-library/` | Cross-Talk curated knowledge by topic. | Global-Librarian · Step 7 |
+| `knowledge-library/` | Cross-Talk curated knowledge by topic. | Global-Librarian · Step 8 |
 
 **Updating.** `/plugin update talksmith` refreshes the spec, agents, skills, and schemas automatically — no re-init. Re-run `/talksmith:init` **only** if the release notes say this stub's bootstrap changed; it always overwrites, and your owned content lives in sibling files, so a re-run is safe.
 

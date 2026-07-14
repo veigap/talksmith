@@ -1,0 +1,514 @@
+{
+  "deck": {
+    "title": "Talksmith",
+    "institution": "build a talk from what you already know",
+    "class": "Intro — what it is, how to install it, how to use it",
+    "presenter": "Paulo Veiga (@veigap)",
+    "date": "2026-07-14",
+    "logo": null,
+    "sections": [
+      "What problems are we addressing?",
+      "What is Talksmith?",
+      "The workflow in practice",
+      "Behind the scenes",
+      "Getting started"
+    ]
+  },
+  "slides": [
+    {
+      "template": "section-agenda",
+      "title": "What problems are we addressing?"
+    },
+    {
+      "template": "statement",
+      "section": "What problems are we addressing?",
+      "title": "Slides are where knowledge goes to die.",
+      "sub": "The deck-first workflow throws away the expensive part.",
+      "notes": "Open cold with this line. Pause. Then: 'Who has rebuilt a talk they'd already given, from scratch, because finding the old material was harder than redoing it?' ~2 min."
+    },
+    {
+      "template": "stat",
+      "section": "What problems are we addressing?",
+      "title": "The cost of the blank page",
+      "lead": "What starting from scratch costs, in three numbers:",
+      "stats": [
+        {
+          "value": "6 hrs",
+          "caption": "typical time to rebuild a class you already gave"
+        },
+        {
+          "value": "~0%",
+          "caption": "of last time's material you actually re-find and reuse"
+        },
+        {
+          "value": "3×",
+          "caption": "times the same source serves different classes — if you keep it"
+        }
+      ],
+      "notes": "Numbers are illustrative. The third one sets up the compounding argument. ~2 min."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "What problems are we addressing?",
+      "title": "Four problems, one root cause",
+      "cards": [
+        {
+          "label": "Scattered sources",
+          "body": "Papers, chats, and downloads live in a dozen places; finding last time's material costs more than redoing it."
+        },
+        {
+          "label": "Knowledge trapped in decks",
+          "body": "Once it's in slides, you can't query, diff, or reuse it."
+        },
+        {
+          "label": "No reuse across classes",
+          "body": "Every class starts cold, even when it overlaps last semester's."
+        },
+        {
+          "label": "No record of decisions",
+          "body": "Why is this slide here? Why was that one cut? The reasoning evaporates."
+        }
+      ],
+      "notes": "Four cards, one per pain — each maps to a Talksmith answer you'll show later. ~2 min."
+    },
+    {
+      "template": "section-agenda",
+      "title": "What is Talksmith?"
+    },
+    {
+      "template": "content-image",
+      "section": "What is Talksmith?",
+      "title": "This is how you'll work — day to day",
+      "layout": "image-top",
+      "image": {
+        "src": "images/claude.png",
+        "alt": "Talksmith introducing itself in Claude — the workflow chart and a new-vs-resume prompt"
+      },
+      "facts": [
+        {
+          "body": "You talk to Talksmith in chat; it introduces itself, shows the workflow, and lists your talks in progress."
+        },
+        {
+          "body": "Everything happens here — start a new talk, or resume one under talks/. No slide editor."
+        }
+      ],
+      "notes": "Live screenshot from Claude (Cowork). Point out the Progress / Context panels on the right. ~1 min."
+    },
+    {
+      "template": "comparison",
+      "section": "What is Talksmith?",
+      "title": "Not a slide generator",
+      "columns": [
+        {
+          "header": "Deck generator",
+          "cells": [
+            "Produces slides directly",
+            "The deck is the artifact",
+            "Nothing reusable next time"
+          ]
+        },
+        {
+          "header": "RAG chatbot",
+          "cells": [
+            "Re-reads the raw pile each query",
+            "Nothing compiled or curated",
+            "No durable outline"
+          ]
+        },
+        {
+          "header": "Talksmith",
+          "cells": [
+            "Compiles sources once",
+            "Drafts a thesis-first outline",
+            "Renders slides on demand"
+          ]
+        }
+      ],
+      "notes": "Land on the last column: same inputs, completely different thing to own afterward. ~3 min."
+    },
+    {
+      "template": "quote",
+      "section": "What is Talksmith?",
+      "quote": "Instead of re-reading raw documents on every request, compile them once into a persistent, cross-linked knowledge base — the way source code compiles once and runs efficiently thereafter.",
+      "attribution": "on Andrej Karpathy's \"LLM wiki\" pattern",
+      "notes": "Let the quote sit. This is the conceptual license for everything Talksmith does. ~1 min."
+    },
+    {
+      "template": "content-image",
+      "section": "What is Talksmith?",
+      "title": "The three layers",
+      "image": {
+        "src": "images/s2-3-1.svg",
+        "alt": "Raw sources compiled into the agent-owned wiki, then rendered into disposable projections"
+      },
+      "facts": [
+        {
+          "label": "Raw sources",
+          "body": "immutable ground truth the agent reads but never rewrites"
+        },
+        {
+          "label": "The wiki",
+          "body": "synthesized, cross-linked Markdown the agent owns and keeps updated"
+        },
+        {
+          "label": "Projections",
+          "body": "final.md, then HTML or .pptx — rendered on demand and disposable"
+        }
+      ],
+      "notes": "Walk left to right once, then stop and let the diagram breathe. Then: 'I drew that as rough ASCII — Talksmith rendered the SVG.' ~3 min."
+    },
+    {
+      "template": "single-point",
+      "section": "What is Talksmith?",
+      "title": "Your diagrams draw themselves",
+      "point": {
+        "label": "You don't draw diagrams",
+        "body": "Talksmith proposes an outline version of each diagram as ASCII right in your draft — edit it if you want — then renders it to a clean, styled SVG at Polish. No more time spent making diagrams look nicer. Every diagram in this talk was generated that way."
+      },
+      "notes": "The single most surprising feature for newcomers — give it its own beat. ~2 min."
+    },
+    {
+      "template": "section-agenda",
+      "title": "The workflow in practice"
+    },
+    {
+      "template": "content-image",
+      "section": "The workflow in practice",
+      "title": "Eight steps, driven from chat",
+      "layout": "image-top",
+      "image": {
+        "src": "images/workflow.png",
+        "alt": "The eight-step Talksmith workflow"
+      },
+      "facts": [
+        {
+          "body": "You talk to Talksmith in chat; it keeps draft.md / final.md as the single source of truth."
+        },
+        {
+          "body": "The live HTML preview and the final render are optional extras."
+        }
+      ],
+      "notes": "This image is the plugin's own workflow diagram — a Markdown image ref, used verbatim. ~3 min."
+    },
+    {
+      "template": "card-row",
+      "section": "The workflow in practice",
+      "title": "Draft your way",
+      "cards": [
+        {
+          "label": "Interview",
+          "body": "Talksmith asks; you answer."
+        },
+        {
+          "label": "Agent Draft",
+          "body": "It drafts from your corpus, then asks."
+        },
+        {
+          "label": "Presenter Outline",
+          "body": "You give titles; it fills them."
+        }
+      ],
+      "notes": "Most people start with Interview and graduate to Agent Draft once the corpus is rich. ~2 min."
+    },
+    {
+      "template": "content-image",
+      "section": "The workflow in practice",
+      "title": "Review is a loop",
+      "image": {
+        "src": "images/s4-3-1.svg",
+        "alt": "Feedback lifecycle: raw bullet, stamped open, applied, closed, mirrored to the backlog, then loop"
+      },
+      "facts": [
+        {
+          "body": "Open draft.md and drop plain-text bullets under Presenter feedback."
+        },
+        {
+          "body": "Talksmith stamps, applies, and closes each one — closed entries are never deleted."
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "body": "This very deck was built this way — see the feedback log in its draft.md."
+        }
+      ],
+      "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "The workflow in practice",
+      "title": "What you end up with",
+      "cards": [
+        {
+          "label": "draft.md",
+          "body": "The working outline you edit, with its feedback audit trail."
+        },
+        {
+          "label": "final.md",
+          "body": "The polished, delivery-ready derivative — diagrams rendered, feedback stripped."
+        },
+        {
+          "label": "research/corpus/",
+          "body": "The compiled knowledge base backing every claim."
+        },
+        {
+          "label": "memory.md",
+          "body": "The progress log that lets you stop and resume anytime."
+        }
+      ],
+      "notes": "draft.md survives Polish untouched — final.md is always re-derivable. ~2 min."
+    },
+    {
+      "template": "section-agenda",
+      "title": "Behind the scenes"
+    },
+    {
+      "template": "icon-list",
+      "section": "Behind the scenes",
+      "title": "Five roles, one source of truth",
+      "rows": [
+        {
+          "label": "Librarian",
+          "body": "Restructures raw sources into a uniform corpus. Preserves; doesn't compress."
+        },
+        {
+          "label": "Composer",
+          "body": "Reviews slides against thesis, audience, sources, and learned rules."
+        },
+        {
+          "label": "Editor",
+          "body": "The muscle: writes draft.md, applies feedback, produces final.md."
+        },
+        {
+          "label": "Illustrator",
+          "body": "Turns your ASCII into styled SVGs at Polish."
+        },
+        {
+          "label": "Global-Librarian",
+          "body": "Curates finalized Talks into the shared knowledge library."
+        }
+      ],
+      "notes": "You never dispatch these by hand — the orchestrator does, and narrates in plain outcomes. ~3 min."
+    },
+    {
+      "template": "content+cards+image",
+      "section": "Behind the scenes",
+      "title": "It's Markdown all the way down",
+      "lead": "Every artifact is a plain .md file — and edits round-trip.",
+      "cards": [
+        {
+          "label": "Diffable",
+          "body": "Every change shows up in git diff."
+        },
+        {
+          "label": "Portable",
+          "body": "The same outline renders to HTML or .pptx."
+        },
+        {
+          "label": "Round-trippable",
+          "body": "Edited the deck in Keynote? Reconcile it back into draft.md."
+        }
+      ],
+      "image": {
+        "src": "images/s5-2-1.svg",
+        "alt": "Forward pipeline draft.md to final.md to pptx, and the reverse pipeline back into draft.md"
+      },
+      "notes": "The round-trip is what makes Markdown-as-source safe: you never lose downstream edits. ~3 min."
+    },
+    {
+      "template": "pros-cons",
+      "section": "Behind the scenes",
+      "title": "Markdown vs. a binary deck",
+      "pros": [
+        "Diffable, versionable, greppable",
+        "Portable across any renderer",
+        "Outlives any single tool"
+      ],
+      "cons": [
+        "Opaque to version control",
+        "Locked to one application",
+        "Knowledge trapped in the format"
+      ],
+      "notes": "Binary decks are more WYSIWYG — but that's the projection's job, not the source's. ~2 min."
+    },
+    {
+      "template": "image-grid",
+      "section": "Behind the scenes",
+      "title": "One base, many decks",
+      "images": [
+        {
+          "src": "images/deck-strict.png",
+          "alt": "Strict PPTX style"
+        },
+        {
+          "src": "images/deck-free-form.png",
+          "alt": "Free-form PPTX style"
+        },
+        {
+          "src": "images/deck-html.png",
+          "alt": "Live HTML preview"
+        },
+        {
+          "src": "images/deck-pdf.png",
+          "alt": "PDF export"
+        }
+      ],
+      "notes": "Four renders of the same talk — the projection point, made visual. ~2 min."
+    },
+    {
+      "template": "big-number",
+      "section": "Behind the scenes",
+      "title": "Knowledge that compounds",
+      "number": "1",
+      "caption": "knowledge base per subject that outlives every renderer, every semester, and every teammate handoff.",
+      "notes": "The hero metric of the whole talk. Say it, then move to close. ~1 min."
+    },
+    {
+      "template": "timeline",
+      "section": "Behind the scenes",
+      "title": "A semester, compounding",
+      "milestones": [
+        {
+          "label": "Class 1",
+          "body": "Corpus seeded from three papers; first outline drafted."
+        },
+        {
+          "label": "Class 3",
+          "body": "Alice's indexed sources answer Bob's new questions — zero re-reading."
+        },
+        {
+          "label": "Class 7",
+          "body": "Recurring feedback promoted to learnings.md; every future class inherits it."
+        },
+        {
+          "label": "Next term",
+          "body": "A new teammate clones the repo and is productive on day one."
+        }
+      ],
+      "notes": "The emotional payoff of 'compounds across classes and co-teachers.' ~2 min."
+    },
+    {
+      "template": "section-agenda",
+      "title": "Getting started"
+    },
+    {
+      "template": "divider",
+      "section": "Getting started",
+      "title": "Setup, once",
+      "notes": "Quick breath before the live demo. ~15 sec."
+    },
+    {
+      "template": "code-example",
+      "section": "Getting started",
+      "title": "Three commands",
+      "language": "bash",
+      "code": "# Install the plugin (once per machine), inside a Claude Code session\n/plugin marketplace add veigap/talksmith\n/plugin install talksmith@talksmith\n\n# Scaffold your subject repo\n/talksmith:init\n\n# Open a fresh session in that repo and say:\nHi Talksmith",
+      "explanation": [
+        "/talksmith:init writes exactly one file — a thin CLAUDE.md stub. Commit and push it; teammates who clone the repo are set up automatically."
+      ],
+      "notes": "Do this live if there's a projector. ~4 min."
+    },
+    {
+      "template": "process",
+      "section": "Getting started",
+      "title": "From nothing to running",
+      "steps": [
+        {
+          "label": "Create",
+          "body": "one Git repo per subject — the shared home for its material"
+        },
+        {
+          "label": "Install",
+          "body": "the plugin, once per machine, from the marketplace"
+        },
+        {
+          "label": "Initialize",
+          "body": "/talksmith:init drops the CLAUDE.md stub; commit it"
+        },
+        {
+          "label": "Start",
+          "body": "open a session, say \"Hi Talksmith\", and follow the workflow"
+        }
+      ],
+      "notes": "Steps 1–3 happen once per repo; step 4 every session. ~2 min."
+    },
+    {
+      "template": "icon-list",
+      "section": "Getting started",
+      "title": "What lives in the repo",
+      "rows": [
+        {
+          "label": "profile.md",
+          "body": "subject, audience, duration, language — set once, inherited by every class"
+        },
+        {
+          "label": "learnings.md",
+          "body": "the team's editorial taste, grown from recurring feedback"
+        },
+        {
+          "label": "logo.*",
+          "body": "your institution logo; a neutral placeholder if you skip it"
+        },
+        {
+          "label": "talks/",
+          "body": "one folder per class; where the corpus and outlines accumulate"
+        },
+        {
+          "label": "knowledge-library/",
+          "body": "the curated cross-Talk topic index shared by the team"
+        }
+      ],
+      "notes": "This folder is where the compounding lives. ~3 min."
+    },
+    {
+      "template": "quiz",
+      "section": "Getting started",
+      "title": "Quick check",
+      "question": "You render a .pptx, then tweak it in PowerPoint. What's the source of truth?",
+      "options": [
+        "The .pptx you just edited",
+        "final.md",
+        "draft.md"
+      ],
+      "correct": "draft.md",
+      "answer": "draft.md",
+      "explanation": "The deck is a projection; edits made downstream are reconciled back into draft.md, so the next Polish re-derives final.md.",
+      "notes": "Let the room vote by hands before the reveal. The aha: even PowerPoint edits flow back to the Markdown. ~2 min."
+    },
+    {
+      "template": "content-text",
+      "title": "Key takeaways",
+      "big": "Stop rebuilding talks from scratch.",
+      "panels": [
+        "Build a knowledge base that compounds, and let the deck be a disposable projection of it.",
+        "Three commands to start; chat and draft.md to run; a closed-forever audit trail for every decision.",
+        "The diagrams even draw themselves."
+      ],
+      "notes": "Mirror the opening hook: the blank page is a choice, and you can stop choosing it. ~2 min."
+    },
+    {
+      "template": "closing-cta",
+      "title": "Try it today",
+      "items": [
+        {
+          "label": "Install",
+          "body": "/plugin marketplace add veigap/talksmith"
+        },
+        {
+          "label": "Pick a subject",
+          "body": "Make the one you teach most your first repo."
+        },
+        {
+          "label": "Questions?",
+          "body": "Let's talk."
+        }
+      ],
+      "notes": "Leave the install command on screen during Q&A. ~1 min to deliver."
+    },
+    {
+      "template": "closing-hero",
+      "title": "Build a talk from what you already know.",
+      "notes": "Full-bleed closing line. Hold it into Q&A. ~15 sec."
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Specification for `talks/<Talk>/draft.md`: the per-Talk **working file** Talksmith produces during Steps 1–5, and for `talks/<Talk>/final.md`: the **derived deliverable** Step 6 (Polish) produces from it.
 
-Each Talk has at most one of each. The shape defined here is parsed downstream by the Composer and Editor roles and by the `talksmith:md-to-deck` skill's `convert.py` — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
+Each Talk has at most one of each. The shape defined here is read downstream by the Composer and Editor roles and by the `talksmith:md-to-deck` skill's FILL step (which decomposes `final.md` into `slide-model.json`) — do not rename or restructure the canonical headings, frontmatter keys, or field labels.
 
 ## Two files, one shape
 
@@ -23,7 +23,7 @@ That is the entire diff between the two files. Step 6 (Polish) is the only produ
 
 `draft.md` is the **single source of truth for one Talk during authoring**. It captures the thesis, the agenda, every Section and Slide (with Content, Sources, Speaker notes, and an in-place Presenter-feedback log), plus closing material (Conclusions, Open questions, Cut material). The presenter edits it directly in Step 5; the Editor stamps and applies bullets via the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill.
 
-`final.md` is the **single source of truth for one Talk as deliverable**. It carries no working-meta: no `Presenter feedback`, no raw ASCII fences for render-driving diagrams. Step 7 (Global-Librarian) and Step 8 (PPTX render) both read `final.md`. Downstream tooling renders the slides; the shape of these files matters more than their prose polish.
+`final.md` is the **single source of truth for one Talk as deliverable**. It carries no working-meta: no `Presenter feedback`, no raw ASCII fences for render-driving diagrams. Step 7 (PPTX render) and Step 8 (Global-Librarian) both read `final.md`. Downstream tooling renders the slides; the shape of these files matters more than their prose polish.
 
 The split exists so Step 6 stays re-runnable: re-render diagrams, re-tweak the Polish pipeline, regenerate `final.md` from scratch — `draft.md` always survives.
 
@@ -35,8 +35,8 @@ The split exists so Step 6 stays re-runnable: re-render diagrams, re-tweak the P
 | Editor role (writer of `final.md`) | Step 6 (Polish), action 0 onward. **Sole writer of `final.md`.** | Step 6 (0): `cp draft.md final.md`. Step 6 (a)–(d): inline SVGs, consolidate image refs, rescue `[open]` feedback, strip `Presenter feedback`. Never reads or writes `draft.md` after Step 6 begins. |
 | Composer role (reader of `draft.md`) | Every drafting milestone in Step 4 | Critique the scoped slice (`thesis` / `agenda` / `section:N` / `full`) against thesis alignment, audience fit, citations, principles, and learnings. Returns a punch-list; does **not** edit. |
 | Illustrator role (reader of `final.md`) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; invoke the `talksmith:ascii-to-svg` skill per block. Read-only. |
-| Global-Librarian role (reader of `final.md`) | Step 7 (Learnings) on promotion | Curate reusable knowledge into `knowledge-library/`. Read-only. |
-| `talksmith:md-to-deck` skill / `convert.py` (reader of `final.md`) | Step 8 (Render PPTX) | Pre-process into an intermediate Markdown shape and hand to `skill://antropic-skills:/pptx`. Read-only. |
+| Global-Librarian role (reader of `final.md`) | Step 8 (Learnings) on promotion | Curate reusable knowledge into `knowledge-library/`. Read-only. |
+| `talksmith:md-to-deck` skill (reader of `final.md`) | Step 7 (Render) | FILL `output/slide-model.json` (LLM decomposition), then render it — mechanically to HTML (`build_html.py`), or via `skill://antropic-skills:/pptx` for the `.pptx` styles. Read-only on `final.md`. |
 
 The orchestrator does **not** write either file directly — every change goes through the editor.
 
@@ -46,8 +46,8 @@ The orchestrator does **not** write either file directly — every change goes t
 2. **Step 4 (Draft) — first Editor role pass.** Editor bootstraps `draft.md` from the *Canonical empty form* (below): copy the form, strip every HTML comment and every YAML frontmatter comment line, keep all headings / frontmatter keys (with empty values) / field labels. Then fill.
 3. **Steps 4–5 — iterate.** Editor fills `draft.md` and applies presenter feedback rounds.
 4. **Step 6 (Polish).** Editor copies `draft.md` → `final.md` (action 0). Illustrator renders ASCII → SVG. Editor inlines image refs in `final.md` (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, rescues any remaining `[open]` feedback bullets into `# Open questions`, then strips every `Presenter feedback` field from `final.md`. **`draft.md` is never touched.**
-5. **Step 7 (Learnings).** `final.md` is finalized; the orchestrator scans the cross-Talk feedback backlog. If the presenter promotes the Talk, the Global-Librarian curates `final.md` + corpus records into `knowledge-library/`.
-6. **Step 8 (Render PPTX, optional).** `convert.py` produces `output/final.intermediate.md` from `final.md`; native `pptx` skill renders to `output/final.pptx`. Neither `draft.md` nor `final.md` is modified.
+5. **Step 7 (Render, optional).** The md-to-deck skill FILLs `output/slide-model.json` from `final.md` (LLM), then renders it — `build_html.py` → `output/html/index.html` for `html-strict`, or the native `pptx` skill → `output/final.pptx` for the `.pptx` styles. Neither `draft.md` nor `final.md` is modified.
+6. **Step 8 (Learnings).** `final.md` is finalized; the orchestrator scans the cross-Talk feedback backlog. If the presenter promotes the Talk, the Global-Librarian curates `final.md` + corpus records into `knowledge-library/`.
 
 ## Canonical block structure
 
@@ -150,7 +150,7 @@ duration:
 # date: when the talk is delivered (ISO format YYYY-MM-DD)
 date:
 # NOTE: PPTX render style is NOT a frontmatter field. It is a render-time parameter
-# asked fresh by the orchestrator at every Step 8 entry (see orchestrator.md Step 8
+# asked fresh by the orchestrator at every Step 7 entry (see orchestrator.md Step 7
 # step 1) and passed to md-to-deck as an invocation argument. draft.md and final.md
 # are style-agnostic so the same content can be rendered in either style at any time.
 ---

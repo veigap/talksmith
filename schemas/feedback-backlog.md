@@ -4,7 +4,7 @@ Specification for [`config/feedback-backlog.md`](config/feedback-backlog.md): th
 
 ## Purpose
 
-Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 7) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`config/learnings.md`](config/learnings.md).
+Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a cross-Talk audit trail. The orchestrator scans this log at presentation completion (Step 8) to detect repeated patterns; patterns recurring 3+ times become promotion candidates for [`config/learnings.md`](config/learnings.md).
 
 ## Loading semantics
 
@@ -12,9 +12,9 @@ Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a
 
 | Reader | Read when | What for |
 |---|---|---|
-| Orchestrator | Step 7 entry | Scan for ≥3× recurrences across Talks, surface promotion candidates by asking the presenter. Read-only — never writes the file directly. |
+| Orchestrator | Step 8 entry | Scan for ≥3× recurrences across Talks, surface promotion candidates by asking the presenter. Read-only — never writes the file directly. |
 | Editor role | Step 5 (Review) | Read existing tag vocabulary before appending a new closed-bullet row. **Sole writer.** Append-only in Step 5. |
-| Editor role | Step 7 (Learnings), Move pass | Remove rows being relocated to `feedback-processed.md`. **Row-removal here is the sole deletion the Editor performs in any step**, and is only allowed during a Step 7 Move — justified because the row is fully preserved (with `promoted_to:` + `promoted_at:` metadata) in `feedback-processed.md`. |
+| Editor role | Step 8 (Learnings), Move pass | Remove rows being relocated to `feedback-processed.md`. **Row-removal here is the sole deletion the Editor performs in any step**, and is only allowed during a Step 8 Move — justified because the row is fully preserved (with `promoted_to:` + `promoted_at:` metadata) in `feedback-processed.md`. |
 
 ## Entry format
 
@@ -37,9 +37,9 @@ Tags are how patterns surface. **Reuse existing tags from prior entries before i
 - **Concern**: `too-dense`, `too-academic`, `too-vague`, `off-thesis`, `wrong-audience`, `missing-evidence`, `bad-order`, `redundant`, `tone`, `visual`, `length`.
 - **Action**: `rewrite`, `reorder`, `cut`, `merge`, `split`, `add-source`, `add-visual`.
 
-## Pattern detection (Step 7)
+## Pattern detection (Step 8)
 
-When the presenter declares `draft.md` final and Step 7 begins, the orchestrator:
+When the presenter declares `draft.md` final and Step 8 begins, the orchestrator:
 
 1. Scans entries added during this Talk and combines them with prior backlog history.
 2. Groups by tag and by recurring resolution shape.
@@ -48,7 +48,7 @@ When the presenter declares `draft.md` final and Step 7 begins, the orchestrator
    - **Promote** — append a new entry to `learnings.md`.
    - **Move** — relocate the contributing backlog rows here into `feedback-processed.md`, stamping each with `promoted_to:` and `promoted_at:`.
 
-The orchestrator never writes either file directly. See *Step 7* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
+The orchestrator never writes either file directly. See *Step 8* in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) for the full protocol.
 
 ## Direct-edit rule
 

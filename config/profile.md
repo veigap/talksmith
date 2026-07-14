@@ -10,7 +10,7 @@
 
 ## Presenter
 
-<!-- Required. One line — name, role, organization (e.g. "Paulo Veiga, Lecturer, Universidad Austral"). Copied into every Talk's draft.md frontmatter as the default `presenter`. Per-Talk override: edit draft.md frontmatter directly in Step 5 Review. -->
+<!-- Required. One line — name, role, organization (e.g. "Jane Doe, Lecturer, Example University"). Copied into every Talk's draft.md frontmatter as the default `presenter`. Per-Talk override: edit draft.md frontmatter directly in Step 5 Review. -->
 
 ## How my presentations are consumed
 

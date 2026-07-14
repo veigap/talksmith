@@ -30,7 +30,7 @@ These are not style rules — they are correctness rules. They hold regardless o
 
 ## 2. Cover slide — contractually fixed *(the only mandatory layout)*
 
-The cover is the deck's identity slide and is reproduced **byte-for-byte structurally**, identical to the strict-style cover. Only the *content* of the four shapes changes per Talk; positions, sizes, fonts, colors, z-order, and the institution logo are fixed. Audited at CONTROL by the cover-fidelity check.
+The cover is the deck's identity slide and is reproduced **byte-for-byte structurally**, identical to the strict-style cover. Only the *content* of the four shapes changes per Talk; positions, sizes, fonts, colors, and z-order are fixed. The institution-logo **slot** is fixed; the logo *image* is repo-supplied (`config/logo.*`, else the bundled neutral placeholder). Audited at CONTROL by the cover-fidelity check.
 
 Four shapes, in z-order:
 
@@ -39,7 +39,7 @@ Four shapes, in z-order:
 | 1 | **Cover title** (`p:sp`, `rect`, no fill, no border) | `(496119, 536823)` | `(8151763, 1948458)` | `algn="l"`, `lnSpc=104%`. Single run: `sz="4050"` (40.5pt), Helvetica Bold, `#1F1E1E`. | `presentation:` from `final.md` frontmatter (Subject from `profile.md`) |
 | 2 | **Class name** (`p:sp`, `rect`, no fill) | `(496119, 2677269)` | `(6216923, 235297)` | `wrap="none"`, `algn="l"`. Single run: `sz="1450"` (14.5pt), Helvetica Bold, `#1F1E1E`. | `class:` from `final.md` frontmatter (per-Talk, **required** — collected at Step 4) |
 | 3 | **Author + date block** (`p:sp`, `rect`, no fill) | `(496119, 3219748)` | `(3295799, 560933)` | Two paragraphs, `algn="l"`, `lnSpc=123%`, `spcAft=900`. Each run: `sz="1150"` (11.5pt), **Helvetica**, `#3B3535`. | Paragraph 1: `Autor: <presenter>` (localize "Autor:" per `Presentation language`). Paragraph 2: `Última Modificación: <Month, YYYY>` from `date:` (localize prefix). |
-| 4 | **Institution logo** (`p:pic`) | `(7183562, 3248546)` | `(1469008, 1214065)` | PNG, `ppt/media/image-1-1.png`. `noChangeAspect="1"`. | `ppt/media/image-1-1.png` preserved verbatim. |
+| 4 | **Institution logo** (`p:pic`) | `(7183562, 3248546)` | `(1469008, 1214065)` | PNG, `ppt/media/image-1-1.png` — repo-supplied (`config/logo.*`), else the bundled neutral placeholder. `noChangeAspect="1"`. | repo logo if present, else placeholder preserved verbatim. |
 
 The cover's specific font choices (Helvetica Bold / Helvetica) are part of the fixed recipe — they exist because the cover is contractually identical across both styles, not because free-form prescribes a typography palette. Slides 2 onward have no font / size / color rules.
 

@@ -102,7 +102,7 @@ This subcommand runs against `final.md`, not `draft.md` — the `--final` flag i
 | `find-open` *(separate script)* | `draft_path` | `--format human\|tsv` |
 | `stamp` | `--draft`, `--line` | `--date` (default: today) |
 | `close` | `--draft`, `--line`, `--resolution` | — |
-| `mirror-row` | `--draft`, `--backlog`, `--line` | `--tags` |
+| `mirror-row` | `--draft`, `--backlog`, `--line` | `--tags`, `--allow-empty-tags` (silence the "no tags provided" warning when a row is intentionally untagged) |
 | `find-closed-unmirrored` | `--draft`, `--backlog` | `--format json\|human` |
 | `rescue-open` | `--final` | `--dry-run` |
 

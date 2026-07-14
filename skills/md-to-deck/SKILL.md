@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-deck
-description: Render a Talk's cleaned `final.md` to a presentation. **Branches by the mandatory `style:` invocation parameter** — three modes, no default: **`pptx-strict`** and **`pptx-free-form`** author a native PowerPoint (`.pptx`) via Anthropic's official `pptx` skill (`skill://antropic-skills:/pptx`, **Cowork-only**, each with a `base-template.pptx`); **`html-strict`** renders a styled **HTML / Reveal.js** deck by code via [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (**Cowork-independent**, needs `jinja2`) — from `final.md` as the shareable deliverable (`output/html/index.html`), and, auto-fired by the orchestrator with `--draft`, from the in-progress `draft.md` as a **live view kept in sync during drafting** (same renderer, same output). Optional Step 8 of the Presenter Agent workflow, invoked after Step 6 (Polish); the live view auto-fires earlier (Step 5.5). Consumes images already on disk under `talks/<Talk>/images/`. The orchestrator asks the presenter the style at every Step 8 entry and passes it in; `final.md`/`draft.md` are style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: the `.pptx` styles → `talks/<Talk>/output/final.<style>.pptx` (+ canonical `final.pptx`); `html-strict` → `output/html/index.html`. Because `html-strict` renders in HTML, its styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**, unlike the native `.pptx` render which can drop it.
+description: Render a Talk's cleaned `final.md` to a presentation. **Branches by the mandatory `style:` invocation parameter** — three modes, no default: **`pptx-strict`** and **`pptx-free-form`** author a native PowerPoint (`.pptx`) via Anthropic's official `pptx` skill (`skill://antropic-skills:/pptx`, **Cowork-only**, each with a `base-template.pptx`); **`html-strict`** renders a styled **HTML / Reveal.js** deck by code via [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (**Cowork-independent**, needs `jinja2`) — from `final.md` as the shareable deliverable (`output/html/index.html`), and, auto-fired by the orchestrator with `--draft`, from the in-progress `draft.md` as a **live view kept in sync during drafting** (same renderer, same output). Optional Step 7 of the Presenter Agent workflow, invoked after Step 6 (Polish); the live view auto-fires earlier (Step 5.5). Consumes images already on disk under `talks/<Talk>/images/`. The orchestrator asks the presenter the style at every Step 7 entry and passes it in; `final.md`/`draft.md` are style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: the `.pptx` styles → `talks/<Talk>/output/final.<style>.pptx` (+ canonical `final.pptx`); `html-strict` → `output/html/index.html`. Because `html-strict` renders in HTML, its styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**, unlike the native `.pptx` render which can drop it.
 ---
 
 # md-to-deck — render `final.md` to a presentation (`.pptx` or HTML)
@@ -14,7 +14,7 @@ All three modes classify each slide against the shared catalog [`slide-templates
 
 ## Style resolution — mandatory, no default
 
-Every render begins by reading the `style:` parameter the orchestrator passed in (it asks the presenter at every Step 8 entry — see [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1*). Allowed values: `pptx-strict`, `pptx-free-form`, `html-strict`. `final.md`/`draft.md` carry no `style:` field — the same content can be rendered in any mode at any time.
+Every render begins by reading the `style:` parameter the orchestrator passed in (it asks the presenter at every Step 7 entry — see [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 7 step 1*). Allowed values: `pptx-strict`, `pptx-free-form`, `html-strict`. `final.md`/`draft.md` carry no `style:` field — the same content can be rendered in any mode at any time.
 
 The resolved style names a self-contained spec (and, for Path A, a base template):
 
@@ -26,7 +26,7 @@ The resolved style names a self-contained spec (and, for Path A, a base template
 **If `style:` is absent or empty, fail render-blocking** — do not guess or default:
 
 ```
-[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 8 step 1).
+[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 7 step 1).
 ```
 
 If the value is present but is not a directory under `config/pptx-styles/`, or a required path is missing, fail render-blocking naming the offending value/path (the enum drifted from disk). Silent fallback to a default was the bug; the loud failure is the fix.
@@ -200,9 +200,9 @@ Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one br
 pptx-strict:                     pptx-free-form:            html-strict:
   [ ] Formatting source            [ ] Formatting source      [ ] Formatting source
   [ ] Building draft slides        [ ] Building slides        [ ] Rendering the deck
-  [ ] Reviewing slides (cyc N/3)   [ ] Sanity check           [ ] Reviewing slides (cyc N/2)
-  [ ] Applying fixes                                          [ ] Applying fixes (surface)
-  [ ] Final check                                             [ ] Ready to view
+  [ ] Reviewing slides (cyc N/3)   [ ] Sanity check           [ ] Ready to view
+  [ ] Applying fixes
+  [ ] Final check
 ```
 
 `html-strict` "Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF).

@@ -3,10 +3,10 @@
   <text x="240" y="60" text-anchor="middle" font-size="30" font-weight="800" fill="#1F1E1E">TALL DIAGRAM</text>
   <text x="240" y="92" text-anchor="middle" font-size="16" fill="#6E6663">aspect 3:4 — taller than 16:9</text>
   <rect x="60" y="130" width="360" height="120" rx="10" fill="#F2EEEE"/>
-  <text x="240" y="200" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Nivel 1</text>
+  <text x="240" y="200" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Level 1</text>
   <rect x="60" y="270" width="360" height="120" rx="10" fill="#F2EEEE"/>
-  <text x="240" y="340" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Nivel 2</text>
+  <text x="240" y="340" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Level 2</text>
   <rect x="60" y="410" width="360" height="120" rx="10" fill="#F2EEEE"/>
-  <text x="240" y="480" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Nivel 3</text>
-  <text x="240" y="600" text-anchor="middle" font-size="18" font-weight="800" fill="#DA1B2E">Esta línea del fondo NO debe recortarse</text>
+  <text x="240" y="480" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Level 3</text>
+  <text x="240" y="600" text-anchor="middle" font-size="18" font-weight="800" fill="#DA1B2E">This bottom line must NOT be cropped</text>
 </svg>

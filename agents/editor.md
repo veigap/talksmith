@@ -211,7 +211,7 @@ labels: ...
 - **External WebP / AVIF / HEIC sources** (typically corpus images — a `.webp` downloaded by the librarian) are rasterized to PNG at the same basename here, before the reference is rewritten. These are *not* SVG-generation territory so they stay with the editor. Recipes: `Image.open('<in.webp>').save('<out.png>', 'PNG')` (Pillow) or `cwebp`/`sips`/`magick` CLI. Keep the original file alongside the PNG for traceability.
 - **Refs already pointing to `.png`/`.jpg`** pass through unchanged.
 
-Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 8 `md-to-deck` pre-flight enforces the same rule as a backstop.
+Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 7 `md-to-deck` pre-flight enforces the same rule as a backstop.
 
 (c) **Rescue `[open]` feedback (from `final.md`).** Run [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) `rescue-open`:
 ```bash
@@ -222,7 +222,7 @@ The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "
 
 (d) **Strip `Presenter feedback` fields (from `final.md`).** Remove at every level (Thesis, Agenda, Section, Slide). Recognize all three forms: H3 (`### Presenter feedback`), paragraph (`**Presenter feedback:**`), legacy bullet (`- **Presenter feedback:**`).
 
-**Step 7 — two passes, in order.**
+**Step 8 — two passes, in order.**
 
 1. **Promote.** Append a new entry to `config/learnings.md` in its existing format (rule, why, where it applies, evidence, date). Generate a stable entry id (incrementing integer or next slug — match the file's convention). Return the entry id.
 2. **Move.** For each backlog row to move: append it to `config/feedback-processed.md` adding `promoted_to: <entry id>` and `promoted_at: <date>`, then remove it from `config/feedback-backlog.md`. This removal is the only deletion the Editor performs in any step.

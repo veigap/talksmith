@@ -516,7 +516,14 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         start_idx = b["ascii"]["start_line"] - 1
         end_idx = b["ascii"]["end_line"] - 1
         if start_idx < 0 or end_idx >= len(lines):
-            raise SystemExit(f"error: line range out of bounds for {b['slide_id']}: {start_idx + 1}-{end_idx + 1} (file has {len(lines)} lines)")
+            print(f"error: line range out of bounds for {b['slide_id']}: {start_idx + 1}-{end_idx + 1} (file has {len(lines)} lines)", file=sys.stderr)
+            raise SystemExit(2)
+        # Stale-plan guard: the plan's line numbers must still bracket an ASCII fence. If final.md
+        # changed since `scan`, they won't — abort (exit 3) rather than silently rewrite wrong lines.
+        # Nothing has been written yet (the file is written once, after the loop), so this is safe.
+        if not lines[start_idx].lstrip().startswith("```") or lines[end_idx].strip() != "```":
+            print(f"error: stale plan — {b['slide_id']} line {start_idx + 1} no longer opens an ASCII fence; re-run `scan` (final.md changed since the plan was captured)", file=sys.stderr)
+            raise SystemExit(3)
         rewrite_lines = [
             f"![{alt}](images/{svg_basename})",
             "<!-- ascii-source:",

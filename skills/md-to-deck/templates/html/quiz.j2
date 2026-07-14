@@ -1,18 +1,27 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(section, title, highlights) %}
-<div class="quiz">
+<div class="quiz{{ ' quiz-split' if image and image[1] else '' }}">
+<div class="quiz-body">
 <p class="quiz-q">{{ question }}</p>
 {% if options %}
 <ol class="quiz-opts">
-{% for o in options %}<li>{{ o }}</li>{% endfor %}
+{% for o in options %}
+{% if loop.index0 == correct_index %}
+{# the correct choice is a Reveal *custom* fragment: it stays on screen but restyles itself
+   (accent fill + check) on the same next-nav step that fades in the answer panel. #}
+<li class="qopt correct fragment custom" data-fragment-index="0">{{ o }}</li>
+{% else %}
+<li class="qopt">{{ o }}</li>
+{% endif %}
+{% endfor %}
 </ol>
 {% endif %}
-{# The answer is a Reveal fragment: the question (and options) show immediately, the answer
-   fades up on the next navigation — the deck's own native animation, no custom JS. #}
-<div class="quiz-ans fragment fade-up">
-<span class="quiz-lab">{{ icon("check_circle") }}Respuesta</span>
+<div class="quiz-ans fragment fade-up" data-fragment-index="0">
+<span class="quiz-lab">{{ icon("check_circle") }}{{ answer_label }}</span>
 <p class="quiz-a">{{ answer }}</p>
 {% if explanation %}<p class="quiz-exp">{{ explanation }}</p>{% endif %}
 </div>
+</div>
+{% if image and image[1] %}<div class="quiz-media">{{ embed(image[0], image[1]) }}</div>{% endif %}
 </div>
 {% endcall %}

@@ -202,4 +202,4 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 
 - `0` — success.
 - `2` — malformed input (missing file, plan JSON missing required fields, line numbers out of range).
-- `3` — `apply` aborted because `final.md` mtime drifted between the plan's capture and the apply (stale plan — re-`scan`).
+- `3` — `cleanup` / `apply` aborted on a **stale plan**: `final.md` changed since `scan`, so a block's recorded line numbers no longer bracket an ASCII fence. Nothing is written (the guard runs before the single atomic write). Re-run `scan` and redo the annotate/extract/cleanup pass.

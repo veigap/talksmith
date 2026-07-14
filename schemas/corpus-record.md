@@ -13,7 +13,7 @@ Lossless restructuring of every raw source under `talks/<Talk>/research/articles
 | Librarian role (writer) | Step 3 (Corpus), Phase 1 and Phase 2. **Sole writer.** | One output record per source. Phase 1 writes text-source records, copies/extracts image bytes into the companion folder, and writes image stubs; Phase 2 fills the stubs when `process_images: true` is set. |
 | Editor role (reader) | Step 4 (Draft) in Modes B and C; Step 5 (Review) when applying source citations | Draft slide Content / Sources from corpus records. Cite the record by filename; reference its images by companion-folder path. |
 | Composer role (reader) | Every drafting milestone in Step 4 | Verify every cited record exists and supports the slide's claim; flag pending stubs as `[major]` and overreaches as `[blocker]`. |
-| Global-Librarian role (reader) | Step 7 (Learnings) on promotion | Reads corpus records + companion images to curate cross-Talk topic folders under `knowledge-library/`. |
+| Global-Librarian role (reader) | Step 8 (Learnings) on promotion | Reads corpus records + companion images to curate cross-Talk topic folders under `knowledge-library/`. |
 
 The orchestrator never reads or writes corpus records directly.
 

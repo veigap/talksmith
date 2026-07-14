@@ -4,4 +4,4 @@
 
 ## Entries
 
-<!-- Editor appends entries below this line when the orchestrator dispatches a Step 7 Move. -->
+<!-- Editor appends entries below this line when the orchestrator dispatches a Step 8 Move. -->

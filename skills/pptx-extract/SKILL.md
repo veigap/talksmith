@@ -1,6 +1,6 @@
 ---
 name: talksmith:pptx-extract
-description: Reconstruct a Talk's presentation Markdown from a (possibly hand-edited) `.pptx`. Reads the deck with stdlib `zipfile`+`xml.etree` (no python-pptx, no Cowork), classifies each slide (cover/agenda/section-divider/content), stages **every** content image (non-template) into `talks/<Talk>/reconcile/staging/` with slot-anchored names (`slide<order>-img<ordinal>.<ext>`), and emits `talks/<Talk>/reconcile/finalpptx.md` in the canonical `draft.md` shape plus a `reconcile/finalpptx.inventory.json` sidecar. Image identity vs. `images/` is NOT decided here (bytes/dimensions alone are unreliable — Keynote resizes and re-encodes) — it's resolved by `talksmith:pptx-diff` via slot alignment. All reverse-pipeline artifacts live under `talks/<Talk>/reconcile/`. First stage of the reverse pipeline: run before `talksmith:pptx-diff`. Mandatory `--style {strict|free-form}` (no default). CLI-safe, requires `python-pptx` (`pip install python-pptx`); no Cowork dependency.
+description: Reconstruct a Talk's presentation Markdown from a (possibly hand-edited) `.pptx`. Reads the deck with `python-pptx` (plus targeted `xml.etree`/`lxml` drop-throughs for SVG twins, raster rels, and bullet markers) — no Cowork — classifies each slide (cover/agenda/section-divider/content), stages **every** content image (non-template) into `talks/<Talk>/reconcile/staging/` with slot-anchored names (`slide<order>-img<ordinal>.<ext>`), and emits `talks/<Talk>/reconcile/finalpptx.md` in the canonical `draft.md` shape plus a `reconcile/finalpptx.inventory.json` sidecar. Image identity vs. `images/` is NOT decided here (bytes/dimensions alone are unreliable — Keynote resizes and re-encodes) — it's resolved by `talksmith:pptx-diff` via slot alignment. All reverse-pipeline artifacts live under `talks/<Talk>/reconcile/`. First stage of the reverse pipeline: run before `talksmith:pptx-diff`. Mandatory `--style {strict|free-form}` (no default). CLI-safe, requires `python-pptx` (`pip install python-pptx`); no Cowork dependency.
 ---
 
 # talksmith:pptx-extract — Rebuild the presentation Markdown from a deck
@@ -12,7 +12,7 @@ Talksmith's forward pipeline is one-directional: `draft.md` → `final.md` → `
 | Points at the edited `.pptx` + the active Talk + the render style | Parses the deck, classifies slides, de-dups images, writes `finalpptx.md` + inventory |
 | Refines the mechanical draft (resolves `<!-- reconstruct: ... -->` markers) | Emits a conservative first pass; never invents Thesis/Sources |
 
-Reading a `.pptx` needs no external tool (a `.pptx` is a zip of OOXML), so — unlike [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md), which is Cowork-only because *authoring* a deck needs the native `pptx` skill — this skill is fully CLI-safe.
+Reading a `.pptx` needs only `python-pptx` (a `pip install`), not the native `pptx` skill — so, unlike [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md), which is Cowork-only because *authoring* a deck needs the native `pptx` skill, this skill is fully CLI-safe.
 
 ## When to use
 
@@ -44,7 +44,7 @@ Resolves true presentation order (`ppt/presentation.xml` `<p:sldIdLst>` + rels �
 
 Classifies each slide **cover / agenda / section-divider / content** — a divider is an agenda re-emit with **exactly one active red dot**; the active dot's row index is the section number.
 
-Each image is either `template` (logo / branded icon / reused chrome → ignored) or `content` (staged to `reconcile/staging/slide<order>-img<ordinal>.<ext>` and recorded with its byte hash + intrinsic dimensions + 1-based slot ordinal). **Template asset detection is a four-tier ladder** — Keynote/PowerPoint rename icons on export, so filename regex alone is not enough:
+Each image is either `template` (logo / branded icon / reused chrome → ignored) or `content` (staged to `reconcile/staging/slide<order>-img<ordinal>.<ext>` and recorded with its byte hash + intrinsic dimensions + 1-based slot ordinal). **Template asset detection is a five-tier ladder** — Keynote/PowerPoint rename icons on export, so filename regex alone is not enough:
 
 1. **Known template basenames** — regex against `icon-*.svg/png`, cover logo `image-1-*`.
 2. **Same-image reused within the slide** — the strict template's card-layout chrome pattern (e.g. `image-5-1.png` placed 3× on slide 5 as a card-divider banner). Any raster whose media path appears ≥2× on the same slide is chrome, not content — every occurrence is dropped.
@@ -85,7 +85,7 @@ talks/<Talk>/reconcile/           # all reverse-pipeline artifacts live here
 **Faithful (mechanical):** section structure, slide titles, bullets/paragraphs/tables, speaker notes, byte-identical generated images.
 
 **Lossy — emitted as a stub + `<!-- reconstruct: ... -->` marker for the Editor to resolve:**
-- `# Thesis` and `### Sources` — both dropped by the forward `convert.py`; unrecoverable from the deck.
+- `# Thesis` and `### Sources` — both dropped by the forward render's FILL step (scaffolding never reaches the deck); unrecoverable from the deck.
 - Callout source-form (three Markdown forms collapse to one rendered shape).
 - Card / icon-list layouts (flattened to text).
 - Multi-column reading order (geometry-inferred).
@@ -96,6 +96,6 @@ The **Editor role** does a refine pass over `finalpptx.md`, resolving every `<!-
 
 ## Boundaries
 
-- **Read-only against the deck and `draft.md`/`final.md`.** Only writes under `talks/<Talk>/reconcile/` (`finalpptx.md`, `finalpptx.inventory.json`, and — with `--stage-new` — `staging/`).
+- **Read-only against the deck and `draft.md`/`final.md`.** Only writes under `talks/<Talk>/reconcile/` (`finalpptx.md`, `finalpptx.inventory.json`, and `staging/` — every content image is always staged).
 - **No deck authoring.** This skill never writes a `.pptx`.
 - Returns one-line status reports (`inventory: ...`, `reconstruct: ...`, `failed: ...`); it never prompts the user.

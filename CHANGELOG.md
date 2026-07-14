@@ -12,6 +12,129 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.50.1] — 2026-07-14
+
+### Fixed
+
+- **Per-skill consistency audit — SKILL.md docs reconciled with their scripts.**
+  - **polish-ascii:** implemented the documented **exit-3 stale-plan guard** (it was documented but
+    missing) — `cleanup`/`apply` now abort, writing nothing, if `final.md` changed since `scan` so a
+    block's line numbers no longer bracket an ASCII fence; and out-of-range line numbers now exit `2`
+    as documented (was exiting `1`). Closes a silent-corruption path.
+  - **pptx-extract:** removed a self-contradiction in the description (claimed both "stdlib, no
+    python-pptx" **and** "requires python-pptx" — it uses python-pptx); corrected "four-tier" →
+    "five-tier" template-detection ladder; and dropped the stale "`--stage-new`" condition on
+    `staging/` (staging is always on).
+  - **ascii-to-svg:** fixed three step cross-references (the Return step is 9, not 8) and a report
+    field name (`png_companion` → `png_critique`).
+  - **md-to-deck:** the html-strict progress checklist no longer shows a review/fix cycle (it's a
+    single-pass, no-critique render).
+  - **feedback-cycle:** documented the `--allow-empty-tags` flag.
+  - **orchestrator/schemas:** removed the phantom `convert.py` references and the stale html-strict
+    "critique loop" prose; the live-view dispatch now correctly describes FILL → mechanical render.
+  - ingest, pptx-diff, pptx-merge, pptx-learn audited clean.
+
+## [0.50.0] — 2026-07-14
+
+### Changed
+
+- **Render now runs right after Polish, and is renamed from "Render PPTX" to just "Render."** The
+  workflow order is now Polish (6) → **Render (7, optional)** → **Learnings (8, mandatory)**: the
+  presenter gets their deck immediately after polishing, and the cross-Talk learnings/promotion
+  wrap-up happens last. The step is called "Render" because it produces a PowerPoint *or* a
+  shareable HTML/Reveal.js deck — not only `.pptx`. Renumbered and renamed consistently across the
+  orchestrator spec, the schemas, agent/skill docs, `config/`, the README, the plugin description,
+  and the workflow diagram (`docs/workflow.svg`/`.png`). No session-start contract change — existing
+  working directories pick this up on their next session reload (no re-init needed).
+
+### Removed
+
+- **Dead code in the HTML renderer.** Retired the orphaned `agenda` template (`agenda.j2` +
+  its `.agenda/.agrow/.agn` CSS — superseded by `section-agenda`), the never-emitted `.fig` and
+  `.stitle.ag` CSS rules, and the unused code-syntax classes (`.codebox .kw/.st/.cm` + their
+  `--kw/--st/--cm` tokens — the code template emits escaped raw lines, so they never applied). No
+  visual change; the style reference still renders every live template with zero fallback.
+
+## [0.50.0] — 2026-07-14
+
+### Added
+
+- **Quiz reveal upgrade.** The `quiz` slide can now name the `correct` choice (by option text,
+  1-based index, or letter) — on next-nav that choice highlights (accent fill + check) *in sync*
+  with the answer, via a Reveal *custom* fragment. It also takes an optional `image` (shown at the
+  right, sized to its own aspect — never cropped) and an `answer_label` (defaults to "Respuesta").
+  Choices now render as cards. Documented in `schemas/slide-model.md` and the catalog.
+
+- **Example talk fixture — Talksmith, built with Talksmith.** Added
+  [`tests/examples/talksmith-intro/`](tests/examples/talksmith-intro/): a complete, realistic
+  `draft.md` for a ~40-min intro talk *about* Talksmith (problem framing → what it is → the workflow
+  → behind the scenes → getting started). It follows the full schema (including a `[open]`/`[closed]`
+  feedback audit trail), exercises nearly every slide type, and carries three render-driving ASCII
+  diagrams plus a real in-Claude screenshot (also shown at the top of the README). Its **rendered
+  HTML deck is committed** (`output/html/index.html`, produced by the `md-to-deck` FILL +
+  `build_html.py` render from `output/slide-model.json`) and linked from the README as the on-ramp
+  for new users.
+
+### Changed
+
+- **Style reference rebuilt as a self-documenting English deck.** Every slide's copy now explains
+  the template it demonstrates; the deck is divided into template *families* by `section-agenda`
+  separators, opens with an explainer slide stating its purpose, and demos the upgraded quiz
+  (correct-highlight + right-side image). Still one example per template plus the layout edge cases
+  (2/3/4/6 cards, long title/body, 2/3-col comparison, the six highlight kinds).
+
+- **Docs overhaul — README is now usage-first.** Rewrote the README lean (~300 → ~120 lines):
+  a copy-paste **Quickstart** up top, a single rendered **workflow diagram**
+  ([`docs/workflow.png`](docs/workflow.png), authored as [`docs/workflow.svg`](docs/workflow.svg))
+  as the one process explanation — the duplicate four-phase mini-diagram is gone — and a
+  **reference-artifacts table** linking a real example or canonical shape for every artifact
+  (including the committed rendered deck and example `final.md` / `slide-model.json`). Moved the
+  deep material out of the README into `docs/`: the four-phase method + "LLM wiki" philosophy →
+  [`docs/methodology.md`](docs/methodology.md), the five roles + render pipeline →
+  [`docs/roles.md`](docs/roles.md), the reverse pipeline → [`docs/reverse-pipeline.md`](docs/reverse-pipeline.md).
+
+- **Workflow steps 7 and 8 reordered.** **Render** is now the optional **Step 7** (a `.pptx` *or* a
+  shareable HTML deck), and **Learnings** promotion is the mandatory final **Step 8** — you deliver
+  the talk, then promote what recurred. Propagated across the orchestrator, agents, schemas, and
+  docs, and the workflow diagram was regenerated to match.
+
+- **Institution logo is now repo-configured.** Drop a `config/logo.*` into your subject repo at
+  setup and every rendered deck (HTML + PPTX) uses it; with none configured, decks fall back to a
+  neutral placeholder. The HTML renderer's resolution order is now frontmatter `logo:` → the Talk's
+  `images/logo.*` → the repo's `config/logo.*` → bundled placeholder → institution text. The
+  strict/free-form PPTX specs now treat the logo *slot* as fixed and the *image* as repo-supplied.
+
+### Removed
+
+- **Institution branding removed from the plugin.** The Universidad Austral logo no longer ships:
+  deleted the bundled `cover-logo.png` and replaced the baked-in `image-1-1.png` in all three
+  `.pptx` templates (strict `template.pptx` + `base-template.pptx`, free-form `base-template.pptx`)
+  with a neutral unbranded placeholder (`config/pptx-styles/placeholder-logo.png`). Genericized the
+  remaining Austral/IAE example text in the schemas and profile placeholders. *(The strict
+  `template-previews/base-template/slide-01.png` still shows the old logo visually — regenerating it
+  needs a PPTX→PNG renderer and is a follow-up.)*
+
+## [0.48.0] — 2026-07-14
+
+### Added
+
+- **`quiz` slide type (HTML).** A "question → answer" slide for check-for-understanding decks:
+  the question and its optional lettered choices (A/B/C/D) show immediately, and the answer panel
+  is revealed on the *next* navigation using Reveal.js's own `fade-up` fragment animation — so the
+  audience can think before the reveal. The answer sits in a red-accented light-pink panel with a
+  "RESPUESTA" label and an optional one-line explanation; space for it is reserved up front so the
+  question never jumps. Fields: `question`, `answer` (required), `title`/`options`/`explanation`
+  (optional). In `.pptx` (static, no reveal) the answer renders visible in place.
+
+### Changed
+
+- **Deck navigation cluster.** The nav arrows are smaller and centered along the bottom with the
+  page number between them (`‹ 12 / 74 ›`) instead of the corner cross. The whole cluster
+  auto-hides: it only appears while the pointer is moving and fades out after a short idle.
+- **README.** Added *"A knowledge base in the Karpathy sense"* — frames Talksmith's corpus / memory /
+  learnings / knowledge-library as an instance of Karpathy's compilation-over-retrieval **LLM wiki**
+  (raw sources → synthesized wiki → schema; ingest / query / lint), and notes where it diverges.
+
 ## [0.47.0] — 2026-07-14
 
 ### Added

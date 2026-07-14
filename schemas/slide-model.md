@@ -22,9 +22,9 @@ deliverable; `draft.md` → live in-progress view).
 {
   "deck": {
     "title": "Inteligencia Artificial: de lo conceptual a lo práctico",
-    "institution": "Master in Management (MiM), IAE Business School, Universidad Austral",
+    "institution": "Máster en Management, Escuela de Negocios (ejemplo)",
     "class": "Seguridad e IA para Managers",
-    "presenter": "Paulo Veiga, Profesor, IAE Business School",
+    "presenter": "Nombre Apellido, Profesor",
     "date": "TBD",
     "logo": null,
     "sections": ["El caso Samsung (2023)", "Fundamentos", "MCP y agentes"]
@@ -44,7 +44,8 @@ deliverable; `draft.md` → live in-progress view).
 ```
 
 - **`deck`** — cover + deck-wide data. `logo: null` → the renderer resolves it (frontmatter
-  `logo:` → the Talk's `images/logo.*` → bundled institution logo). `sections` is the ordered
+  `logo:` → the Talk's `images/logo.*` → the subject repo's `config/logo.*` (set once at repo
+  setup) → the bundled neutral placeholder — the plugin ships no institution branding). `sections` is the ordered
   section list that drives the section-separator roadmap; the cover slide is synthesized from
   `deck`, never authored as a slide.
 - **`slides`** — ordered. Every slide object has **`template`** (one of the ids below), and may
@@ -95,7 +96,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `quote` | `quote` | `attribution`, `section` |
 | `timeline` | `title`, `milestones:[{label,body}]` | per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
-| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `explanation` (extra reveal) |
+| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown at right, never cropped), `answer_label` (label on the answer panel; default "Respuesta") |
 | `single-point` | `title`, `point:{label,body}` | — |
 | `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title` |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |

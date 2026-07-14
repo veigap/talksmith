@@ -133,7 +133,7 @@ A renderer should measure the title text width in Helvetica Bold and pick the la
 
 > **Visual reference:** [`template-previews/base-template/slide-01.png`](template-previews/base-template/slide-01.png).
 >
-> **The cover is the deck's identity slide and must be reproduced byte-for-byte structurally.** Only the *content* of the four text/image shapes changes per Talk; positions, sizes, fonts, colors, and z-order are fixed. The institution logo (Universidad Austral) is part of the brand and never moves.
+> **The cover is the deck's identity slide and must be reproduced byte-for-byte structurally.** Only the *content* of the four text/image shapes changes per Talk; positions, sizes, fonts, colors, and z-order are fixed. The institution-logo **slot** (position + size) is fixed; the logo *image* is **repo-supplied** — the subject repo's `config/logo.*`, or the bundled neutral placeholder if the repo hasn't configured one. The plugin ships no institution branding.
 
 ### 4.1 Background
 
@@ -146,7 +146,7 @@ Pure white `#FFFFFF` per §1. Same on every slide in the deck.
 | 1 | **Cover title** (`p:sp`, `rect`, no fill, no border) | `(496119, 536823)` | `(8151763, 1948458)` | `(0.542, 0.587)` | `(8.914, 2.131)` | Body insets `0,0,0,0`. `normAutofit`. One `<a:p>` with `algn="l"`, `lnSpc=104%`. Single run: `sz="4050"` (40.5pt), Helvetica Bold, `#1F1E1E`. Wraps to multiple lines as needed. |
 | 2 | **Subtitle** (`p:sp`, `rect`, no fill) | `(496119, 2677269)` | `(6216923, 235297)` | `(0.542, 2.928)` | `(6.800, 0.257)` | `wrap="none"` (single line). Body insets `0`. `algn="l"`, `lnSpc=104%`. Single run: `sz="1450"` (14.5pt), Helvetica Bold, `#1F1E1E`. |
 | 3 | **Author + date block** (`p:sp`, `rect`, no fill) | `(496119, 3219748)` | `(3295799, 560933)` | `(0.542, 3.521)` | `(3.603, 0.613)` | Two paragraphs. `algn="l"`, `lnSpc=123%`, `spcAft=900` (9pt) between paragraphs. Each run: `sz="1150"` (11.5pt), **Helvetica** (not Mono), `#3B3535`. |
-| 4 | **Institution logo** (`p:pic`) | `(7183562, 3248546)` | `(1469008, 1214065)` | `(7.856, 3.553)` | `(1.606, 1.328)` | PNG, `ppt/media/image-1-1.png` (Universidad Austral, 616×510 px, RGBA). `noChangeAspect="1"`. `<a:stretch><a:fillRect/></a:stretch>`. |
+| 4 | **Institution logo** (`p:pic`) | `(7183562, 3248546)` | `(1469008, 1214065)` | `(7.856, 3.553)` | `(1.606, 1.328)` | PNG, `ppt/media/image-1-1.png` — the **repo-supplied** institution logo (`config/logo.*`); a neutral unbranded placeholder (616×510 px, RGBA) ships as the default. `noChangeAspect="1"`. `<a:stretch><a:fillRect/></a:stretch>`. |
 
 ### 4.3 Content substitution slots
 
@@ -158,7 +158,7 @@ When generating a new cover, substitute **content only**; preserve geometry exac
 | Shape #2 text | `class:` (Talk-specific, **required** — collected in Step 4 per `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`). The Subject in shape #1 is subject-level and identical across every Talk; this class name is what distinguishes *this* class. Do not leave the placeholder text; do not omit the shape. | `Clase 3: Ingeniería de Prompts y Técnicas Avanzadas` |
 | Shape #3 paragraph 1 | `Autor: <presenter>` — `<presenter>` from `profile.md` Presenter section | `Autor: Paulo Veiga/Marcos Sanchez Sorondo` |
 | Shape #3 paragraph 2 | `Última Modificación: <Month, YYYY>` from `final.md` frontmatter `date:` | `Última Modificación: Marzo, 2026` |
-| Shape #4 image | `ppt/media/image-1-1.png` (institution logo, never replaced unless presenter explicitly swaps brands) | (binary preserved verbatim) |
+| Shape #4 image | `ppt/media/image-1-1.png` (institution logo — the subject repo's `config/logo.*`, or the bundled neutral placeholder if none is configured) | (repo logo if present, else placeholder preserved verbatim) |
 
 **Cover title line breaks.** The shape uses `normAutofit` so PowerPoint will reflow long titles automatically; lengths up to ~80 chars at 40.5pt have been observed to wrap to 3 lines comfortably within the 2.131-in shape height. Do not hand-insert line breaks.
 
@@ -496,7 +496,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 - **No image is used full-bleed** (zero slides with an image ≥ 90% canvas). All images are inset, sized to a content column, and aligned to adjacent text.
 - Image counts per slide: most 1–4; max 11 (slide 44).
 - No captions exist as separate text — image meaning is carried by the adjacent title or card.
-- The cover logo (`image-1-1.png`, 616×510 px) is the only **branded** image and is preserved verbatim across decks unless the presenter explicitly swaps institutions.
+- The cover logo (`image-1-1.png`, 616×510 px) is the only **branded** image. It's repo-supplied (`config/logo.*`) and reused verbatim across a subject's decks; if the repo hasn't configured one, a neutral unbranded placeholder is used. The plugin bundles no institution branding.
 - **Aspect ratio is fixed at the source and must not be changed.** When sizing an image into a slot, scale **uniformly** — the rendered `cx:cy` ratio of every `<p:pic>` must equal the source asset's intrinsic `width:height`. Stretching, squishing, anamorphic crops, or "fit to box" non-uniform scaling are forbidden; they distort diagrams, logos, and rasterized SVGs. If a slot's box doesn't match the image's aspect, leave the unfilled gap (whitespace) rather than distort. The cover logo's `noChangeAspect="1"` flag (§4.2 shape #4) makes this explicit in XML; **every other `<p:pic>` should carry the same flag** so downstream editors can't accidentally re-fit the image. The SVG `<a:stretch><a:fillRect/></a:stretch>` pattern in §17.4 is uniform scaling — never use `<a:srcRect>` cropping or `<a:stretch>` with non-zero `fillRect` insets to "stretch to fit".
 
   **Enforcement (three layers, defense in depth):**
@@ -675,7 +675,7 @@ When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and 
   effect: <what changes downstream if the presenter accepts the default>
 ```
 
-The presenter picks one. The renderer records the resolution in [`config/feedback-backlog.md`](feedback-backlog.md) with the tag `pre-emit-audit` so the next Talk in the working directory can carry the rule forward via the Step-7 learnings promotion.
+The presenter picks one. The renderer records the resolution in [`config/feedback-backlog.md`](feedback-backlog.md) with the tag `pre-emit-audit` so the next Talk in the working directory can carry the rule forward via the Step-8 learnings promotion.
 
 **Never silently compensate.** A renderer that absorbs an ambiguity by picking the plainer layout, dropping the emoji, or shrinking the font is exactly the renderer that ships the regression this audit exists to prevent.
 
@@ -883,7 +883,7 @@ Rendered previews live in [`template-previews/base-template/slide-NN.png`](templ
 
 | # | Zone | Demonstrates | Spec § | What's on the slide | When generating |
 |---|---|---|---|---|---|
-| 1 | A | **Cover** | §4 | 4 text shapes (`{{PRESENTATION_TITLE}}`, `{{TALK_SUBTITLE}}`, `Autor: {{PRESENTER}}`, `Última Modificación: {{DATE}}`) + the Universidad Austral logo at (7.86, 3.55) in. | Substitute the four placeholders from `profile.md` (`Subject`, `Presenter`, `Presentation language`) and the Talk's frontmatter (`class`, `date`). Logo stays. |
+| 1 | A | **Cover** | §4 | 4 text shapes (`{{PRESENTATION_TITLE}}`, `{{TALK_SUBTITLE}}`, `Autor: {{PRESENTER}}`, `Última Modificación: {{DATE}}`) + the institution logo (repo-supplied `config/logo.*`, else neutral placeholder) at (7.86, 3.55) in. | Substitute the four placeholders from `profile.md` (`Subject`, `Presenter`, `Presentation language`) and the Talk's frontmatter (`class`, `date`). Logo slot stays; image is the repo's. |
 | 2 | A | **Agenda (item 1 active)** | §5 | Title "Agenda" + 7 placeholder item rows with `{{SECTION_k_TITLE}}` / `{{SECTION_k_SUBTITLE}}` slots. Dot 1 is `#DA1B2E` (active), dots 2–7 are `#F2EEEE` (inactive). | Replace `2 × N` placeholders with the N H1s and `Subtitle:` fields from `final.md` (N = section count). Clone or delete rows so the agenda has exactly N rows. Keep active dot at 1. Always emit immediately after the cover. |
 | 3 | B | **Separator banner** | — | Red `#DA1B2E` band across the middle with the text "TEMPLATE — LAYOUT EXAMPLES BELOW", flanked by guidance above/below. | **Drop this slide entirely.** It's a marker for the human/agent reading the template. |
 | 4 | C | **image-grid + callout** (was source slide 3) | §7.1 (cards) + §8 (callout) | Section pill `TEMPLATE — IMAGE-GRID + CALLOUT`, large H2, lead paragraph, 3-column image-headed cards, full-width `#F7BBC1` callout at bottom with 💡 emoji. | Use when a slide has 3 supporting concepts each with a small icon, plus a tip/analogy at the bottom. |

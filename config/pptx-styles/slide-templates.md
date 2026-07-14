@@ -194,11 +194,15 @@ Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
   assertion with no question (→ `statement`); a quoted line (→ `quote`); a list of parallel
   facts (→ enumeration templates).
 - **Format:** section pill + optional topic title; the **question set large** (Bold, ~24–28 pt),
-  optional **lettered choices** (A/B/C/D) beneath, then a distinct **answer panel** — light-pink
+  optional **carded choices** (A/B/C/D) beneath, then a distinct **answer panel** — light-pink
   `#F9D2D6`, red left-accent, an uppercase red "RESPUESTA" label — carrying the answer (Bold) and
-  an optional one-line explanation. **In the HTML deck the answer panel is a Reveal fragment:**
-  the question (and choices) render immediately and the answer is revealed on the *next*
-  navigation using Reveal's native `fade-up` — so the audience can think before the reveal.
+  an optional one-line explanation. An optional **image sits at the right** (contained, sized to
+  its own aspect — never cropped), splitting the slide into text-left / image-right. **In the HTML
+  deck the reveal is a Reveal fragment:** the question (and choices) render immediately, and on the
+  *next* navigation the answer fades up (`fade-up`) **while the `correct` choice highlights in sync**
+  (accent fill + check, via a Reveal *custom* fragment) — so the audience votes first, then sees
+  both the right choice and the why. Space for the answer is reserved up front so the question
+  never jumps.
 - **Strict recipe:** none yet. `.pptx` is static (no reveal), so render the answer panel visible
   in place — same layout, just always shown. **Provenance:** the *seguridad-governance-ai* deck
   (a quiz per page).

@@ -1,11 +1,11 @@
 ---
 name: global-librarian
-description: Cross-Talk curator of the shared knowledge-library/ at the user's working directory root. Sole writer to knowledge-library/. Dispatch at Step 7 (Learnings) when the presenter chooses to promote a just-finalized Talk - curates research/corpus/, final.md, and images/ into topic folders rather than 1-to-1 copying.
+description: Cross-Talk curator of the shared knowledge-library/ at the user's working directory root. Sole writer to knowledge-library/. Dispatch at Step 8 (Learnings) when the presenter chooses to promote a just-finalized Talk - curates research/corpus/, final.md, and images/ into topic folders rather than 1-to-1 copying.
 ---
 
 # Global-Librarian role
 
-Cross-Talk curator of the shared `knowledge-library/` at the user's working directory root. Active in Step 7 (Learnings) when the presenter chooses to promote the just-finalized Talk into the library. Sole writer to `knowledge-library/`.
+Cross-Talk curator of the shared `knowledge-library/` at the user's working directory root. Active in Step 8 (Learnings) when the presenter chooses to promote the just-finalized Talk into the library. Sole writer to `knowledge-library/`.
 
 Distinct from the per-Talk **Librarian** role (which restructures raw sources into `research/corpus/` losslessly, one record per source). The global-librarian reads what the Librarian produced for *this* Talk plus what every prior promotion left behind, then **curates** — extracting reusable knowledge units, organizing them by topic, and merging into the cross-Talk library so future Talks can draw on them.
 
@@ -90,7 +90,7 @@ last_updated: <YYYY-MM-DD>
 - **Preserve traceability.** Every curated claim has a path back to the source corpus record (or external citation) so a future reader can verify.
 - **Folders are topics, not Talks.** Name folders by what they're about. The same Talk feeds multiple topic folders; the same topic folder accumulates across Talks.
 - **Default to one `index.md`.** Split into themed files only when the topic is genuinely multi-faceted enough that a future reader would jump to one and skip the others. Single-file is easier to merge later.
-- **Merge over duplicate.** When a topic already exists, extend it. The presenter approves ambiguous merges (Step 7 prompt).
+- **Merge over duplicate.** When a topic already exists, extend it. The presenter approves ambiguous merges (Step 8 prompt).
 - **Images stay inside.** Every image ref resolves to the topic folder's own `images/`. The topic folder is fully self-contained and movable.
 - **Language matches the profile.** Curate in the `Presentation language` from `config/profile.md`. If a Talk used a different language than the profile default, surface the mismatch in the report — do not silently translate.
 - **Source Talk is read-only.** Never write to `talks/<Talk>/`. The library is a derived artifact; the Talk folder is canonical.

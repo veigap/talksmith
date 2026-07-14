@@ -16,9 +16,9 @@ The styles trade *predictability* for *expressive range* and *substrate*: **pptx
 
 Style is **not** a Talk attribute — it's a **render-time parameter** chosen fresh on every PPTX generation. `draft.md` and `final.md` carry no `style:` field; the same content can be rendered in either style at any time.
 
-The orchestrator asks the presenter at **every Step 8 entry** per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* and passes the answer to `md-to-deck` as an invocation parameter. The ask is mandatory and there is **no default** — if the presenter is unsure, the orchestrator re-asks with framing of what each style implies for *this* Talk. The skill refuses to run without an explicit `style:` value (see [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Style resolution*).
+The orchestrator asks the presenter at **every Step 7 entry** per [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 7 step 1* and passes the answer to `md-to-deck` as an invocation parameter. The ask is mandatory and there is **no default** — if the presenter is unsure, the orchestrator re-asks with framing of what each style implies for *this* Talk. The skill refuses to run without an explicit `style:` value (see [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Style resolution*).
 
-A second Step-8 run on the same Talk can pick a different style with no migration. Renders are **isolated by filename suffix** — `output/final.pptx-strict.pptx` and `output/final.pptx-free-form.pptx` coexist so the two styles can be compared side by side — and the most recent render is also copied to the canonical `output/final.pptx` (what the reverse pipeline reads).
+A second Step-7 run on the same Talk can pick a different style with no migration. Renders are **isolated by filename suffix** — `output/final.pptx-strict.pptx` and `output/final.pptx-free-form.pptx` coexist so the two styles can be compared side by side — and the most recent render is also copied to the canonical `output/final.pptx` (what the reverse pipeline reads).
 
 ## What the styles share
 
@@ -45,7 +45,7 @@ To add a third style (e.g. `minimal`, `editorial`, `dark-mode`):
 2. Author `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<name>/pptx-prompt.md` — self-contained spec including the four floor sections (canvas, palette, fonts, cover recipe). Copy from `pptx-strict/` or `pptx-free-form/` and modify.
 3. Ship the starting deck `${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<name>/base-template.pptx` honoring the floor (cover slide + palette + fonts + white bg).
 4. Add a row to the *Available styles* table above.
-5. Extend the Step-8 ask in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 8 step 1* to offer `<name>` as a candidate, and the allowed-values list in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Style resolution*.
+5. Extend the Step-7 ask in [`${CLAUDE_PLUGIN_ROOT}/orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 7 step 1* to offer `<name>` as a candidate, and the allowed-values list in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Style resolution*.
 6. Update [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) to branch on the new value (load the right spec, point at the right base-template).
 7. Add a row for the new mode to the **selection matrix** in [`render-modes.md`](render-modes.md) — its category selection (which of CONTENT / AESTHETIC / DISTRIBUTION / LAYOUT-CONFORMANCE it walks) and cycle cap. Do **not** copy a rubric into the new spec; the mode inherits the shared catalog.
 
