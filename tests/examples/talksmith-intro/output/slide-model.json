@@ -234,16 +234,22 @@
       },
       "facts": [
         {
-          "body": "Open draft.md and drop plain-text bullets under Presenter feedback."
+          "label": "Edit in place",
+          "body": "open draft.md in any editor and drop plain-text feedback bullets under a slide's Presenter feedback"
         },
         {
-          "body": "Talksmith stamps, applies, and closes each one — closed entries are never deleted."
+          "label": "Polish the content",
+          "body": "the goal is the argument and structure — what each slide says, cut or keep, order, wording"
+        },
+        {
+          "label": "Applied & audited",
+          "body": "Talksmith stamps, applies, and closes each bullet; closed entries stay as an audit trail"
         }
       ],
       "highlights": [
         {
-          "kind": "takeaway",
-          "body": "This very deck was built this way — see the feedback log in its draft.md."
+          "kind": "important",
+          "body": "Review is about the content, not how it looks — visuals, diagrams, and styling come later at Polish."
         }
       ],
       "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min."

@@ -341,12 +341,17 @@ Most people start with Interview and graduate to Agent Draft once the corpus is 
 ## 3. Review is a loop
 <!-- template: content+image -->
 
-The differentiator: feedback is applied *and* kept forever. Second render-driving diagram.
+The differentiator: feedback is applied *and* kept forever — and it's about content, not looks. Second render-driving diagram.
 
 ### Content
 
-- Open `draft.md`, drop plain-text bullets under `### Presenter feedback`.
-- Talksmith stamps, applies, and closes each one — the closed entries are never deleted.
+Once the first `draft.md` exists, you refine it by leaving **inline feedback right in the Markdown** — the goal is to polish the *content*.
+
+- **Edit in place** Open `draft.md` in any editor and drop plain-text feedback bullets under a slide's `### Presenter feedback`.
+- **Polish the content** The goal is the argument and structure — what each slide *says*, what to cut or keep, the order, the wording.
+- **Applied & audited** Talksmith stamps, applies, and closes each bullet; closed entries stay as an audit trail, never deleted.
+
+**Important:** Review is about the **content**, not how it looks — visuals, diagrams, and styling come later at Polish. Here you're perfecting *what the talk says*.
 
 ```ascii
      you edit draft.md
