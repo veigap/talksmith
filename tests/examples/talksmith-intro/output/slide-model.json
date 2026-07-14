@@ -234,25 +234,26 @@
       },
       "facts": [
         {
-          "label": "Edit in place",
-          "body": "open draft.md in any editor and drop plain-text feedback bullets under a slide's Presenter feedback"
+          "label": "1 · Leave feedback",
+          "body": "drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor"
         },
         {
-          "label": "Polish the content",
-          "body": "the goal is the argument and structure — what each slide says, cut or keep, order, wording"
+          "label": "2 · Talksmith applies",
+          "body": "it stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail"
         },
         {
-          "label": "Applied & audited",
-          "body": "Talksmith stamps, applies, and closes each bullet; closed entries stay as an audit trail"
+          "label": "3 · Review and repeat",
+          "body": "look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say \"final\""
         }
       ],
       "highlights": [
         {
           "kind": "important",
-          "body": "Review is about the content, not how it looks — visuals, diagrams, and styling come later at Polish."
+          "body": "Every round is about the content, not how it looks — visuals and styling come later at Polish."
         }
       ],
-      "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min."
+      "notes": "Meta-moment: open this talk's draft.md and show the real feedback bullets. ~4 min.",
+      "lead": "You refine draft.md in rounds — leave inline feedback, it's applied, you review again, until the talk is right."
     },
     {
       "template": "concept-breakdown",

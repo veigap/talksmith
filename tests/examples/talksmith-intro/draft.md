@@ -345,13 +345,13 @@ The differentiator: feedback is applied *and* kept forever — and it's about co
 
 ### Content
 
-Once the first `draft.md` exists, you refine it by leaving **inline feedback right in the Markdown** — the goal is to polish the *content*.
+You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you review again, until the talk is right.
 
-- **Edit in place** Open `draft.md` in any editor and drop plain-text feedback bullets under a slide's `### Presenter feedback`.
-- **Polish the content** The goal is the argument and structure — what each slide *says*, what to cut or keep, the order, the wording.
-- **Applied & audited** Talksmith stamps, applies, and closes each bullet; closed entries stay as an audit trail, never deleted.
+- **1 · Leave feedback** Drop plain-text bullets right in `draft.md`, under each slide's `### Presenter feedback` — as many as you want, in any editor.
+- **2 · Talksmith applies** It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail.
+- **3 · Review and repeat** Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say "final".
 
-**Important:** Review is about the **content**, not how it looks — visuals, diagrams, and styling come later at Polish. Here you're perfecting *what the talk says*.
+**Important:** Every round is about the **content**, not how it looks — visuals and styling come later at Polish.
 
 ```ascii
      you edit draft.md
