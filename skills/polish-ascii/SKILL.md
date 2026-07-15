@@ -18,9 +18,10 @@ The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per bloc
 5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each.
 7. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the args file. Easily parallelizable across subagents.
-8. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
+8. **`stamp-renders`** *(mandatory — never skip)* — stamp each rendered SVG with the SHA-256 digest of the ASCII it was drawn from. This is what makes step 6 (`prepare-render-args`) able to skip unchanged blocks on the **next** pass: it is the one and only signal consulted, so an unstamped SVG re-renders every time, forever. Run once after **all** renders complete, before `cleanup`. Blocks whose render failed have no SVG on disk and are skipped + reported on stderr — they correctly re-render next pass.
+9. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
-A single-pass `apply` subcommand exists for quick passes (does steps 5 + 8 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup).
+A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup). **`apply` does not stamp** — if you use it after rendering SVGs by hand, run `stamp-renders` yourself or the next pass re-renders everything.
 
 ## When to use
 
@@ -104,12 +105,19 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     prepare-render-args --plan /tmp/plan.annotated.json \
         --out-dir /tmp/ts-args --repo-root "$(pwd)"
 
-# Phase 4 — parallel renders (one Agent per /tmp/ts-args/<slide_id>.json), then cleanup
+# Phase 4 — parallel renders (one Agent per /tmp/ts-args/<slide_id>.json)
+
+# Phase 5 — stamp the renders (MANDATORY: this is what lets the *next* pass skip
+#           unchanged blocks; skip it and every pass re-renders everything, forever)
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+    stamp-renders --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
+
+# Phase 6 — cleanup
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 
-`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk. All subcommands are idempotent.
+`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk; it does **not** stamp, so pair it with `stamp-renders` when you've rendered by hand. All subcommands are idempotent.
 
 ## Output
 

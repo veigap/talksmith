@@ -478,7 +478,7 @@ window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configur
   Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
   if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
 Reveal.initialize({
-  width:1280, height:720, margin:0.04, minScale:0.2, maxScale:2.0,
+  width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
   keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]

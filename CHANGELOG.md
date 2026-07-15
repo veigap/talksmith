@@ -12,6 +12,68 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.58.0] — 2026-07-15
+
+Step 6 (Polish) reviewed diagrams it could not actually see, and re-rendered diagrams
+that hadn't changed. This release fixes both, and removes a rasterizer that was quietly
+corrupting every image the pipeline produced.
+
+### Added
+
+- **A blind diagram critic.** Visual review of a rendered diagram now happens in its own
+  `diagram-critic` subagent that receives the PNG and nothing else — no SVG path, and
+  `tools: Read` so pixels are all it can reach. Previously the agent that *wrote* the SVG
+  also critiqued it, which cannot work: with every coordinate already in context it
+  reviewed by arithmetic rather than by eye, "confirming" text was centred by re-deriving
+  the formula it had just used to place it — true by construction, blind to whether the
+  diagram looks right. The spec had always said *don't critique by reading the XML*, but
+  couldn't enforce it against a critic holding the XML; worse, the checklist it pointed at
+  was itself written in XML terms. The critic now describes what it sees in visual language
+  and the renderer, which has the coordinates, translates that into the edit.
+- **A mechanical aspect audit** (`audit_aspect.py`), because one defect class is invisible
+  to *any* visual review: the critique PNG is rasterized **from** the viewBox, so a viewBox
+  that doesn't fit its art renders a correct-looking picture whose dead canvas reads as
+  deliberate whitespace. Nothing to see — it survived Polish and only detonated a full
+  render cycle later at PPTX build time. It now surfaces at render time as an ordinary
+  defect, with a suggested corrected viewBox that is a pure crop. It measures margins in
+  viewBox units rather than comparing aspect ratios; ratio drift flags healthy diagrams
+  (equal margins in units are unequal in percent when the axes differ in scale).
+
+### Fixed
+
+- **Render idempotency was built but never armed.** `stamp-renders` — the step that writes
+  the ASCII digest deciding what re-renders next pass — existed as a working subcommand and
+  a note under "operating principles", but appeared in no sequence: not the illustrator's
+  numbered loop, not the skill recipe, not the copy-pasteable invocation block. So SVGs went
+  unstamped, no digest ever matched, and every pass re-rendered a Talk whose ASCII hadn't
+  changed — minutes instead of sub-second. It is now step 9 of the loop.
+- **`qlmanage` removed as a rasterizer.** It was the documented macOS fallback and was
+  silently mangling output: `-s N` doesn't render N wide, it fits the art into an N×N square
+  and pads with *opaque white*, so a 640×360 SVG became a 1200×1200 PNG with white bands —
+  and that square is what the deck embedded. Cropping it back was not a fix either: its
+  geometry disagrees with cairosvg's, placing ink 100px off at identical dimensions. A
+  backend that draws differently isn't a fallback. **`cairosvg` is now required, with no
+  fallback** — if it's missing the render fails and says how to install it.
+- **`pip install cairosvg` was never sufficient on macOS**, which is why the fallback kept
+  firing: the package installs cleanly and then fails at import, because the stock python3
+  (Xcode's) can't see Homebrew's libcairo — ctypes searches dyld's default paths, which
+  exclude `/opt/homebrew/lib`, and SIP strips `DYLD_*` from Apple-signed interpreters. All
+  rasterization now goes through `rasterize.py`, which preloads the dylib by absolute path,
+  and which re-measures every PNG against the viewBox before letting it reach disk.
+- **`ascii-to-svg` looked for `diagram-style.md` in the wrong place** — `<repo_root>/config/`
+  (the presenter's working directory, which never has it) instead of `${CLAUDE_PLUGIN_ROOT}/config/`.
+  The render didn't fail; it silently dropped the palette and reported `deviations: no
+  diagram-style.md`.
+
+### Changed
+
+- **Critique cap lowered from 3 iterations to 2** (initial + 1 revision). Historically half
+  the blocks land clean on the first pass and nearly all the rest on the second; a third
+  mostly re-litigated subjective nits at ~95s of model time apiece.
+- **Diagram dispatch is a sliding window of 5, not fixed batches of 5.** Blocks finish at
+  very different times — one render versus two renders plus two critiques — so a barrier
+  parked up to four slots waiting on the slowest straggler.
+
 ## [0.57.0] — 2026-07-15
 
 ### Changed
@@ -25,6 +87,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   `<!-- reveal: together -->` shows a slide all at once. Old `sequential` hints keep working
   (they animate, which is now the default). Unchanged for `.pptx`, which is static; viewers
   can still switch every animation off from the deck's animations button.
+
+- **The deck fills the window.** Slides were inset by a 4% margin that framed them against the
+  page background; that frame is gone, so a slide — and an `aside` column in particular — now
+  runs to the window's edge. Side bands can still appear when the window isn't 16:9: that is
+  letterboxing, not margin, and only a 16:9 window or full-screen Present removes it.
 
 ### Fixed
 

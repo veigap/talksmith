@@ -46,7 +46,11 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 1. **Detect diagram vs code.** If the resolved ASCII payload is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
-2. **Load standing visual rules.** Read `<repo_root>/config/diagram-style.md`. The bullets in that file are the standing rules every render must obey (e.g. "flat style only", "light mode only"). Treat them as hard constraints. If `repo_root` is missing from the invocation, stop and return `failed: repo_root input missing`. If `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` doesn't exist, render with sensible defaults (light background, flat 2D, plain typography) and note `deviations: no diagram-style.md`.
+2. **Load standing visual rules.** Read `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` — **not** `<repo_root>/config/…`. This file is a **plugin-bundled asset**, so it is always resolved through `${CLAUDE_PLUGIN_ROOT}`; `repo_root` points at the *presenter's working directory*, which has no `config/diagram-style.md` and never will. Looking there finds nothing, silently drops the presenter's palette, and reports `deviations: no diagram-style.md` on a render that should have been styled — a quiet wrong answer, not a loud failure.
+
+   The bullets in that file are the standing rules every render must obey (e.g. "flat style only", "light mode only"). Treat them as hard constraints. If `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` genuinely doesn't exist (a broken install), render with sensible defaults (light background, flat 2D, plain typography) and note `deviations: no diagram-style.md`. That report line means *the plugin is broken*, not *this Talk has no style* — if you emit it, say so in the report.
+
+   `repo_root` is still required (it anchors Talk-relative paths the caller passes); if it's missing from the invocation, stop and return `failed: repo_root input missing`. It just has nothing to do with this step.
 
 3. **Merge with per-render directives.** Apply `style_directives` (if any) on top of the standing rules. A per-render directive that contradicts a standing rule wins for this render only — note the deviation in the report. A directive that adds to the standing rules (e.g. a specific color for a panel) is taken verbatim.
 
@@ -84,29 +88,66 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory as the SVG, same basename, `.png` extension). This is the **build deliverable** that the Step-7 PPTX renderer consumes — the native `pptx` skill and any python-pptx fallback load via PIL, which cannot decode SVG, so the .pptx references the PNG bytes. Per [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Output contract — SVG + PNG companion*, every illustrator run produces both files; the [`md-to-deck`](../md-to-deck/SKILL.md) skill's *Keynote-safe image extensions* + *Pre-rendered local images* prereqs stop the build if the `.png` a `final.md` ref points at is missing.
 
-   Preferred tool: `cairosvg` (`pip install cairosvg --break-system-packages` in Cowork sandboxes; pure-Python, fast):
+   **Always rasterize through [`rasterize.py`](rasterize.py). Never call `cairosvg` (or anything else) inline.**
 
    ```bash
-   python3 -c "import cairosvg; cairosvg.svg2png(url='<output_path>', write_to='<output_path with .png>', output_width=<viewBox_w * 2>)"
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py <output_path> \
+       -o <output_path with .png> --width <viewBox_w * 2>
    ```
 
-   Width = SVG `viewBox` width × 2 (e.g. `viewBox="0 0 680 318"` → `output_width=1360`); height auto-derived to preserve aspect ratio per §12. If `cairosvg` isn't available, fall back to `qlmanage -t -s <viewBox_w*2> -o <parent>/ <output_path>` on macOS (then `mv <parent>/<basename>.svg.png <parent>/<basename>.png` to normalize the basename — `qlmanage` appends `.png` rather than replacing). If both fail, return `failed: png_companion: <reason>` per step 9 — the SVG alone is not a successful render.
+   Width = SVG `viewBox` width × 2 (e.g. `viewBox="0 0 680 318"` → `--width 1360`); the height follows the viewBox automatically. The script verifies the PNG it wrote actually matches the viewBox ratio and deletes it + exits non-zero if it doesn't — so a mis-shaped PNG can't reach the deck. On a non-zero exit, return `failed: png_companion: <reason>` per step 9; the SVG alone is not a successful render.
 
-8. **Rasterize a critique-companion PNG.** Render the SVG to a PNG sibling at `<output_path parent>/.critique/<basename>.png` (create `.critique/` if missing). This PNG is **not** referenced from `final.md`, **not** consumed by the Step-7 PPTX renderer, and **distinct from the deliverable PNG written in step 7** — it exists solely so the illustrator role can perform visual analysis on rasterized pixels in step 5b of its loop (XML inspection of an SVG is not a substitute for visual critique).
+   Going through the script is not a style preference. It owns the libcairo lookup that inline `import cairosvg` gets wrong (see the *Rasterizer* section below), and it is the only thing standing between a silently wrong PNG and the .pptx.
 
-   Use `qlmanage` (built into macOS, zero install):
+8. **Rasterize a critique-companion PNG.** Same script, different width and destination — write to `<output_path parent>/.critique/<basename>.png` (the script creates `.critique/` if missing):
 
    ```bash
-   qlmanage -t -s 1600 -o <parent>/.critique/ <output_path>
-   mv <parent>/.critique/<basename>.svg.png <parent>/.critique/<basename>.png
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py <output_path> \
+       -o <parent>/.critique/<basename>.png --width 1600
    ```
 
-   `qlmanage` writes the thumbnail as `<input-filename>.png` (it appends `.png` rather than replacing `.svg`), so the `mv` normalizes the basename. If `qlmanage` exits non-zero or the resulting PNG is missing / 0-byte, still report the SVG as `rendered` but add `png_critique: failed` to the report — a missing PNG degrades critique fidelity but doesn't invalidate the render. Never delete the SVG because the PNG step failed.
+   This PNG is **not** referenced from `final.md`, **not** consumed by the Step-7 PPTX renderer, and **distinct from the deliverable PNG in step 7**. It exists for exactly one reader: the blind [`diagram-critic`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) subagent, whose only view of the render this is. Get its shape wrong and the critique is performed on a diagram that doesn't exist.
 
-9. **Return** a one-line report:
-   - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_deliverable: <path> · png_critique: <path|failed> · directives_applied: <count> · deviations: <none|description>`
-   - On skip: `skipped: <reason>`
-   - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_companion: <reason>` — without the PNG the Step-7 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
+   If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
+
+9. **Audit the frame — the one defect no critique can see.** Run [`audit_aspect.py`](audit_aspect.py) against the SVG and the deliverable PNG from step 7:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/audit_aspect.py <output_path> \
+       --png <output_path with .png>
+   ```
+
+   Exit 0 = the frame is sound. Exit 1 = the viewBox doesn't fit the art: report `aspect_audit: <the tool's defect line, verbatim>` in step 10 and return it as a **defect**, not a failure — the SVG stays on disk and the illustrator folds the finding into its next-iteration `style_directives` exactly like a critic defect. Exit 2 = the audit itself couldn't run (no viewBox, blank raster); surface as `failed: aspect_audit: <reason>`.
+
+   **Why a script and not the critic.** This is the single defect class visual review is *structurally* incapable of catching. The critique PNG is rasterized **from** the viewBox, so a viewBox declaring 2.30:1 around art that wants 2.91:1 produces a PNG at exactly 2.30:1 — correct-looking, with the surplus reading as deliberate whitespace. There is nothing to see. Left to the eye it survives Polish untouched and only detonates a full render cycle later, when the PPTX slot is sized from the viewBox and the picture lands wrong on the slide. Here it costs one iteration; there it costs a build.
+
+   Pass the tool's line through **verbatim** — it names the margins in viewBox units and proposes a corrected viewBox that is a pure crop (changing `viewBox` moves no element coordinate), which is precise enough that the re-render usually lands it in one pass. Do **not** apply the suggestion yourself: whitespace is sometimes intentional, and this skill renders one block from one contract — reframing the presenter's diagram on its own initiative isn't its call.
+
+10. **Return** a one-line report:
+    - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
+    - On skip: `skipped: <reason>`
+    - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_companion: <reason>` — without the PNG the Step-7 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
+
+    An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the illustrator can act on it in the next iteration.
+
+## Rasterizer — cairosvg, required, no fallback
+
+[`rasterize.py`](rasterize.py) uses **`cairosvg`**, and nothing else. `qlmanage` was the documented macOS fallback and has been removed on measured evidence:
+
+- **It letterboxes.** `qlmanage -t -s N` does not render N wide — it fits the art into an N × N square and pads the short axis with *opaque* white. A 640×360 SVG came back as a 1200×1200 PNG with white bands. That square went into the deck, and the PPTX slot (sized from the viewBox, correctly 16:9) got a 1:1 image.
+- **It disagrees with cairosvg.** Even cropped back to the viewBox ratio, its geometry diverges — on one of this repo's own fixtures the cropped qlmanage output placed the ink 100px away from cairosvg's at identical dimensions.
+
+A backend that draws differently isn't a fallback; it's a second renderer that disagrees in silence, and it would put the critic and the deck on different pixels. Failing loudly is better.
+
+**Installing it — `pip install cairosvg` is not enough on macOS.** The package installs cleanly and then raises `OSError` at import, because the stock `python3` (Xcode's) cannot see Homebrew's libcairo: `ctypes.util.find_library()` searches dyld's default paths, which exclude `/opt/homebrew/lib`, and SIP strips `DYLD_*` from Apple-signed interpreters. `rasterize.py` already works around this by preloading the dylib from a list of known locations — but the C library has to exist:
+
+```bash
+brew install cairo && pip install cairosvg        # macOS
+apt install libcairo2 && pip install cairosvg     # Linux
+# Cowork sandboxes: pip install cairosvg --break-system-packages
+```
+
+If `rasterize.py` reports `cairosvg unavailable`, that is the real message and its hint text says exactly this — do **not** work around it with another tool.
 
 ## You cannot ask questions
 
