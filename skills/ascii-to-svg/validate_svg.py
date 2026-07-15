@@ -43,6 +43,7 @@ CLI-safe; standard library only.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -147,6 +148,64 @@ def validate(svg_text: str, tolerance: float) -> tuple[str, list[str], list[str]
     return svg_text, fixes, errors
 
 
+# Presentation attributes SVG inherits down the tree. Declaring one on an element whose
+# nearest declaring ancestor already supplies the same value costs bytes and changes nothing.
+_INHERITED_ATTRS = ("font-family", "font-size", "fill")
+
+
+def redundant_inherited(svg_text: str) -> list[tuple[str, str, int, int]]:
+    """Count declarations that hoisting to the root would make unnecessary.
+
+    Returns (attr, dominant_value, count, bytes) per inheritable attribute.
+
+    A **warning only** — never repaired. Repairing would be theatre: the render step is
+    output-token-bound (~17 tok/s), so a redundant attribute's cost is paid the moment the
+    model emits it. Rewriting the file afterwards shrinks bytes on disk and saves zero
+    seconds. The saving exists only if the author never emits it — which makes this a lint
+    against `SKILL.md` step 5's hoisting rule, not a fixer.
+
+    What counts is *hoistability*, not "an ancestor already says this". The real waste
+    pattern has **no** root declaration at all and fifteen children each restating the same
+    family; nothing is technically redundant there, yet all fifteen are avoidable. So this
+    simulates declaring the dominant value at the root and counts what would then be
+    droppable.
+
+    That simulation is walked **down the tree**, which is the whole subtlety: a
+    `<tspan font-family=MONO>` inside a `<text font-family=HELV>` is **not** droppable even
+    when MONO is the root's value and the document's dominant family — it inherits from its
+    parent, not the root. Stripping it there silently reverts an inline code span to the
+    wrong face; it is invisible in the XML and shows up only in the pixels. Counting bare
+    repetitions, as the obvious implementation does, flags exactly that legitimate case.
+    """
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError:
+        return []
+
+    out: list[tuple[str, str, int, int]] = []
+    for attr in _INHERITED_ATTRS:
+        values = [e.get(attr) for e in root.iter() if e.get(attr)]
+        if len(values) < 2:
+            continue
+        dom = Counter(values).most_common(1)[0][0]
+
+        droppable = 0
+
+        def walk(el, inherited: str | None):
+            nonlocal droppable
+            own = el.get(attr)
+            eff = own if own is not None else inherited
+            if own is not None and own == dom and inherited == dom and el is not root:
+                droppable += 1
+            for ch in el:
+                walk(ch, eff)
+
+        walk(root, dom)  # simulate: the root declares `dom`
+        if droppable:
+            out.append((attr, dom, droppable, droppable * (len(attr) + len(dom) + 4)))
+    return sorted(out, key=lambda t: -t[2])
+
+
 def _drop_root_attrs(svg_text: str, attrs: tuple[str, ...]) -> tuple[str, bool]:
     """Drop the named attributes from the root <svg ...> open tag only.
 
@@ -195,6 +254,16 @@ def main(argv: list[str] | None = None) -> int:
         for e in errors:
             print(f"validate_svg: ERROR  {args.svg}: {e}", file=sys.stderr)
         return 2
+
+    # Advisory only, and never repaired — see redundant_inherited()'s docstring.
+    for attr, value, count, waste in redundant_inherited(original):
+        if count < 3:
+            continue  # a couple of repeats isn't worth a nag
+        short = value if len(value) <= 34 else value[:31] + "…"
+        print(f"validate_svg: HINT   {args.svg}: {attr}=\"{short}\" declared {count}× that a root "
+              f"declaration would make unnecessary (~{waste} B, ~{waste // 4} tokens of the "
+              f"authoring step, which is output-token-bound). Hoist it to the root <svg> and "
+              f"override only the exceptions — see ascii-to-svg SKILL.md step 5.", file=sys.stderr)
 
     if fixes:
         for f in fixes:

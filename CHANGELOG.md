@@ -12,6 +12,57 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.58.2] — 2026-07-15
+
+The SVG authoring step is the pipeline's only real cost — measured at ~36 s against 0.34 s
+for every script around it, and it is bound by *output* tokens, so bytes not emitted are
+seconds not spent. This release stops emitting about a fifth of them.
+
+### Changed
+
+- **Inheritable attributes are hoisted to the root** (`SKILL.md` step 5). `font-family`
+  belongs once on the `<svg>`, not on all fifteen `<text>` children; same for `font-size`
+  and `fill` where one value dominates. SVG inherits down the tree, so the render is
+  unchanged — measured across the fixtures: **0 differing pixels out of 3.9M**, files
+  **24.6% smaller** (~1450 tokens over seven diagrams; 19.9% of bytes across all nine once
+  `fill` and `font-size` are counted).
+
+  The rule carries the trap that makes it non-obvious: **inheritance is by tree, not by
+  document order**. A `<tspan font-family="…mono">` inside a `<text font-family="Helvetica">`
+  must keep its declaration even when mono is the root's value — it inherits from its
+  parent. Dropping it there silently reverts an inline code span to the wrong face,
+  invisible in the XML and visible only in pixels. That case exists in this repo's fixtures
+  and a naive implementation of this very optimisation broke it.
+
+  This is deliberately an authoring rule and not a cleanup pass: by the time any script
+  runs, the seconds were already spent emitting the bytes, so shrinking the file afterwards
+  saves nothing.
+
+### Added
+
+- **A hoisting lint** in `validate_svg.py` — advisory, never repaired (repairing would save
+  no time, per above). It reports how many declarations a root declaration would make
+  unnecessary. It measures *hoistability* by resolving the tree, not repetition: the common
+  waste pattern has no root declaration at all and fifteen children restating the same
+  value — nothing is redundant in the strict sense, yet all fifteen are avoidable — while
+  the nested-override case above is a legitimate repeat that must not be flagged. Tests in
+  `tests/skills/ascii-to-svg/test_redundant_attrs.py`.
+
+### Investigated, no change
+
+- **Whether `talk_thesis` / `section_goal` earn their place in the context bundle** —
+  hypothesis was that ~67% of the bundle leaves no trace in the render. **No evidence
+  either way, and the pixel-diff A/B cannot produce any**: a control arm (two renders from
+  byte-identical input) differs from itself in **12%, 32% and 46% of pixels** depending on
+  the block. That noise floor swamps the effect — across three blocks, 3 of 6 experimental
+  arms diverged *more* than the control and 3 diverged *less*, a coin flip. In one block,
+  dropping the thesis produced a render closer to the control than the control was.
+
+  Moot regardless: the bundle is **input**, and this step is output-bound — reading it is
+  instant. Removing 2.1 KB of input from a step whose cost is emission saves ~0 s, so even
+  a proven-dead field would not be worth the risk of removing context the model may be
+  using to decide what to emphasise. The bundle stays as it is.
+
 ## [0.58.1] — 2026-07-15
 
 Hardening of the blind critic, from what a nine-diagram test run actually surfaced.
