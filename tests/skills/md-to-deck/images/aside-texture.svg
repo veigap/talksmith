@@ -1,0 +1,27 @@
+<!-- Fixture stand-in for an aside's atmospheric photo: an abstract texture, deliberately carrying
+     no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="ag" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#1b2a6b"/>
+      <stop offset="0.55" stop-color="#3f4f9d"/>
+      <stop offset="1" stop-color="#0d1330"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.7" cy="0.25" r="0.75">
+      <stop offset="0" stop-color="#e8a24a" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#e8a24a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#ag)"/>
+  <rect width="600" height="900" fill="url(#glow)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5">
+    <path d="M-40 700 C 140 560, 300 640, 420 470 S 640 250, 700 120"/>
+    <path d="M-40 780 C 160 640, 320 720, 450 545 S 660 320, 720 195"/>
+    <path d="M-40 620 C 120 490, 280 560, 390 400 S 620 185, 680 60"/>
+  </g>
+  <g fill="#ffffff" fill-opacity="0.14">
+    <circle cx="470" cy="205" r="86"/>
+    <circle cx="150" cy="760" r="42"/>
+    <circle cx="255" cy="835" r="20"/>
+  </g>
+</svg>

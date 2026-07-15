@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
+{% call m.stage(s) %}
 <div class="cci"><div class="ccicards">
-{% for it in items %}<div class="ccard sm">{{ icon(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>{% endfor %}
-</div>{{ embed(images[0][0], images[0][1]) if images else embed("", None) }}</div>
+{% for c in s.cards %}<div class="ccard sm{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>{% endfor %}
+</div>{{ embed_img(s.image) }}</div>
 {% endcall %}

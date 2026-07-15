@@ -1,632 +1,682 @@
 {
-  "deck": {
-    "title": "Talksmith Style Reference",
-    "lang": "es",
-    "institution": "md-to-deck visual regression deck",
-    "class": "One example of every slide template, plus layout edge cases",
-    "presenter": "Talksmith",
-    "date": "2026-07-14",
-    "logo": null,
-    "sections": [
-      "Frames & openers",
-      "Statement & emphasis",
-      "Enumerations",
-      "Ordered & comparison",
-      "Visual & data",
-      "Interactive (quiz)",
-      "Closing"
-    ]
-  },
-  "slides": [
-    {
-      "template": "section-agenda",
-      "title": "Frames & openers"
-    },
-    {
-      "template": "statement",
-      "section": "Frames & openers",
-      "title": "This deck renders one example of every Talksmith slide template.",
-      "sub": "Flip through it, or diff style-reference.html, and any styling regression jumps out."
-    },
-    {
-      "template": "divider",
-      "section": "Frames & openers",
-      "title": "A divider is a plain sub-opener within a section"
-    },
-    {
-      "template": "section-agenda",
-      "title": "Statement & emphasis"
-    },
-    {
-      "template": "statement",
-      "section": "Statement & emphasis",
-      "title": "A statement slide is one dominant claim, set large.",
-      "sub": "No bullets, no cards — just the single line you want the room to remember."
-    },
-    {
-      "template": "statement",
-      "section": "Statement & emphasis",
-      "title": "A statement title can run long, and it should still wrap gracefully across two or three lines while reading as one strong, uninterrupted assertion."
-    },
-    {
-      "template": "big-number",
-      "section": "Statement & emphasis",
-      "title": "big-number: one hero metric",
-      "number": "1",
-      "caption": "big-number is for a single hero figure — one number set very large, one caption, nothing competing with it."
-    },
-    {
-      "template": "quote",
-      "section": "Statement & emphasis",
-      "quote": "A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.",
-      "attribution": "the Talksmith style guide"
-    },
-    {
-      "template": "callout",
-      "section": "Statement & emphasis",
-      "title": "callout: an emphasized aside",
-      "callout": {
-        "label": "Think of it this way",
-        "body": "A callout is a single rounded panel for a tip, analogy, or warning — pink for a lateral note, blue for a declarative takeaway."
-      },
-      "tone": "pink"
-    },
-    {
-      "template": "single-point",
-      "section": "Statement & emphasis",
-      "title": "single-point: one lead plus one point",
-      "point": {
-        "label": "The rule",
-        "body": "When a slide is a claim plus exactly one supporting beat, give that beat a card — never a lone bullet floating under a title."
-      }
-    },
-    {
-      "template": "section-agenda",
-      "title": "Enumerations"
-    },
-    {
-      "template": "concept-breakdown",
-      "section": "Enumerations",
-      "title": "concept-breakdown: 2 cards (edge case)",
-      "cards": [
-        {
-          "label": "Two is valid",
-          "body": "A two-item labeled set is a real concept-breakdown, not something to drop to prose."
-        },
-        {
-          "label": "Iconed",
-          "body": "Each card still gets its own distinct, content-matched icon above the label."
-        }
-      ]
-    },
-    {
-      "template": "concept-breakdown",
-      "section": "Enumerations",
-      "title": "concept-breakdown: 3 cards in a row",
-      "cards": [
-        {
-          "label": "Unordered",
-          "body": "The cards have no sequence; order carries no meaning here."
-        },
-        {
-          "label": "Short bodies",
-          "body": "Keep each body to a line or two so the grid stays even."
-        },
-        {
-          "label": "No source image",
-          "body": "Any picture would route the slide to figures instead."
-        }
-      ]
-    },
-    {
-      "template": "concept-breakdown",
-      "section": "Enumerations",
-      "title": "concept-breakdown: 4 cards (2×2), longer bodies edge case",
-      "cards": [
-        {
-          "label": "Capacity",
-          "body": "Two through six cards fit; beyond six, split across two slides so nothing has to shrink."
-        },
-        {
-          "label": "Wrapping",
-          "body": "Longer bodies wrap inside their card, and all four cards hold the same height as a 2×2 grid."
-        },
-        {
-          "label": "Distinct icons",
-          "body": "The renderer never repeats an icon within a slide, so four cards means four different glyphs."
-        },
-        {
-          "label": "When to switch",
-          "body": "If a body is too long to read comfortably here, move it to icon-list, which gives each row prose room."
-        }
-      ]
-    },
-    {
-      "template": "concept-breakdown",
-      "section": "Enumerations",
-      "title": "concept-breakdown: 6 cards (3×2), the dense edge",
-      "cards": [
-        {
-          "label": "Default home",
-          "body": "The general case for any labeled set of two or more."
-        },
-        {
-          "label": "Grid",
-          "body": "Six cards lay out as a 3×2 grid with uniform gutters."
-        },
-        {
-          "label": "Icon each",
-          "body": "Six distinct icons, one anchoring every concept."
-        },
-        {
-          "label": "Terse",
-          "body": "At six cards, keep every body to a single short line."
-        },
-        {
-          "label": "Split point",
-          "body": "Need more than six? Split the set across two slides."
-        },
-        {
-          "label": "Still cards",
-          "body": "Even this dense, it is cards — never a bullet list."
-        }
-      ]
-    },
-    {
-      "template": "card-row",
-      "section": "Enumerations",
-      "title": "card-row: 3 short cards with a lead",
-      "lead": "A lead line sits above a single horizontal row of three to five short cards:",
-      "cards": [
-        {
-          "label": "Lead",
-          "body": "One framing sentence introduces the row."
-        },
-        {
-          "label": "Short",
-          "body": "Each body stays under about eighty characters."
-        },
-        {
-          "label": "One row",
-          "body": "Three to five cards share one horizontal band."
-        }
-      ]
-    },
-    {
-      "template": "icon-list",
-      "section": "Enumerations",
-      "title": "icon-list: rows with room for prose",
-      "lead": "Pick icon-list over card-row when at least one item needs two to four sentences:",
-      "rows": [
-        {
-          "label": "Vertical stack",
-          "body": "The rows stack top to bottom instead of sitting in one horizontal band, which gives every item room for a longer explanation without shrinking the type."
-        },
-        {
-          "label": "One icon per row",
-          "body": "A line-art icon sits at the left of each row, content-matched and never repeated within the slide."
-        },
-        {
-          "label": "Three to five rows",
-          "body": "Three rows are comfortable with full sentences; five rows only when the bodies are short."
-        }
-      ]
-    },
-    {
-      "template": "icon-list",
-      "section": "Enumerations",
-      "title": "icon-list also holds a bare anaphora",
-      "rows": [
-        {
-          "label": "No labels are required here."
-        },
-        {
-          "label": "Each parallel line becomes one row."
-        },
-        {
-          "label": "This keeps such slides off the fallback path."
-        }
-      ]
-    },
-    {
-      "template": "section-agenda",
-      "title": "Ordered & comparison"
-    },
-    {
-      "template": "process",
-      "section": "Ordered & comparison",
-      "title": "process: an ordered sequence of steps",
-      "lead": "Use process when order carries meaning — steps, phases, or a numbered flow:",
-      "steps": [
-        {
-          "label": "Classify",
-          "body": "The fill step reads final.md and picks each slide's template."
-        },
-        {
-          "label": "Decompose",
-          "body": "It splits the body into that template's exact required fields."
-        },
-        {
-          "label": "Render",
-          "body": "build_html.py maps those fields onto Jinja templates, mechanically."
-        }
-      ]
-    },
-    {
-      "template": "process",
-      "section": "Ordered & comparison",
-      "title": "process: plain numbered steps",
-      "lead": "When the steps are ordered but unlabeled, render them as a vertical numbered list:",
-      "steps": [
-        {
-          "body": "Identify the data you are about to share and where it came from."
-        },
-        {
-          "body": "Classify its sensitivity before it leaves your workspace."
-        },
-        {
-          "body": "Choose an approved tool for that classification."
-        },
-        {
-          "body": "Record what was shared so the workflow can be audited later."
-        }
-      ]
-    },
-    {
-      "template": "timeline",
-      "section": "Ordered & comparison",
-      "title": "timeline: a dated milestone sequence",
-      "milestones": [
-        {
-          "label": "Day 1",
-          "body": "Reach for timeline when the labels read as dates or milestones."
-        },
-        {
-          "label": "Day 2",
-          "body": "Time flows top to bottom along a connecting rail with a dot per entry."
-        },
-        {
-          "label": "Day 3",
-          "body": "It differs from process only in that here, when matters more than the step."
-        }
-      ]
-    },
-    {
-      "template": "comparison",
-      "section": "Ordered & comparison",
-      "title": "comparison: three columns",
-      "columns": [
-        {
-          "header": "Layout",
-          "cells": [
-            "Two to three equal columns",
-            "Parallel headers",
-            "Uniform widths"
-          ]
-        },
-        {
-          "header": "Rows",
-          "cells": [
-            "Cells align across columns",
-            "One row per comparison point",
-            "Shared gridlines"
-          ]
-        },
-        {
-          "header": "Rule",
-          "cells": [
-            "A card-per-row grid",
-            "Never a native table",
-            "No plain bullets"
-          ]
-        }
-      ]
-    },
-    {
-      "template": "comparison",
-      "section": "Ordered & comparison",
-      "title": "comparison: two columns (myth vs reality)",
-      "columns": [
-        {
-          "header": "Myth",
-          "cells": [
-            "A comparison needs a real HTML table",
-            "The two columns should look different"
-          ]
-        },
-        {
-          "header": "Reality",
-          "cells": [
-            "It renders as a card-per-row grid",
-            "Both columns share the same weight and width"
-          ]
-        }
-      ]
-    },
-    {
-      "template": "pros-cons",
-      "section": "Ordered & comparison",
-      "title": "pros-cons: upside versus downside",
-      "pros": [
-        "The pro column uses the blue tint with a check",
-        "Best for a decision framed as a trade-off",
-        "Each line is one short point"
-      ],
-      "cons": [
-        "The con column uses the pink tint with a mark",
-        "Author-directed: two labeled groups",
-        "Not for a general A-versus-B comparison"
-      ]
-    },
-    {
-      "template": "section-agenda",
-      "title": "Visual & data"
-    },
-    {
-      "template": "stat",
-      "section": "Visual & data",
-      "title": "stat: two to four standalone numbers",
-      "lead": "Each number is a value with a short caption beneath it:",
-      "stats": [
-        {
-          "value": "2–4",
-          "caption": "the number of metrics a stat slide holds"
-        },
-        {
-          "value": "1",
-          "caption": "caption line per value, baselines aligned across the row"
-        },
-        {
-          "value": "0",
-          "caption": "bullets — the numbers themselves are the payload"
-        }
-      ],
-      "highlights": [
-        {
-          "body": "A hero single metric goes on big-number instead.",
-          "kind": "note"
-        }
-      ]
-    },
-    {
-      "template": "content-image",
-      "section": "Visual & data",
-      "title": "content-image: text beside an image",
-      "lead": "Each fact leads with a bold label the renderer bolds for you:",
-      "facts": [
-        {
-          "label": "One image",
-          "body": "supports one to three short facts."
-        },
-        {
-          "label": "Aspect preserved",
-          "body": "the image is never cropped or forced into a box."
-        },
-        {
-          "label": "Two layouts",
-          "body": "text-left, shown here, or image-top."
-        }
-      ],
-      "image": {
-        "src": "images/portrait.svg",
-        "alt": "A tall portrait test image"
-      },
-      "layout": "text-left",
-      "highlights": [
-        {
-          "label": "Never cropped",
-          "body": "the tall portrait must show its full height, edge to edge.",
-          "kind": "important"
-        }
-      ]
-    },
-    {
-      "template": "content-image",
-      "section": "Visual & data",
-      "title": "content-image: image-top layout for short text",
-      "layout": "image-top",
-      "facts": [
-        "When the text is just a line, the image-top layout lets the image dominate the slide."
-      ],
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      }
-    },
-    {
-      "template": "figures",
-      "section": "Visual & data",
-      "title": "figures: a set where each item has its own image",
-      "lead": "Three or more figure cards, each an image with a label and a line:",
-      "figures": [
-        {
-          "image": {
-            "src": "images/pipeline.svg",
-            "alt": "Pipeline diagram, first figure"
-          },
-          "label": "Image per item",
-          "body": "This is what separates figures from concept-breakdown."
-        },
-        {
-          "image": {
-            "src": "images/pipeline.svg",
-            "alt": "Pipeline diagram, second figure"
-          },
-          "label": "Uniform crop",
-          "body": "Every figure shares the same size and alignment."
-        },
-        {
-          "image": {
-            "src": "images/pipeline.svg",
-            "alt": "Pipeline diagram, third figure"
-          },
-          "label": "Label and line",
-          "body": "A short caption sits under each image."
-        }
-      ]
-    },
-    {
-      "template": "image-grid",
-      "section": "Visual & data",
-      "title": "image-grid: four or more images as one composite",
-      "images": [
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 1"
-        },
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 2"
-        },
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 3"
-        },
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 4"
-        },
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 5"
-        },
-        {
-          "src": "images/pipeline.svg",
-          "alt": "Grid sample 6"
-        }
-      ]
-    },
-    {
-      "template": "content+cards+image",
-      "section": "Visual & data",
-      "title": "content+cards+image: cards beside one image",
-      "cards": [
-        {
-          "label": "Cards on one side",
-          "body": "A labeled set fills one half of the slide."
-        },
-        {
-          "label": "Image on the other",
-          "body": "A single supporting visual fills the rest."
-        }
-      ],
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      }
-    },
-    {
-      "template": "code-example",
-      "section": "Visual & data",
-      "title": "code-example: a readable code surface",
-      "language": "python",
-      "explanation": [
-        "The code sits on a monospace surface with syntax colors.",
-        "A short explanation column reads alongside it."
-      ],
-      "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)"
-    },
-    {
-      "template": "content-text",
-      "section": "Visual & data",
-      "title": "content-text: the prose last resort",
-      "big": "content-text carries only prose — a definition or a framing — when nothing richer fits.",
-      "panels": [
-        "It renders as one lead line plus a few light panels, never a paragraph and never bullets.",
-        "The fill flags it as a restructure candidate: most prose slides are really cards in disguise."
-      ]
-    },
-    {
-      "template": "content-text",
-      "section": "Visual & data",
-      "title": "Highlights: the six kinds",
-      "big": "Any content slide can carry a highlights band; the fill picks each line's kind:",
-      "panels": [],
-      "highlights": [
-        {
-          "kind": "takeaway",
-          "label": "Takeaway",
-          "body": "the one idea to remember (the default kind)."
-        },
-        {
-          "kind": "important",
-          "label": "Important",
-          "body": "a risk, a limit, or a hard 'do not'."
-        },
-        {
-          "kind": "definition",
-          "label": "Definition",
-          "body": "a term being defined."
-        },
-        {
-          "kind": "example",
-          "label": "Example",
-          "body": "a concrete case or scenario."
-        },
-        {
-          "kind": "quote",
-          "body": "\"A cited line — rendered in italics.\""
-        },
-        {
-          "kind": "note",
-          "label": "Note",
-          "body": "an aside or minor context."
-        }
-      ]
-    },
-    {
-      "template": "section-agenda",
-      "title": "Interactive (quiz)"
-    },
-    {
-      "template": "quiz",
-      "section": "Interactive (quiz)",
-      "title": "Quiz",
-      "question": "In a Talksmith quiz slide, when does the answer appear?",
-      "options": [
-        "Immediately, with the question",
-        "On the next navigation (Reveal fragment)",
-        "Only in the PDF export",
-        "Never — it's decorative"
-      ],
-      "correct": "On the next navigation (Reveal fragment)",
-      "answer": "On next-nav — the question shows first so the audience can think, then the answer fades up.",
-      "explanation": "The correct choice highlights in sync; space is reserved so the question never jumps.",
-      "image": {
-        "src": "images/portrait.svg",
-        "alt": "Quiz illustration"
-      },
-      "answer_label": "Answer",
-      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
-    },
-    {
-      "template": "section-agenda",
-      "title": "Closing"
-    },
-    {
-      "template": "closing-hero",
-      "section": "Closing",
-      "title": "Questions?",
-      "body": "Thanks for flipping through the Talksmith template catalog."
-    },
-    {
-      "template": "closing-cta",
-      "section": "Closing",
-      "title": "Where to go next",
-      "items": [
-        {
-          "label": "Schema",
-          "body": "schemas/slide-model.md"
-        },
-        {
-          "label": "Catalog",
-          "body": "config/pptx-styles/slide-templates.md"
-        },
-        {
-          "label": "Repo",
-          "body": "github.com/austral/talksmith"
-        }
-      ]
-    }
+ "deck": {
+  "title": "Talksmith Style Reference",
+  "lang": "es",
+  "institution": "md-to-deck visual regression deck",
+  "class": "One example of every slide template, plus layout edge cases",
+  "presenter": "Talksmith",
+  "date": "2026-07-14",
+  "logo": null,
+  "sections": [
+   "Frames & openers",
+   "Statement & emphasis",
+   "Enumerations",
+   "Ordered & comparison",
+   "Visual & data",
+   "Interactive (quiz)",
+   "Closing"
   ]
+ },
+ "slides": [
+  {
+   "template": "section-agenda",
+   "title": "Frames & openers"
+  },
+  {
+   "template": "statement",
+   "section": "Frames & openers",
+   "title": "This deck renders one example of every Talksmith slide template.",
+   "sub": "Flip through it, or diff style-reference.html, and any styling regression jumps out."
+  },
+  {
+   "template": "divider",
+   "section": "Frames & openers",
+   "title": "A divider is a plain sub-opener within a section"
+  },
+  {
+   "template": "section-agenda",
+   "title": "Statement & emphasis"
+  },
+  {
+   "template": "statement",
+   "section": "Statement & emphasis",
+   "title": "A statement slide is one dominant claim, set large.",
+   "sub": "No bullets, no cards — just the single line you want the room to remember."
+  },
+  {
+   "template": "statement",
+   "section": "Statement & emphasis",
+   "title": "A statement title can run long, and it should still wrap gracefully across two or three lines while reading as one strong, uninterrupted assertion."
+  },
+  {
+   "template": "big-number",
+   "section": "Statement & emphasis",
+   "title": "big-number: one hero metric",
+   "number": "1",
+   "caption": "big-number is for a single hero figure — one number set very large, one caption, nothing competing with it."
+  },
+  {
+   "template": "quote",
+   "section": "Statement & emphasis",
+   "quote": "A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.",
+   "attribution": "the Talksmith style guide"
+  },
+  {
+   "template": "callout",
+   "section": "Statement & emphasis",
+   "title": "callout: an emphasized aside",
+   "callout": {
+    "label": "Think of it this way",
+    "body": "A callout is a single rounded panel for a tip, analogy, or warning — pink for a lateral note, blue for a declarative takeaway."
+   },
+   "tone": "pink"
+  },
+  {
+   "template": "single-point",
+   "section": "Statement & emphasis",
+   "title": "single-point: one lead plus one point",
+   "point": {
+    "label": "The rule",
+    "body": "When a slide is a claim plus exactly one supporting beat, give that beat a card — never a lone bullet floating under a title."
+   }
+  },
+  {
+   "template": "section-agenda",
+   "title": "Enumerations"
+  },
+  {
+   "template": "concept-breakdown",
+   "section": "Enumerations",
+   "title": "concept-breakdown: 2 cards (edge case)",
+   "cards": [
+    {
+     "label": "Two is valid",
+     "body": "A two-item labeled set is a real concept-breakdown, not something to drop to prose."
+    },
+    {
+     "label": "Iconed",
+     "body": "Each card still gets its own distinct, content-matched icon above the label."
+    }
+   ]
+  },
+  {
+   "template": "concept-breakdown",
+   "section": "Enumerations",
+   "title": "concept-breakdown: 3 cards (2 + 1 across the width)",
+   "cards": [
+    {
+     "label": "Unordered",
+     "body": "The cards have no sequence; order carries no meaning here."
+    },
+    {
+     "label": "Short bodies",
+     "body": "Keep each body to a line or two so the grid stays even."
+    },
+    {
+     "label": "No source image",
+     "body": "Any picture would route the slide to figures instead."
+    }
+   ]
+  },
+  {
+   "template": "concept-breakdown",
+   "section": "Enumerations",
+   "title": "concept-breakdown: 4 cards (2×2), longer bodies edge case",
+   "cards": [
+    {
+     "label": "Capacity",
+     "body": "Two through six cards fit; beyond six, split across two slides so nothing has to shrink."
+    },
+    {
+     "label": "Wrapping",
+     "body": "Longer bodies wrap inside their card, and all four cards hold the same height as a 2×2 grid."
+    },
+    {
+     "label": "Distinct icons",
+     "body": "The renderer never repeats an icon within a slide, so four cards means four different glyphs."
+    },
+    {
+     "label": "When to switch",
+     "body": "If a body is too long to read comfortably here, move it to icon-list, which gives each row prose room."
+    }
+   ]
+  },
+  {
+   "template": "concept-breakdown",
+   "section": "Enumerations",
+   "title": "concept-breakdown: 6 cards (3×2), the dense edge",
+   "cards": [
+    {
+     "label": "Default home",
+     "body": "The general case for any labeled set of two or more."
+    },
+    {
+     "label": "Grid",
+     "body": "Six cards lay out as a 3×2 grid with uniform gutters."
+    },
+    {
+     "label": "Icon each",
+     "body": "Six distinct icons, one anchoring every concept."
+    },
+    {
+     "label": "Terse",
+     "body": "At six cards, keep every body to a single short line."
+    },
+    {
+     "label": "Split point",
+     "body": "Need more than six? Split the set across two slides."
+    },
+    {
+     "label": "Still cards",
+     "body": "Even this dense, it is cards — never a bullet list."
+    }
+   ]
+  },
+  {
+   "template": "icon-list",
+   "section": "Enumerations",
+   "title": "aside: a full-bleed image column on the right",
+   "lead": "The image reinforces the point; the text carries it.",
+   "rows": [
+    {
+     "label": "Atmosphere, not information",
+     "body": "The column crops to fill, so nothing in it needs to be read closely."
+    },
+    {
+     "label": "Default side",
+     "body": "An aside sits on the right unless the hint says left."
+    },
+    {
+     "label": "Any stage-based type",
+     "body": "The stage macro adds it, so every content template supports it."
+    }
+   ],
+   "aside": {
+    "image": {
+     "src": "images/aside-texture.svg",
+     "alt": "An abstract texture standing in for an atmospheric photo"
+    }
+   },
+   "notes": "The aside is the slide-model expression of an author's `<!-- aside: ... -->` hint in draft.md. It reserves roughly 37% of the slide width as a full-bleed image column and pads the stage on that side so the head and body lay out in what remains. Because the column crops to fill rather than fitting the whole image, it is only ever atmosphere: a diagram, chart, or screenshot the audience must actually read belongs in a template that owns its image, where it is contained and legible."
+  },
+  {
+   "template": "concept-breakdown",
+   "section": "Enumerations",
+   "title": "aside: the same column, on the left",
+   "cards": [
+    {
+     "label": "side: left",
+     "body": "The hint's optional side moves the column to the other edge."
+    },
+    {
+     "label": "Content reflows",
+     "body": "The stage pads whichever side the image takes."
+    }
+   ],
+   "aside": {
+    "side": "left",
+    "image": {
+     "src": "images/aside-texture.svg",
+     "alt": "An abstract texture standing in for an atmospheric photo"
+    }
+   },
+   "notes": "The left variant exists for rhythm: alternating the side across a run of slides keeps a deck from feeling like a template. The choice carries no semantics — it is purely visual pacing."
+  },
+  {
+   "template": "card-row",
+   "section": "Enumerations",
+   "title": "card-row: 3 short cards with a lead",
+   "lead": "A lead line sits above a single horizontal row of three to five short cards:",
+   "cards": [
+    {
+     "label": "Lead",
+     "body": "One framing sentence introduces the row."
+    },
+    {
+     "label": "Short",
+     "body": "Each body stays under about eighty characters."
+    },
+    {
+     "label": "One row",
+     "body": "Three to five cards share one horizontal band."
+    }
+   ]
+  },
+  {
+   "template": "icon-list",
+   "section": "Enumerations",
+   "title": "icon-list: rows with room for prose",
+   "lead": "Pick icon-list over card-row when at least one item needs two to four sentences:",
+   "rows": [
+    {
+     "label": "Vertical stack",
+     "body": "The rows stack top to bottom instead of sitting in one horizontal band, which gives every item room for a longer explanation without shrinking the type."
+    },
+    {
+     "label": "One icon per row",
+     "body": "A line-art icon sits at the left of each row, content-matched and never repeated within the slide."
+    },
+    {
+     "label": "Three to five rows",
+     "body": "Three rows are comfortable with full sentences; five rows only when the bodies are short."
+    }
+   ]
+  },
+  {
+   "template": "icon-list",
+   "section": "Enumerations",
+   "title": "icon-list also holds a bare anaphora",
+   "rows": [
+    {
+     "label": "No labels are required here."
+    },
+    {
+     "label": "Each parallel line becomes one row."
+    },
+    {
+     "label": "This keeps such slides off the fallback path."
+    }
+   ]
+  },
+  {
+   "template": "section-agenda",
+   "title": "Ordered & comparison"
+  },
+  {
+   "template": "process",
+   "section": "Ordered & comparison",
+   "title": "process: an ordered sequence of steps",
+   "lead": "Use process when order carries meaning — steps, phases, or a numbered flow:",
+   "steps": [
+    {
+     "label": "Classify",
+     "body": "The fill step reads final.md and picks each slide's template."
+    },
+    {
+     "label": "Decompose",
+     "body": "It splits the body into that template's exact required fields."
+    },
+    {
+     "label": "Render",
+     "body": "build_html.py maps those fields onto Jinja templates, mechanically."
+    }
+   ]
+  },
+  {
+   "template": "process",
+   "section": "Ordered & comparison",
+   "title": "process: plain numbered steps",
+   "lead": "When the steps are ordered but unlabeled, render them as a vertical numbered list:",
+   "steps": [
+    {
+     "body": "Identify the data you are about to share and where it came from."
+    },
+    {
+     "body": "Classify its sensitivity before it leaves your workspace."
+    },
+    {
+     "body": "Choose an approved tool for that classification."
+    },
+    {
+     "body": "Record what was shared so the workflow can be audited later."
+    }
+   ]
+  },
+  {
+   "template": "timeline",
+   "section": "Ordered & comparison",
+   "title": "timeline: a dated milestone sequence",
+   "milestones": [
+    {
+     "label": "Day 1",
+     "body": "Reach for timeline when the labels read as dates or milestones."
+    },
+    {
+     "label": "Day 2",
+     "body": "Time flows top to bottom along a connecting rail with a dot per entry."
+    },
+    {
+     "label": "Day 3",
+     "body": "It differs from process only in that here, when matters more than the step."
+    }
+   ]
+  },
+  {
+   "template": "comparison",
+   "section": "Ordered & comparison",
+   "title": "comparison: three columns",
+   "columns": [
+    {
+     "header": "Layout",
+     "cells": [
+      "Two to three equal columns",
+      "Parallel headers",
+      "Uniform widths"
+     ]
+    },
+    {
+     "header": "Rows",
+     "cells": [
+      "Cells align across columns",
+      "One row per comparison point",
+      "Shared gridlines"
+     ]
+    },
+    {
+     "header": "Rule",
+     "cells": [
+      "A card-per-row grid",
+      "Never a native table",
+      "No plain bullets"
+     ]
+    }
+   ]
+  },
+  {
+   "template": "comparison",
+   "section": "Ordered & comparison",
+   "title": "comparison: two columns (myth vs reality)",
+   "columns": [
+    {
+     "header": "Myth",
+     "cells": [
+      "A comparison needs a real HTML table",
+      "The two columns should look different"
+     ]
+    },
+    {
+     "header": "Reality",
+     "cells": [
+      "It renders as a card-per-row grid",
+      "Both columns share the same weight and width"
+     ]
+    }
+   ]
+  },
+  {
+   "template": "pros-cons",
+   "section": "Ordered & comparison",
+   "title": "pros-cons: upside versus downside",
+   "pros": [
+    "The pro column uses the blue tint with a check",
+    "Best for a decision framed as a trade-off",
+    "Each line is one short point"
+   ],
+   "cons": [
+    "The con column uses the pink tint with a mark",
+    "Author-directed: two labeled groups",
+    "Not for a general A-versus-B comparison"
+   ]
+  },
+  {
+   "template": "section-agenda",
+   "title": "Visual & data"
+  },
+  {
+   "template": "stat",
+   "section": "Visual & data",
+   "title": "stat: two to four standalone numbers",
+   "lead": "Each number is a value with a short caption beneath it:",
+   "stats": [
+    {
+     "value": "2–4",
+     "caption": "the number of metrics a stat slide holds"
+    },
+    {
+     "value": "1",
+     "caption": "caption line per value, baselines aligned across the row"
+    },
+    {
+     "value": "0",
+     "caption": "bullets — the numbers themselves are the payload"
+    }
+   ],
+   "highlights": [
+    {
+     "body": "A hero single metric goes on big-number instead.",
+     "kind": "note"
+    }
+   ]
+  },
+  {
+   "template": "content-image",
+   "section": "Visual & data",
+   "title": "content-image: text beside an image",
+   "lead": "Each fact leads with a bold label the renderer bolds for you:",
+   "facts": [
+    {
+     "label": "One image",
+     "body": "supports one to three short facts."
+    },
+    {
+     "label": "Aspect preserved",
+     "body": "the image is never cropped or forced into a box."
+    },
+    {
+     "label": "Two layouts",
+     "body": "text-left, shown here, or image-top."
+    }
+   ],
+   "image": {
+    "src": "images/portrait.svg",
+    "alt": "A tall portrait test image"
+   },
+   "layout": "text-left",
+   "highlights": [
+    {
+     "label": "Never cropped",
+     "body": "the tall portrait must show its full height, edge to edge.",
+     "kind": "important"
+    }
+   ]
+  },
+  {
+   "template": "content-image",
+   "section": "Visual & data",
+   "title": "content-image: image-top layout for short text",
+   "layout": "image-top",
+   "facts": [
+    "When the text is just a line, the image-top layout lets the image dominate the slide."
+   ],
+   "image": {
+    "src": "images/pipeline.svg",
+    "alt": "The Talksmith pipeline diagram"
+   }
+  },
+  {
+   "template": "figures",
+   "section": "Visual & data",
+   "title": "figures: a set where each item has its own image",
+   "lead": "Three or more figure cards, each an image with a label and a line:",
+   "figures": [
+    {
+     "image": {
+      "src": "images/pipeline.svg",
+      "alt": "Pipeline diagram, first figure"
+     },
+     "label": "Image per item",
+     "body": "This is what separates figures from concept-breakdown."
+    },
+    {
+     "image": {
+      "src": "images/pipeline.svg",
+      "alt": "Pipeline diagram, second figure"
+     },
+     "label": "Uniform crop",
+     "body": "Every figure shares the same size and alignment."
+    },
+    {
+     "image": {
+      "src": "images/pipeline.svg",
+      "alt": "Pipeline diagram, third figure"
+     },
+     "label": "Label and line",
+     "body": "A short caption sits under each image."
+    }
+   ]
+  },
+  {
+   "template": "image-grid",
+   "section": "Visual & data",
+   "title": "image-grid: four or more images as one composite",
+   "images": [
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 1"
+    },
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 2"
+    },
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 3"
+    },
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 4"
+    },
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 5"
+    },
+    {
+     "src": "images/pipeline.svg",
+     "alt": "Grid sample 6"
+    }
+   ]
+  },
+  {
+   "template": "content+cards+image",
+   "section": "Visual & data",
+   "title": "content+cards+image: cards beside one image",
+   "cards": [
+    {
+     "label": "Cards on one side",
+     "body": "A labeled set fills one half of the slide."
+    },
+    {
+     "label": "Image on the other",
+     "body": "A single supporting visual fills the rest."
+    }
+   ],
+   "image": {
+    "src": "images/pipeline.svg",
+    "alt": "The Talksmith pipeline diagram"
+   }
+  },
+  {
+   "template": "code-example",
+   "section": "Visual & data",
+   "title": "code-example: a readable code surface",
+   "language": "python",
+   "explanation": [
+    "The code sits on a monospace surface with syntax colors.",
+    "A short explanation column reads alongside it."
+   ],
+   "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)"
+  },
+  {
+   "template": "content-text",
+   "section": "Visual & data",
+   "title": "content-text: the prose last resort",
+   "big": "content-text carries only prose — a definition or a framing — when nothing richer fits.",
+   "panels": [
+    "It renders as one lead line plus a few light panels, never a paragraph and never bullets.",
+    "The fill flags it as a restructure candidate: most prose slides are really cards in disguise."
+   ]
+  },
+  {
+   "template": "content-text",
+   "section": "Visual & data",
+   "title": "Highlights: the six kinds",
+   "big": "Any content slide can carry a highlights band; the fill picks each line's kind:",
+   "panels": [],
+   "highlights": [
+    {
+     "kind": "takeaway",
+     "label": "Takeaway",
+     "body": "the one idea to remember (the default kind)."
+    },
+    {
+     "kind": "important",
+     "label": "Important",
+     "body": "a risk, a limit, or a hard 'do not'."
+    },
+    {
+     "kind": "definition",
+     "label": "Definition",
+     "body": "a term being defined."
+    },
+    {
+     "kind": "example",
+     "label": "Example",
+     "body": "a concrete case or scenario."
+    },
+    {
+     "kind": "quote",
+     "body": "\"A cited line — rendered in italics.\""
+    },
+    {
+     "kind": "note",
+     "label": "Note",
+     "body": "an aside or minor context."
+    }
+   ]
+  },
+  {
+   "template": "section-agenda",
+   "title": "Interactive (quiz)"
+  },
+  {
+   "template": "quiz",
+   "section": "Interactive (quiz)",
+   "title": "Quiz",
+   "question": "In a Talksmith quiz slide, when does the answer appear?",
+   "options": [
+    "Immediately, with the question",
+    "On the next navigation (Reveal fragment)",
+    "Only in the PDF export",
+    "Never — it's decorative"
+   ],
+   "correct": "On the next navigation (Reveal fragment)",
+   "answer": "On next-nav — the question shows first so the audience can think, then the answer fades up.",
+   "explanation": "The correct choice highlights in sync; space is reserved so the question never jumps.",
+   "image": {
+    "src": "images/portrait.svg",
+    "alt": "Quiz illustration"
+   },
+   "answer_label": "Answer",
+   "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
+  },
+  {
+   "template": "section-agenda",
+   "title": "Closing"
+  },
+  {
+   "template": "closing-hero",
+   "section": "Closing",
+   "title": "Questions?",
+   "body": "Thanks for flipping through the Talksmith template catalog."
+  },
+  {
+   "template": "closing-cta",
+   "section": "Closing",
+   "title": "Where to go next",
+   "items": [
+    {
+     "label": "Schema",
+     "body": "schemas/slide-model.md"
+    },
+    {
+     "label": "Catalog",
+     "body": "config/pptx-styles/slide-templates.md"
+    },
+    {
+     "label": "Repo",
+     "body": "github.com/austral/talksmith"
+    }
+   ]
+  }
+ ]
 }

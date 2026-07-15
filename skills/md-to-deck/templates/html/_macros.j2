@@ -1,9 +1,21 @@
-{% macro header(section, title) %}
-{% if section %}<span class="pill">{{ section }}</span>{% endif %}
-{% if title %}<h2 class="stitle">{{ title }}</h2>{% endif %}
+{# Shared chrome. Every content template wraps its body in `stage(s)`, where `s` is the
+   slide-model slide — so the macros read section/title/highlights/reveal/lead off it directly. #}
+{% macro header(s) %}
+{% if s.section %}<span class="pill">{{ s.section }}</span>{% endif %}
+{% if s.title %}<h2 class="stitle">{{ s.title }}</h2>{% endif %}
 {% endmacro %}
-{% macro stage(section, title, highlights=none) %}
-<div class="stage"><div class="shead">{{ header(section, title) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
-{% if highlights %}<div class="highlights">{% for h in highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
+{# `aside: {image, side}` → a full-bleed image column on that edge (default right), reinforcing
+   the content visually. Available to every stage-based slide; the stage's side padding keeps the
+   head and body clear of it. #}
+{% macro stage(s) %}
+<div class="stage{{ (' aside-' + (s.aside.side or 'right')) if s.aside else '' }}">
+{% if s.aside %}<div class="sasi">{{ embed_img(s.aside.image) }}</div>{% endif %}
+<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
+{% if s.highlights %}<div class="highlights{{ frag(s) }}">{% for h in s.highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
 </div></div></div>
 {% endmacro %}
+{# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
+   opts out and shows them all at once. Negated on purpose: an unrecognized value animates,
+   which is the default anyone wants — the opt-in form failed silently on every typo. #}
+{% macro frag(s) %}{{ '' if s.reveal == 'together' else ' fragment fade-up' }}{% endmacro %}
+{% macro lead(s) %}{% if s.lead %}<p class="lead">{{ s.lead }}</p>{% endif %}{% endmacro %}

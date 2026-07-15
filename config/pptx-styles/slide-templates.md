@@ -138,10 +138,24 @@ The signal *definitions* are in *Classification procedure* above; the row-level 
 are in *Disambiguation quick-reference* below. This overview is the map; those two are the
 precise rules.
 
-> **Optional reveal.** Any enumeration slide (`stat`, `card-row`, `concept-breakdown`, `icon-list`)
-> may carry `reveal: sequential` — set from an author `<!-- reveal: sequential -->` hint — so its
-> items appear **one at a time** in the HTML deck (Reveal fragments). The `.pptx` render is static
-> and shows them all at once.
+> **Reveal, on by default.** With no author action, the HTML deck steps through a slide on click
+> (Reveal fragments): every enumeration slide (`stat`, `card-row`, `concept-breakdown`,
+> `icon-list`, `content+cards+image`) reveals its items **one at a time**, and any slide's
+> `highlights` then land as **one final step** — so the takeaway text below the body arrives after
+> what it comments on, instead of being readable before the presenter gets there. To show a whole
+> slide at once instead, carry `reveal: together` — set from an author `<!-- reveal: together -->`
+> hint. The `.pptx` render is static and shows everything at once regardless. Viewers can also
+> toggle every fragment off at runtime from the deck's animations button, so `together` is for
+> slides whose parts must be read as one, not for viewer preference.
+>
+> **Optional aside.** Any slide type in this catalog *except* the full-bleed ones (`cover`,
+> `divider`, `statement`, `quote`, `closing-hero`) and the image-owning ones (`content-image`,
+> `figures`, `image-grid`, `content+cards+image`, `process` with an image) may carry
+> `aside: {image, side}` — set from an author `<!-- aside: [left|right] ![alt](path) -->` hint. It
+> renders the image as a **full-bleed column down that edge** (default `right`, ~37% of the width),
+> with the title and body in the remaining width. It is **visual reinforcement** — an evocative
+> image that sets the tone — and it crops to fill, so it must never carry information the audience
+> has to read. Content that must be read goes to an image-owning template instead.
 
 ### Frame — structure, not a content choice
 

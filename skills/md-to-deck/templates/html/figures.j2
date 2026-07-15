@@ -1,8 +1,8 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
+{% call m.stage(s) %}
 <div class="figs">
-{% for it, im in figs %}
-<div class="figc">{{ embed(im[0], im[1]) }}<h4>{{ it.label }}</h4><p>{{ it.body }}</p></div>
+{% for f in s.figures %}
+<div class="figc">{{ embed_img(f.image) }}<h4>{{ f.label }}</h4><p>{{ f.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

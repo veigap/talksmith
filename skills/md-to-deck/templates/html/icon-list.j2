@@ -1,9 +1,9 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-{% if body %}<p class="lead">{{ body[0] }}</p>{% endif %}
+{% call m.stage(s) %}
+{{ m.lead(s) -}}
 <div class="iconlist">
-{% for it in items %}
-<div class="ilrow{{ ' solo' if not it.body else '' }}{{ ' fragment fade-up' if reveal == 'sequential' else '' }}">{{ icon(it.icon) }}<div><h4>{{ it.label }}</h4>{% if it.body %}<p>{{ it.body }}</p>{% endif %}</div></div>
+{% for r in s.rows %}
+<div class="ilrow{{ ' solo' if not r.body else '' }}{{ m.frag(s) }}">{{ icon(r.icon) }}<div><h4>{{ r.label }}</h4>{% if r.body %}<p>{{ r.body }}</p>{% endif %}</div></div>
 {% endfor %}
 </div>
 {% endcall %}

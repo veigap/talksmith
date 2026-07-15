@@ -1,7 +1,7 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
-<div class="stats" style="grid-template-columns:repeat({{ cols }},1fr)">
-{% for it in items %}<div class="stat{{ ' fragment fade-up' if reveal == 'sequential' else '' }}"><span class="statn">{{ it.label }}</span><span class="statl">{{ it.body }}</span></div>{% endfor %}
+{% call m.stage(s) %}
+{{ m.lead(s) -}}
+<div class="stats">
+{% for st in s.stats %}<div class="stat{{ m.frag(s) }}"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}
 </div>
 {% endcall %}

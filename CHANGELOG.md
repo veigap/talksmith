@@ -12,6 +12,78 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.57.0] — 2026-07-15
+
+### Changed
+
+- **Slides now animate by default.** Enumeration slides (`stat`, `card-row`,
+  `concept-breakdown`, `icon-list`, `content+cards+image`) reveal their items one at a time
+  in the HTML deck, and a slide's `highlights` now arrive as one final step instead of being
+  readable from the moment the slide opens — so the takeaway lands after what it comments on.
+  Animation used to be opt-in via `<!-- reveal: sequential -->`, which in practice meant decks
+  never had any: a whole 42-slide deck shipped with zero. The hint is now an opt-*out* —
+  `<!-- reveal: together -->` shows a slide all at once. Old `sequential` hints keep working
+  (they animate, which is now the default). Unchanged for `.pptx`, which is static; viewers
+  can still switch every animation off from the deck's animations button.
+
+### Fixed
+
+- **A slide's `aside` image column is full-bleed again.** It was taking over the whole slide and
+  shoving the title to the bottom: the rules that make an inline figure look like a figure (a
+  hairline, a white fill, no clipping) tie the aside's own rules on CSS specificity and, coming
+  later in the sheet, quietly won. The column now spans its edge properly on both sides, and
+  inline figures elsewhere are untouched. Note for authors: a **photo** aside crops to fill on its
+  own, but an **SVG** aside must carry `preserveAspectRatio="… slice"` itself or it will
+  letterbox — CSS cannot set that for it.
+- **Polish no longer attributes a discarded diagram to a real slide.** ASCII under
+  `# Cut material`, `# Open questions`, or `# Thesis` was inherited by the preceding section
+  and could be rendered onto one of its slides — the scan only recognized `# N.`, `# Agenda`
+  and `# Conclusiones` as section boundaries, so every other heading was invisible to it and
+  the previous section leaked past. Any heading now ends a section, and ASCII under one that
+  carries no slides is skipped and reported. Re-tagging a discarded diagram as ` ```text ` was
+  never the protection it looked like (the scan claims `text` too); it is no longer needed.
+- **Polish no longer reuses a stale diagram, or one from another topic.** Whether an SVG is
+  re-rendered was decided from its filename prefix, but a `<slide-id>` is minted from position
+  in `final.md` and renames itself as soon as slides move — so a match could hand back a
+  diagram belonging to a different slide entirely. Each rendered SVG is now stamped with a
+  digest of the ASCII it was drawn from (diagram + `ascii-note` intent), and that digest is
+  the only thing consulted. Changing a diagram's intent alone now re-renders it, and an
+  unstamped SVG re-renders rather than being trusted.
+
+## [0.56.0] — 2026-07-15
+
+### Added
+
+- **Slides can carry a full-bleed image column down one edge.** Write
+  `<!-- aside: ![alt](images/photo.jpg) -->` under a slide's `##` heading in `draft.md`
+  and the render devotes roughly a third of the slide's width to that image, edge to
+  edge, laying the title and body out beside it. Add `left` (`<!-- aside: left ![…](…) -->`)
+  to put it on the other edge; it sits on the right by default. Every content slide type
+  supports it.
+
+  The aside is **atmosphere, not information** — an evocative image that sets the tone of
+  the point while the audience reads the text. It crops to fill, so anything that must
+  actually be *read* (a diagram, chart, or screenshot) still belongs in the slide body as a
+  normal image reference, where the render gives it a template that shows it in full.
+
+### Changed
+
+- **Three-card concept slides now lay out as two cards on top and one spanning the full
+  width below**, instead of three narrow columns. Three columns squeezed each body into a
+  thin ribbon of text; the wide third card gives them room to breathe. Other card counts
+  (1, 2, 4, 6) are unchanged.
+- **Stat slides pick their column count from how many stats there are** rather than always
+  using three, so two stats no longer leave a gap and four no longer wrap awkwardly.
+
+### Fixed
+
+- **Slide templates are now self-contained**, which makes them safe to change without
+  reading the renderer. Each template reads its own `slide-model.json` fields directly;
+  previously a Python layer renamed every type's fields to generic names first, so a
+  one-line markup change could mean editing two files and understanding the mapping in
+  between. Adding a slide type is correspondingly simpler — see
+  [`CLAUDE.md`](CLAUDE.md) → *Adding a new slide type*. The rendered output is unchanged.
+
 ## [0.55.0] — 2026-07-14
 
 ### Added

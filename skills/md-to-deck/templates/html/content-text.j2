@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-<div class="ctext"><p class="big2">{{ big }}</p><div class="ctpanels">
-{% for p in panels %}<div class="ctp">{{ p }}</div>{% endfor %}
+{% call m.stage(s) %}
+<div class="ctext"><p class="big2">{{ s.big }}</p><div class="ctpanels">
+{% for p in s.panels %}<div class="ctp">{{ p }}</div>{% endfor %}
 </div></div>
 {% endcall %}

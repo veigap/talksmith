@@ -214,8 +214,11 @@ def _embed(alt, path):
 
 # --------------------------------------------------------------------------- #
 # per-template slide rendering — one Jinja template per slide type in templates/html/.
-# Python computes the structured context (which template, cols, rows, matched icon name);
-# the .j2 files own the *markup*.
+# Each .j2 receives the slide-model slide as `s` and reads its own schema fields off it
+# (`s.cards`, `s.stats`, …), so a slide type is described in exactly one file: its template.
+# Python only does what a template can't — resolve icons against the catalog, resolve and
+# embed image paths, normalize the fields the schema lets the fill emit two ways, and supply
+# the localized chrome labels (`L`). Layout belongs in theme.css, markup in the .j2.
 # --------------------------------------------------------------------------- #
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
@@ -226,12 +229,24 @@ _ENV = Environment(
     autoescape=select_autoescape(enabled_extensions=("j2", "html"), default=True),
     trim_blocks=True, lstrip_blocks=True)
 _CUR_CACHE = None                          # bound per render so templates can call icon()/chip()
+_CUR_ROOTS = (None, None)                  # (talk_root, asset_dir) — bound per render for embed_img()
+
+
+def _embed_img(image) -> Markup:
+    """Resolve a model `{src,alt}` image and embed it self-contained. A missing/None image
+    renders the placeholder, so templates never branch on whether an image is present."""
+    alt, path = _resolve_img(image, *_CUR_ROOTS)
+    return Markup(_embed(alt, path))
+
 
 _ENV.globals.update(
     icon=lambda name: Markup(icon(name, _CUR_CACHE)),
     chip=lambda name: Markup(chip(name, _CUR_CACHE)),
-    embed=lambda alt, path: Markup(_embed(alt, path)),
-    icon_for=icon_for,
+    embed_img=_embed_img,
+    labeled=lambda items: _labeled(items),
+    pivot=lambda columns: _pivot(columns),
+    correct_index=lambda options, correct: _correct_index(options, correct),
+    lines=lambda code: code.splitlines() if isinstance(code, str) else (code or []),
 )
 
 # catalog template id → template file
@@ -337,8 +352,37 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
         author_label=author_label or L["author"], modified_label=modified_label or L["modified"])
 
 
-# Templates whose markup places a matched icon next to each item / the point.
-_ICON_ITEM_KINDS = {"concept-breakdown", "card-row", "icon-list", "content+cards+image", "closing-cta"}
+# Templates whose markup places a matched icon next to each item, → the slide field holding them.
+_ICON_LISTS = {
+    "concept-breakdown": "cards", "card-row": "cards", "content+cards+image": "cards",
+    "icon-list": "rows", "closing-cta": "items",
+}
+
+
+def _pivot(columns) -> list:
+    """Transpose a comparison's `columns` (each `{header, cells}`) into rows of cells, padding
+    short columns so every row has one cell per column."""
+    cols = columns or []
+    n = max((len(c.get("cells", [])) for c in cols), default=0)
+    return [[(c.get("cells", [])[i] if i < len(c.get("cells", [])) else "") for c in cols]
+            for i in range(n)]
+
+
+def _correct_index(options, correct) -> int:
+    """The 0-based index of a quiz's correct choice. The fill may express `correct` as the option
+    string, a 1-based index, or a letter (A/B/C…); -1 → no option highlighted."""
+    opts = options or []
+    ci = -1
+    if isinstance(correct, bool):
+        pass
+    elif isinstance(correct, int):
+        ci = correct - 1 if correct >= 1 else correct
+    elif isinstance(correct, str) and correct:
+        if len(correct) == 1 and correct.upper().isalpha():
+            ci = ord(correct.upper()) - 65
+        else:
+            ci = next((k for k, o in enumerate(opts) if str(o).strip() == correct.strip()), -1)
+    return ci if 0 <= ci < len(opts) else -1
 
 
 def _labeled(items) -> list:
@@ -382,112 +426,23 @@ def _resolve_item_icons(items: list) -> None:
 
 
 def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang="en") -> str:
-    """Render one `slide-model.json` slide: map its template's fields onto the Jinja template's
-    context. All semantics were resolved by the LLM fill step — this is a pure field mapping."""
+    """Render one `slide-model.json` slide. The template reads the slide's own schema fields off
+    `s`; all semantics were resolved by the LLM fill step. Here we only normalize the fields the
+    schema allows in more than one shape, and resolve the icons/images a template can't."""
+    global _CUR_ROOTS
     _reset_slide_icons()                   # icons don't repeat within a slide
-    L = _labels(lang)                      # renderer-emitted chrome labels (localized)
+    _CUR_ROOTS = (talk_root, asset_dir)    # bound for embed_img()
     t = slide.get("template", "fallback")
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
-    ctx = {"section": slide.get("section", ""), "title": slide.get("title", ""),
-           "highlights": _highlights(slide.get("highlights")),
-           "reveal": slide.get("reveal", "")}   # "sequential" → items appear one at a time (Reveal fragments)
-    ri = lambda im: _resolve_img(im, talk_root, asset_dir)
-    lead = slide.get("lead", "")
-    if t == "divider":
-        ctx["number"] = slide.get("number")
-    elif t == "statement":
-        ctx["body"] = [slide["sub"]] if slide.get("sub") else []
-    elif t == "concept-breakdown":
-        cards = slide.get("cards", [])
-        ctx["items"] = cards
-        n = len(cards)
-        ctx["cols"] = 1 if n == 1 else (2 if n in (2, 4) else 3)
-    elif t == "card-row":
-        ctx["items"], ctx["body"] = slide.get("cards", []), ([lead] if lead else [])
-    elif t == "icon-list":
-        ctx["items"], ctx["body"] = slide.get("rows", []), ([lead] if lead else [])
-    elif t == "process":
-        steps = slide.get("steps", [])
-        ctx["items"] = steps
-        ctx["labeled"] = any(s.get("label") for s in steps)
-        ctx["body"] = [lead] if lead else []
-        ctx["images"] = [ri(slide.get("image"))] if slide.get("image") else []
-    elif t == "figures":
-        ctx["figs"] = [(f, ri(f.get("image"))) for f in slide.get("figures", [])]
-    elif t == "image-grid":
-        ctx["images"] = [ri(i) for i in slide.get("images", [])]
-    elif t == "content-image":
-        ctx["lead"], ctx["facts"] = lead, _labeled(slide.get("facts"))
-        ctx["images"] = [ri(slide.get("image"))]
-        ctx["layout"] = slide.get("layout", "text-left")
-    elif t == "content+cards+image":
-        ctx["items"], ctx["images"] = slide.get("cards", []), [ri(slide.get("image"))]
-    elif t == "comparison":
-        cols = slide.get("columns", [])
-        rows = [[c.get("header", "") for c in cols]]
-        maxn = max((len(c.get("cells", [])) for c in cols), default=0)
-        for i in range(maxn):
-            rows.append([(c.get("cells", [])[i] if i < len(c.get("cells", [])) else "") for c in cols])
-        ctx["rows"] = rows
-        ctx["ncols"] = len(cols) or 1
-    elif t == "stat":
-        stats = slide.get("stats", [])
-        ctx["items"] = [{"label": s.get("value", ""), "body": s.get("caption", "")} for s in stats]
-        ctx["cols"], ctx["lead"] = (min(len(stats), 4) or 1), lead
-    elif t == "big-number":
-        ctx["number"], ctx["caption"], ctx["more"] = slide.get("number", ""), slide.get("caption", ""), []
-    elif t == "quote":
-        ctx["quote"], ctx["attribution"] = slide.get("quote", ""), slide.get("attribution", "")
-    elif t == "timeline":
-        ctx["items"] = [{"label": m.get("label", ""), "body": m.get("body", "")} for m in slide.get("milestones", [])]
-    elif t == "pros-cons":
-        ctx["items"] = [{"label": slide.get("pro_label") or L["pros"], "body": " · ".join(slide.get("pros", []))},
-                        {"label": slide.get("con_label") or L["cons"], "body": " · ".join(slide.get("cons", []))}]
-    elif t == "quiz":
-        # question + optional choices show immediately; the answer (and the highlight on the
-        # correct choice) reveal together on next-nav (Reveal fragments). Optional image at right.
-        opts = slide.get("options", [])
-        ctx["question"] = slide.get("question", "") or slide.get("title", "")
-        ctx["options"] = opts
-        ctx["answer"] = slide.get("answer", "")
-        ctx["explanation"] = slide.get("explanation", "")
-        ctx["answer_label"] = slide.get("answer_label") or L["answer"]
-        ctx["image"] = ri(slide.get("image")) if slide.get("image") else None
-        # `correct` selects the choice highlighted on reveal: an option string, a 1-based
-        # index, or a letter (A/B/C…). -1 → no option highlighted.
-        corr, ci = slide.get("correct"), -1
-        if isinstance(corr, bool):
-            pass
-        elif isinstance(corr, int):
-            ci = corr - 1 if corr >= 1 else corr
-        elif isinstance(corr, str) and corr:
-            if len(corr) == 1 and corr.upper().isalpha():
-                ci = ord(corr.upper()) - 65
-            else:
-                ci = next((k for k, o in enumerate(opts) if str(o).strip() == corr.strip()), -1)
-        ctx["correct_index"] = ci if 0 <= ci < len(opts) else -1
-    elif t in ("single-point", "callout"):
-        ctx["item"] = slide.get("point") or slide.get("callout") or {"label": "", "body": ""}
-        ctx["tone"] = slide.get("tone", "blue" if t == "callout" else "pink")
-        ctx["show_lead"] = False
-    elif t == "code-example":
-        code = slide.get("code", "")
-        ctx["code"] = code.splitlines() if isinstance(code, str) else code
-        ctx["body"] = slide.get("explanation", [])
-    elif t == "content-text":
-        ctx["big"], ctx["panels"] = slide.get("big", ""), slide.get("panels", [])
-    elif t == "closing-hero":
-        ctx["body"] = [slide["body"]] if slide.get("body") else []
-    elif t == "closing-cta":
-        ctx["items"] = slide.get("items", [])
-    elif t == "fallback":
-        ctx["big"] = slide.get("big", "") or slide.get("title", "")
-    if t in _ICON_ITEM_KINDS and ctx.get("items"):
-        _resolve_item_icons(ctx["items"])
-    elif t in ("single-point", "callout") and ctx.get("item"):
-        _resolve_item_icons([ctx["item"]])
-    return _render(_TMPL.get(t, "fallback.j2"), cache, **ctx)
+    slide["highlights"] = _highlights(slide.get("highlights"))
+    items = list(slide.get(_ICON_LISTS[t], []) or []) if t in _ICON_LISTS else []
+    if t in ("single-point", "callout"):
+        point = slide.get("point") or slide.get("callout")
+        if isinstance(point, dict):
+            items.append(point)
+    _resolve_item_icons(items)
+    return _render(_TMPL.get(t, "fallback.j2"), cache, s=slide, L=_labels(lang))
 
 
 # The theme stylesheet lives in its own file (static CSS, no interpolation) — read at import,

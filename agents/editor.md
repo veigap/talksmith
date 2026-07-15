@@ -105,6 +105,7 @@ You don't **have** to tag templates — the render classifies each slide from it
 
 - `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `card-row`), for when the content is ambiguous or you specifically want that treatment;
 - `<!-- reveal: sequential -->` — on an enumeration slide, ask the render to reveal the items one at a time.
+- `<!-- aside: [left|right] ![alt](path) -->` — give the slide a **full-bleed image column** down one edge (`right` if you don't say). The image is **atmosphere, not information**: it reinforces the point's tone while the audience reads the text beside it. The column crops to fill, so never put something that must be *read* there — a diagram, chart, or screenshot the audience needs belongs in the slide body as a normal `![alt](path)` ref, which the render gives to a template that owns its image. Don't add an aside to a slide that already carries an image ref.
 
 The render honours these hints; without them it classifies from content. **They are optional, never required** — add one only where the intent actually matters. Writing each slide to fit *some* category (hinted or not) keeps the deck varied and prevents "title + a wall of bullets" mush; when a slide resists every category, it's usually carrying two ideas — split it.
 

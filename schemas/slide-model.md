@@ -71,10 +71,26 @@ deliverable; `draft.md` → live in-progress view).
   | `example` | an illustration / concrete scenario | "Ej.: pegar la lista de clientes en un chatbot gratuito." |
   | `quote` | a pull-quote / cited line (rendered italic) | "Una falla de seguridad no siempre tiene un atacante." |
   | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
-- **`reveal`** — an **optional** field on an **enumeration** slide (`stat`, `card-row`,
-  `concept-breakdown`, `icon-list`): `"reveal": "sequential"` makes its items appear **one at a
-  time** in the HTML deck (Reveal fragments; the `.pptx` render, being static, shows them all at
-  once). Set it from an author `<!-- reveal: sequential -->` hint in `draft.md`/`final.md`.
+- **`aside`** — an **optional** common field on any content slide: `{image: {src, alt}, side?}`,
+  where `side` is `"right"` *(default)* or `"left"`. Renders the image as a **full-bleed column down
+  that edge** of the slide, with the title and body laid out in the remaining width. Its job is
+  **visual reinforcement** — an evocative image that sets the tone of the point being made — not
+  information the slide needs. Anything load-bearing (a diagram, a chart, a screenshot the audience
+  must actually read) belongs in a template that *owns* its image (`content-image`, `figures`,
+  `content+cards+image`, `process`), because the aside column crops to fill and is not read closely.
+  Set it from an author `<!-- aside: ... -->` hint (see [`draft.md`](draft.md)). Don't put an `aside`
+  on a template that already carries an image.
+- **`reveal`** — an **optional opt-out** on any slide that reveals progressively. By **default** —
+  field absent — the HTML deck steps through the slide on click (Reveal fragments):
+  first the enumerated items one at a time (`stat`, `card-row`, `concept-breakdown`, `icon-list`,
+  `content+cards+image`), then `highlights` as one final block, so the takeaway text below the
+  body lands *after* what it comments on rather than being readable from the start.
+  `"reveal": "together"` shows the whole slide at once instead. A slide with only `highlights`
+  and no enumeration still gets that one closing step.
+  The `.pptx` render is static and always shows everything at once, whatever this says.
+  Set it from an author `<!-- reveal: together -->` hint in `draft.md`/`final.md`.
+  Only `"together"` is recognized; any other value (including the legacy `"sequential"`) leaves
+  the default in place, so a typo animates rather than silently flattening the slide.
 - **Never drop content.** Every load-bearing line in the source must be *translated* into the
   model — as a field value, a card/row/step, a fact, or a `highlights` entry. Do not omit a line
   because it looks redundant with an image or another slide; move it to `highlights` if it's a
@@ -138,7 +154,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   the standalone `# Agenda` slide (it only feeds `deck.sections`), every `### Sources` and
   `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers. **Exception — honour author
   directives:** a `<!-- template: <type> -->` comment pins that slide's `template` (skip
-  classification), and `<!-- reveal: sequential -->` sets its `reveal` field. These are the only
+  classification), and `<!-- reveal: together -->` sets its `reveal` field. These are the only
   HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
   Polish only strips `Presenter feedback` and rewrites ASCII fences — so the hint the author wrote
   while drafting is exactly what reaches this FILL step.)

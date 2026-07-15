@@ -1,15 +1,14 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-{% if layout == 'image-top' %}
-<div class="ci ci-top">{{ embed(images[0][0], images[0][1]) if images else embed("", None) }}
+{% macro citext(s) %}
 <div class="citext">
-{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
-{% if facts %}<ul class="cifacts">{% for f in facts %}<li>{% if f.label %}<b>{{ f.label }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
-</div></div>
+{{ m.lead(s) -}}
+{% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% endmacro %}
+{% call m.stage(s) %}
+{% if s.layout == 'image-top' %}
+<div class="ci ci-top">{{ embed_img(s.image) }}{{ citext(s) }}</div>
 {% else %}
-<div class="ci"><div class="citext">
-{% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
-{% if facts %}<ul class="cifacts">{% for f in facts %}<li>{% if f.label %}<b>{{ f.label }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
-</div>{{ embed(images[0][0], images[0][1]) if images else embed("", None) }}</div>
+<div class="ci">{{ citext(s) }}{{ embed_img(s.image) }}</div>
 {% endif %}
 {% endcall %}

@@ -1,8 +1,8 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-<div class="cards c{{ cols }}">
-{% for it in items %}
-<div class="ccard{{ ' fragment fade-up' if reveal == 'sequential' else '' }}">{{ icon(it.icon) }}<h3>{{ it.label }}</h3><p>{{ it.body }}</p></div>
+{% call m.stage(s) %}
+<div class="cards">
+{% for c in s.cards %}
+<div class="ccard{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

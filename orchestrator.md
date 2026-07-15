@@ -278,13 +278,31 @@ It is a **single pass, no critique loop** (`html-strict` is `no-critique`) — t
 
 Triggered when the presenter signals ready in Step 5. Runs end-to-end without prompts. Produces `final.md` + rendered SVGs from a frozen `draft.md` (see *Role* for the two-files contract).
 
+**Show a live progress checklist — mandatory.** Polish is the **longest unattended step in the workflow**: it draws every diagram in the deck, each through its own review loop, and routinely runs several minutes with nothing asked of the presenter. Step 7's rule applies here in full and for the same reason — **never bury this in one opaque, multi-minute dispatch**. Silence past ~a minute is a defect, not a slow render.
+
+On entry, post this checklist and **edit that same message in place**, flipping each row `[ ]` → `[⟳]` → `[✓]` (`[—]` skipped, `[✗]` failed) as the stages land:
+
+```
+  [ ] Finding the diagrams
+  [ ] Drawing them
+  [ ] Checking how they look
+  [ ] Adding them to the deck
+  [ ] Final tidy-up
+```
+
+Personalize each row as the numbers become known — *"Drawing them — 3 of 12"*, *"Checking how they look — found 2 small things to fix"*, *"Adding them to the deck — 12 diagrams"*. **Drawing is the row that runs longest**: tick a count as each diagram lands rather than waiting for all of them, and give any stage quiet > 30 s a plain-language heartbeat. A Talk with no diagrams marks the middle three rows `[—]` and goes straight to tidy-up; a diagram that fails to draw marks `[✗]` and Polish keeps going (failures are reported at the end, never hidden).
+
+Both the *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids (`s1-2-1`), file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the checklist from them, never relay them. **Don't:** *"Dispatching Illustrator — batch 2 of 5 (s1-2-1, s3-4-1…)"*. **Do:** *"Drawing them — 7 of 12."*
+
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
-1. **Render every ASCII diagram to SVG.** Perform the **Illustrator** role ([`illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)). It owns the full recipe (scan, dispatch, batching, narration). Narrate to the presenter in plain language only.
+1. **Render every ASCII diagram to SVG** — drives the *Finding* / *Drawing* / *Checking* rows. Perform the **Illustrator** role ([`illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)). It owns the full recipe (scan, dispatch, batching, narration). Narrate to the presenter in plain language only.
 
-2. **Clean `final.md`.** Perform the **Editor** role ([`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 6 — produce `final.md`*). It owns the four transformations (inline rendered SVGs, consolidate + rasterize images, rescue `[open]` feedback, strip `Presenter feedback`) and the Keynote-safe format rule.
+2. **Clean `final.md`** — drives the *Adding them to the deck* / *Final tidy-up* rows. Perform the **Editor** role ([`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 6 — produce `final.md`*). It owns the four transformations (inline rendered SVGs, consolidate + rasterize images, rescue `[open]` feedback, strip `Presenter feedback`) and the Keynote-safe format rule.
 
    Goal: `final.md` reads as the finished deliverable — no working-meta fields visible.
+
+**Close with a plain-language report** before moving on: how many diagrams were drawn, anything that failed or that the presenter should look at, and where `final.md` lives. Full per-block detail goes to `memory.md`, not chat.
 
 Proceed to Step 7 automatically.
 

@@ -1,5 +1,5 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-{% if show_lead and body %}<p class="lead">{{ body[0] }}</p>{% endif %}
-<div class="callout {{ tone }}">{{ icon(item.icon) }}<p><b>{{ item.label }}</b> {{ item.body }}</p></div>
+{% set p = s.point or s.callout or {} %}
+{% call m.stage(s) %}
+<div class="callout {{ s.tone or ('blue' if s.template == 'callout' else 'pink') }}">{{ icon(p.icon) }}<p><b>{{ p.label }}</b> {{ p.body }}</p></div>
 {% endcall %}

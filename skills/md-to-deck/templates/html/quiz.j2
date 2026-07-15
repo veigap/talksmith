@@ -1,12 +1,13 @@
 {% import "_macros.j2" as m %}
-{% call m.stage(section, title, highlights) %}
-<div class="quiz{{ ' quiz-split' if image and image[1] else '' }}">
+{% set ci = correct_index(s.options, s.correct) %}
+{% call m.stage(s) %}
+<div class="quiz{{ ' quiz-split' if s.image else '' }}">
 <div class="quiz-body">
-<p class="quiz-q">{{ question }}</p>
-{% if options %}
+<p class="quiz-q">{{ s.question or s.title }}</p>
+{% if s.options %}
 <ol class="quiz-opts">
-{% for o in options %}
-{% if loop.index0 == correct_index %}
+{% for o in s.options %}
+{% if loop.index0 == ci %}
 {# the correct choice is a Reveal *custom* fragment: it stays on screen but restyles itself
    (accent fill + check) on the same next-nav step that fades in the answer panel. #}
 <li class="qopt correct fragment custom" data-fragment-index="0">{{ o }}</li>
@@ -17,11 +18,11 @@
 </ol>
 {% endif %}
 <div class="quiz-ans fragment fade-up" data-fragment-index="0">
-<span class="quiz-lab">{{ icon("check_circle") }}{{ answer_label }}</span>
-<p class="quiz-a">{{ answer }}</p>
-{% if explanation %}<p class="quiz-exp">{{ explanation }}</p>{% endif %}
+<span class="quiz-lab">{{ icon("check_circle") }}{{ s.answer_label or L.answer }}</span>
+<p class="quiz-a">{{ s.answer }}</p>
+{% if s.explanation %}<p class="quiz-exp">{{ s.explanation }}</p>{% endif %}
 </div>
 </div>
-{% if image and image[1] %}<div class="quiz-media">{{ embed(image[0], image[1]) }}</div>{% endif %}
+{% if s.image %}<div class="quiz-media">{{ embed_img(s.image) }}</div>{% endif %}
 </div>
 {% endcall %}

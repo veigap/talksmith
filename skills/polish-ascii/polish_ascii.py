@@ -19,6 +19,7 @@ See SKILL.md for the full contract.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -31,6 +32,7 @@ LEGACY_ASCII_LANG_TAGS = {"", "text", "diagram"}
 BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓]|->|==>|<-|=>")
 FENCE_OPEN = re.compile(r"^```(\w*)\s*$")
 FENCE_CLOSE = re.compile(r"^```\s*$")
+H1_ANY = re.compile(r"^# (?!#)")
 H1_SECTION = re.compile(r"^# (\d+)\.")
 H1_AGENDA = re.compile(r"^# (?:Agenda|Índice|Indice)\b", re.IGNORECASE)
 H1_CONCL = re.compile(r"^# (?:Conclusion|Conclusiones|Conclusions)\b", re.IGNORECASE)
@@ -125,7 +127,30 @@ def _strip_h2(line: str) -> str:
 
 
 def _is_section_heading(ln: str) -> bool:
-    return bool(H1_SECTION.match(ln) or H1_AGENDA.match(ln) or H1_CONCL.match(ln))
+    """Every H1 is a section boundary. The title only labels it — see `_section_of_h1`.
+
+    Detection must not depend on recognizing the title. Matching only the titles we know
+    made an unknown H1 (`# Cut material`, `# Open questions`, `# Thesis`) invisible, so the
+    preceding section leaked past it and blocks under it were attributed to that section's
+    last slide. Mirrors feedback_cycle.py, which matches any H1 and classifies afterwards.
+    """
+    return bool(H1_ANY.match(ln))
+
+
+def _section_of_h1(ln: str) -> str | int | None:
+    """Section id for an H1 line, or None when the heading carries no slides.
+
+    None covers Thesis, Open questions, Cut material, and any section the schema grows
+    later; `scan` skips ASCII found under those rather than minting a slide_id for it.
+    """
+    m = H1_SECTION.match(ln)
+    if m:
+        return int(m.group(1))
+    if H1_AGENDA.match(ln):
+        return 0
+    if H1_CONCL.match(ln):
+        return "c"
+    return None
 
 
 def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str, str]:
@@ -222,9 +247,10 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
     text = final_path.read_text()
     lines = text.splitlines()
 
-    section: str | int = 0  # 0 = pre-Agenda / Agenda; "c" = Conclusions
+    section: str | int | None = 0  # 0 = pre-Agenda / Agenda; "c" = Conclusions; None = no slides here
     slide = 0
     ascii_n = 0
+    skipped_non_slide = 0
 
     in_fence = False
     fence_lang: str | None = None
@@ -238,18 +264,12 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
         ln = lines[i]
         line_no = i + 1
         if not in_fence:
-            if H1_AGENDA.match(ln):
-                section, slide, ascii_n = 0, 0, 0
-            elif H1_CONCL.match(ln):
-                section, slide, ascii_n = "c", 0, 0
+            if _is_section_heading(ln):
+                # Any H1 ends the current section, whether or not we can name it.
+                section, slide, ascii_n = _section_of_h1(ln), 0, 0
             else:
-                m_sec = H1_SECTION.match(ln)
                 m_sld = H2_SLIDE.match(ln)
-                if m_sec:
-                    section = int(m_sec.group(1))
-                    slide = 0
-                    ascii_n = 0
-                elif m_sld:
+                if m_sld:
                     slide = int(m_sld.group(1))
                     ascii_n = 0
             m_f = FENCE_OPEN.match(ln)
@@ -274,6 +294,10 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                     elif is_legacy_candidate and payload.strip() and is_ascii_payload(payload):
                         accept = True
                         detection_mode = "legacy-heuristic"
+                    if accept and section is None:
+                        # Under Thesis / Open questions / Cut material — no slide to attach to.
+                        accept = False
+                        skipped_non_slide += 1
                     if accept:
                         ascii_n += 1
                         slide_id = f"s{section}-{slide}-{ascii_n}"
@@ -327,7 +351,7 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
             ctx["presentation_language"] = presentation_language
         b["context"] = ctx
 
-    return {"final_path": str(final_path), "blocks": blocks}
+    return {"final_path": str(final_path), "blocks": blocks, "skipped_non_slide": skipped_non_slide}
 
 
 def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]]) -> None:
@@ -399,6 +423,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
             print(f"  ⚠  {legacy_count} block(s) detected via legacy glyph-heuristic — re-tag opening fence as ``` ascii ``` to make them canonical")
         if doc_only_count:
             print(f"  ℹ  {doc_only_count} block(s) marked documentation-only (slide has Markdown image ref) — pipeline will skip them")
+        if result.get("skipped_non_slide"):
+            print(f"  ℹ  {result['skipped_non_slide']} block(s) skipped — under a heading that carries no slides (Thesis / Open questions / Cut material)")
         if result["blocks"]:
             print()
         for b in result["blocks"]:
@@ -426,6 +452,51 @@ def build_sidecar_content(ascii_payload: str, note_payload: str | None) -> str:
     if not body.endswith("\n"):
         body += "\n"
     return body
+
+
+# ── render idempotency: the ASCII hash stamped into the SVG ──────────────────
+# The one and only signal that decides re-render. It is stamped into the SVG at render
+# time, so it records what *that file* was drawn from, and stays true no matter what
+# later passes do to the `.ascii` sidecar (which `extract` overwrites before every
+# render). Filenames never decide: a slide_id is minted from position in final.md, so
+# it renames itself the moment slides move and can point at a diagram on another topic.
+SVG_HASH_MARKER = "talksmith-ascii-sha256"
+SVG_HASH_RE = re.compile(rf"^<!--\s*{SVG_HASH_MARKER}:\s*([0-9a-f]{{64}})\s*-->\s*$", re.MULTILINE)
+_XML_DECL_RE = re.compile(r"^<\?xml[^>]*\?>\s*")
+
+
+def ascii_digest(ascii_payload: str, note_payload: str | None) -> str:
+    """SHA-256 of exactly what `ascii-to-svg` reads: the sidecar (payload + ascii-note).
+
+    The note carries the render intent, so a changed note must re-render just as a changed
+    diagram does — hashing the sidecar rather than the payload alone gets that for free.
+    """
+    return hashlib.sha256(build_sidecar_content(ascii_payload, note_payload).encode()).hexdigest()
+
+
+def read_svg_digest(svg_path: Path) -> str | None:
+    """The ASCII digest an SVG was stamped with, or None if unstamped/unreadable."""
+    try:
+        m = SVG_HASH_RE.search(svg_path.read_text())
+    except (OSError, UnicodeDecodeError):
+        return None
+    return m.group(1) if m else None
+
+
+def stamp_svg_digest(svg_path: Path, digest: str) -> None:
+    """Write the digest into the SVG, replacing any previous stamp.
+
+    The marker goes after the XML declaration (nothing may precede it) and before the root
+    element, where a comment is legal and no SVG consumer will render it.
+    """
+    text = SVG_HASH_RE.sub("", svg_path.read_text()).lstrip("\n")
+    marker = f"<!-- {SVG_HASH_MARKER}: {digest} -->\n"
+    m = _XML_DECL_RE.match(text)
+    if m:
+        text = text[:m.end()] + marker + text[m.end():]
+    else:
+        text = marker + text
+    svg_path.write_text(text)
 
 
 def _load_plan(args: argparse.Namespace) -> tuple[Path, dict[str, Any]] | int:
@@ -686,12 +757,21 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         return 2
 
     written = 0
+    reused = 0
     for b in renderables:
         sid = b.get("slide_id", "")
         basename = b["render"]["svg_basename"]
         if not basename.endswith(".svg"):
             basename = f"{basename}.svg"
         stem = basename[:-4]
+        # Idempotency, in full: an SVG is reused iff it was stamped with the digest of the
+        # ASCII we are about to render. Nothing else is consulted — not the filename, not
+        # the fence form, not the sidecar (already overwritten by `extract` by now).
+        svg_path = images_dir / basename
+        digest = ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload"))
+        if svg_path.exists() and read_svg_digest(svg_path) == digest:
+            reused += 1
+            continue
         ctx = b.get("context") or {}
         payload: dict[str, Any] = {
             "ascii_file": str(images_dir / f"{stem}.ascii"),
@@ -710,8 +790,47 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         written += 1
 
     print(f"wrote args for {written} block(s) to {out_dir}", file=sys.stderr)
+    if reused:
+        print(f"  reused {reused} block(s) (SVG stamped with the same ASCII digest — no re-render)", file=sys.stderr)
     if skipped:
         print(f"  skipped {skipped} block(s) (documentation-only or no render mapping)", file=sys.stderr)
+    return 0
+
+
+def cmd_stamp_renders(args: argparse.Namespace) -> int:
+    """Stamp each freshly rendered SVG with the digest of the ASCII it was drawn from.
+
+    Must run after the renders and before the next pass — an unstamped SVG simply re-renders
+    (the safe direction), so a missed stamp costs work, never correctness.
+    """
+    loaded = _load_plan(args)
+    if isinstance(loaded, int):
+        return loaded
+    final_path, plan = loaded
+    images_dir = final_path.parent / "images"
+
+    stamped = 0
+    missing: list[tuple[str, Path]] = []
+    for b in plan.get("blocks") or []:
+        if b.get("documentation_only") or not b.get("render"):
+            continue
+        basename = b["render"]["svg_basename"]
+        if not basename.endswith(".svg"):
+            basename = f"{basename}.svg"
+        svg_path = images_dir / basename
+        if not svg_path.exists():
+            missing.append((b.get("slide_id", ""), svg_path))
+            continue
+        if not args.dry_run:
+            stamp_svg_digest(svg_path, ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload")))
+        stamped += 1
+
+    tag = "  [dry-run]" if args.dry_run else ""
+    print(f"stamped {stamped} SVG(s) with their ASCII digest{tag}")
+    if missing:
+        print(f"  ⚠  {len(missing)} render(s) produced no SVG — they will re-render next pass:", file=sys.stderr)
+        for sid, p in missing:
+            print(f"     {sid} → {p}", file=sys.stderr)
     return 0
 
 
@@ -766,6 +885,10 @@ def main(argv: list[str]) -> int:
     p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no final.md mutation)")
     _add_plan_args(p_extract)
     p_extract.set_defaults(func=cmd_extract)
+
+    p_stamp = sub.add_parser("stamp-renders", help="stamp each rendered SVG with the digest of the ASCII it was drawn from — the sole re-render signal for the next pass")
+    _add_plan_args(p_stamp)
+    p_stamp.set_defaults(func=cmd_stamp_renders)
 
     p_cleanup = sub.add_parser("cleanup", help="rewrite final.md fences to image refs from an annotated scan plan (no sidecar writing)")
     _add_plan_args(p_cleanup)
