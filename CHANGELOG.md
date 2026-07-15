@@ -12,6 +12,36 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.58.1] — 2026-07-15
+
+Hardening of the blind critic, from what a nine-diagram test run actually surfaced.
+
+### Fixed
+
+- **A defect naming something that isn't there had no legal outcome.** A critic reported a
+  gradient on a panel that was flat `#FFFFFF`. The illustrator is told to treat the verdict
+  as authoritative and never check it against the XML — so obeying meant fabricating an edit
+  for a non-existent element, and not obeying meant the arithmetic self-review the split
+  exists to kill. Every path was a rule violation. There is now an `unreproducible` verdict,
+  scoped tightly: it applies only when a defect's *subject* is verifiably absent from the
+  source, never when its *judgement* is merely one you'd rather overrule.
+- **A critic that couldn't load the standing rules failed silently.** Its output would carry
+  no rule violations, which reads exactly like a diagram that has none. It now returns
+  `missing_rules:` and the block is recorded `unresolved: critique_unavailable` rather than
+  passing.
+
+### Changed
+
+- **The critic's checklist learned the two glyph traps** that were the only real defects in
+  the whole test run: arrow characters rasterizing as tofu, and hyphens drawing as long
+  dashes. Both make the XML look perfect and the picture lie, so the blind critic is the only
+  thing that can catch them. Previously they had to be forced into "colour contrast".
+- **The standing-rule item no longer invites confabulated gradients** — the one false defect
+  of the run. Flat fills at slightly different greys and antialiased edges suggest depth at a
+  squint; a gradient means an unmistakable ramp. Paired with a general rule: report only what
+  you could point at with a finger. The renderer cannot catch a wrong defect, by design — it
+  acts on it.
+
 ## [0.58.0] — 2026-07-15
 
 Step 6 (Polish) reviewed diagrams it could not actually see, and re-rendered diagrams

@@ -37,7 +37,13 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
       - `slide_title`, `presentation_language` — from the args file.
       - `iteration` — 1 or 2. On iteration 2, also pass `previous_defects` (the iteration-1 list) so the critic can confirm they're actually fixed instead of recalling them.
 
-      The critic returns `clean`, a `defects:` list, `png_unreadable: <path>`, or `contaminated: <what>`. Take its verdict as authoritative — **do not "check its work" against the XML.** Second-guessing it with the coordinates you happen to have is exactly the contamination this step exists to remove; if you overrule the critic from the XML, you have simply restored the old broken loop with extra steps.
+      The critic returns `clean`, a `defects:` list, `png_unreadable: <path>`, `missing_rules: <path>`, or `contaminated: <what>`. Take its verdict as authoritative — **do not "check its work" against the XML.** Second-guessing it with the coordinates you happen to have is exactly the contamination this step exists to remove; if you overrule the critic from the XML, you have simply restored the old broken loop with extra steps.
+
+      `missing_rules` or `contaminated` mean the critique didn't happen — the critic couldn't load the standing rules, or it saw XML and is no longer independent. Neither is a defect in the diagram. Record the block `unresolved: critique_unavailable: <the critic's line>` and exit; do not fall back to critiquing it yourself, and do not treat the absence of reported defects as a clean verdict.
+
+      **When a defect names something that isn't there — `unreproducible`.** Rarely, a defect describes a construct the SVG does not contain (a production critic once reported a gradient on a panel that was flat `#FFFFFF`). You will notice, because you have the XML. This is the one case where the rule above needs a release valve, and without one every path is a violation: obeying literally means fabricating an edit for a thing that doesn't exist, and "checking the critic's work" is the contamination you were told to avoid.
+
+      So: if a defect names a construct that is **verifiably absent from the source** — not "I think it looks fine", but *the element is not in the file* — record it in the critique log as `unreproducible: <the defect line>` and **do not act on it**. Then handle the rest of the list normally. Do not use this to dismiss a defect you merely disagree with: "the critic says the label overlaps, but my coordinates say it clears" is exactly the arithmetic self-review this design exists to kill — the critic can see, and you cannot. The valve is only for a defect whose *subject* doesn't exist, never for one whose *judgement* you'd rather overrule.
 
       If the skill reported `png_deliverable: failed` (or the critic returns `png_unreadable`), record `unresolved: png_deliverable_failed` and exit the sub-loop — never fall back to critiquing the XML yourself. No pixels means no critique; that is a legitimate outcome, and a fabricated XML critique is worse than an honest gap.
 
@@ -120,6 +126,8 @@ Format:
 **Defects observed:** none
 **Verdict:** clean after 1 revision
 ```
+
+Record the critic's verdict **verbatim** on each iteration, including any line you logged `unreproducible` — the log is the only place a bad critique is visible after the fact, and a pattern of them across blocks is a signal about the critic, not about the diagrams.
 
 If a block ends `unresolved` (hit the 2-iteration cap), the last iteration records the surviving defects and the verdict is `unresolved — see surviving defects above`. If the PNG companion never materialized, the run section records `png_deliverable: failed` and the verdict is `unresolved — no pixels available for visual review`.
 
