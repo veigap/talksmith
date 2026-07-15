@@ -13,6 +13,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.59.1] — 2026-07-15
+
+Post-restructure audit sweep: three parallel audits (cross-reference integrity, stale claims, Python bug hunt with fixture repros) over the whole plugin; every confirmed finding fixed.
+
+### Fixed
+- **`polish_ascii.py` — seven verified bugs:** a fence opener with a non-word tag or info string (```` ```c++ ````, ```` ```python title=x ````) flipped fence parity and could mint a phantom block spanning the next slide's headings (structural corruption on `cleanup`); a mid-line `-->` in an `ascii-note` (e.g. `emphasize: the input --> model arrow`) truncated the note; an in-place payload edit passed the stale-plan guard and was silently reverted (guard now compares payload byte-for-byte → exit 3); slide-boundary detection read `#`-prefixed lines *inside* fences as headings, breaking `documentation_only` and context extraction; a stale `apply` wrote sidecars before aborting (now validates first — exit 3 writes nothing); the `⇒` arrow glyph documented in the legacy heuristic wasn't detected; scan plans stored a cwd-relative `final_path` that `prepare-render-args` mis-anchored from another cwd (now resolved absolute).
+- **`merge_draft.py`:** `apply-auto` landed a slide's retitle first, orphaning that slide's remaining edits on unnumbered slides (anchored by the pre-change title); retitles now apply last.
+- **`pptx_inventory.py`:** the SVG-only picture fallback was dead code — link-only / SVG-only pictures were silently dropped from the inventory; the fallback is now reachable.
+- **Stale docs:** `editor.md`/`schemas/draft.md` documented the no-op legacy `<!-- reveal: sequential -->` instead of the real opt-out `<!-- reveal: together -->`; `principles.md` justified the title budget with the retired Roboto Mono face; the strict spec still attributed the icon picture-shape format to Marp, overstated `template-previews/` coverage, and carried two malformed relative links; one pointer targeted `config/feedback-backlog.md` for a section that lives in `schemas/feedback-backlog.md`; three pointers named a README heading that doesn't exist (*One shared repo per subject* → *One repo per subject*); `polish-ascii` SKILL.md's "all subcommands are idempotent" and exit-code contract corrected to match actual behavior.
+- **Dev-data leak:** `config/learnings.md` in the plugin repo carried a real learning entry from a development talk (already promoted into the strict spec's §15 meta-rule); reset to the canonical empty form.
+
 ## [0.59.0] — 2026-07-15
 
 A plugin-wide **prose diet + single-source restructure**. Every spec file is LLM context, and an audit found the same facts stated in 2–9 places, plus large rationale/history blocks in high-frequency files. This release establishes an **ownership map** (now in the dev `CLAUDE.md`): every fact lives in exactly one owning file — the catalog owns template Match/Format, `schemas/slide-model.md` owns field contracts, the strict prompt owns EMU recipes, `diagram-critic.md` owns the blind-critique rationale, each skill owns its own mechanics — and every other file points there. ~17k words (~22k tokens) of restatement removed; **no rule, CLI contract, or schema form was dropped**, and the regenerated `tests/.../style-reference.html` is byte-identical.

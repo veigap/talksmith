@@ -50,7 +50,7 @@ The plan JSON has this shape:
 
 ```json
 {
-  "final_path": "talks/<Talk>/final.md",
+  "final_path": "/abs/path/to/talks/<Talk>/final.md",
   "blocks": [
     {
       "slide_id": "s1-2-1",
@@ -117,7 +117,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 
-`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk; it does **not** stamp, so pair it with `stamp-renders` when you've rendered by hand. All subcommands are idempotent.
+`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk; it does **not** stamp, so pair it with `stamp-renders` when you've rendered by hand. Read-only subcommands (`scan`, `inspect-intents`, `annotate-renders`, `prepare-render-args`) and `extract`/`stamp-renders` are idempotent; a second `cleanup`/`apply` with the same plan exits 3 by design (the fences are gone — re-run `scan` for a fresh plan).
 
 ## Output
 
@@ -187,4 +187,4 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 
 - `0` — success.
 - `2` — malformed input (missing file, plan JSON missing required fields, line numbers out of range). Also `prepare-render-args` when the plan's `final.md` is absent (stale plan / different session mount) or a renderable block's `.ascii` sidecar is missing (run `extract` first) — it validates both up front and writes **no** args on failure, rather than silently emitting args that point at nothing.
-- `3` — `cleanup` / `apply` aborted on a **stale plan**: `final.md` changed since `scan`, so a block's recorded line numbers no longer bracket an ASCII fence. Nothing is written (the guard runs before the single atomic write). Re-run `scan` and redo the annotate/extract/cleanup pass.
+- `3` — `cleanup` / `apply` aborted on a **stale plan**: `final.md` changed since `scan` — a block's recorded lines no longer bracket an ASCII fence, **or the payload between them differs from the plan** (an in-place edit preserves line count, so the payload is checked byte-for-byte). Nothing is written — `apply` validates the whole plan before writing any sidecar. Re-run `scan` and redo the annotate/extract/cleanup pass.

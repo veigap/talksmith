@@ -29,9 +29,16 @@ from typing import Any
 
 CANONICAL_ASCII_TAG = "ascii"
 LEGACY_ASCII_LANG_TAGS = {"", "text", "diagram"}
-BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓]|->|==>|<-|=>")
-FENCE_OPEN = re.compile(r"^```(\w*)\s*$")
+BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓⇒⇐⇑⇓]|->|==>|<-|=>")
+# Any ```-prefixed line toggles fence state (mirrors _pptxlib.FENCE). The old `^```(\w*)\s*$`
+# failed to match openers like ```c++ or ```python title=x, flipping fence parity: the block's
+# closing ``` then opened a phantom fence that swallowed following slides. Group 1 is the full
+# info string; scan() takes its first token as the language tag.
+FENCE_OPEN = re.compile(r"^```(.*)$")
 FENCE_CLOSE = re.compile(r"^```\s*$")
+# End-of-line comment closer (mirrors _pptxlib.COMMENT_CLOSE): a mid-line `-->` — e.g. an
+# `emphasize: the input --> model arrow` note line — must not terminate the comment.
+COMMENT_CLOSE = re.compile(r"(?<!-)-->\s*$")
 H1_ANY = re.compile(r"^# (?!#)")
 H1_SECTION = re.compile(r"^# (\d+)\.")
 H1_AGENDA = re.compile(r"^# (?:Agenda|Índice|Indice)\b", re.IGNORECASE)
@@ -153,14 +160,39 @@ def _section_of_h1(ln: str) -> str | int | None:
     return None
 
 
-def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str, str]:
+def _fence_line_mask(lines: list[str]) -> list[bool]:
+    """True for every line inside (or delimiting) a fenced code block.
+
+    Heading/boundary detection must skip these — a payload line like `# legend: ...`
+    inside an ASCII fence is content, not a structural boundary. Same parity walk scan() uses.
+    """
+    mask = [False] * len(lines)
+    in_f = False
+    for i, ln in enumerate(lines):
+        if not in_f:
+            if FENCE_OPEN.match(ln):
+                in_f = True
+                mask[i] = True
+        else:
+            mask[i] = True
+            if FENCE_CLOSE.match(ln):
+                in_f = False
+    return mask
+
+
+def _extract_block_context(lines: list[str], ascii_start_line: int, fence_mask: list[bool] | None = None) -> dict[str, str]:
     """Walk back from the ASCII block (1-based line) to gather slide + section context."""
     start_idx = ascii_start_line - 1  # 0-based
+    if fence_mask is None:
+        fence_mask = _fence_line_mask(lines)
 
-    # Walk back to find the most recent H2 (slide), then the most recent section H1.
+    # Walk back to find the most recent H2 (slide), then the most recent section H1 —
+    # skipping lines inside fences (a `# ...` line in an earlier diagram is not a heading).
     slide_idx = -1
     section_idx = -1
     for i in range(start_idx - 1, -1, -1):
+        if fence_mask[i]:
+            continue
         ln = lines[i]
         if slide_idx < 0 and H2_SLIDE.match(ln):
             slide_idx = i
@@ -179,7 +211,7 @@ def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str,
         # If no slide above us, scan to next H2 or H1 below the section heading.
         if slide_idx < 0:
             for j in range(section_idx + 1, len(lines)):
-                if H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j]):
+                if not fence_mask[j] and (H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j])):
                     end_idx = j
                     break
         for j in range(section_idx + 1, end_idx):
@@ -210,13 +242,13 @@ def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str,
     if slide_idx >= 0:
         slide_end = len(lines)
         for j in range(slide_idx + 1, len(lines)):
-            if H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j]):
+            if not fence_mask[j] and (H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j])):
                 slide_end = j
                 break
         # Walk H3 fields within the slide.
         j = slide_idx + 1
         while j < slide_end:
-            m = _H3.match(lines[j])
+            m = _H3.match(lines[j]) if not fence_mask[j] else None
             if not m:
                 j += 1
                 continue
@@ -224,7 +256,7 @@ def _extract_block_context(lines: list[str], ascii_start_line: int) -> dict[str,
             body_start = j + 1
             body_end = slide_end
             for k in range(j + 1, slide_end):
-                if _H3.match(lines[k]):
+                if not fence_mask[k] and _H3.match(lines[k]):
                     body_end = k
                     break
             body = lines[body_start:body_end]
@@ -275,7 +307,9 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
             m_f = FENCE_OPEN.match(ln)
             if m_f:
                 in_fence = True
-                fence_lang = m_f.group(1).lower()
+                # First token of the info string is the language tag (```python title=x → "python").
+                info = m_f.group(1).strip().lower()
+                fence_lang = info.split()[0] if info else ""
                 fence_open_line = line_no
                 buf = []
         else:
@@ -311,7 +345,7 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                         if j < len(lines) and lines[j].lstrip().startswith(NOTE_OPEN):
                             note_start = j + 1
                             k = j
-                            while k < len(lines) and "-->" not in lines[k]:
+                            while k < len(lines) and not COMMENT_CLOSE.search(lines[k]):
                                 k += 1
                             if k < len(lines):
                                 note_end = k + 1
@@ -340,12 +374,13 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                 buf.append(ln)
         i += 1
 
-    _annotate_documentation_only(lines, blocks)
+    fence_mask = _fence_line_mask(lines)
+    _annotate_documentation_only(lines, blocks, fence_mask)
 
     # Per-block context (mechanical extraction so callers don't re-parse final.md per render).
     thesis = _extract_thesis(lines)
     for b in blocks:
-        ctx = _extract_block_context(lines, b["ascii"]["start_line"])
+        ctx = _extract_block_context(lines, b["ascii"]["start_line"], fence_mask)
         ctx["talk_thesis"] = thesis
         if presentation_language:
             ctx["presentation_language"] = presentation_language
@@ -354,15 +389,18 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
     return {"final_path": str(final_path), "blocks": blocks, "skipped_non_slide": skipped_non_slide}
 
 
-def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]]) -> None:
+def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]], fence_mask: list[bool] | None = None) -> None:
     """Flag each ASCII block as documentation_only when its containing slide has a Markdown image ref.
 
     Slide scope = lines between the most recent H1/H2 boundary at-or-before the block and the next
     H1/H2 boundary after it. An image ref anywhere in that scope (outside the ASCII block lines
     themselves and outside `<!-- ascii-source: ... -->` HTML comments left by prior Polish passes)
-    means the block is documentation-only — the pipeline must skip it.
+    means the block is documentation-only — the pipeline must skip it. Boundary detection skips
+    lines inside fences (a `# ...` payload line is not a heading).
     """
-    boundaries = [i + 1 for i, ln in enumerate(lines) if H1_OR_H2.match(ln)]
+    if fence_mask is None:
+        fence_mask = _fence_line_mask(lines)
+    boundaries = [i + 1 for i, ln in enumerate(lines) if H1_OR_H2.match(ln) and not fence_mask[i]]
     boundaries.append(len(lines) + 1)
 
     def slide_range(line_no: int) -> tuple[int, int]:
@@ -383,7 +421,7 @@ def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]])
     while i < len(lines):
         if "<!-- ascii-source:" in lines[i]:
             j = i
-            while j < len(lines) and "-->" not in lines[j]:
+            while j < len(lines) and not COMMENT_CLOSE.search(lines[j]):
                 j += 1
             ignored_ranges.append((i + 1, min(j + 1, len(lines))))
             i = j + 1
@@ -410,7 +448,9 @@ def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]])
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    final_path = Path(args.final_path)
+    # Resolve so the plan's final_path is absolute — `prepare-render-args` may run from a
+    # different cwd and re-anchors off this field.
+    final_path = Path(args.final_path).resolve()
     if not final_path.exists():
         print(f"error: final.md not found: {final_path}", file=sys.stderr)
         return 2
@@ -561,6 +601,44 @@ def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tu
     return written, unchanged, skipped_no_render, sidecar_records
 
 
+def _stale_error(lines: list[str], b: dict[str, Any]) -> tuple[int, str] | None:
+    """Return (exit_code, message) when block `b`'s recorded lines no longer match final.md.
+
+    Three checks: line range in bounds (2), fences still bracket the range (3), and the payload
+    between them still matches the plan byte-for-byte (3) — an in-place edit preserves line count
+    and fence positions, so without the payload check the guard silently reverts the user's edit.
+    """
+    start_idx = b["ascii"]["start_line"] - 1
+    end_idx = b["ascii"]["end_line"] - 1
+    if start_idx < 0 or end_idx >= len(lines):
+        return 2, (f"line range out of bounds for {b['slide_id']}: {start_idx + 1}-{end_idx + 1} "
+                   f"(file has {len(lines)} lines)")
+    if not lines[start_idx].lstrip().startswith("```") or lines[end_idx].strip() != "```":
+        return 3, (f"stale plan — {b['slide_id']} line {start_idx + 1} no longer opens an ASCII fence; "
+                   f"re-run `scan` (final.md changed since the plan was captured)")
+    if lines[start_idx + 1:end_idx] != b["ascii"]["payload"].splitlines():
+        return 3, (f"stale plan — {b['slide_id']} payload at lines {start_idx + 2}-{end_idx} differs "
+                   f"from the plan; re-run `scan` (final.md changed since the plan was captured)")
+    return None
+
+
+def _renderable(b: dict[str, Any]) -> bool:
+    return not b.get("documentation_only") and bool(b.get("render"))
+
+
+def _assert_plan_fresh(final_path: Path, plan: dict[str, Any]) -> None:
+    """Fail loudly (exit 2/3) if any renderable block's recorded lines have drifted — writes nothing."""
+    lines = final_path.read_text().splitlines(keepends=False)
+    for b in plan.get("blocks") or []:
+        if not _renderable(b):
+            continue
+        err = _stale_error(lines, b)
+        if err:
+            code, msg = err
+            print(f"error: {msg}", file=sys.stderr)
+            raise SystemExit(code)
+
+
 def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int]:
     """Rewrite final.md fences. Returns (rewritten, skipped_no_render)."""
     blocks = plan.get("blocks") or []
@@ -586,15 +664,14 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         alt = render.get("alt") or b["slide_id"]
         start_idx = b["ascii"]["start_line"] - 1
         end_idx = b["ascii"]["end_line"] - 1
-        if start_idx < 0 or end_idx >= len(lines):
-            print(f"error: line range out of bounds for {b['slide_id']}: {start_idx + 1}-{end_idx + 1} (file has {len(lines)} lines)", file=sys.stderr)
-            raise SystemExit(2)
-        # Stale-plan guard: the plan's line numbers must still bracket an ASCII fence. If final.md
-        # changed since `scan`, they won't — abort (exit 3) rather than silently rewrite wrong lines.
-        # Nothing has been written yet (the file is written once, after the loop), so this is safe.
-        if not lines[start_idx].lstrip().startswith("```") or lines[end_idx].strip() != "```":
-            print(f"error: stale plan — {b['slide_id']} line {start_idx + 1} no longer opens an ASCII fence; re-run `scan` (final.md changed since the plan was captured)", file=sys.stderr)
-            raise SystemExit(3)
+        # Stale-plan guard: bounds, fences, AND payload must still match the plan. Aborts (exit 2/3)
+        # rather than silently rewriting wrong or user-edited lines. Nothing has been written yet
+        # (the file is written once, after the loop), so aborting here is safe.
+        err = _stale_error(lines, b)
+        if err:
+            code, msg = err
+            print(f"error: {msg}", file=sys.stderr)
+            raise SystemExit(code)
         # Neutralize any `-->` inside the ASCII so it can't close the `<!-- ascii-source: … -->`
         # comment early (which would leak the rest of the diagram into the visible body, and throw
         # off the doc-only comment-range scan). The `.ascii` sidecar keeps the exact source; this
@@ -840,6 +917,9 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
+    # Validate the plan against final.md BEFORE writing sidecars, so a stale plan aborts with
+    # nothing written (the exit-3 contract) instead of leaving stale .ascii sidecars behind.
+    _assert_plan_fresh(final_path, plan)
     written, unchanged, skipped_no_render, _ = _write_sidecars(final_path, plan, args.dry_run)
     rewritten, _ = _rewrite_final(final_path, plan, args.dry_run)
     tag = "  [dry-run]" if args.dry_run else ""

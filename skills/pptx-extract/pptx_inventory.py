@@ -698,21 +698,25 @@ def _extract_images(slide, images_dir: Path, order: int) -> list[dict]:
     content_ordinal = 0
     for pic in pictures:
         raster_path = L.pic_raster_target(pic, part)
-        if not raster_path:
-            continue
-        try:
-            img = pic.image
-        except (AttributeError, KeyError):
-            continue
-
-        # SVG twin (via lxml drop-through) — used for icon-content sniffing.
+        # SVG twin (via lxml drop-through) — icon-content sniffing + the SVG-only fallback.
         svg_path = L.pic_svg_target(pic, part)
         svg_blob = L.pic_svg_blob(pic, part) if svg_path else None
 
-        # Prefer the raster; only fall back to SVG if there's no raster.
+        # Prefer the raster; fall back to SVG when the pic carries only an svgBlip
+        # (an embedded raster is absent — e.g. an SVG-only or link-only picture).
         picked = raster_path if raster_path else svg_path
         if not picked:
             continue
+        img = None
+        if raster_path:
+            try:
+                img = pic.image
+            except (AttributeError, KeyError):
+                # Raster declared but unreadable (external r:link, missing part) —
+                # fall back to the SVG twin if one exists, else drop the pic.
+                if not svg_blob:
+                    continue
+                picked = svg_path
 
         # Filter 1: template basename regex.
         if L.TEMPLATE_MEDIA_RE.search(picked):
@@ -727,10 +731,12 @@ def _extract_images(slide, images_dir: Path, order: int) -> list[dict]:
             continue
 
         # Load the picked blob.
-        if picked == raster_path:
+        if picked == raster_path and img is not None:
             blob = img.blob
         else:
-            blob = svg_blob or img.blob
+            blob = svg_blob or (img.blob if img is not None else None)
+        if blob is None:
+            continue
 
         # Filter 4: PNG-only icon by intrinsic size.
         if picked.lower().endswith(".png") and L.is_png_icon(blob):

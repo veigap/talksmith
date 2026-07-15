@@ -301,7 +301,12 @@ def cmd_apply_auto(args) -> int:
 
     applied, skipped, failed = 0, 0, 0
     reports: list[str] = []
-    for change in diff.get("changes", []):
+    # Apply retitles LAST (stable sort): every change carries the slide's PRE-change title
+    # as its anchor, so landing a retitle first orphans the same slide's remaining edits —
+    # they re-plan against the renamed slide and skip with "no draft.md slide anchor"
+    # (the slide-number fallback can't rescue unnumbered H2 slides).
+    changes = sorted(diff.get("changes", []), key=lambda c: 1 if c.get("kind") == "title" else 0)
+    for change in changes:
         # Re-plan against the CURRENT draft each time (line numbers shift).
         tree = L.parse_md_slides(str(draft))
         action = _plan_action(change, tree, talk_root)
