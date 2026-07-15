@@ -104,7 +104,7 @@ The orchestrator picks one of three modes; the Editor's authoring sequence insid
 You don't **have** to tag templates — the render classifies each slide from its content — but **when you have a clear intent for a slide, you may record it** as an optional metadata line right under the slide's `##` heading:
 
 - `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `card-row`), for when the content is ambiguous or you specifically want that treatment;
-- `<!-- reveal: sequential -->` — on an enumeration slide, ask the render to reveal the items one at a time.
+- `<!-- reveal: together -->` — opt **out** of progressive reveal on this slide (sequential reveal is the default; the HTML deck steps through enumerated items on click). The legacy `sequential` value still parses but is a no-op.
 - `<!-- aside: [left|right] ![alt](path) -->` — give the slide a **full-bleed image column** down one edge (`right` if you don't say). The image is **atmosphere, not information**: it reinforces the point's tone while the audience reads the text beside it. The column crops to fill, so never put something that must be *read* there — a diagram, chart, or screenshot the audience needs belongs in the slide body as a normal `![alt](path)` ref, which the render gives to a template that owns its image. Don't add an aside to a slide that already carries an image ref.
 
 The render honours these hints; without them it classifies from content. **They are optional, never required** — add one only where the intent actually matters. Writing each slide to fit *some* category (hinted or not) keeps the deck varied and prevents "title + a wall of bullets" mush; when a slide resists every category, it's usually carrying two ideas — split it.
@@ -134,7 +134,7 @@ Per-round loop:
           --draft talks/<Talk>/draft.md --line <N> \
           --resolution "<one-line summary of what changed>"
       ```
-   d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `config/feedback-backlog.md` → *Tagging vocabulary*).
+   d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md` → *Tagging vocabulary*).
       ```bash
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
           --draft talks/<Talk>/draft.md \

@@ -481,7 +481,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 
 - 240 image assets total: **147 PNG** + **93 SVG**.
 - Naming: `image-<slide>-<n>.{png,svg}` — one-to-one mapped to the slide they appear on.
-- **Most icons ship as PNG + SVG pairs** (PNG is the rasterized fallback). When generating, prefer SVG; emit PNG alongside as a Marp-compatibility fallback.
+- **Most icons ship as PNG + SVG pairs** (PNG is the rasterized fallback). When generating, prefer SVG; emit PNG alongside so viewers without SVG support still render the mark.
 - **No image is used full-bleed** (zero slides with an image ≥ 90% canvas). All images are inset, sized to a content column, and aligned to adjacent text.
 - Image counts per slide: most 1–4; max 11 (slide 44).
 - No captions exist as separate text — image meaning is carried by the adjacent title or card.
@@ -518,7 +518,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 | **image-grid** | 14 | 3, 4, 10, 31, 33–38, 44, 46, 49, 50 | 3+ images arranged in row or grid; each typically a PNG+SVG pair |
 | **closing-cta** | 1 | 53 | Title + 4-card grid of next-step resources |
 
-### 13.1 Layout files — Marp-style, one per slide
+### 13.1 Layout files — one bespoke layout per slide
 
 The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) named `Slide 1 master` … `Slide N master` — i.e. **one bespoke layout per slide**. Layouts are *not* reusable templates with placeholders; they are slide-specific carriers. Downstream `md-to-deck` should **generate shape geometry directly** rather than expect named placeholders.
 
@@ -664,7 +664,7 @@ When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and 
   effect: <what changes downstream if the presenter accepts the default>
 ```
 
-The presenter picks one. The renderer records the resolution in [`config/feedback-backlog.md`](feedback-backlog.md) with the tag `pre-emit-audit` so the next Talk in the working directory can carry the rule forward via the Step-8 learnings promotion.
+The presenter picks one. The renderer records the resolution in the working directory's `config/feedback-backlog.md` with the tag `pre-emit-audit` so the next Talk in the working directory can carry the rule forward via the Step-8 learnings promotion.
 
 **Never silently compensate.** A renderer that absorbs an ambiguity by picking the plainer layout, dropping the emoji, or shrinking the font is exactly the renderer that ships the regression this audit exists to prevent.
 
@@ -745,7 +745,7 @@ concept (the library is ~3000 icons); the 15 are the common cases:
 
 ### 17.4 How to render an icon shape in XML
 
-The picture shape format Marp emits has both a PNG fallback and an SVG primary via `<asvg:svgBlip>`. **A generator must emit both** so the icon renders in PowerPoint *and* in LibreOffice/Keynote/Google Slides:
+The picture shape carries both a PNG fallback and an SVG primary via `<asvg:svgBlip>`. **A generator must emit both** so the icon renders in PowerPoint *and* in LibreOffice/Keynote/Google Slides:
 
 ```xml
 <p:pic>
@@ -836,7 +836,7 @@ Codepoint detection ranges to scan: `U+1F300`–`U+1FAFF`, `U+2600`–`U+27BF`, 
 | **B. Separator banner** | 3 | **Discard** — never appears in a generated deck. Its only job is to mark the boundary in the template. |
 | **C. Layout reference (do not copy content)** | 4 – 15 | **Discard the slides themselves.** Use them only as visual recipes; build your own slides from the matching `§` recipe and your real content. |
 
-Rendered previews live in [`template-previews/base-template/slide-NN.png`](template-previews/base-template/) — one per slide.
+Rendered previews live in [`template-previews/base-template/slide-NN.png`](template-previews/base-template/) — slides 1–13 (14–15 have no previews yet).
 
 ### 18.1 Slide-by-slide
 
@@ -893,9 +893,9 @@ The whole guide is small enough to serve as the body of an `md-to-deck` skill, a
 | [`config/template.pptx`](template.pptx) | The original 53-slide brand reference deck. Read-only. | Only when verifying a measurement not in the spec, or copying a binary asset (cover logo). |
 | [`config/pptx-prompt.md`](pptx-prompt.md) | This file — canonical visual specification. | **Always.** Read end-to-end on entry. |
 | [`config/base-template.pptx`](base-template.pptx) | Working foundation (15 slides): cover + agenda with `{{placeholders}}`, red separator (slide 3), the layout-example slides, and a section-divider example (slide 13). | **Always.** Open as the starting deck; substitute placeholders; discard slides 3–15. |
-| [`config/template-previews/`](template-previews/) | Rendered PNGs of every template.pptx and base-template.pptx slide + icon catalog. | Visual cross-check when a recipe is ambiguous in prose. |
+| [`config/template-previews/`](template-previews/) | Rendered PNGs of base-template.pptx slides 1–13 + the icon catalog. | Visual cross-check when a recipe is ambiguous in prose. |
 | [`config/template-previews/icons/`](template-previews/icons/) | 15 branded line-art icon PNG previews — visual reference only; render assets are fetched by name per §17.6. | When picking an icon per §17.5. |
-| [`config/profile.md`](profile.md) | Presenter's subject-level defaults — Subject, Presenter, Audience, Default duration, Presentation language. | At cover/agenda substitution time (§19.3 stages 1–2). |
+| `config/profile.md` (working directory) | Presenter's subject-level defaults — Subject, Presenter, Audience, Default duration, Presentation language. | At cover/agenda substitution time (§19.3 stages 1–2). |
 | `talks/<Talk>/final.md` | The deliverable Markdown. Frontmatter + structured sections. | The content source. |
 
 ### 19.2 Required reading order on entry

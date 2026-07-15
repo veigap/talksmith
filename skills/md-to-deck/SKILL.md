@@ -114,7 +114,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 | Keynote-safe image extensions | Every `![alt](path)` uses `.png`/`.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote drops them on import. | Stop, list every offending ref. `.svg` → re-dispatch Illustrator for a `.png` companion + Editor's Step-6(b) rewrite; `.webp/.avif/.heic` → re-dispatch Editor (rasterizes inline). |
 | No remote image refs | No `![...](http(s)://...)` refs (pptx skill behavior on URLs is undefined) | Stop and ask the presenter to download into `images/` or explicitly accept the risk. |
 | Base template | `<base_template_path>` exists (style-resolved) | Stop and ask. |
-| Visual spec | `<spec_path>` exists (strict §1–§20, free-form §1–§4) | Stop and ask — the spec is the contract. |
+| Visual spec | `<spec_path>` exists (strict §1–§15 + §17–§20, free-form §1–§4) | Stop and ask — the spec is the contract. |
 | Icon capability *(pptx-strict only)* | Icons are fetched by name at render time via `icon_fetch.py` (network on first fetch, cached under `output/.icons/`) — see `pptx-strict/pptx-prompt.md` §17.6. Free-form makes icons optional (§3.2). | Stop and ask — the no-emoji rule needs them. |
 
 ### Inputs (Path A)

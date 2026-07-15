@@ -23,7 +23,7 @@ Five roles:
 
 ## Philosophy — one shared repo per subject
 
-**One repo per subject** (course, recurring workshop, research area); `talks/` accumulates class by class, and all Talks share the `config/profile.md` defaults set in Step 0.5. The Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. New subject = new repo. Full rationale: [`README.md`](README.md) → *One shared repo per subject*.
+**One repo per subject** (course, recurring workshop, research area); `talks/` accumulates class by class, and all Talks share the `config/profile.md` defaults set in Step 0.5. The Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. New subject = new repo. Full rationale: [`README.md`](README.md) → *One repo per subject*.
 
 ## Session start — mandatory loads
 
