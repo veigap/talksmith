@@ -1,0 +1,62 @@
+<!-- talksmith-ascii-sha256: 35aee9916be46443a704010a6777da50d8cfcd75b357b131f245cb37a5d9989b -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 380" role="img">
+  <title>Anatomía de un SKILL.md</title>
+  <desc>Slide-ejemplo que aterriza dos cosas a la vez: la anatomía de una Skill y el beat de archivos .md + metadata de la sección 6.</desc>
+
+  <rect x="0" y="0" width="680" height="380" fill="#ffffff"/>
+
+  <!-- ===== documento SKILL.md ===== -->
+  <rect x="18" y="18" width="452" height="288" rx="5" fill="#ffffff" stroke="#D8D4D4" stroke-width="1"/>
+
+  <!-- barra de título del archivo -->
+  <path d="M 18 44 V 23 A 5 5 0 0 1 23 18 H 465 A 5 5 0 0 1 470 23 V 44 Z" fill="#F2F2F2"/>
+  <line x1="18" y1="44" x2="470" y2="44" stroke="#D8D4D4" stroke-width="1"/>
+  <text x="34" y="35" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" font-weight="bold" fill="#1F1E1E">SKILL.md</text>
+
+  <!-- ===== zona 1: metadata / header (YAML) ===== -->
+  <rect x="18" y="44" width="452" height="132" fill="#F2EEEE"/>
+  <rect x="24" y="89" width="2.5" height="52" fill="#DA1B2E"/>
+
+  <text x="34" y="64" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#6A737D">---</text>
+
+  <text font-family="'DejaVu Sans Mono', monospace" font-size="11.5">
+    <tspan x="34" y="82" font-weight="bold" fill="#1F1E1E">name:</tspan><tspan x="76" y="82" fill="#3B3535">reporte-semanal</tspan>
+  </text>
+
+  <text font-family="'DejaVu Sans Mono', monospace" font-size="11.5">
+    <tspan x="34" y="100" font-weight="bold" fill="#DA1B2E">description:</tspan><tspan x="124" y="100" fill="#3B3535">Genera el pulso semanal de mercado a partir</tspan>
+  </text>
+  <text x="48" y="118" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">de la carpeta fuentes/ de la semana. Usar cuando pidan</text>
+  <text x="48" y="136" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">"reporte semanal" o "pulso de la semana".</text>
+
+  <text x="34" y="154" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#6A737D">---</text>
+
+  <!-- separador de zonas -->
+  <line x1="18" y1="176" x2="470" y2="176" stroke="#D8D4D4" stroke-width="1"/>
+
+  <!-- ===== zona 2: cuerpo (Markdown) ===== -->
+  <text font-family="'DejaVu Sans Mono', monospace" font-size="11.5">
+    <tspan x="34" y="196" fill="#6A737D">#</tspan><tspan x="48" y="196" font-weight="bold" fill="#1F1E1E">Reporte semanal</tspan>
+  </text>
+  <text x="34" y="232" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">1. Leé TODOS los archivos de fuentes/ y consolidá</text>
+  <text x="55" y="250" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">por empresa.</text>
+  <text x="34" y="268" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">2. Generá el reporte con esta estructura exacta...</text>
+  <text x="34" y="286" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3B3535">3. Guardá con sufijo -new (no pises el original).</text>
+
+  <!-- ===== etiquetas laterales ===== -->
+  <line x1="482" y1="48" x2="482" y2="172" stroke="#D8D4D4" stroke-width="1.5"/>
+  <line x1="482" y1="110" x2="492" y2="110" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="498" y="106" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#1F1E1E">METADATA (YAML)</text>
+  <text x="498" y="120" font-family="Helvetica, Arial, sans-serif" font-size="9.5" fill="#3B3535">qué es · cuándo se activa</text>
+
+  <line x1="482" y1="180" x2="482" y2="302" stroke="#D8D4D4" stroke-width="1.5"/>
+  <line x1="482" y1="241" x2="492" y2="241" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="498" y="237" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#1F1E1E">CUERPO (Markdown)</text>
+  <text x="498" y="251" font-family="Helvetica, Arial, sans-serif" font-size="9.5" fill="#3B3535">qué hace · las instrucciones</text>
+
+  <!-- ===== callout focal ===== -->
+  <rect x="18" y="322" width="644" height="42" rx="5" fill="#F7BBC1"/>
+  <text font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">
+    <tspan x="34" y="348">La </tspan><tspan font-family="'DejaVu Sans Mono', monospace" font-weight="bold" fill="#1F1E1E">description</tspan><tspan> decide cuándo se activa la Skill — por sentido, no por palabra clave.</tspan>
+  </text>
+</svg>

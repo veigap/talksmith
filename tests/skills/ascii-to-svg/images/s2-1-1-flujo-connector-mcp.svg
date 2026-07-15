@@ -1,0 +1,44 @@
+<!-- talksmith-ascii-sha256: 433ec343292fd8720471c200a293e81790b90b6dd86b91463ef4915078cde864 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 708 94" role="img">
+  <title>Conectores y MCP: las "manos" del chat</title>
+  <desc>Desarmar el miedo: conectar un servicio externo le da "manos" al chat, sin programar nada.</desc>
+
+  <defs>
+    <marker id="ah" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#3B3535"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="708" height="94" fill="#ffffff"/>
+
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" text-anchor="middle">
+
+    <!-- Box A — Chat / agente -->
+    <rect x="14" y="14" width="152" height="66" rx="5" fill="#F2F2F2" stroke="#D8D4D4" stroke-width="1.2"/>
+    <text x="90" y="52" font-size="14" fill="#3B3535">Chat / agente</text>
+
+    <!-- Box B — Connector (focal) -->
+    <rect x="278" y="14" width="152" height="66" rx="5" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="1.8"/>
+    <text x="354" y="44" font-size="14" fill="#1F1E1E">Conector</text>
+    <text x="354" y="60" font-size="11" fill="#DA1B2E">1 clic</text>
+
+    <!-- Box C — Servicio externo -->
+    <rect x="542" y="14" width="152" height="66" rx="5" fill="#F2F2F2" stroke="#D8D4D4" stroke-width="1.2"/>
+    <text x="618" y="44" font-size="14" fill="#3B3535">Servicio externo</text>
+    <text x="618" y="60" font-size="11" fill="#6A737D">Gmail / Calendar</text>
+
+    <!-- Gap 1: Chat -> Connector -->
+    <text x="222" y="30" font-size="10.5" fill="#3B3535">pide datos</text>
+    <line x1="169" y1="39" x2="277" y2="39" stroke="#3B3535" stroke-width="1.4" marker-end="url(#ah)"/>
+    <line x1="275" y1="59" x2="167" y2="59" stroke="#3B3535" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="222" y="71" font-size="10.5" fill="#3B3535">devuelve datos</text>
+
+    <!-- Gap 2: Connector -> Servicio externo, via MCP -->
+    <rect x="462" y="20" width="48" height="15" rx="4" fill="#DA1B2E"/>
+    <text x="486" y="30.5" font-size="10.5" font-weight="bold" fill="#FFFFFF">MCP</text>
+    <line x1="433" y1="39" x2="541" y2="39" stroke="#3B3535" stroke-width="1.4" marker-end="url(#ah)"/>
+    <line x1="539" y1="59" x2="431" y2="59" stroke="#3B3535" stroke-width="1.4" marker-end="url(#ah)"/>
+    <text x="486" y="71" font-size="10.5" fill="#3B3535">protocolo</text>
+
+  </g>
+</svg>

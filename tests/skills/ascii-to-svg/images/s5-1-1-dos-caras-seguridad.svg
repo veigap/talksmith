@@ -1,0 +1,54 @@
+<!-- talksmith-ascii-sha256: 8d62d938d66593d63af75f4539daa051de31e1b299f68cd497f4eb0c0b37ef5f -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 280" role="img">
+  <title>Las dos caras de la seguridad</title>
+  <desc>La seguridad tiene dos caras: protegerte de los que atacan, y cumplir lo que prometiste.</desc>
+
+  <rect x="0" y="0" width="680" height="280" fill="#ffffff"/>
+
+  <!-- ================= column headers ================= -->
+  <text x="172" y="35" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="15" letter-spacing="1.2" fill="#6A737D">LO QUE IMAGINAMOS</text>
+  <text x="508" y="35" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="15" font-weight="bold" letter-spacing="1.2" fill="#1F1E1E">LO QUE PASA DE VERDAD</text>
+
+  <!-- ================= left panel — CARA 1 (de-emphasized) ================= -->
+  <rect x="24" y="48" width="296" height="142" rx="6" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+
+  <text x="44" y="78" font-family="Helvetica, Arial, sans-serif" font-size="12"
+        letter-spacing="1.5" fill="#6A737D">CARA 1</text>
+  <text x="44" y="106" font-family="Helvetica, Arial, sans-serif" font-size="17"
+        font-weight="bold" fill="#3B3535">El ataque</text>
+
+  <circle cx="47" cy="135" r="2.5" fill="#D8D4D4"/>
+  <text x="58" y="140" font-family="Helvetica, Arial, sans-serif" font-size="15"
+        fill="#3B3535">hackers, malware</text>
+  <circle cx="47" cy="159" r="2.5" fill="#D8D4D4"/>
+  <text x="58" y="164" font-family="Helvetica, Arial, sans-serif" font-size="15"
+        fill="#3B3535">el candado roto</text>
+
+  <!-- ================= right panel — CARA 2 (focal) ================= -->
+  <rect x="360" y="48" width="296" height="142" rx="6" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2.5"/>
+
+  <text x="380" y="78" font-family="Helvetica, Arial, sans-serif" font-size="12"
+        letter-spacing="1.5" fill="#DA1B2E">CARA 2</text>
+  <text x="380" y="106" font-family="Helvetica, Arial, sans-serif" font-size="17"
+        font-weight="bold" fill="#1F1E1E">Las promesas incumplidas</text>
+
+  <circle cx="383" cy="135" r="2.5" fill="#DA1B2E"/>
+  <text x="394" y="140" font-family="Helvetica, Arial, sans-serif" font-size="15"
+        fill="#3B3535">datos fuera de control</text>
+  <circle cx="383" cy="159" r="2.5" fill="#DA1B2E"/>
+  <text x="394" y="164" font-family="Helvetica, Arial, sans-serif" font-size="15"
+        fill="#3B3535">la puerta abierta</text>
+
+  <!-- ================= arrows + captions ================= -->
+  <line x1="172" y1="230" x2="172" y2="209" stroke="#D8D4D4" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 172 198 L 166.5 209 L 177.5 209 Z" fill="#D8D4D4"/>
+  <text x="172" y="252" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="14" fill="#6A737D">casi todos miran aca</text>
+
+  <line x1="508" y1="230" x2="508" y2="209" stroke="#DA1B2E" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M 508 196 L 500 210 L 516 210 Z" fill="#DA1B2E"/>
+  <text x="508" y="252" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="16" font-weight="bold" fill="#DA1B2E">la IA golpea aca</text>
+</svg>

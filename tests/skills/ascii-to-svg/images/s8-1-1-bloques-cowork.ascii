@@ -1,0 +1,35 @@
++============== PLUGINS (capa transversal: empaquetan y distribuyen) ==============+
+||                                                                                ||
+||  +----------------------+  "quiero compartir el resultado vivo"                ||
+||  | LIVE ARTIFACTS       |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "no quiero repetir la tarea / delegar en paralelo"  ||
+||  | SKILLS / SUBAGENTES  |  (avanzado, seccion 7)                               ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "quiero que la IA entienda mi material"             ||
+||  | ARCHIVOS .MD         |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "contexto fijo + todo en un lugar"                  ||
+||  | INSTRUCCIONES +      |                                                      ||
+||  | PROJECTS             |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "quiero que trabaje sobre mis archivos"   <== ACA   ||
+||  | COWORK: carpetas     |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "quiero que corra solo"                   (visto)   ||
+||  | TAREAS PROGRAMADAS   |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "quiero info real + que actue"            (visto)   ||
+||  | CONECTORES           |                                                      ||
+||  +----------------------+                                                      ||
+||  +----------------------+  "respondia solo de memoria"               (visto)   ||
+||  | EL CHAT              |                                                      ||
+||  +----------------------+                                                      ||
++==================================================================================+
+   los bloques se apilan (cada uno suma autonomia); PLUGINS los distribuye a todos
+
+<!-- ascii-note:
+intent: presentar el arco completo de la charla como bloques que se apilan (no una pirámide/escalera estricta): el chat (base) -> conectores -> tareas programadas -> Cowork (carpetas/archivos) -> Instrucciones+Projects -> archivos .md -> Skills/Subagentes -> Live Artifacts, con Plugins como BANDA TRANSVERSAL que envuelve/distribuye todo. Los tres bloques de abajo están marcados "(visto)" y el bloque Cowork lleva el marcador "estamos acá".
+emphasize: el marcador "<== ACÁ" en el bloque Cowork; los "(visto)" en chat/conectores/tareas programadas; que Plugins es transversal (banda que rodea la pila, distinto color), NO un nivel más; el par bloque↔problema en cada nivel.
+labels: banda exterior = PLUGINS (capa transversal, distribución). Bloques apilados (base→cima): El chat · Conectores · Tareas programadas · Cowork: carpetas · Instrucciones+Projects · Archivos .md · Skills/Subagentes · Live Artifacts, cada uno con su frase-problema a la derecha.
+-->

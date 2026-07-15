@@ -39,7 +39,7 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 
       The critic returns `clean`, a `defects:` list, `png_unreadable: <path>`, or `contaminated: <what>`. Take its verdict as authoritative — **do not "check its work" against the XML.** Second-guessing it with the coordinates you happen to have is exactly the contamination this step exists to remove; if you overrule the critic from the XML, you have simply restored the old broken loop with extra steps.
 
-      If the skill reported `png_companion: failed` (or the critic returns `png_unreadable`), record `unresolved: png_companion_failed` and exit the sub-loop — never fall back to critiquing the XML yourself. No pixels means no critique; that is a legitimate outcome, and a fabricated XML critique is worse than an honest gap.
+      If the skill reported `png_deliverable: failed` (or the critic returns `png_unreadable`), record `unresolved: png_deliverable_failed` and exit the sub-loop — never fall back to critiquing the XML yourself. No pixels means no critique; that is a legitimate outcome, and a fabricated XML critique is worse than an honest gap.
 
       If the verdict is `clean`, record the block as `rendered` and exit the sub-loop.
 
@@ -121,7 +121,7 @@ Format:
 **Verdict:** clean after 1 revision
 ```
 
-If a block ends `unresolved` (hit the 2-iteration cap), the last iteration records the surviving defects and the verdict is `unresolved — see surviving defects above`. If the PNG companion never materialized, the run section records `png_companion: failed` and the verdict is `unresolved — no pixels available for visual review`.
+If a block ends `unresolved` (hit the 2-iteration cap), the last iteration records the surviving defects and the verdict is `unresolved — see surviving defects above`. If the PNG companion never materialized, the run section records `png_deliverable: failed` and the verdict is `unresolved — no pixels available for visual review`.
 
 The `.critique/` folder is critique-only scratch space (also holds the `<basename>.png` rasterizations). Suggest the presenter add `talks/*/images/.critique/` to their working directory's `.gitignore` if they track it. The presenter reviews these files only when investigating unresolved blocks; they are not part of the deliverable.
 
@@ -178,7 +178,7 @@ The PNG is **not** the `.critique/` rasterization (that one is critique-only scr
 
 PNG width: the SVG's intrinsic `viewBox` width × 2 (so a `viewBox="0 0 900 420"` SVG → 1800-wide PNG). Aspect ratio preserved per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md) §12 — and enforced, not merely intended: [`rasterize.py`](../skills/ascii-to-svg/rasterize.py) re-measures every PNG it writes against the viewBox and deletes it rather than ship a mis-shaped one. The [`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) skill handles both files in a single invocation. **Rasterizer: `cairosvg`, required, no fallback** — if it's unavailable the render fails and you install cairo; you do not reach for another tool.
 
-When the illustrator detects a legacy file (SVG present, PNG missing) during a re-run, it re-rasterizes the PNG without re-rendering the SVG — the rasterization step is idempotent on the SVG bytes and cheap. Failures to produce the PNG surface as `failed: png_companion: <reason>` per the per-block report (distinct from the `.critique/` PNG companion failure, which only degrades visual critique and does not block the build).
+When the illustrator detects a legacy file (SVG present, PNG missing) during a re-run, it re-rasterizes the PNG without re-rendering the SVG — the rasterization step is idempotent on the SVG bytes and cheap. Failures to produce the PNG surface as `failed: png_deliverable: <reason>` per the per-block report (distinct from the `.critique/` PNG companion failure, which only degrades visual critique and does not block the build).
 
 ## Output filename convention
 

@@ -1,0 +1,35 @@
+<!-- talksmith-ascii-sha256: a1e577cead974a9808dc7f1e23f9e82ca6db124e5e44e0817da4fe5803eb5cca -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 290" role="img">
+  <title>Controller vs. processor</title>
+  <desc>La prueba para distinguir roles: quien decide para que se usan los datos.</desc>
+
+  <rect x="0" y="0" width="680" height="290" fill="#ffffff"/>
+
+  <!-- Responsable (controller) -->
+  <rect x="40" y="44" width="220" height="96" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="150" y="76" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F1E1E">RESPONSABLE</text>
+  <text x="150" y="96" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-style="italic" fill="#6A737D">controller</text>
+  <text x="150" y="122" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14.5" fill="#3B3535">tu empresa</text>
+
+  <!-- Encargado (processor) -->
+  <rect x="420" y="44" width="220" height="96" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="530" y="76" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F1E1E">ENCARGADO</text>
+  <text x="530" y="96" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-style="italic" fill="#6A737D">processor</text>
+  <text x="530" y="122" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14.5" fill="#3B3535">proveedor de IA</text>
+
+  <!-- Flujo de datos + instrucciones -->
+  <text x="340" y="82" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" fill="#6A737D">datos + instrucciones</text>
+  <line x1="264" y1="104" x2="406" y2="104" stroke="#3B3535" stroke-width="1.5"/>
+  <polygon points="416,104 404,98.5 404,109.5" fill="#3B3535"/>
+
+  <!-- El DPA: el contrato que une a los dos roles -->
+  <line x1="150" y1="140" x2="150" y2="196" stroke="#DA1B2E" stroke-width="2"/>
+  <line x1="530" y1="140" x2="530" y2="196" stroke="#DA1B2E" stroke-width="2"/>
+  <line x1="150" y1="196" x2="260" y2="196" stroke="#DA1B2E" stroke-width="2"/>
+  <line x1="420" y1="196" x2="530" y2="196" stroke="#DA1B2E" stroke-width="2"/>
+
+  <rect x="260" y="179" width="160" height="34" rx="5" fill="#DA1B2E"/>
+  <text x="340" y="201" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#FFFFFF">DPA (Art. 28)</text>
+
+  <text x="340" y="244" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14.5" fill="#3B3535">el contrato obligatorio que regula la relación</text>
+</svg>

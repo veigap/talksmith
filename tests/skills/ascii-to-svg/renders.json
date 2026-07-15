@@ -1,0 +1,11 @@
+{
+  "s1-1-1": {"svg_basename": "s1-1-1-top-p-recorta-cola.svg",     "alt": "Top-p recorta la cola de candidatos improbables"},
+  "s2-1-1": {"svg_basename": "s2-1-1-flujo-connector-mcp.svg",    "alt": "Flujo de una llamada a un Connector vía MCP"},
+  "s3-1-1": {"svg_basename": "s3-1-1-tarjeta-instrucciones.svg",  "alt": "La tarjeta de instrucciones como contrato"},
+  "s4-1-1": {"svg_basename": "s4-1-1-controller-vs-processor.svg","alt": "Controller vs. processor bajo GDPR"},
+  "s5-1-1": {"svg_basename": "s5-1-1-dos-caras-seguridad.svg",    "alt": "Las dos caras de la seguridad"},
+  "s6-1-1": {"svg_basename": "s6-1-1-anatomia-skill-md.svg",      "alt": "Anatomía de un SKILL.md"},
+  "s7-1-1": {"svg_basename": "s7-1-1-pii-vs-personal-data.svg",   "alt": "PII como subconjunto de Personal Data"},
+  "s8-1-1": {"svg_basename": "s8-1-1-bloques-cowork.svg",         "alt": "Los bloques de la charla apilados"},
+  "s9-1-1": {"svg_basename": "s9-1-1-subagentes-fanout.svg",      "alt": "Subagentes: fan-out y fan-in"}
+}

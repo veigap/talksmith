@@ -1,0 +1,20 @@
++---------------------------------------------+
+|  PERSONAL DATA (la categoria legal amplia)  |
+|  todo lo vinculable a una persona:          |
+|  IP, ubicacion, comportamiento,             |
+|  inferencias...                             |
+|                                             |
+|     +-------------------------------+       |
+|     |  PII (Personally              |       |
+|     |  Identifiable Information)    |       |
+|     |  identifica directamente:     |       |
+|     |  nombre, DNI, email,          |       |
+|     |  telefono, foto, legajo       |       |
+|     +-------------------------------+       |
++---------------------------------------------+
+
+<!-- ascii-note:
+intent: mostrar que PII es un subconjunto de Personal Data (relacion de inclusion); terminos en ingles, sin nombrar ninguna ley
+emphasize: el rectangulo exterior (Personal Data) es mucho mas grande que el interior (PII)
+labels: exterior = Personal Data (la categoria legal amplia), interior = PII (Personally Identifiable Information)
+-->

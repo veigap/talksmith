@@ -1,0 +1,67 @@
+<!-- talksmith-ascii-sha256: 74afa30184435794979f23fbce18f3d8fd3578822eff6d7073c32325f717ddf1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" role="img">
+  <title>Subagentes: delegar en paralelo</title>
+  <desc>Nivel avanzado, presentarlo como «para cuando crezcas».</desc>
+
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3B3535"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="600" height="420" fill="#FFFFFF"/>
+
+  <g font-family="Helvetica, Arial, sans-serif">
+
+    <!-- agente principal -->
+    <rect x="184" y="30" width="232" height="58" rx="6"
+          fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+    <text x="300" y="65" text-anchor="middle" font-size="18" font-weight="bold" fill="#1F1E1E">agente principal</text>
+
+    <!-- fan-out -->
+    <g stroke="#3B3535" stroke-width="1.5" fill="none">
+      <path d="M 300 88 L 300 116"/>
+      <path d="M 112 116 L 488 116"/>
+      <path d="M 112 116 L 112 152" marker-end="url(#ah)"/>
+      <path d="M 300 116 L 300 152" marker-end="url(#ah)"/>
+      <path d="M 488 116 L 488 152" marker-end="url(#ah)"/>
+    </g>
+    <text x="500" y="121" text-anchor="start" font-size="13" fill="#3B3535">en paralelo</text>
+
+    <!-- subagentes -->
+    <rect x="34" y="152" width="156" height="100" rx="6"
+          fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="112" y="184" text-anchor="middle" font-size="17" font-weight="bold" fill="#DA1B2E">sub A</text>
+    <rect x="50" y="200" width="124" height="26" rx="5" fill="#F2EEEE"/>
+    <text x="112" y="217.5" text-anchor="middle" font-size="12.5" fill="#3B3535">contexto propio</text>
+
+    <rect x="222" y="152" width="156" height="100" rx="6"
+          fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="300" y="184" text-anchor="middle" font-size="17" font-weight="bold" fill="#DA1B2E">sub B</text>
+    <rect x="238" y="200" width="124" height="26" rx="5" fill="#F2EEEE"/>
+    <text x="300" y="217.5" text-anchor="middle" font-size="12.5" fill="#3B3535">contexto propio</text>
+
+    <rect x="410" y="152" width="156" height="100" rx="6"
+          fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2"/>
+    <text x="488" y="184" text-anchor="middle" font-size="17" font-weight="bold" fill="#DA1B2E">sub C</text>
+    <rect x="426" y="200" width="124" height="26" rx="5" fill="#F2EEEE"/>
+    <text x="488" y="217.5" text-anchor="middle" font-size="12.5" fill="#3B3535">contexto propio</text>
+
+    <!-- fan-in -->
+    <g stroke="#3B3535" stroke-width="1.5" fill="none">
+      <path d="M 112 252 L 112 292"/>
+      <path d="M 300 252 L 300 292"/>
+      <path d="M 488 252 L 488 292"/>
+      <path d="M 112 292 L 488 292"/>
+      <path d="M 300 292 L 300 312" marker-end="url(#ah)"/>
+    </g>
+
+    <!-- resumen combinado -->
+    <rect x="160" y="312" width="280" height="68" rx="6"
+          fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+    <text x="300" y="340" text-anchor="middle" font-size="17" font-weight="bold" fill="#1F1E1E">resumen combinado</text>
+    <text x="300" y="362" text-anchor="middle" font-size="12.5" fill="#3B3535">un resumen, no la transcripción</text>
+
+  </g>
+</svg>

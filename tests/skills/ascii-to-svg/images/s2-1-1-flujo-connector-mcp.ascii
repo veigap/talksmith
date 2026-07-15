@@ -1,0 +1,11 @@
++--------+   pide datos    +-----------+   protocolo   +--------------+
+| CHAT / | --------------> | Connector |  -- MCP -->   | Servicio ext |
+| agente |                 |  (1 clic) |               | Gmail/Calendar|
++--------+ <-------------- +-----------+ <-----------  +--------------+
+            devuelve datos
+
+<!-- ascii-note:
+intent: mostrar el flujo de una llamada a un Connector: el chat/agente pide datos, el Connector traduce vía el protocolo MCP, el servicio externo responde.
+emphasize: la etiqueta "MCP" sobre la flecha del medio; el Connector como puente de un clic.
+labels: Chat/agente -> Connector (1 clic) -> Servicio externo (Gmail / Calendar); flecha de ida "pide datos", flecha de vuelta "devuelve datos".
+-->

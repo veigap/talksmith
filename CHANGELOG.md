@@ -20,6 +20,20 @@ corrupting every image the pipeline produced.
 
 ### Added
 
+- **A fixture Talk for the whole Step-6 pipeline** at `tests/skills/ascii-to-svg/` — nine
+  slides lifted verbatim (art, prose, notes) from production Talks, spanning 1.4:1 to
+  7.9:1 plus a no-`ascii-note` block and a legacy-tagged fence. Hand-written ASCII has a
+  texture invented fixtures don't. Its `test_audit_aspect.py` holds the audit's real
+  regression tests: synthetic, deliberately broken, required to *fail*. The nine renders
+  all pass the audit and therefore verify nothing about it — a distinction that turned out
+  to matter (see the background bug below, which kept the suite green throughout).
+- **Standing font rules in `config/diagram-style.md`**, after a nine-block test run where
+  the only two defects anyone hit were both font-resolution bugs. Arrow glyphs
+  (`←` `→` `↑`, U+2190-21FF) rasterize as **tofu** — absent from the fonts cairosvg
+  resolves — so arrows must be drawn as paths, even though the ASCII source is full of the
+  characters. And `Menlo` is a trap: it resolves, so nothing errors, but its hyphen draws
+  at near-full-em width, turning `a-b` into `a–b` and fusing YAML `---` into one rule. Both
+  produce a correct-looking XML and a lying picture.
 - **A blind diagram critic.** Visual review of a rendered diagram now happens in its own
   `diagram-critic` subagent that receives the PNG and nothing else — no SVG path, and
   `tools: Read` so pixels are all it can reach. Previously the agent that *wrote* the SVG
@@ -41,6 +55,27 @@ corrupting every image the pipeline produced.
 
 ### Fixed
 
+- **The aspect audit was blind to any diagram with a tinted background.** It hard-coded
+  white as the background colour instead of measuring it, so a full-canvas tinted rect made
+  every pixel count as ink: the bbox became the whole image and it returned
+  `ok: full-bleed` — exit 0 — for art that was badly mis-framed. Same diagram, same defect,
+  `#FFFFFF` background flagged at 3.86× and `#F2EEEE` passed clean. It now samples the
+  background from the image corners. A check that reports ok when it cannot see is worse
+  than no check, because it launders the defect as verified.
+- **The viewBox contract taught the wrong method, and its self-check was a tautology.**
+  Step 5 said to derive the aspect from the character grid (`chars × 0.5 : lines`) while
+  also saying not to use the character grid; the arithmetic was the only concrete thing in
+  the section, so it won. Measured across the nine fixtures it diverged from the honest
+  layout in six, by up to 2× — it cannot know that a label column needs width or that a
+  callout the spec *instructs* you to add needs a row. And the offered self-check ("rasterize
+  at 600px wide — that over 600 must equal H/W") is true by construction, since the raster
+  derives from the viewBox: precisely the self-confirming arithmetic the blind critic exists
+  to stamp out. Step 5 now says: lay out the art, measure the ink, add an even margin, and
+  the viewBox is that rectangle.
+- **`audit_aspect.py` no longer oversells itself.** It verifies the frame *fits the art*
+  (even margins); it does not verify you chose the right proportions — evenly-framed art
+  passes at any aspect. `ok` means "this frame fits this art", never "this was the right
+  shape".
 - **Render idempotency was built but never armed.** `stamp-renders` — the step that writes
   the ASCII digest deciding what re-renders next pass — existed as a working subcommand and
   a note under "operating principles", but appeared in no sequence: not the illustrator's

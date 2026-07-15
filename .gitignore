@@ -4,6 +4,7 @@ talks/*/output/
 tests/skills/*/output/
 .icons/
 talks/*/images/.critique/
+tests/skills/*/images/.critique/
 __pycache__/
 *.pyc
 .claude/settings.local.json

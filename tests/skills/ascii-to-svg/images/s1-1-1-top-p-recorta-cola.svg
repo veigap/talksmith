@@ -1,0 +1,50 @@
+<!-- talksmith-ascii-sha256: 2be582ba65fb33d5f90da2f91a6446ed1bbb24a6c86c77e879dc04818d086ce7 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 150" role="img">
+  <title>Top-p: la otra forma de dar variedad</title>
+  <desc>Top-p recorta la lista de candidatos: se queda con el núcleo que suma el 90% de la confianza y descarta la cola improbable.</desc>
+
+  <rect x="0" y="0" width="1000" height="150" fill="#ffffff"/>
+
+  <!-- caption -->
+  <text x="20" y="34" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#6A737D">Lista completa de candidatos (por confianza)</text>
+
+  <!-- top_p badge (focal) -->
+  <rect x="459" y="20" width="114" height="22" rx="5" fill="#DA1B2E"/>
+  <text x="516" y="36" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">top_p = 0.9</text>
+
+  <!-- cut boundary (focal) -->
+  <line x1="516" y1="46" x2="516" y2="114" stroke="#DA1B2E" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+  <!-- kept candidates (nucleus) -->
+  <rect x="20" y="50" width="76" height="44" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="58" y="77.5" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#3B3535" text-anchor="middle">azul</text>
+
+  <rect x="106" y="50" width="76" height="44" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="144" y="77.5" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#3B3535" text-anchor="middle">gris</text>
+
+  <rect x="192" y="50" width="84" height="44" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="234" y="77.5" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#3B3535" text-anchor="middle">claro</text>
+
+  <rect x="286" y="50" width="100" height="44" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="336" y="77.5" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#3B3535" text-anchor="middle">celeste</text>
+
+  <rect x="396" y="50" width="108" height="44" rx="5" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="450" y="77.5" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#3B3535" text-anchor="middle">turquesa</text>
+
+  <!-- discarded tail -->
+  <rect x="528" y="50" width="452" height="44" rx="5" fill="#F2F2F2" stroke="#D8D4D4" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="570" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+  <text x="640" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+  <text x="710" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+  <text x="780" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+  <text x="850" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+  <text x="920" y="78" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#6A737D" text-anchor="middle">&#215;</text>
+
+  <!-- kept bracket -->
+  <path d="M 20 100 L 20 106 L 504 106 L 504 100" fill="none" stroke="#3B3535" stroke-width="1.5"/>
+  <text x="262" y="126" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3B3535" text-anchor="middle">se queda con esto (los que suman 90%)</text>
+
+  <!-- discard bracket -->
+  <path d="M 528 100 L 528 106 L 980 106 L 980 100" fill="none" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="754" y="126" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#6A737D" text-anchor="middle">descarta la cola larga</text>
+</svg>

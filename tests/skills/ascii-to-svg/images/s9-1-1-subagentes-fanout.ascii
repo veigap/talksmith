@@ -1,0 +1,21 @@
+                +------------------+
+                | agente principal |
+                +------------------+
+                  /      |       \
+                 v       v        v
+          +--------+ +--------+ +--------+
+          | sub A  | | sub B  | | sub C  |
+          |contexto| |contexto| |contexto|
+          |propio  | |propio  | |propio  |
+          +--------+ +--------+ +--------+
+                 \       |       /
+                  v      v      v
+                +------------------+
+                | resumen combinado|
+                +------------------+
+
+<!-- ascii-note:
+intent: mostrar el patron fan-out/fan-in: el agente principal reparte una tarea entre varios subagentes que corren en paralelo con contexto propio, y junta los resultados en un resumen combinado.
+emphasize: el paralelismo (tres subagentes a la vez) y que cada uno tiene contexto aislado; el resumen combinado al final.
+labels: agente principal -> sub A / sub B / sub C (contexto propio) -> resumen combinado.
+-->

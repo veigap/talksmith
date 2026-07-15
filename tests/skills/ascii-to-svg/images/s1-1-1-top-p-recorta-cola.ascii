@@ -1,0 +1,11 @@
+  Lista completa de candidatos (por confianza):
+   azul  gris  claro  celeste  turquesa  ...cola larga...
+
+  top_p = 0.9  ->  |<-- se queda con esto -->|  x x x x
+                     (los que suman 90%)       descarta la cola
+
+<!-- ascii-note:
+intent: mostrar que top-p recorta la cola larga de candidatos improbables, quedándose con el núcleo que suma p
+emphasize: la frontera del corte al 90%; la "cola larga" descartada con equis
+labels: fila de candidatos ordenados, "top_p = 0.9", "se queda con esto (los que suman 90%)", "descarta la cola"
+-->

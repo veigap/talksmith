@@ -1,0 +1,15 @@
+   LO QUE IMAGINAMOS            LO QUE PASA DE VERDAD
++----------------------+     +------------------------+
+| CARA 1: EL ATAQUE    |     | CARA 2: LAS PROMESAS   |
+| hackers, malware     |     | incumplidas            |
+| el candado roto      |     | datos fuera de control |
+|                      |     | la puerta abierta      |
++----------------------+     +------------------------+
+          ^                             ^
+  casi todos miran aca          la IA golpea aca
+
+<!-- ascii-note:
+intent: contrastar las dos caras de la seguridad — ataque externo vs. promesas incumplidas (compliance) — como tesis de la charla
+emphasize: la columna derecha (Cara 2) es la que importa; la flecha "la IA golpea aca" debe dominar visualmente
+labels: izquierda = imaginario colectivo (candado roto), derecha = realidad con IA (puerta abierta)
+-->

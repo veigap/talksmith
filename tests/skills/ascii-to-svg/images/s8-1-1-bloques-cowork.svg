@@ -1,0 +1,60 @@
+<!-- talksmith-ascii-sha256: cb835027011912dc0986ed52352319907dc9ef1826fa34be8396ff8b6fb9eeac -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 486" role="img">
+  <title>Bloques que se apilan</title>
+  <desc>El mapa de toda la sesión: arranca en el chat que ya usan, no en Cowork.</desc>
+
+  <rect x="0" y="0" width="680" height="486" fill="#ffffff"/>
+
+  <!-- Banda transversal: PLUGINS -->
+  <rect x="16" y="14" width="648" height="442" rx="6" fill="#F2EEEE" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="36" y="40" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#3B3535">PLUGINS — capa transversal: empaqueta y distribuye</text>
+
+  <!-- Fila 8 — Live Artifacts -->
+  <rect x="36" y="54" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="77" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Live Artifacts</text>
+  <text x="252" y="77" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“quiero compartir el resultado vivo”</text>
+
+  <!-- Fila 7 — Skills / Subagentes -->
+  <rect x="36" y="103" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="126" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Skills / Subagentes</text>
+  <text x="252" y="126" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“no quiero repetir la tarea / delegar en paralelo” <tspan font-size="10">(avanzado, sección 7)</tspan></text>
+
+  <!-- Fila 6 — Archivos .md -->
+  <rect x="36" y="152" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="175" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Archivos .md</text>
+  <text x="252" y="175" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“quiero que la IA entienda mi material”</text>
+
+  <!-- Fila 5 — Instrucciones + Projects -->
+  <rect x="36" y="201" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="224" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Instrucciones + Projects</text>
+  <text x="252" y="224" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“contexto fijo + todo en un lugar”</text>
+
+  <!-- Fila 4 — Cowork (foco: estamos acá) -->
+  <rect x="36" y="250" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2.5"/>
+  <text x="136" y="273" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#DA1B2E">Cowork: carpetas</text>
+  <text x="252" y="273" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“quiero que trabaje sobre mis archivos”</text>
+  <path d="M 546 269 L 558 263.5 L 558 274.5 Z" fill="#DA1B2E"/>
+  <line x1="557" y1="269" x2="566" y2="269" stroke="#DA1B2E" stroke-width="2.5"/>
+  <text x="648" y="273" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#DA1B2E">ESTAMOS ACÁ</text>
+
+  <!-- Fila 3 — Tareas programadas -->
+  <rect x="36" y="299" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="322" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Tareas programadas</text>
+  <text x="252" y="322" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“quiero que corra solo”</text>
+  <text x="648" y="322" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#3B3535">(visto)</text>
+
+  <!-- Fila 2 — Conectores -->
+  <rect x="36" y="348" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="371" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">Conectores</text>
+  <text x="252" y="371" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“quiero info real + que actúe”</text>
+  <text x="648" y="371" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#3B3535">(visto)</text>
+
+  <!-- Fila 1 — El chat (base) -->
+  <rect x="36" y="397" width="200" height="38" rx="4" fill="#FFFFFF" stroke="#D8D4D4" stroke-width="1.5"/>
+  <text x="136" y="420" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#3B3535">El chat</text>
+  <text x="252" y="420" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3B3535">“respondía solo de memoria”</text>
+  <text x="648" y="420" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#3B3535">(visto)</text>
+
+  <!-- Pie -->
+  <text x="340" y="474" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3B3535">Los bloques se apilan — cada uno suma autonomía; Plugins los distribuye a todos.</text>
+</svg>

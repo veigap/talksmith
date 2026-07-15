@@ -1,0 +1,21 @@
++--------------------------------------------------------------+
+| ---                                                          |  <-- METADATA / HEADER (YAML)
+| name: reporte-semanal                                        |      "que es" + "cuando se activa"
+| description: Genera el pulso semanal de mercado a partir     |
+|   de la carpeta fuentes/ de la semana. Usar cuando pidan     |
+|   "reporte semanal" o "pulso de la semana".                  |
+| ---                                                          |
++--------------------------------------------------------------+
+| # Reporte semanal                                            |  <-- CUERPO (Markdown)
+|                                                              |      "que hace": las instrucciones
+| 1. Leé TODOS los archivos de fuentes/ y consolidá           |
+|    por empresa.                                              |
+| 2. Generá el reporte con esta estructura exacta...          |
+| 3. Guardá con sufijo -new (no pises el original).           |
++--------------------------------------------------------------+
+
+<!-- ascii-note:
+intent: mostrar la anatomía de un SKILL.md — un bloque de metadata (YAML frontmatter: name + description) arriba y el cuerpo de instrucciones en Markdown abajo. Refuerza el beat de archivos .md/metadata de la sección Cowork.
+emphasize: la separación visual en dos zonas — METADATA/HEADER (name, description; "qué es / cuándo se activa") vs CUERPO (las instrucciones; "qué hace"); que la `description` es lo que dispara la Skill.
+labels: zona superior = metadata/header (YAML, name + description); zona inferior = cuerpo (instrucciones en Markdown); etiquetas laterales "cuándo se activa" y "qué hace".
+-->

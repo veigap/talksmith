@@ -1,0 +1,12 @@
+RESPONSABLE  --(datos + instrucciones)-->  ENCARGADO
+(tu empresa)                               (proveedor IA)
+     |                                          |
+     +-----------  DPA (Art. 28)  --------------+
+       el contrato obligatorio que regula
+       la relacion
+
+<!-- ascii-note:
+intent: relacion legal responsable (controller) / encargado (processor) bajo GDPR, con el DPA como contrato obligatorio que la une
+emphasize: el DPA como puente/candado entre las dos cajas; "tu empresa" = responsable, "proveedor IA" = encargado
+labels: flecha superior = flujo de datos + instrucciones; llave inferior = DPA (Art. 28)
+-->

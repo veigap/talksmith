@@ -74,24 +74,41 @@ def parse_viewbox(svg_path: Path) -> tuple[float, float, float, float]:
 
 
 def ink_bbox(png_path: Path, tol: int = 8):
-    """Bounding box of everything that isn't background white, in PNG pixels.
+    """Bounding box of everything that isn't the background, in PNG pixels.
 
     Measured on the rasterized PNG rather than parsed out of the SVG geometry: computing
     a true bbox from arbitrary paths, markers, strokes and text metrics means
     reimplementing a renderer, and would disagree with the one that actually draws.
+
+    **The background colour is sampled from the corners, not assumed to be white.** An
+    earlier version hard-coded white, which made this whole audit silently useless on any
+    diagram carrying a full-canvas tinted rect: every pixel differed from white, the ink
+    bbox became the entire image, and the check returned "full-bleed — art runs to every
+    edge" and exit 0. Same diagram, same framing defect, `#FFFFFF` background → correctly
+    flagged at 3.86x; `#F2EEEE` background → passed clean. A check that reports ok when it
+    cannot see is worse than no check, because it launders the defect as verified.
+
+    The corners are the one place guaranteed to be background: whatever the outermost pixel
+    is, the art is framed against it. Taking the majority of the four is what survives a
+    single corner clipped by a bleeding element.
     """
     from PIL import Image, ImageChops
+    from collections import Counter
     im = Image.open(png_path).convert("RGB")
-    bg = Image.new("RGB", im.size, (255, 255, 255))
+    W, H = im.size
+    corners = [im.getpixel(p) for p in ((0, 0), (W - 1, 0), (0, H - 1), (W - 1, H - 1))]
+    bg_colour = Counter(corners).most_common(1)[0][0]
+    bg = Image.new("RGB", im.size, bg_colour)
     mask = ImageChops.difference(im, bg).convert("L").point(lambda v: 255 if v > tol else 0)
-    return im.size, mask.getbbox()
+    return im.size, mask.getbbox(), bg_colour
 
 
 def audit(svg: Path, png: Path, threshold: float = DEFAULT_THRESHOLD) -> tuple[int, str]:
     vx, vy, vw, vh = parse_viewbox(svg)
-    (W, H), bbox = ink_bbox(png)
+    (W, H), bbox, bg_colour = ink_bbox(png)
     if bbox is None:
         return 2, f"failed: {svg.name} rasterizes to a blank image — nothing is drawn"
+    bg_hex = "#%02X%02X%02X" % bg_colour
 
     # PNG pixels → viewBox units. rasterize.py guarantees the PNG matches the viewBox ratio,
     # so a single scale factor per axis is exact.
@@ -103,7 +120,8 @@ def audit(svg: Path, png: Path, threshold: float = DEFAULT_THRESHOLD) -> tuple[i
 
     smallest_side = min(vw, vh)
     if max(margins.values()) < smallest_side * _FULL_BLEED_EPS:
-        return 0, f"ok: {svg.name} · full-bleed (art runs to every edge)"
+        return 0, (f"ok: {svg.name} · full-bleed (art runs to every edge) · "
+                   f"background sampled as {bg_hex}")
 
     lo = max(min(margins.values()), smallest_side * 0.001)  # floor: avoid /0 on one flush edge
     hi = max(margins.values())
@@ -111,7 +129,8 @@ def audit(svg: Path, png: Path, threshold: float = DEFAULT_THRESHOLD) -> tuple[i
 
     fmt = " / ".join(f"{k[0].upper()}{v:.0f}" for k, v in margins.items())
     if imbalance <= threshold:
-        return 0, f"ok: {svg.name} · margins {fmt} units · imbalance {imbalance:.2f}×"
+        return 0, (f"ok: {svg.name} · margins {fmt} units · "
+                   f"imbalance {imbalance:.2f}× (defect at >{threshold}×) · background {bg_hex}")
 
     # Suggest a pure crop: keep the art where it is, tighten the frame to an even margin.
     pad = min(margins.values())

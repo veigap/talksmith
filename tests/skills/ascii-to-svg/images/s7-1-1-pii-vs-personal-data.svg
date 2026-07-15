@@ -1,0 +1,52 @@
+<!-- talksmith-ascii-sha256: 1cc8c781451fccbe05c58ece4661521a4909467a81b1d21230734eb026332980 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 400" role="img">
+  <title>PII vs. Personal Data</title>
+  <desc>PII es un subconjunto de Personal Data: la sigla identifica a una persona directamente, mientras que Personal Data abarca todo lo vinculable a una persona.</desc>
+
+  <rect x="0" y="0" width="680" height="400" fill="#ffffff"/>
+
+  <!-- Outer panel — Personal Data (la categoria legal amplia) -->
+  <rect x="24" y="24" width="632" height="352" rx="6" ry="6"
+        fill="#F2EEEE" stroke="#D8D4D4" stroke-width="1.5"/>
+
+  <text x="48" y="68"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="25" font-weight="bold" letter-spacing="0.4" fill="#1F1E1E">PERSONAL DATA</text>
+
+  <text x="48" y="92"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" fill="#3B3535">la categoría legal amplia</text>
+
+  <text x="48" y="124"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" fill="#3B3535">Todo lo vinculable a una persona:</text>
+
+  <text x="48" y="146"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" fill="#3B3535">IP, ubicación, comportamiento, inferencias…</text>
+
+  <!-- Inner panel — PII (focal element, deck accent red) -->
+  <rect x="104" y="176" width="472" height="126" rx="6" ry="6"
+        fill="#FFFFFF" stroke="#DA1B2E" stroke-width="2.5"/>
+
+  <text x="132" y="212"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="bold" letter-spacing="0.4" fill="#DA1B2E">PII</text>
+
+  <text x="184" y="212"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="14.5" fill="#3B3535">Personally Identifiable Information</text>
+
+  <text x="132" y="242"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" fill="#3B3535">Identifica directamente:</text>
+
+  <text x="132" y="270"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="15" fill="#3B3535">nombre · DNI · email · teléfono · foto · legajo</text>
+
+  <!-- Containment caption -->
+  <text x="340" y="342" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="14.5" fill="#3B3535">PII es un subconjunto de Personal Data — no son sinónimos</text>
+</svg>
