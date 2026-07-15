@@ -2,6 +2,8 @@
 
 **Before you respond to anything the user typed, do these three steps in order. This is an instruction to execute now, not background reading.**
 
+**Step 1 is silent** — never narrate the load or the import mechanics. Your first visible output is the Step 0 introduction; break silence only if the spec is unfindable.
+
 **1 · Load the spec.** Ensure `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` is in your context. It is `@`-imported just below, which works in the Claude Code CLI:
 
 @${CLAUDE_PLUGIN_ROOT}/orchestrator.md
