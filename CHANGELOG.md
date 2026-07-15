@@ -12,6 +12,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > entries get compacted as they age — collapse superseded fixes, fold noise into
 > the release summary, drop detail that no longer helps a reader. Less is more.
 
+## [0.55.0] — 2026-07-14
+
+### Added
+
+- **Setup now asks for your institution logo**, alongside subject, presenter, audience, duration
+  and language. Drop it at `config/logo.png` (or `.svg`/`.jpg`), hand over a path, or skip for the
+  neutral placeholder. Previously the logo was only discoverable in the README, so presenters
+  reached a rendered deck and found a placeholder cover without knowing their own mark was
+  supported. `config/profile.md` gains an optional seventh section recording the choice, so you're
+  asked once per working directory. Existing profiles pick it up on their next session — no
+  re-init.
+
 ## [0.54.0] — 2026-07-14
 
 ### Fixed

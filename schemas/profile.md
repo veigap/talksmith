@@ -4,7 +4,7 @@ Specification for [`config/profile.md`](config/profile.md): the presenter's glob
 
 ## Purpose
 
-Captures per-presenter defaults that apply across every Talk in this working directory: the **subject** the working directory is dedicated to (one working directory per subject — see [`README.md`](${CLAUDE_PLUGIN_ROOT}/README.md) → *One working directory per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, and presentation language. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `draft.md` frontmatter — it does **not** re-prompt for any field listed here.
+Captures per-presenter defaults that apply across every Talk in this working directory: the **subject** the working directory is dedicated to (one working directory per subject — see [`README.md`](${CLAUDE_PLUGIN_ROOT}/README.md) → *One working directory per subject*), who is delivering, how presentations are typically consumed, who the typical audience is, default total duration, presentation language, and whether the subject has an institution logo for rendered deck covers. Read once at session start and kept in context across all role work. Step 4 (Draft) reads these silently to populate `draft.md` frontmatter — it does **not** re-prompt for any field listed here.
 
 ## Loading semantics
 
@@ -17,7 +17,7 @@ The orchestrator writes the file whenever Step 0.5 collects a value for a previo
 
 **One-time, session-load settings.** Three sections in particular — `How my presentations are consumed`, `Audience defaults`, and `Presentation language` — are **initialized once** during Step 0.5 and **never re-prompted per-Talk**. They are subject-level defaults read silently at session start; per-Talk calibration (e.g. a one-off audience tweak for a specific class) happens by editing `draft.md` frontmatter directly in Step 5 Review.
 
-## Canonical sections (exactly six)
+## Canonical sections (exactly seven)
 
 | Section | Required? | Purpose |
 |---|---|---|
@@ -27,8 +27,9 @@ The orchestrator writes the file whenever Step 0.5 collects a value for a previo
 | `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `draft.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `draft.md` directly — never re-prompted in Step 4. |
 | `Default duration` | **Required** | Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's `draft.md` frontmatter as the default `duration`. Per-Talk override: edit the `draft.md` frontmatter directly in Step 5 Review. |
 | `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `draft.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `draft.md` prose. |
+| `Institution logo` | *Optional* | Records the logo decision, not the image — the image is the file `config/logo.svg\|.png\|.jpg\|.jpeg`, reused on every rendered deck cover. Holds either the filename supplied (e.g. "`config/logo.png`") or a decline ("None — use the neutral placeholder"), so Step 0.5 asks once and never again. Renderers ignore this text and resolve the logo by file presence, so a stale value can't break a render. |
 
-**Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints" — these were intentionally removed). **Do not remove any of the six canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
+**Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints" — these were intentionally removed). **Do not remove any of the seven canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
 
 ## Empty vs. filled state
 
@@ -36,9 +37,9 @@ Step 0.5's behavior depends on the state of `config/profile.md`. The driving rul
 
 | State of `config/profile.md` | Orchestrator action (Step 0.5) |
 |---|---|
-| All six sections filled | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
-| Partially filled — one or more **required** sections missing, empty, or HTML-comment-only | Load the filled sections as global defaults. Walk through every missing **required** section, prompting with 2–4 concrete candidates per section — **no skip option** for required sections. Write the result back. |
-| Exists but every section is empty (only headings + HTML comments) | Walk through every section with the presenter (no skip — all six are now required). Never free-text except where the section semantics demand it (Subject and Presenter are free-text by definition). Write the result back. |
+| All seven sections filled (`Institution logo` counts as filled once it records a choice, decline included) | Load as global defaults. Acknowledge picked-up defaults. Skip to Step 1. |
+| Partially filled — one or more sections missing, empty, or HTML-comment-only | Load the filled sections as global defaults. Walk through every missing section, prompting with 2–4 concrete candidates per section — **no skip option** for the six required ones. Write the result back. |
+| Exists but every section is empty (only headings + HTML comments) | Walk through every section with the presenter. Never free-text except where the section semantics demand it (Subject and Presenter are free-text by definition). Write the result back. |
 | Exists but missing one or more canonical section headings (e.g. legacy / hand-edited file that dropped `## Audience defaults`) | Treat the file as needing rebuild: re-bootstrap from the *Canonical empty form* below, **preserving any content under the canonical headings that did exist** (copy it into the rebuilt file under the same heading). Never silently drop presenter content. Then proceed as the "exists but every section is empty" case for whatever required sections came up empty after the rebuild. |
 | Does not exist | Bootstrap from the *Canonical empty form* below → `config/profile.md`, then proceed as the "exists but every section is empty" case above. |
 
@@ -52,7 +53,8 @@ Step 0.5's behavior depends on the state of `config/profile.md`. The driving rul
   - `Audience defaults`: 2–4 candidates such as "Technical peers / engineers", "Mixed technical + business", "University students (undergraduate)", "Domain practitioners (non-engineering)".
   - `Default duration`: 2–4 candidates such as "30 min", "45 min", "60 min + Q&A", "90 min lecture".
   - `Presentation language`: 2–3 candidates such as "Spanish", "English", "Portuguese".
-- All six sections are required. There are no optional sections — every field must be filled before the orchestrator advances past Step 0.5.
+  - `Institution logo`: asked last, and skippable. If `config/logo.*` already exists, record its filename without asking. Otherwise offer to take a path (copy it to `config/logo.<ext>`), wait for a drop-in, or skip. On skip write "None — use the neutral placeholder" — an empty section means *not yet asked* and re-prompts next session.
+- The six sections above `Institution logo` are required — every one must be filled before the orchestrator advances past Step 0.5.
 
 ## Step 4 (Draft) contract
 
@@ -107,4 +109,8 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 ## Presentation language
 
 <!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and draft.md prose. -->
+
+## Institution logo
+
+<!-- Optional. Drop your institution logo at config/logo.svg|.png|.jpg|.jpeg — it appears on the cover of every rendered deck in this working directory. This section just records the choice so you're asked once: the filename supplied, or "None — use the neutral placeholder". -->
 ```

@@ -111,12 +111,12 @@ Immediately after, ask the presenter: **new presentation** or **resume existing*
 
 ## Step 0.5 — Profile
 
-Schema + canonical empty form: [`${CLAUDE_PLUGIN_ROOT}/schemas/profile.md`](${CLAUDE_PLUGIN_ROOT}/schemas/profile.md). Data file: `config/profile.md` (six required sections — **Subject**, **Presenter**, **How my presentations are consumed**, **Audience defaults**, **Default duration**, **Presentation language** — subject-level defaults, never re-prompted per-Talk).
+Schema + canonical empty form: [`${CLAUDE_PLUGIN_ROOT}/schemas/profile.md`](${CLAUDE_PLUGIN_ROOT}/schemas/profile.md). Data file: `config/profile.md` (six required sections — **Subject**, **Presenter**, **How my presentations are consumed**, **Audience defaults**, **Default duration**, **Presentation language** — plus one optional seventh, **Institution logo**. All are subject-level defaults, never re-prompted per-Talk).
 
 | State of `config/profile.md` | Action |
 |---|---|
 | All sections filled | Load as defaults; skip to Step 1. |
-| Any required section missing / empty / HTML-comment-only | Walk through the missing sections with the presenter, prompting with 2–4 concrete candidates each (free-text only for `Subject` and `Presenter`). Write back. |
+| Any section missing / empty / HTML-comment-only | Walk through the missing sections with the presenter, prompting with 2–4 concrete candidates each (free-text only for `Subject` and `Presenter`; `Institution logo` is asked last and is the one section a presenter may decline). Write back. |
 | Missing one or more canonical section headings | Re-bootstrap from the schema's *Canonical empty form*, preserving content under any heading that did exist. Then proceed as the missing-section case. |
 | Does not exist | Copy the *Canonical empty form* → `config/profile.md`, then proceed as the missing-section case. |
 

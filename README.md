@@ -91,7 +91,7 @@ The expected setup is **one repository per subject, shared by everyone who teach
 - **Corpus knowledge is reusable.** A paper Alice indexed for class 3 is queryable when Bob preps class 7.
 - **`config/profile.md`** sets the subject's audience, duration, and language once; every class inherits it.
 - **`config/learnings.md`** accumulates the team's editorial taste — recurring feedback promoted in Step 8 applies to every future class.
-- **`config/logo.*`** (optional) is your institution logo, dropped in once at repo setup; every rendered deck uses it. Without it, decks fall back to a neutral placeholder — the plugin ships no branding.
+- **`config/logo.*`** (optional) is your institution logo; every rendered deck uses it. Talksmith asks for it once during setup (Step 0.5, alongside subject and presenter) and never again — you can drop it in then or skip it. Without one, decks fall back to a neutral placeholder — the plugin ships no branding.
 - **`knowledge-library/`** is the team's curated cross-Talk topic index.
 
 Treat it like any code repo: branch per Talk, merge when finalized. If the team presents on three subjects, that's three repos.
