@@ -1,6 +1,6 @@
 ---
 name: talksmith:feedback-cycle
-description: Runs the full Step 5 (Review) feedback iteration on a Talk's `draft.md` — detect unstamped Presenter-feedback bullets, stamp each as `[open]`, close it with a resolution when the Editor applies the fix, mirror every `[closed]` to `feedback-backlog.md`, and sanity-check that the mirror is complete. Also exposes the `rescue-open` pass used by Step 6 (c) against `final.md`. CLI-safe, stdlib-only Python — the LLM Editor authors only the content fix, the resolution wording, and the tag list; every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through this skill.
+description: Mechanical bookkeeping for the Step 5 (Review) feedback loop on `draft.md` — detect, stamp, close, and mirror Presenter-feedback bullets — plus the `rescue-open` pass Step 6 runs against `final.md`. The Editor authors only wording; every line edit goes through this CLI. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:feedback-cycle — Step 5 (Review) iteration helper

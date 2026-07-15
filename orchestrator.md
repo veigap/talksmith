@@ -23,7 +23,7 @@ Five roles:
 
 ## Philosophy — one shared repo per subject
 
-**One repo per subject** (course, recurring workshop, research area) — typically a shared GitHub repo the teaching team clones, so corpus / learnings / feedback compound across presenters and across semesters. `talks/` accumulates class by class; all Talks share the six `config/profile.md` fields set in Step 0.5 (`Subject`, `Presenter(s)`, consumption mode, audience, duration, language). Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. New subject = new repo. Full rationale: [`README.md`](README.md) → *One shared repo per subject*.
+**One repo per subject** (course, recurring workshop, research area); `talks/` accumulates class by class, and all Talks share the `config/profile.md` defaults set in Step 0.5. The Step-1 briefing captures only what's specific to *this class* — angle, scope, thesis — never the subject itself. New subject = new repo. Full rationale: [`README.md`](README.md) → *One shared repo per subject*.
 
 ## Session start — mandatory loads
 
@@ -51,9 +51,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 - **Speak human, not internal.** Presenter is non-technical. Chat narration must never expose subagent/skill names (Illustrator, `talksmith:ascii-to-svg`, `polish-ascii`, …), tool-call mechanics (*"dispatching"*, *"args files"*, *"batch N of 5"*), internal IDs (`s1-2-1`, `<basename>`, kebab slugs, `.critique/` paths), or pipeline tags (`[pptx N/8]`, `[cycle N/3] FEEDBACK`, `[block-drop]`). Translate to outcomes. **Don't:** *"21 args files ready. Dispatching Illustrator — batch 1 of 5 (s1-2-1, …)"*. **Do:** *"Rendering diagrams now — this usually takes a minute or two."* **Don't:** *"[cycle 2/3] FEEDBACK — slide 7 · practice 7 …"*. **Do:** *"Reviewing the rendered slides — found 2 small things to fix."* Heartbeats for long-running work are good (*what's happening*, not *how it's wired*). Full technical detail goes into the closing per-step report and `memory.md`, not running chat.
 - **Role dispatch.** When the spec says *"perform the `<Role>` role"*, read its spec from [`${CLAUDE_PLUGIN_ROOT}/agents/`](${CLAUDE_PLUGIN_ROOT}/agents/) and follow it for that work block, then return to the orchestrator. The active Talk folder path is mandatory context.
 - **Presenter signal vocabulary.** When the spec says the presenter signals "ready" / "done" / declares X final, accept any of: *"ready"*, *"done"*, *"looks good"*, *"move on"*, *"move to review"*. Wait for one of these before advancing past a gated step.
-- **Keep `memory.md` live, not just post-hoc** (full spec: [`${CLAUDE_PLUGIN_ROOT}/schemas/memory.md`](${CLAUDE_PLUGIN_ROOT}/schemas/memory.md)). Two writer roles:
-  - **Orchestrator (you) — live-state updates, in-place.** Whenever you ask the presenter a workflow-gating question, append a row to the current step's `Asks log:` (`<YYYY-MM-DD HH:MM> — "<verbatim question>" → pending`), flip `**Current step:**`'s status to `awaiting_presenter`, write the `**Awaiting:**` header line. On answer, rewrite trailing `pending` with the answer, flip status to `in_progress`, remove `**Awaiting:**`. Never delete asks-log rows.
-  - **Editor — bootstrap and step closure.** Dispatch the editor at Step-1 init (creates the file) and at the **end of every step 1–8** to fill closure fields (`What was decided`, `Key inputs`, `Files created/modified`, `Pending open questions`) and flip `Status: complete`. Per-step sections below describe the work; the closure is implicit and applies uniformly.
+- **Keep `memory.md` live, not just post-hoc** — row formats and the full writer contract live in [`${CLAUDE_PLUGIN_ROOT}/schemas/memory.md`](${CLAUDE_PLUGIN_ROOT}/schemas/memory.md). Split: **you** (orchestrator) write the live-state updates in place — log every workflow-gating ask in the current step's `Asks log:`, flip `**Current step:**` to `awaiting_presenter` with an `**Awaiting:**` line, and resolve both when the answer arrives; the **Editor** bootstraps the file at Step-1 init and fills the closure fields at the end of every step 1–8 (implicit, applies uniformly).
 - **On Resume (Step 0).** After picking the Talk folder, read `memory.md`. Parse `**Current step:**` for the resume target and status. If `awaiting_presenter`, parse `**Awaiting:**` and re-emit the outstanding question to the presenter rather than advancing — the previous session paused mid-ask.
 
 ## Workflow
@@ -130,7 +128,7 @@ Runs once per session for new presentations. Skip on resume unless asked.
 
 2. **Folder name** (kebab-case) — propose 2–3 candidates from the topic.
 
-Render style is **not** asked here — it's a render-time concern, asked fresh at every Step 7 invocation. `draft.md` / `final.md` are style-agnostic; the same content can be rendered in any style at any time.
+Render style is **not** asked here — it's a render-time concern, asked fresh at every Step 7 invocation (see Step 7).
 
 Create exactly:
 
@@ -222,7 +220,7 @@ Per-mode authoring sequences + the critical-only question budget live in [`edito
 
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
-**On first complete draft, kick the live HTML view.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 live HTML view** in the background (`build_html.py --draft` — runs in any session, no Cowork; see *Step 5.5 — Live HTML view*). It runs in parallel and must **not** block the presenter from starting their review.
+**On first complete draft, kick the live HTML view.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 live HTML view** in the background — it must **not** block the presenter from starting their review (see *Step 5.5*).
 
 ---
 
@@ -241,36 +239,20 @@ When the presenter signals ready, Step 5 ends. **If a live view is available (or
 
 ## Step 5.5 — Live HTML view *(optional, non-blocking)*
 
-The **live HTML view** of the slides rendered straight from `draft.md` so the presenter can watch the deck's *shape and look* — order, what's on each slide, how each template renders — as it takes shape. It is not the final deliverable (that's Step 7 from `final.md`), but it is the **same renderer and output** (`build_html.py`, `output/html/index.html`), just reading the in-progress `draft.md` via `--draft`. It stays fast by skipping everything expensive — no `.pptx`, no `.pdf`, no native skill, raw ASCII fences shown as code surfaces (no Illustrator SVG pass). Because it renders in HTML, the styled layer (cards, per-concept icons, callouts, code surfaces) is **fully present**.
+A live HTML render of the slides straight from the in-progress `draft.md`, so the presenter can watch the deck's shape — order, per-slide content, how each template renders — as it takes form. Same renderer and output as a Step-7 `html-strict` render (`output/html/index.html`), just reading `draft.md` via `--draft`: single pass, no critique loop, no `.pptx`/`.pdf`, raw ASCII fences shown as code surfaces, runs in **any** session (no Cowork). Full mechanics and guardrails: [`md-to-deck` SKILL.md](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Path B*.
 
-**It renders once — no critique loop.** `html-strict` is a single-pass GENERATE with **no** automated FEEDBACK/REGENERATE pass (per [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md), html-strict column: `no-critique`). The code renderer is deterministic and takes no fix instructions, so anything the presenter wants changed — a structural surprise, a too-thin section — is resolved by editing `draft.md`, which re-fires the render. The live view's job is to *show* the deck's shape early, not to auto-critique it.
+**How it fires — two moments:**
 
-**No special prerequisite.** It runs in **any** session — no Cowork, no native skill needed (that's why it can auto-fire in the background). If the render fails for any reason, the live view is simply skipped — never block on it.
+1. **Auto-fire on first complete draft (background, parallel).** When Step 4 hands to Step 5, kick the live render in the background and tell the presenter in one plain line — e.g. *"I'm putting together a live view of the slides in the background — go ahead and start reviewing, it'll be ready when you are."* **This must not block Review.**
+2. **Refresh on change.** Re-fire silently after each Step-5 round that materially changes `draft.md` (superseding any in-flight render). The presenter only hears about the live view when it's offered.
 
-### How it fires — two moments
-
-1. **Auto-fire on first complete draft (background, parallel).** When Step 4 first produces a structurally complete `draft.md` and hands to Step 5, kick the live render in the **background** and tell the presenter in one plain line that a live view is being put together while they review — e.g. *"I'm putting together a live view of the slides in the background — go ahead and start reviewing, it'll be ready when you are."* **This must not block Review.** The presenter starts editing `draft.md` immediately; the render proceeds in parallel.
-2. **Refresh on change.** Each Step-5 round that materially changes `draft.md` makes the last render stale. Re-fire the background render (superseding any in-flight one) so the newest render always reflects the current `draft.md`. Don't nag about it — refresh silently; the presenter only hears about the live view when it's offered.
-
-### The checkpoint — when Review ends
-
-When the presenter signals ready at the end of Step 5, **before** advancing to Step 6, offer the live view:
+**The checkpoint — when Review ends.** When the presenter signals ready at the end of Step 5, **before** advancing to Step 6, offer:
 
 > Want to take a quick look at a rough draft of the slides before I polish and finalize? *(optional — say skip to go straight to finishing)*
 
-- **If they look:** surface the rendered live view — the styled **Reveal.js** deck `talks/<Talk>/output/html/index.html` (open it: → / ← to advance, `Esc` overview, `F` full screen, `s` speaker notes). Frame it as rough: raw diagrams show as plain code surfaces, content is pre-Polish, it's just to catch structural surprises (missing slide, wrong order, a section that's too thin). Any change they want becomes ordinary Step-5 feedback — loop back into Review, which re-fires the html-strict render.
-- **If they skip, or the live view isn't ready / failed to render:** proceed to Step 6 without ceremony. A failed or unavailable live view is never fatal — it's a convenience.
+If they look, surface `talks/<Talk>/output/html/index.html` (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes) and frame it as rough — raw diagrams as code surfaces, content pre-Polish; it exists to catch structural surprises. Any change they want becomes ordinary Step-5 feedback, which re-fires the render. If they skip, or the live view isn't ready / failed to render, proceed to Step 6 without ceremony — a missing live view is never fatal.
 
-### Dispatch
-
-**Two steps — FILL then RENDER — same as any `html-strict` render** (see [`md-to-deck` SKILL.md](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Path B*):
-
-1. **FILL** `output/slide-model.draft.json` from the in-progress `draft.md` — the LLM (semantic) step: for each slide, classify it against the shared catalog and decompose its body into that template's fields, per [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md). This is the same fill Step 7 does on `final.md`, just reading `draft.md`.
-2. **RENDER** it mechanically with the committed renderer — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft` (equivalently, dispatch `md-to-deck` with `style: html-strict`). `build_html.py --draft` reads `slide-model.draft.json` and maps each slide's fields onto its Jinja template — no classification, no parsing. **Never hand-roll a render script** — the renderer is committed for exactly this reason.
-
-It is a **single pass, no critique loop** (`html-strict` is `no-critique`) — the render produces `output/html/index.html` directly. Its `[html]` stage events are **log-only**, suppressed from chat like the Step-7 `[pptx …]` tags (see Step 7 → *Suppression rule*). **Show the live render checklist** while it runs — even as a background render, its items tick so the presenter sees it finish. Never write the render's paths or tags into `draft.md`, `final.md`, or chat verbatim — translate to plain outcomes.
-
-**Never let the live view mutate the pipeline.** It reads `draft.md` read-only, writes only under `output/html/` (git-ignored), and never touches `final.md` or `output/final.pptx`. It does not consume Step-7's style choice — a later Step 7 still asks the style fresh.
+**Dispatch:** `md-to-deck` with `style: html-strict` on `draft.md` — FILL `output/slide-model.draft.json` per [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md), then RENDER with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft`. **Never hand-roll a render script.** Its `[html]` stage events are log-only (see Step 7 → *Suppression rule*); show the render checklist while it runs. The live view reads `draft.md` read-only, writes only under `output/html/`, and never consumes Step-7's style choice — a later Step 7 still asks fresh.
 
 ---
 
@@ -292,7 +274,7 @@ On entry, post this checklist and **edit that same message in place**, flipping 
 
 Personalize each row as the numbers become known — *"Drawing them — 3 of 12"*, *"Checking how they look — found 2 small things to fix"*, *"Adding them to the deck — 12 diagrams"*. **Drawing is the row that runs longest**: tick a count as each diagram lands rather than waiting for all of them, and give any stage quiet > 30 s a plain-language heartbeat. A Talk with no diagrams marks the middle three rows `[—]` and goes straight to tidy-up; a diagram that fails to draw marks `[✗]` and Polish keeps going (failures are reported at the end, never hidden).
 
-Both the *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids (`s1-2-1`), file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the checklist from them, never relay them. **Don't:** *"Dispatching Illustrator — batch 2 of 5 (s1-2-1, s3-4-1…)"*. **Do:** *"Drawing them — 7 of 12."*
+The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the checklist from them, never relay them.
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
@@ -333,19 +315,7 @@ The deck is polished — offer to render it now, or skip to wrap-up (**Step 8, L
 
    **Do not bury the render in one opaque, multi-minute dispatch.** If any part runs as a sub-agent (e.g. the pptx-strict or html-strict visual critique), it must **return phase/batch events that you surface as they happen** — after pre-process, after the build, after CONTROL, after each FEEDBACK batch (*"reviewed 10 of 29…"*), after each fix pass — not a single silent call that only reports when finished. If a stage runs quiet > 30 s, surface a plain-language heartbeat (*"still building — 7 of 18 slides…"*). A render that shows only *"Multitasking…"* for more than ~a minute is a defect, in every mode.
 
-   **Suppression rule (hard).** Everything the skill emits is **internal log-only** — consume it for the checklist + the closing report, never relay verbatim. Suppression covers two shapes:
-
-   - **Bracketed-tag lines** — `[pptx`, `[cycle`, `[late-catch`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`, or any other bracketed prefix.
-   - **Prose summaries containing internal vocabulary** — phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `image-1-1.png`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`, e.g. `AESTHETIC-06`), or the phrase *"final.md frontmatter"* / *"draft.md frontmatter"*.
-
-   Any prose between checklist updates must be plain language. **Concrete don't / do** (this is the leak pattern that prompted the rule):
-
-   - **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."*
-   - **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
-
-   Translation pattern: name the *outcome* (what got fixed, how many things, which slides if user-actionable). Strip the *mechanism* (which audit, which XML element, which library, which phase tag). Slide numbers are presenter-actionable (they can look at the slide) so they stay; tool/audit/XML names are not.
-
-   If a leak is observed, treat it as a behavior bug to fix in the next session and log the offending line to `memory.md` so it can be diffed against this rule.
+   **Suppression rule (hard).** Everything the skill emits — bracketed-tag lines (`[pptx`, `[cycle`, …) and prose containing internal vocabulary (phase / audit / library / XML names) — is **internal log-only**: consume it for the checklist and the closing report, never relay it verbatim. Translate mechanism to outcome — what got fixed, how many, which slides (slide numbers are presenter-actionable and stay; tool/audit/XML names are not). The full suppression vocabulary + don't/do examples: [SKILL.md → *Progress reporting*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md). If a leak is observed, treat it as a behavior bug and log the offending line to `memory.md`.
 
 4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx` — plus the mode-tagged `final.<style>.pptx` if they rendered more than one style and want to compare, or `output/html/index.html` for `html-strict`), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
 

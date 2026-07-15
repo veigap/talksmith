@@ -34,6 +34,7 @@ from pathlib import Path, PurePosixPath
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, MSO_SHAPE
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
 import _pptxlib as L
 
 # --------------------------------------------------------------------------- #

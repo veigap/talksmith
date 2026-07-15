@@ -1,6 +1,6 @@
 ---
 name: talksmith:polish-ascii
-description: Step 6 (Polish) helper for the editor + illustrator roles. Six subcommands plus a convenience wrapper. `scan` walks a Talk's `final.md` and emits structured JSON listing every fenced ASCII diagram block, any `<!-- ascii-note: ... -->` HTML comment that follows it (with exact line ranges for both), **and per-block slide context** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) so callers — including parallel-render subagents — never need to re-parse `final.md` themselves. `inspect-intents` prints one row per block (`slide_id | slide_title | ascii-note intent`) for quick eyeballing of the scan. `annotate-renders` merges an LLM-authored `slide_id → {svg_basename, alt}` map into a scan plan, emitting an annotated plan with `render` fields set (and `null` for documentation-only / unmapped blocks). `prepare-render-args` fans an annotated plan into one `<slide_id>.json` args file per renderable block, ready to feed parallel `talksmith:ascii-to-svg` invocations. `extract` takes the annotated plan and writes `talks/<Talk>/images/<basename>.ascii` sidecar files containing ASCII source + captured note in the spec'd layout, without touching `final.md`. `cleanup` takes the same plan and rewrites the matching ASCII fences in `final.md` to image references with `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments untouched, without touching sidecars. `apply` is a convenience wrapper that runs `extract` + `cleanup` in one pass (legacy / quick passes). All subcommands operate on `final.md` only — `draft.md` is read-only from Step 6 onward. CLI-safe, stdlib-only Python.
+description: Deterministic CLI helper for Step 6 (Polish), used by the editor + illustrator roles — scans a Talk's `final.md` for fenced ASCII diagram blocks (with per-block slide context) and mechanically handles sidecar extraction, render-arg fan-out, idempotency stamping, and fence-to-image cleanup. The canonical subcommand sequence is in the skill body. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:polish-ascii — Mechanical ASCII extraction + final.md rewrite
@@ -123,28 +123,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
 
 ### `scan` — JSON (default)
 
-```json
-{
-  "final_path": "talks/senales-1d-biomedicina/final.md",
-  "blocks": [
-    {
-      "slide_id": "s1-2-1",
-      "ascii": {"start_line": 84, "end_line": 101, "payload": "[gray]  Audio …"},
-      "note": {"start_line": 102, "end_line": 106, "payload": "<!-- ascii-note:\nintent: …\n-->"},
-      "context": {
-        "slide_title": "Cuatro señales 1D",
-        "slide_content_prose": "...",
-        "speaker_notes": "...",
-        "section_title": "Foundations",
-        "section_goal": "...",
-        "talk_thesis": "**Claim:** ...",
-        "presentation_language": "Spanish"
-      },
-      "render": null
-    }
-  ]
-}
-```
+Exactly the plan shape shown under *Inputs* above, with `render: null` on every block (the illustrator's `annotate-renders` fills it later).
 
 ### `scan` — human
 
@@ -166,11 +145,7 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 ## Detection rules (used by `scan`)
 
-- **ASCII block** — detection runs in two tiers, mirroring [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Detection rule*:
-  1. **Canonical (deterministic):** fence opens with exactly ` ```ascii ` (lowercase). Payload is trusted as a diagram, no glyph inspection. Scan emits `detection_mode: "canonical"`. This is the form the editor must use for all new ASCII.
-  2. **Legacy heuristic (fallback):** fence opens with an empty / `text` / `diagram` language tag AND payload contains box / arrow glyphs (`─│┌┐└┘├┤┬┴┼+|→←↑↓` or `->`, `==>`, `─`, `│`) or spans ≥3 lines with spatially arranged characters. Scan emits `detection_mode: "legacy-heuristic"` and the `human` formatter prints a migration warning per legacy block.
-
-  Fences tagged `python`, `bash`, `javascript`, `yaml`, `json`, `sh`, etc. are ignored under both tiers.
+- **ASCII block** — two tiers, same rules as [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Detection rule*: the canonical ` ```ascii ` fence (`detection_mode: "canonical"`, no glyph inspection) or the legacy glyph heuristic on empty/`text`/`diagram`-tagged fences (`detection_mode: "legacy-heuristic"`, migration warning per block in `human` output). Real-language fences (`python`, `bash`, …) are ignored under both tiers.
 - **Note** = an HTML comment of shape `<!-- ascii-note: ... -->` whose opening `<!-- ascii-note:` line appears **within 1 blank-line tolerance** after the closing fence. The comment is captured verbatim from its opening sentinel through the line containing `-->`.
 - **`slide_id`** = `s<section-N>-<slide-M>-<n>`. Section is the most recent `# N.` H1; slide is the most recent `## M.` H2 inside that section; `n` is the 1-based ordinal of the ASCII block within the current slide. Special locators: `# Agenda` → section `0`; `# Conclusiones` / `# Conclusions` → section `c`.
 - **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` HTML comment left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads the source and are skipped by `extract`/`cleanup`/`apply`.

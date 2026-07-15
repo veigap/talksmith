@@ -179,16 +179,14 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `body:"drop bullets in draft.md"`; `1. **Leave feedback** drop bullets...` and
   `Paso 1: Leave feedback` → `label:"Leave feedback"`. The renderer supplies the visible 1/2/3,
   so keeping the source ordinal would duplicate it.
-- **Standalone metrics** ($4.44M, 97%, USD 670.000) → `stat` `stats:[{value,caption}]` — the number
-  is `value`, the trailing text its `caption`; a lone hero metric → `big-number`.
-- **A pipe table** — two comparable value columns → `comparison` `columns:[{header,cells}]`; a
-  label/value table → `concept-breakdown` `cards`.
-- **One image + a little text** → `content-image` (`facts`, `image:{src,alt}`; add
-  `"layout":"image-top"` when the text is very short). If the slide is an ordered sequence plus a
-  supporting diagram/example, keep it as `process` and include `image`. ≥4 images → `image-grid`;
-  labeled images → `figures`. A fenced code block → `code-example` (`code`, `explanation`).
-- A short **pull-quote** that is the point → `quote`; a single dominant claim → `statement`
-  (`title` + optional `sub`); a lone analogy/tip → `callout` / `single-point`.
+- **Standalone metrics** — the number is `value`, its trailing text the `caption` (`stat.stats`;
+  a lone hero metric fills `big-number.number` + `caption`).
+- **A pipe table** → `comparison.columns:[{header,cells}]` (header row → `header`, body cells in
+  column order); a label/value table decomposes as `cards`. *(Which template a given shape gets is
+  the catalog's Match rules — not restated here.)*
+- **Images** — carry `src` paths exactly as written into `image:{src,alt}` / `images` / `figures`;
+  on `content-image`, add `"layout":"image-top"` when the text is very short. A fenced code block
+  fills `code-example.code` (+ `explanation`).
 - **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a
   colon), split it into `{label, body}` yourself — the renderer bolds `label` and never parses the
   colon. This applies to `content-image` `facts` and `highlights` (both accept `{label, body}`), and

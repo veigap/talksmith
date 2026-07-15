@@ -1,6 +1,6 @@
 ---
 name: talksmith:pptx-diff
-description: Align a Talk's `final.md` against the `reconcile/finalpptx.md` reconstructed by `talksmith:pptx-extract` and explain the differences. Parses both files into slide trees, aligns slides by (section, slide#) with a normalized-title similarity fallback, then reports per-slide title changes, content edits (bullet/line granularity via difflib), speaker-notes edits, and image changes (added/removed/replaced/renamed by basename+hash). Emits a human-readable report and a machine `talks/<Talk>/reconcile/finalpptx.diff.json` consumed by `talksmith:pptx-merge`. Second stage of the reverse pipeline. CLI-safe, stdlib-only Python (no pptx parsing here); no Cowork dependency.
+description: Explain what changed between a Talk's `final.md` and the `reconcile/finalpptx.md` reconstructed by `talksmith:pptx-extract` — per-slide title/content/notes/image deltas — emitting a human-readable report plus `reconcile/finalpptx.diff.json` for `talksmith:pptx-merge`. Second stage of the reverse pipeline. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:pptx-diff — Explain what changed in the deck

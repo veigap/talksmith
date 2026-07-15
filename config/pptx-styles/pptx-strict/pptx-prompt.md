@@ -15,7 +15,7 @@ Visual specification distilled from [`config/template.pptx`](template.pptx) (53 
 | Slide background | **Pure white `#FFFFFF`** on every slide. No tints, no off-whites, no warm greys. Emit as a single `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg>` on every layout. (Historical note: the source 53-slide reference deck used a black `<p:bg>` + 95%-alpha white overlay producing apparent `#F2F2F2`; this working directory has standardized on pure white. Generators must emit `#FFFFFF` solid — do not reproduce the legacy two-layer recipe.) |
 | Master chrome | **None** — `slideMaster1.xml` has an empty `<p:spTree>`. No footer, page number, or logo on master. Every visible mark lives on individual slides or layouts. |
 | Theme | `theme1.xml` declares Calibri Light / Calibri and the standard Office accent palette. **Zero slides use them** — every run overrides theme defaults at the `<a:rPr>` level. Treat the theme as residual scaffolding; never inherit from it. |
-| Speaker-notes pane | **Load-bearing, not decorative.** The reference 53-slide template happened to leave the pane sparse (mean ~2 chars/slide); that is a property of *that one* source deck, **not** the contract for generated decks. Per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk; the slide is the punctuation*, the notes pane carries the prose the slide replaces. A generated deck with empty notes panes signals an over-authored deck where the slide is doing the speaker's job. The renderer emits every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim — no truncation, no dropping. |
+| Speaker-notes pane | **Load-bearing, not decorative** — per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Speaker notes are the talk*, the pane carries the prose the slide replaces. Emit every `### Notes` block verbatim — no truncation, no dropping. (The sparse panes in the 53-slide source deck are a property of that deck, not the contract.) |
 
 ---
 
@@ -226,7 +226,7 @@ Each row consists of 5 shapes (positions relative to `y_dot = row top`):
 | Item subtitle (1..N) | Section k's `Subtitle:` field if present; else a single-line summary of the section's Goal. |
 | Active item index | The agenda instance's position in the deck — the first agenda (after the cover) highlights item 1; the agenda before section k highlights item k. The mapping is **invariant**: agenda instance k highlights item k. |
 
-**The agenda emits exactly N rows, where N = number of H1 sections in `final.md`.** N is not fixed — the source template happened to have 7, but `base-template.pptx` contains 7 placeholder rows and the renderer is expected to clone or delete rows to match N. Capacity per §5.3: N ≤ 8 fits cleanly; 9–10 emits with a tightness warning; N > 10 surfaces to the presenter (the agenda chrome is out of vertical room and an alternate layout is needed).
+**The agenda emits exactly N rows, where N = number of H1 sections in `final.md`.** N is not fixed — `base-template.pptx` ships 7 placeholder rows; clone or delete rows to match N. Capacity limits: §5.3.
 
 ### 5.6 Agenda instance positions
 
@@ -240,10 +240,10 @@ Section H1s authored in `final.md` become both the agenda row text (§5.5) **and
 
 - **Target ≤ 25 characters** per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) line 34 → *Title-length budget*. At this length the agenda row renders at full type-scale and the §6 pill renders as a clean single-line chip at `sz="800"` without entering the downsize/wrap ladder.
 - **Acceptable up to ~50 characters.** The agenda still fits its row; the §6 pill renders single-line at `sz="800"` (up to ~3.1 in width). No quality loss.
-- **Long but renderable, ~50–80 characters.** The pill enters the downsize ladder (`sz="800" → "700" → "650"`) to stay single-line, or wraps to 2 lines at the smallest size. Renders cleanly — the renderer's §6 sizing algorithm is designed to never break — but the pill becomes visually heavier than ideal, and the agenda row may need a smaller subtitle to balance.
-- **Beyond ~80 characters.** Still renders without breaking, but the pill occupies enough horizontal space that the slide title below loses its visual primacy. Strong signal to abbreviate the H1 at authoring time. Common reshape: drop the descriptive subordinate clause and move it to the section subtitle (which renders in the agenda row but not in the per-slide pill).
+- **Long but renderable, ~50–80 characters.** The pill enters the downsize ladder (`sz="800" → "700" → "650"`) to stay single-line, or wraps to 2 lines at the smallest size — visually heavier than ideal.
+- **Beyond ~80 characters.** Still renders, but the pill crowds the slide title's visual primacy. Strong signal to abbreviate the H1 at authoring time — drop the subordinate clause into the section subtitle (agenda-row-only, never in the pill).
 
-The renderer never fails on length — see §6 *Sizing algorithm* steps 4–6, which always produce a non-broken pill regardless of how long the label is. This subsection exists so the Editor / Composer can author with both consumers in mind during Step 4, not so the renderer has a reason to reject a long H1.
+The renderer never fails on length (§6 *Sizing algorithm* steps 4–6); this subsection is authoring guidance for the Editor / Composer in Step 4.
 
 ---
 
@@ -272,15 +272,11 @@ Every content slide (49 of 53 — excluding cover, the 53 closing-CTA, and 3 unu
 5. **Multi-line fallback** (when single-line at `sz="650"` still exceeds the cap): the pill grows downward, never rightward, wrapping at the nearest whitespace before `pill_cx_max = 4.00 in`. `pill_cy = N_lines × line_h + 2 × vertical_padding` where `N_lines` is whatever the text requires (typically 2; rarely 3). The slide title's `y` offset (§3.5) shifts down by `(pill_cy − single_line_cy)` to preserve the gap between pill and title. The pill fill always covers the full text — no line ever hangs unstyled below the chip.
 6. **Floor — `sz="550"` (5.5pt).** Do not shrink below this; if a label at 5.5pt still requires multi-line wrap, accept the wrap. The renderer's contract is *always produce a non-broken pill*, regardless of label length — there is no length at which the renderer is permitted to fail, truncate, ellipsize, or let text overflow the background.
 
-**Authoring-side budget (cross-reference).** [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) line 34 recommends section H1s ≤ 25 characters as a deck-quality guideline — short pills read cleaner and leave more room for the slide title below. The renderer does **not** enforce this — long H1s render correctly via the downsize-then-wrap ladder above. The 25-char target is editorial guidance for the Editor / Composer in Step 4; the renderer's job is to make any length look clean. See §5.7 for the same guidance applied at agenda-authoring time.
+**Authoring-side budget (cross-reference).** [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) line 34 recommends section H1s ≤ 25 characters — editorial guidance for Step 4 (see §5.7); the renderer does **not** enforce it.
 
-**Anti-patterns.** Do not: emit a fixed-width pill independent of text (e.g. always 1.88 in because that was the median in the source deck); shrink the text below `sz="550"` to fit; silently truncate the label with an ellipsis (changes meaning; an audience reading "ECG — EL ELECTRO…" cannot recover the rest); let text overflow the pill background visually (the chip covers part of the text, the rest hangs in white).
+**Anti-patterns.** Do not: emit a fixed-width pill independent of text; shrink the text below `sz="550"`; silently truncate with an ellipsis (changes meaning); let text overflow the pill background.
 
-The pill text mirrors the active **agenda section name verbatim, uppercased**. Examples (all of these render cleanly via the sizing ladder above — the renderer never fails on length):
-- Agenda item 1 "ECG" → pill text `ECG` (3 chars — single-line at default `sz="800"`)
-- Agenda item 2 "ECG — el electrocardiograma" → pill text `ECG — EL ELECTROCARDIOGRAMA` (27 chars — single-line at `sz="800"`, width ~1.74 in well under cap)
-- Agenda item 3 "Fundamentos de Foundational Models" → pill text `FUNDAMENTOS DE FOUNDATIONAL MODELS` (34 chars — single-line at `sz="800"`, width ~2.12 in, still under cap)
-- Agenda item 4 (extreme) "Ingeniería de prompts estructurada y técnicas avanzadas" → 55 chars — single-line at 8pt would be ~3.24 in (under cap), so still single-line; only at 70+ chars does the ladder enter downsize/wrap territory.
+The pill text mirrors the active **agenda section name verbatim, uppercased** — e.g. `ECG` (3 chars, single-line at `sz="800"`) or `FUNDAMENTOS DE FOUNDATIONAL MODELS` (34 chars, ~2.12 in, still single-line); only at 70+ chars does the ladder enter downsize/wrap territory.
 
 Every content slide under a section must carry this pill — it is the only thing tying a content slide back to its parent agenda entry.
 
@@ -330,11 +326,10 @@ The **icon is not optional** — a concept slide rendered as plain iconless card
 
 ### 7.3 Lead + N items — card-row (§7.4) vs icon-bullet list (§7.5)
 
-**When to pick which — and the capacity limits — are the catalog's `card-row` and
-`icon-list` *Match*/*Format*** ([`../slide-templates.md`](../slide-templates.md)): the same
-lead + 3–5 labeled items shape, split by per-item body length (≤ ~80 chars → §7.4 card-row;
-longer → §7.5 icon-bullet list), picking by the *longest* item and never splitting one group
-across both. §7.4 and §7.5 below are strict's EMU realizations of those two templates.
+When-to-pick + capacity are the catalog's `card-row` / `icon-list` *Match*/*Format*
+([`../slide-templates.md`](../slide-templates.md)); the mechanical split: pick by the *longest*
+item body (≤ ~80 chars → §7.4; longer → §7.5), never splitting one group across both. §7.4 and
+§7.5 below are strict's EMU realizations.
 
 ### 7.4 Card-row (lead + 3–5 short cards) — horizontal
 
@@ -376,16 +371,13 @@ Section pill + title + lead paragraph (full width) + a vertical stack of N rows 
 
 ### 7.6 Labeled enumerations render as cards (strict realization)
 
-The rule that a set of labeled/named units renders as cards and **never** as a bullet
-list or a flat paragraph lead is the catalog's **universal invariant** and its
-`process` / `concept-breakdown` templates — see [`../slide-templates.md`](../slide-templates.md).
-Strict's realization: an **ordered** sequence (`Paso 1`, `Step N`, `Fase I`, `Case A`, an
-integer list) → §7.1 numbered cards (integer labels) or §7.2 plain cards with the label as
-`Card heading`; an **unordered** labeled set → the **§7.2.1 icon card grid** — the default
-concept-breakdown carries a per-concept §17 icon (plain iconless §7.2 only for a dense
-5–6-item grid or when no glyph fits). The ordinal/label becomes the card number/heading; the
-description becomes the body. Never emit the label as an inline paragraph prefix
-(`**Paso 1.** …`) — the named hierarchy must stay visually scannable.
+The cards-never-bullets rule is the catalog's **universal invariant**
+([`../slide-templates.md`](../slide-templates.md)). Strict's realization: an **ordered**
+sequence (`Paso 1`, `Step N`, `Fase I`, an integer list) → §7.1 numbered cards or §7.2 plain
+cards with the label as `Card heading`; an **unordered** labeled set → the **§7.2.1 icon card
+grid** (plain iconless §7.2 only for a dense 5–6-item grid or when no glyph fits). The
+ordinal/label becomes the card number/heading; the description the body. Never emit the label
+as an inline paragraph prefix (`**Paso 1.** …`).
 
 ---
 
@@ -472,9 +464,6 @@ appear, the emit rule below governs their glyph.
 **The template contains ZERO `<a:tbl>` elements.** `ppt/tableStyles.xml` is empty (just `<a:tblStyleLst def="…"/>`).
 
 A pipe-table is the source signal for the catalog's `comparison` (and label/value `concept-breakdown`) templates — see [`../slide-templates.md`](../slide-templates.md); the rule *never emit a native `<a:tbl>`; convert to a card grid* is strict's substrate invariant. Strict's realization binds each shape to a §7 card recipe:
-
-| Markdown shape | Render as |
-|---|---|
 
 | Markdown shape | Render as |
 |---|---|
@@ -613,19 +602,19 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
 
    > **The authoritative when-to-pick lives in the shared catalog** [`../slide-templates.md`](../slide-templates.md) → *Classification procedure* + each template's *Match*. This table is strict's realization of it: each row binds a catalog template to its strict §-recipe and the mechanical signal that predicts it (what `audits/layout_fit.py` checks). When this table and the catalog disagree on *when* a template applies, the catalog wins; this table governs only which strict recipe emits it.
 
-   | Markdown signal in the H2-led slide | Layout type (§13) | Content-intent fit (when this layout is right; when it is not) |
+   | Markdown signal in the H2-led slide | Layout type (§13) | Discriminator (full Use-when / NOT-for prose: the catalog's *Match* rules) |
    |---|---|---|
-   | First slide of deck, no H2, frontmatter present | **cover** (§4) | Not a content choice — first slide is always cover regardless of Markdown. |
-   | H1-only slide (numbered section header) | **agenda/divider** (§5) — render full 7-item agenda with matching number active | Not a content choice — section transitions always emit an agenda re-emit with the active dot incremented. |
-   | H2 + 1–3 `![]()` images interleaved with paragraphs | **content+image** | **Use when:** one main claim is supported by 1–3 illustrative images (a hero diagram + 1–2 close-ups; a worked example with its result; a concept + its real-world instance). The slide is *about* the prose; the images are evidence. **NOT for:** parallel concepts of equal weight (→ §7.4 card-row or §7.5 list); a visual catalog where variety is the point (→ image-grid); a single full-bleed hero (template never goes full-bleed per §12). |
-   | H2 + ≥4 `![]()` images | **image-grid** | **Use when:** the *visual variety itself* is the message — model output samples, phenotype spreads, before/after pairs across N cases, a portfolio. The reader scans the grid as one composite. **NOT for:** a list of items that each happen to have an icon (→ §7.5 icon-bullet list, which keeps text dominant); one main idea with supporting illustrations (→ content+image, where the prose leads). |
-   | H2 + fenced ``` ``` code block as primary content | **code-example** (§9) | **Use when:** the audience must read code line-by-line — a worked snippet, an API call shape, a config example, a before/after diff. Pairs the code surface (right) with a 2–3-sentence explanation column (left). **NOT for:** code as a cited artifact you don't expect the audience to read (drop into speaker notes or screenshot it as an image); pseudocode for an algorithm whose structure matters more than its syntax (→ §7.5 with the steps as items, or a diagram). |
-   | H2 + sequence of `### Subhead` + paragraph repeats (2+ groups), **no image** | **card-grid** = **§7.2.1 icon cards** (per-concept §17 glyph; plain §7.2 only for a dense 5–6 grid) | **Use when:** 2 or more named, structurally-parallel concepts each fit in a short heading + 1–2-line body — a catalog of techniques, a feature comparison, a 2×N or 3×N matrix. The grid reads as a navigable index; **each concept is anchored by its own §17 icon** (§7.2.1) — do not emit bare iconless cards unless the grid is dense (5–6). Any `![]()` image present → **content+cards+image**, not card-grid. **NOT for:** 3 items (→ §7.4 card-row, the row layout reads more cleanly at low N); items with multi-sentence prose bodies (→ §7.5 icon-bullet list); label/value pairs that read like a small table (→ card-grid via §11, which uses a tighter visual). |
-   | H2 + lead paragraph + 3–5 `- **Label** body…` bullets (or 3–5 `- <emoji> **Label:** body…` or `#### Label` + paragraph groups) | **§7.4 card-row** when every per-item body ≤ ~80 chars; **§7.5 icon-bullet list** otherwise — **NEVER §10 plain bullets** | **§7.4 card-row use when:** 3–5 symmetric, equal-weight, parallel concept *summaries* — "three innovations of StyleGAN", "four pillars of X", "five steps". Each item headline-able in ≤ ~80 chars; the audience reads horizontally and sees the parallelism. **§7.5 icon-bullet list use when:** 3–5 parallel items each needing 2–3 sentences of prose — "three strengths of GANs", "four limitations of X", "five reasons Y matters". The audience reads top-to-bottom; each item gets real horizontal room. **Decision rule:** measure post-Markdown chars per item body, pick by the *longest* item, never split a group across both. See §7.3. **Common renderer mistake:** falling through to §10 plain bullets when the emoji-bullet-with-bold-label pattern is detected. The lead + 3-5 *labeled* bullets shape is **never** a §10 bullet list — even when bodies are short (→ §7.4) or long (→ §7.5), the *labeled* structure makes it a card/row layout. §10 is for plain unlabeled bullets only (rare; e.g. a 3-item caveat list under a content+image slide). **NOT for:** label/value pairs (→ §11 card-grid); enumerations with > 5 items (split into two slides); a single concept with sub-points (→ content+image or content-text). |
-   | H2 + pipe-table | **card-grid** via §11 conversion | **Use when:** the content is structurally label/value pairs — model specs, parameter comparisons, "before vs after" rows, dosage tables. The template never emits native `<a:tbl>`; pipe-tables convert to a card-per-row visual. **NOT for:** 3–5 parallel concepts where the "table" is just a layout convenience (→ §7.4 or §7.5, more visually appropriate); narrative rows that read as prose (→ content-text or split into multiple slides). |
-   | Final slide with H2 + list of links | **closing-cta** | **Use when:** the talk's last slide — a call to action, a "where to next" list, contact + repo links, references the audience will photograph. **NOT for:** any non-terminal slide; an inline references section (those belong in speaker notes or an appendix slide, not in a CTA layout). |
-   | H2 + paragraphs only, no images, no code | **content-text** | **Last-resort use when:** a slide genuinely carries only prose — a definition, a quote, an opening framing. Template avoids this; appears 1× in 53 source slides. **NOT for:** anything that could be restructured — most "wall of paragraphs" slides are draft defects where parallel structure (→ §7.4 / §7.5) or a diagram (→ content+image) would serve better. Flag in review as a candidate to restructure before accepting. |
-   | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink (§8.1) for analogy/tip/warning, blue (§8.2) for declarative claim/key takeaway | **Use when:** a slide's content includes a single emphasized claim or aside that markdown-authored as a one-item bullet with emoji + bold lead. The shape is **not a bullet list** — a 1-bullet "list" never reads as enumeration; it reads as emphasis. Promote to the §8 callout layout, picking pink vs. blue per the §8 decision table by the bullet's intent (`🎯`, `💡`, `📚`, `⚠` → pink; `📊`, `ℹ️`, declarative claim → blue). Per [`audits/block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py), the renderer is audited for this — emitting the bullet as a plain `<a:buChar>` paragraph instead of a callout shape registers as a `[block-drop]` because the audit looks for the matching `#F7BBC1`/`#B8E6F5` roundRect. **NOT for:** multi-bullet emoji-prefixed lists (those are §10 bullet lists with the emoji-to-icon swap per §17.7); inline bold within a paragraph (not a callout signal — just emphasis). |
+   | First slide of deck, no H2, frontmatter present | **cover** (§4) | Unconditional. |
+   | H1-only slide (numbered section header) | **agenda/divider** (§5) | Unconditional — agenda re-emit, active dot incremented. |
+   | H2 + 1–3 `![]()` images interleaved with paragraphs | **content+image** | The prose leads; images are evidence. NOT parallel equal-weight concepts (→ §7.4/§7.5) or a visual catalog (→ image-grid). Never full-bleed (§12). |
+   | H2 + ≥4 `![]()` images | **image-grid** | Visual variety *is* the message. NOT items-that-happen-to-have-icons (→ §7.5) or prose-led (→ content+image). |
+   | H2 + fenced ``` ``` code block as primary content | **code-example** (§9) | Audience reads the code line-by-line; explanation column left, code right. NOT code-as-citation (→ notes/screenshot) or pseudocode-whose-structure-matters (→ §7.5 / diagram). |
+   | H2 + sequence of `### Subhead` + paragraph repeats (2+ groups), **no image** | **card-grid** = **§7.2.1 icon cards** (per-concept §17 glyph; plain §7.2 only for a dense 5–6 grid) | Named parallel concepts with short bodies; each anchored by its own §17 icon. Any `![]()` present → **content+cards+image**. 3 items → §7.4; multi-sentence bodies → §7.5; label/value pairs → §11. |
+   | H2 + lead paragraph + 3–5 `- **Label** body…` bullets (or emoji-prefixed / `#### Label` groups) | **§7.4 card-row** when every body ≤ ~80 chars; **§7.5 icon-bullet list** otherwise — **NEVER §10 plain bullets** | Pick by the *longest* item body; never split a group (§7.3). The *labeled* structure is never a §10 list, however short the bodies — §10 is for rare plain unlabeled bullets only. >5 items → split the slide; label/value pairs → §11. |
+   | H2 + pipe-table | **card-grid** via §11 conversion | Structurally label/value pairs; never native `<a:tbl>`. 3–5 parallel concepts wearing a table → §7.4/§7.5. |
+   | Final slide with H2 + list of links | **closing-cta** | Terminal slide only. |
+   | H2 + paragraphs only, no images, no code | **content-text** | Last resort (1× in 53 source slides) — flag as a restructure candidate. |
+   | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink for analogy/tip/warning, blue for declarative claim/takeaway | A 1-bullet "list" reads as emphasis, not enumeration — promote to §8, picking pink vs blue per the §8 decision table. Audited: emitting it as a plain `<a:buChar>` paragraph registers as a `[block-drop]` in [`audits/block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py). NOT multi-bullet emoji lists (→ §10 + §17.7 swap) or inline bold (just emphasis). |
 
 6. **Title sizing per content slide.** Apply §3.3 — pick the largest size from the discrete ladder `[17, 18, 19, 20, 21, 22.5, 24, 26, 28, 30, 31]` pt that fits the title on one line.
 7. **All `roundRect` shapes use 5760 EMU corner radius** (§2.3). Encode the per-shape `adj` accordingly.
@@ -678,29 +667,6 @@ When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and 
 The presenter picks one. The renderer records the resolution in [`config/feedback-backlog.md`](feedback-backlog.md) with the tag `pre-emit-audit` so the next Talk in the working directory can carry the rule forward via the Step-8 learnings promotion.
 
 **Never silently compensate.** A renderer that absorbs an ambiguity by picking the plainer layout, dropping the emoji, or shrinking the font is exactly the renderer that ships the regression this audit exists to prevent.
-
-## 16. Recipes summary
-
-When you only need a one-line cheat-sheet:
-
-| Concern | Answer |
-|---|---|
-| Background | Pure white `#FFFFFF` `<p:bg>` solid fill on every slide |
-| Title font | Helvetica Bold, `#1F1E1E`, adaptive 17–31pt (40.5pt for cover) |
-| Body font | Helvetica, `#3B3535`, 10.5–12.5pt |
-| Code font | Courier New, `#000000` with GitHub-light syntax colors |
-| Section pill | `roundRect` `#F9D2D6` top-left, ALL CAPS Helvetica Bold `#3B3535` text overlay |
-| Card (numbered) | `roundRect` `#FFFFFF` + `rect` `#F2EEEE` left strip + Helvetica Bold number + heading + Helvetica body |
-| Card (plain) | `roundRect` `#FFFFFF` + Helvetica Bold heading + Helvetica body, 0.18 in inner padding |
-| Callout | `roundRect` `#F7BBC1` + emoji image + Helvetica `#000000` text |
-| Code surface | `roundRect` `#F2F2F2` + Courier New + syntax-color spans |
-| Agenda dot (active) | `roundRect` `#DA1B2E` + `#FFFFFF` "N" text + `#F33447` connector |
-| Agenda dot (inactive) | `roundRect` `#F2EEEE` + `#3B3535` "N" text + `#D8D4D4` connector |
-| Corner radius | Constant ~5760 EMU (4.6 pt) on every roundRect |
-| Tables | None — convert pipe-tables to card grids |
-| Cover logo | `image-1-1.png` at `(7183562, 3248546)` EMU, `(1469008, 1214065)` EMU size — preserved verbatim |
-
----
 
 ## 17. Icon library — branded line-art set
 
@@ -824,20 +790,13 @@ When a content slide is being assembled and an icon slot needs to be filled:
 
 ### 17.6 Where the assets come from — fetch by name, don't bundle
 
-There is **no bundled icon library** and icons are **never generated**. Each icon is a
-**Material Symbols** SVG fetched **by name, on demand** via
-[`icon_fetch.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/icon_fetch.py) (see the §17 intro),
-cached under `talks/<Talk>/output/.icons/`. Fetch each content-matched icon, recolor to
-`#DA1B2E`, then embed it as a `<p:pic>` per §17.4 (SVG primary + PNG fallback). A deck fetches
-only the handful of icons it uses.
+Per the §17 intro: no bundled library, never generated — fetch by name via `icon_fetch.py`, cache under `talks/<Talk>/output/.icons/`, recolor `#DA1B2E`, embed per §17.4 (SVG primary + PNG fallback).
 
 | Need | Do |
 |---|---|
 | The icon SVG for concept "X" | `icon_fetch.py <material-name> --cache …/output/.icons --color DA1B2E` → local recolored `.svg` |
 | PNG fallback for the `<asvg:svgBlip>` pair (§17.4) | rasterize the fetched SVG (the Cowork `pptx` skill / renderer handles SVG→PNG), or embed SVG-only where the target supports it |
 | A visual reference for the 15 core categories | [`template-previews/icons/`](template-previews/icons/) PNGs (reference only — **not** the render assets) |
-
-*(The earlier claim that `ppt/media/icon-<name>.svg` ships inside `base-template.pptx` was wrong — those files never existed, which is why concept icons rendered blank. Fetch from Material Symbols instead.)*
 
 ### 17.7 Emoji → catalog-icon swap table
 
@@ -935,7 +894,7 @@ The whole guide is small enough to serve as the body of an `md-to-deck` skill, a
 | [`config/pptx-prompt.md`](pptx-prompt.md) | This file — canonical visual specification. | **Always.** Read end-to-end on entry. |
 | [`config/base-template.pptx`](base-template.pptx) | Working foundation (15 slides): cover + agenda with `{{placeholders}}`, red separator (slide 3), the layout-example slides, and a section-divider example (slide 13). | **Always.** Open as the starting deck; substitute placeholders; discard slides 3–15. |
 | [`config/template-previews/`](template-previews/) | Rendered PNGs of every template.pptx and base-template.pptx slide + icon catalog. | Visual cross-check when a recipe is ambiguous in prose. |
-| [`config/template-previews/icons/`](template-previews/icons/) | 15 branded line-art icon PNG previews. SVG+PNG pairs live in `base-template.pptx` at `ppt/media/icon-<name>.{svg,png}`. | When picking an icon per §17.5. |
+| [`config/template-previews/icons/`](template-previews/icons/) | 15 branded line-art icon PNG previews — visual reference only; render assets are fetched by name per §17.6. | When picking an icon per §17.5. |
 | [`config/profile.md`](profile.md) | Presenter's subject-level defaults — Subject, Presenter, Audience, Default duration, Presentation language. | At cover/agenda substitution time (§19.3 stages 1–2). |
 | `talks/<Talk>/final.md` | The deliverable Markdown. Frontmatter + structured sections. | The content source. |
 
@@ -954,13 +913,13 @@ Each stage points to the §-section that owns the substantive rules. The stage d
 
 | Stage | What you do | Rules in |
 |---|---|---|
-| **1. Cover** | Substitute the 4 placeholders on slide 1: `{{PRESENTATION_TITLE}}` (← `profile.md.Subject`), `{{TALK_SUBTITLE}}` (← `final.md.class` — **required**, never delete the shape; if the field is missing in frontmatter, stop and surface as a render-blocking error so the editor can fill it), `Autor: {{PRESENTER}}` (localize "Autor:" per `Presentation language`), `Última Modificación: {{DATE}}` (localize prefix; format date as "Month, YYYY"). Preserve logo verbatim. | §4 + §4.3 |
-| **2. Agenda** | Substitute the placeholders on slide 2: `{{SECTION_k_TITLE}}` and `{{SECTION_k_SUBTITLE}}` for k = 1..N (N = section count). Clone/delete placeholder rows to match N. Active dot stays at 1. Warn the presenter if N > 8 (tight) or N > 10 (out of vertical room — §5.3). | §5 + §5.3 + §5.5 |
+| **1. Cover** | Substitute the 4 cover placeholders per §4.3 (`class` missing from frontmatter → stop, render-blocking; localize the author/date labels per `Presentation language`). Preserve logo verbatim. | §4 + §4.3 |
+| **2. Agenda** | Substitute `{{SECTION_k_TITLE}}`/`{{SECTION_k_SUBTITLE}}` for k = 1..N; clone/delete rows to match N; active dot stays at 1. Capacity warnings per §5.3. | §5 + §5.3 + §5.5 |
 | **3. Discard zones B and C** | Delete slides 3 through 15 from your working copy. They are template guidance. After deletion the working deck has only the cover + agenda. | §18 (zone classification) |
 | **4. Build content slides** | For each `## <Title>` in `final.md`, pick a layout per the Markdown-signal table (§15), then emit: section pill (§6) at top-left with text = `<UPPERCASE SECTION H1>`, slide title sized adaptively (§3.3), body per the layout recipe, icons per §17.5, callouts per §8 decision table. | §15 + §6 + §7 + §8 + §9 + §13 + §17 |
 | **5. Section dividers** | Between section k-1's last slide and section k's first slide (k = 2..N), emit an agenda re-emit with active dot at k. Total dividers = N − 1. | §5 + §5.6 |
 | **6. Backgrounds** | Pure white `#FFFFFF` `<p:bg>` solid fill on every layout. No overlays, no tints, no grey. | §1 |
-| **7. Speaker notes** | Emit every `### Notes` block from `final.md` into the corresponding slide's notes pane verbatim. The notes pane is **load-bearing**, not decorative — it carries the prose the slide replaces (per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Content* → *Speaker notes are the talk*). No truncation, no dropping; never spill notes content into the slide body. | §1 (Speaker-notes pane row) + [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) |
+| **7. Speaker notes** | Emit every `### Notes` block verbatim into the notes pane — no truncation, no dropping; never spill notes into the slide body. | §1 (Speaker-notes pane row) |
 
 ### 19.4 Output contract
 
@@ -1013,34 +972,9 @@ Things that look reasonable but break the template. The §-section in each row i
 | Plain-bullet layout (§10) shipped when source has ≥4 `### Subhead` groups (§15.5 → card-grid / content+cards+image) | Card layouts exist because the deck "strongly prefers cards over bullet lists for grouped content" (§10); falling through to plain bullets defeats the visual hierarchy | §15.6.1 |
 | Layout chosen because "it was easier" rather than because §15.5's discriminator selected it | §15.5 is a contract, not a negotiation. Each render must justify its layout choice from the discriminator's output, logged at the cycle's CONTROL phase | §15.6.1 |
 
-### 19.7 When in doubt — navigation
+### 19.7 Deployment
 
-| Question | Where to look |
-|---|---|
-| "What's the exact EMU position of the cover title?" | §4 |
-| "What size is a card-row icon?" | §17.3 |
-| "Pink or blue callout for this content?" | §8 decision table |
-| "What icon for 'patient privacy'?" | §17.1 → `shield` |
-| "How do I emit a section divider?" | §5 + §5.6 |
-| "Can I use a native PPTX table?" | §11 — no, convert to cards |
-| "What's the slide background color?" | §1 — pure white `#FFFFFF` solid fill on every slide |
-| "Can I resize an image to fit a slot exactly?" | §12 — scale uniformly only; aspect ratio is fixed |
-| "What font for code blocks?" | §3.1 — Courier New (not Helvetica Bold) |
-| "How many lines can a slide title span?" | §3.3 — adaptive sz to fit one line |
-| "Where is the brand logo?" | `ppt/media/image-1-1.png` in template.pptx / base-template.pptx |
-| "How do I render a dual-format icon (PNG fallback + SVG primary)?" | §17.4 |
-| "What goes in `[Content_Types].xml`?" | §19.4 integrity invariants |
-| "How many iterations of edit + re-render are allowed?" | §19.5 — 2 beyond initial |
-
-### 19.8 Deployment — where this guide can live
-
-The whole spec (§§1–19) is self-contained. Three places it usefully gets installed:
-
-1. **`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md` body** — the skill loads the full spec on invocation; downstream actually emits the XML.
-2. **System message of a dedicated rendering agent** — agent stays oriented across multi-turn editing; pass `talks/<Talk>/final.md` and `config/profile.md` as user-turn inputs.
-3. **`/render-deck` slash command body** — one-shot CLI invocation.
-
-In all three cases pointing the agent at `config/pptx-prompt.md` is sufficient — this file is the contract. Trust the spec; defer to `base-template.pptx` for geometry; defer to the §17 catalog for visual marks; defer to the §8 decision table for callouts. When the spec and intuition disagree, the spec wins — file an issue if you think the spec is wrong, but do not silently drift.
+The spec is self-contained; pointing any renderer (skill body, agent system message, slash command) at this file is sufficient — this file is the contract. Trust the spec; defer to `base-template.pptx` for geometry, the §17 catalog for visual marks, the §8 decision table for callouts. When the spec and intuition disagree, the spec wins — file an issue rather than silently drifting.
 
 ---
 

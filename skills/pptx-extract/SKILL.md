@@ -1,6 +1,6 @@
 ---
 name: talksmith:pptx-extract
-description: Reconstruct a Talk's presentation Markdown from a (possibly hand-edited) `.pptx`. Reads the deck with `python-pptx` (plus targeted `xml.etree`/`lxml` drop-throughs for SVG twins, raster rels, and bullet markers) — no Cowork — classifies each slide (cover/agenda/section-divider/content), stages **every** content image (non-template) into `talks/<Talk>/reconcile/staging/` with slot-anchored names (`slide<order>-img<ordinal>.<ext>`), and emits `talks/<Talk>/reconcile/finalpptx.md` in the canonical `draft.md` shape plus a `reconcile/finalpptx.inventory.json` sidecar. Image identity vs. `images/` is NOT decided here (bytes/dimensions alone are unreliable — Keynote resizes and re-encodes) — it's resolved by `talksmith:pptx-diff` via slot alignment. All reverse-pipeline artifacts live under `talks/<Talk>/reconcile/`. First stage of the reverse pipeline: run before `talksmith:pptx-diff`. Mandatory `--style {strict|free-form}` (no default). CLI-safe, requires `python-pptx` (`pip install python-pptx`); no Cowork dependency.
+description: Reconstruct a Talk's presentation Markdown (`reconcile/finalpptx.md` + inventory + staged images) from a possibly hand-edited `.pptx`. First stage of the reverse pipeline — run before `talksmith:pptx-diff` and `talksmith:pptx-merge`. Mandatory `--style {strict|free-form}`. Requires `python-pptx`; no Cowork dependency.
 ---
 
 # talksmith:pptx-extract — Rebuild the presentation Markdown from a deck

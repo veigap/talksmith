@@ -38,6 +38,7 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
 import _pptxlib as L
 
 FIELD_ALIASES = {"content": "content", "notes": "speaker notes", "speaker notes": "speaker notes"}

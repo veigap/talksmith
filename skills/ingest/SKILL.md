@@ -1,6 +1,6 @@
 ---
 name: talksmith:ingest
-description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) and persist it under `talks/<Talk>/research/web/<folder-name>/` so the librarian ingests it into the corpus in Step 3 alongside articles and chat exports. Invocation: pass a URL (required) and the active Talk path. Optional folder name (default = slug of URL host + first path segment). CLI-safe, stdlib-only Python; no Cowork dependency.
+description: Fetch a web page (HTML + best-effort Markdown extraction + referenced images) into `talks/<Talk>/research/web/<folder-name>/` for the librarian to ingest at Step 3. Invoke when the presenter hands over a URL to capture; pass the URL and the active Talk path. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:ingest — Capture a web page as Talk research

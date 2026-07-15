@@ -1,6 +1,6 @@
 ---
 name: talksmith:pptx-merge
-description: Apply a `finalpptx.diff.json` (from `talksmith:pptx-diff`) back into a Talk's `draft.md` — the editable source of truth — then re-run Step 6 Polish to re-derive `final.md`. Re-anchors each change structurally (by section + slide title + pre-change text, not by line number, since Polish rewrites lines). `apply-auto` lands the SIMPLE high-confidence changes automatically (bullet/notes edits, new-image insert+copy, diagram overwrite) and leaves the COMPLEX/CONFUSING ones for the Editor (low-confidence matches, removals, added/deleted slides, and image edits that trace back to a draft ASCII source). Every write is atomic and anchor-guarded (re-apply after drift fails loudly). Follows the `feedback-cycle` precedent: Python does the line surgery, the LLM authors wording. Third/final stage of the reverse pipeline. CLI-safe, stdlib-only Python (no pptx parsing here); no Cowork dependency.
+description: Apply a `finalpptx.diff.json` (from `talksmith:pptx-diff`) back into a Talk's `draft.md`: `apply-auto` lands the simple high-confidence changes atomically and routes complex/ambiguous ones to the Editor; re-run Step 6 Polish afterwards to re-derive `final.md`. Third/final stage of the reverse pipeline. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:pptx-merge — Reincorporate deck edits into draft.md

@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-deck
-description: Render a Talk's cleaned `final.md` to a presentation. **Branches by the mandatory `style:` invocation parameter** — three modes, no default: **`pptx-strict`** and **`pptx-free-form`** author a native PowerPoint (`.pptx`) via Anthropic's official `pptx` skill (`skill://antropic-skills:/pptx`, **Cowork-only**, each with a `base-template.pptx`); **`html-strict`** renders a styled **HTML / Reveal.js** deck by code via [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) (**Cowork-independent**, needs `jinja2`) — from `final.md` as the shareable deliverable (`output/html/index.html`), and, auto-fired by the orchestrator with `--draft`, from the in-progress `draft.md` as a **live view kept in sync during drafting** (same renderer, same output). Optional Step 7 of the Presenter Agent workflow, invoked after Step 6 (Polish); the live view auto-fires earlier (Step 5.5). Consumes images already on disk under `talks/<Talk>/images/`. The orchestrator asks the presenter the style at every Step 7 entry and passes it in; `final.md`/`draft.md` are style-agnostic. The skill fails render-blocking if `style:` is absent. Each style resolves to a self-contained spec under [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/) per [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/README.md). Output: the `.pptx` styles → `talks/<Talk>/output/final.<style>.pptx` (+ canonical `final.pptx`); `html-strict` → `output/html/index.html`. Because `html-strict` renders in HTML, its styled layer (cards, per-concept icons, callouts, code surfaces) is **always present**, unlike the native `.pptx` render which can drop it.
+description: Render a Talk's `final.md` to a presentation — a native `.pptx` (styles `pptx-strict` / `pptx-free-form`, Cowork-only) or a code-rendered HTML/Reveal.js deck (`html-strict`, Cowork-independent; also the Step-5.5 live view from `draft.md` via `--draft`). Optional Step 7 of the workflow. The `style:` invocation parameter is mandatory — the skill fails render-blocking without it.
 ---
 
 # md-to-deck — render `final.md` to a presentation (`.pptx` or HTML)
@@ -115,7 +115,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 | No remote image refs | No `![...](http(s)://...)` refs (pptx skill behavior on URLs is undefined) | Stop and ask the presenter to download into `images/` or explicitly accept the risk. |
 | Base template | `<base_template_path>` exists (style-resolved) | Stop and ask. |
 | Visual spec | `<spec_path>` exists (strict §1–§20, free-form §1–§4) | Stop and ask — the spec is the contract. |
-| Icon library *(pptx-strict only)* | `pptx-strict/base-template.pptx` `ppt/media/icon-*.svg` — see `pptx-strict/pptx-prompt.md` §17. Free-form makes icons optional (§3.2). | Stop and ask — the no-emoji rule needs them. |
+| Icon capability *(pptx-strict only)* | Icons are fetched by name at render time via `icon_fetch.py` (network on first fetch, cached under `output/.icons/`) — see `pptx-strict/pptx-prompt.md` §17.6. Free-form makes icons optional (§3.2). | Stop and ask — the no-emoji rule needs them. |
 
 ### Inputs (Path A)
 
@@ -127,7 +127,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 
 0. **Resolve style** (see *Style resolution*). Cache `<spec_path>` (verify it exists for the style) and `<base_template_path>` (verify for the two `.pptx` styles). Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>).`
 1. **Verify prerequisites** (table above). Stop on any failure.
-2. **FILL `slide-model.json`** — the shared semantic step, identical to Path B's ([`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)). An LLM decomposes `final.md` into `output/slide-model.json`: per slide it picks the `template` against [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md), decomposes the body into that template's required fields, lifts `### Speaker notes` into `notes`, sets `section`, and drops scaffolding (`# Thesis` / `# Open questions` / `# Cut material`, `### Sources`, `### Presenter feedback`). HTML and PPTX author from this same structured model, so a slide looks the same in both.
+2. **FILL `slide-model.json`** — the shared semantic step, **identical to Path B's Step 1** (classify per the catalog, decompose into the template's required fields, lift notes verbatim, drop scaffolding — see Path B above + [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)). HTML and PPTX author from this same structured model, so a slide looks the same in both.
 
    > **Author from the model ONLY; never re-parse `final.md`.** The model has already resolved every field — `template`, structured content, `notes`, `section`.
 
@@ -194,6 +194,8 @@ Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one br
 
 **Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` (single pass, no cycles).
 
+**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
+
 **Checklists** (orchestrator shows these, ticking `[ ]`→`[⟳]`→`[✓]`, `[—]` skipped, `[✗]` failed):
 
 ```
@@ -235,12 +237,6 @@ Operational/IO failures (visual-spec violations are catalogued in `<spec_path>` 
 
 ## Why Cowork-only (Path A)
 
-Earlier iterations tried three *CLI-only, from-scratch* paths — **all abandoned**. This is about building a deck **without** the native `pptx` skill; the native skill's own `python-pptx`-from-base-template workflow is the sanctioned path.
-
-| Attempt | Outcome |
-|---|---|
-| Hand-rolled `python-pptx` from a blank `Presentation()` | Brittle parsing, theme reimplementation, fails Keynote import. |
-| Marp CLI | Required migrating `final.md` to Marp syntax — a change to the source of truth. |
-| `pandoc --reference-doc` | Template-layout name mismatch → default theme; dividers split; tables dropped silently. |
+Every CLI-only, from-scratch path (blank `Presentation()`, Marp, `pandoc --reference-doc`) was tried and abandoned — each fails Keynote import or mangles the source of truth. The native `pptx` skill's `python-pptx`-from-base-template workflow is the only sanctioned path; there is no CLI fallback.
 
 The native `pptx` skill is the only tested-good `.pptx` path. `html-strict` (Path B) needs no Cowork at all — it's deterministic code. `final.md` is plain Markdown, so a presenter who needs one-off CLI rendering can use their own toolchain; Talksmith just won't maintain that path.

@@ -27,6 +27,7 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
 import _pptxlib as L
 
 TITLE_MATCH_MIN = 0.6

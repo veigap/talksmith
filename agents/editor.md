@@ -75,9 +75,9 @@ Hard rules for the editor when *producing* ASCII:
 - The fence pair brackets the diagram bytes only — no headings, no prose, no Markdown list markers inside.
 - The optional `<!-- ascii-note: ... -->` HTML comment follows the closing fence with at most one blank line between them.
 
-Together, ` ```ascii ` + closing ` ``` ` are the diagram's open/close sentinel pair — the analogue of `<!-- ascii-note:` + `-->`. Downstream extractors (`talksmith:polish-ascii scan`, `talksmith:ascii-to-svg`) key on the `ascii` tag alone; the glyph heuristic is retained only as a fallback for legacy / hand-edited files and is flagged for migration.
+Downstream extractors key on the `ascii` tag alone (the glyph heuristic survives only as a legacy fallback — detection priority order: [`illustrator.md`](illustrator.md) → *Detection rule*).
 
-The note is for the **rendering pass**, not the reader of `draft.md`. Keep it terse (≤ 4 short lines) and factual — no narrative. The illustrator reads this comment when it walks the diagram in Step 6 (in `final.md`) and forwards it to the `talksmith:ascii-to-svg` skill as extra context, so the SVG can be labelled, colored, and laid out with intent rather than guessed at from the glyphs alone. **An ASCII block without an `ascii-note` is valid** (the illustrator falls back to slide title + Content + Speaker notes); add the note whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
+The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines) and factual. The illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent. **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
 
 An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
@@ -186,37 +186,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py cleanup --fina
 
 The `apply` subcommand (sidecars + cleanup in one shot) exists for quick passes where rendering happened out of band — prefer the staged `extract` → render → `cleanup` flow for normal Step 6.
 
-For each rendered `talks/<Talk>/images/<slide-id>-<n>-<short-description>.svg` (filename convention owned by the illustrator — see `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md` → *Output filename convention*), the skill performs the following three-step transform per block — this is the spec the skill implements; understand it so you can audit results, but **do not re-implement** in ad-hoc Python:
-
-1. **Detect and capture.** Find the fenced ASCII block. **Look immediately after the closing fence** (skipping at most a single blank line) for an `<!-- ascii-note: ... -->` HTML comment. If one is present, capture it verbatim — opening sentinel through the terminal `-->` — including all interior lines. The captured note is the input to the sidecar in the bullet below. If no comment is there, capture nothing (no synthesis, no defaults).
-2. **Replace the ASCII fence** with the image reference plus an `<!-- ascii-source: -->` echo of the original ASCII:
-   ```markdown
-   ![<slide title or short description>](images/<slide-id>-<n>-<short-description>.svg)
-   <!-- ascii-source:
-   <original ASCII verbatim>
-   -->
-   ```
-3. **Leave the post-fence `<!-- ascii-note: ... -->` in `final.md` in place.** Do not delete it, do not move it. It remains directly below the new image reference (after the `ascii-source` comment) and continues to document render-time intent for future re-renders. The Step-6 (d) strip targets only `Presenter feedback`, not `ascii-note`.
-
-**Sidecar `.ascii` file — also write the source to disk.** In addition to embedding the ASCII in the HTML comment, write a sidecar to `talks/<Talk>/images/<slide-id>-<n>-<short-description>.ascii` (same basename as the SVG, `.ascii` extension). The sidecar contains the **ASCII source and the captured illustrator note** from step (a.1) above, in this exact layout:
-
-```
-<ASCII bytes verbatim — no fence, no leading/trailing blank lines>
-
-<!-- ascii-note:
-intent: ...
-emphasize: ...
-labels: ...
--->
-```
-
-- The ASCII section is mandatory; it's the diagram bytes exactly as they appeared between the opening and closing fences in `final.md`.
-- The `<!-- ascii-note: ... -->` section is **included verbatim if and only if the slide carried one in `final.md`**. The sentinel `<!-- ascii-note:` lets a downstream script split the file: everything before the sentinel line (minus the separating blank) is the ASCII payload; everything from the sentinel through `-->` is the note. If no note exists on the slide, write only the ASCII bytes — no trailing comment, no empty stub.
-- A blank line separates the two sections (only when the note section is present).
-
-**Rationale:** the HTML comment in `final.md` lets the SVG be regenerated from the deliverable alone, but a sidecar file makes both the source and the renderer's intent trivially recoverable even if `final.md` is later edited, makes diffs cleaner (git treats `.ascii` as a normal text file), and means the `images/` folder is a self-contained record of every diagram in three representations (rendered SVG, ASCII source, render-time intent). Note that `draft.md` always carries the raw ASCII fence too, so the source is recoverable from the working file as well.
-
-**Idempotency:** if the `.ascii` file already exists and its bytes match the new content, skip the write (avoid touching the mtime). If it differs, overwrite — the new ASCII + note in `final.md` is authoritative.
+The per-block transform — fence → image ref + `<!-- ascii-source: -->` echo, post-fence `ascii-note` left in place, `.ascii` sidecar layout, write idempotency — is the polish-ascii skill's contract: see [SKILL.md](../skills/polish-ascii/SKILL.md) → *Rewrite rules*. Understand it so you can audit results, but **do not re-implement it** in ad-hoc Python. (Filename convention is the illustrator's — see `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md` → *Output filename convention*.)
 
 (b) **Consolidate image refs (in `final.md`) AND enforce Keynote-safe raster-only extensions.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave the prefix. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
 

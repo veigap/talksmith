@@ -1,6 +1,6 @@
 ---
 name: talksmith:ascii-to-svg
-description: Render **one** ASCII diagram block into **one** SVG file. Invoked by the `illustrator` role during Step 6 (Polish) — once per fenced ASCII block in `final.md`. The skill applies the standing visual rules in [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md) plus optional per-render directives from the caller. The caller passes the pre-extracted slide context (title, content, speaker notes, section goal, language) so the SVG can be labelled and themed semantically. No template catalog; no closed style spec. CLI-safe.
+description: Render one ASCII diagram block into one SVG file, applying the standing visual rules in `config/diagram-style.md` plus optional caller style directives. Invoked by the `illustrator` role once per fenced ASCII block during Step 6 (Polish), with pre-extracted slide context passed in. CLI-safe.
 ---
 
 # talksmith:ascii-to-svg — Render one ASCII block to one SVG
@@ -46,11 +46,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 1. **Detect diagram vs code.** If the resolved ASCII payload is a real programming language (Python, bash, JSON, YAML, etc.) or contains no diagram glyphs (`+-|`, `─│┌┐└┘├┤┬┴┼`, `→ ← ↑ ↓ ⇒ -->`, `=>`, `~~~`, `/\`, `<>v^`), stop and return `skipped: not a diagram`.
 
-2. **Load standing visual rules.** Read `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` — **not** `<repo_root>/config/…`. This file is a **plugin-bundled asset**, so it is always resolved through `${CLAUDE_PLUGIN_ROOT}`; `repo_root` points at the *presenter's working directory*, which has no `config/diagram-style.md` and never will. Looking there finds nothing, silently drops the presenter's palette, and reports `deviations: no diagram-style.md` on a render that should have been styled — a quiet wrong answer, not a loud failure.
-
-   The bullets in that file are the standing rules every render must obey (e.g. "flat style only", "light mode only"). Treat them as hard constraints. If `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` genuinely doesn't exist (a broken install), render with sensible defaults (light background, flat 2D, plain typography) and note `deviations: no diagram-style.md`. That report line means *the plugin is broken*, not *this Talk has no style* — if you emit it, say so in the report.
-
-   `repo_root` is still required (it anchors Talk-relative paths the caller passes); if it's missing from the invocation, stop and return `failed: repo_root input missing`. It just has nothing to do with this step.
+2. **Load standing visual rules.** Read `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` — a **plugin-bundled asset**, never `<repo_root>/config/…` (the presenter's working directory has no such file; looking there silently drops the palette). Treat its bullets as hard constraints. If the file genuinely doesn't exist (a broken install), render with sensible defaults (light background, flat 2D, plain typography) and note `deviations: no diagram-style.md` — that line means *the plugin is broken*, say so in the report. `repo_root` is still required (it anchors Talk-relative paths); if missing, stop with `failed: repo_root input missing`.
 
 3. **Merge with per-render directives.** Apply `style_directives` (if any) on top of the standing rules. A per-render directive that contradicts a standing rule wins for this render only — note the deviation in the report. A directive that adds to the standing rules (e.g. a specific color for a panel) is taken verbatim.
 
@@ -74,19 +70,18 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    The margin frame is the part `audit_aspect.py` actually verifies (step 9), so this is the procedure that passes it. Nothing checks a ratio *target* — there is no such thing.
 
-   - **Do not derive the ratio from the character grid.** It is tempting (`chars × 0.5 : lines`, since monospace cells are ~half as wide as tall) and it is unreliable: measured across this repo's nine fixtures it diverged from the honest layout in six, by up to 2×. It cannot know that a label column needs real width, that a callout drawn from `speaker_notes` per step 4 adds a row the ASCII never had, or that three cramped ASCII lines become a bracket plus a pill plus a caption. The grid is the source's shape; you are drawing the art's. Use it as a smell test at most — if your layout lands wildly away from it, re-read the block — never as the answer.
-   **Hoist inheritable attributes to the root — this step is output-token-bound.** Reading the inputs is instant; emitting the XML is the whole cost (measured: ~17 tokens/s, so a 2.4 KB SVG is ~36 s and the entire script chain around it is 0.34 s). Every byte you don't emit is time you don't spend, close to linearly.
+   - **Do not derive the ratio from the character grid.** It is tempting (`chars × 0.5 : lines`) and unreliable: it cannot know that a label column needs real width, that a callout drawn from `speaker_notes` per step 4 adds a row the ASCII never had, or that three cramped ASCII lines become a bracket plus a pill plus a caption. The grid is the source's shape; you are drawing the art's. A smell test at most, never the answer.
 
-   Declare `font-family` **once on the root `<svg>`** and never repeat it on each `<text>`. SVG inherits it down the tree, so the render is unchanged — measured across this repo's fixtures: **0 differing pixels out of 3.9M**, while the files got **24.6% smaller** (~1450 tokens across seven diagrams). The same applies to any presentation attribute most children share: `font-size` when one size dominates, `fill` for the default ink. Declare it high, override only the exception.
+   **Hoist inheritable attributes to the root — this step is output-token-bound.** Emitting the XML is the whole cost of the render; every byte you don't emit is time you don't spend. Declare `font-family` **once on the root `<svg>`** and never repeat it on each `<text>` — SVG inherits it down the tree, so the render is pixel-identical while the file gets meaningfully smaller. The same applies to any presentation attribute most children share (`font-size` when one size dominates, `fill` for the default ink): declare high, override only the exception.
 
-   - **Inheritance is by tree, not by document order** — this is the part that bites. An attribute may only be omitted when the element's nearest declaring *ancestor* already supplies the same value. A `<tspan font-family="'DejaVu Sans Mono', monospace">` inside a `<text font-family="Helvetica, …">` **must keep its declaration**, even if monospace is the diagram's dominant family and the root declares it — the tspan inherits from its parent `<text>`, not from the root. Dropping it there silently reverts an inline code span to Helvetica. That exact case exists in this repo's fixtures and it is invisible in the XML; it only shows up in the pixels.
-   - This is an authoring rule, not a cleanup. It cannot be recovered by a post-processing pass: by the time any script runs you have already paid the seconds to emit the redundant bytes, and shrinking the file on disk saves nothing. The saving exists only if you never emit them.
+   - **Inheritance is by tree, not by document order** — the part that bites. An attribute may only be omitted when the element's nearest declaring *ancestor* supplies the same value. A `<tspan font-family="'DejaVu Sans Mono', monospace">` inside a `<text font-family="Helvetica, …">` **must keep its declaration** even when the root declares monospace — the tspan inherits from its parent `<text>`, not the root; dropping it silently reverts an inline code span to Helvetica, invisible in the XML.
+   - This is an authoring rule, not a cleanup — a post-processing pass cannot recover the seconds already spent emitting the redundant bytes.
 
    - Do **not** set `width="…"` / `height="…"` attributes on the root `<svg>` at values that disagree with the viewBox ratio. Either omit them entirely (consumers honor viewBox alone — preferred) or set them to the same numbers as the viewBox so there is one source of truth.
    - Do **not** set `preserveAspectRatio="none"` anywhere. The default `xMidYMid meet` is correct; `none` signals to consumers that anamorphic scaling is OK and defeats every downstream guarantee.
    - When the same diagram could plausibly fit two ratios (e.g. a flow that reads either as a wide row or a tall column), pick the one the *content* actually demands and commit — never split the difference. A near-square viewBox to "hedge" against the eventual slot is the bug — the slot adapts to the SVG, not the other way around.
    - `W` is free. `0 0 680 H` is a common choice for moderate aspects, not a rule — very wide art needs a larger `W` to leave legible height (a 6.7:1 diagram at W=680 gets ~102 units of height, too little for three rows of text).
-   - **There is no useful self-check you can run in your head.** A previous version of this spec asked "if I rasterized this at 600px wide, how many pixels tall would it be? — that over 600 must equal `H/W`". That is a tautology: the raster *derives* from the viewBox, so it agrees always, including when the viewBox is badly wrong. It is exactly the reasoning the blind-critic split exists to stamp out — arithmetic that confirms itself by construction. The real check is mechanical and runs in step 9.
+   - **There is no useful self-check you can run in your head** — any "would the raster match" arithmetic derives from the viewBox and confirms itself by construction. The real check is mechanical and runs in step 9.
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
 
@@ -103,7 +98,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    A non-zero exit means the SVG is broken in a way this skill can't mechanically repair (no viewBox, malformed XML, root element isn't `<svg>`). When that happens, **do not return success** — return `failed: svg_validation: <error>` per step 9. A broken SVG must not reach disk: the downstream PPTX renderer trusts the viewBox to size its placement slot, and a faulty viewBox poisons the [`audits/aspect_ratios.py`](../md-to-deck/audits/aspect_ratios.py) gate at PPTX-build time (one full render cycle wasted). Catching it here is cheap; catching it there is expensive. If repair happened, note the fix count in the step-9 report under `svg_validation:`.
 
-7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory as the SVG, same basename, `.png` extension). This is the **build deliverable** that the Step-7 PPTX renderer consumes — the native `pptx` skill and any python-pptx fallback load via PIL, which cannot decode SVG, so the .pptx references the PNG bytes. Per [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Output contract — SVG + PNG companion*, every illustrator run produces both files; the [`md-to-deck`](../md-to-deck/SKILL.md) skill's *Keynote-safe image extensions* + *Pre-rendered local images* prereqs stop the build if the `.png` a `final.md` ref points at is missing.
+7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory, same basename). This is the **build deliverable** the Step-7 PPTX renderer consumes (it loads images via PIL, which cannot decode SVG). Every render produces both files (illustrator's *Output contract*); [`md-to-deck`](../md-to-deck/SKILL.md)'s prereqs stop the build if the `.png` a `final.md` ref points at is missing.
 
    **Always rasterize through [`rasterize.py`](rasterize.py). Never call `cairosvg` (or anything else) inline.**
 
@@ -127,7 +122,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
 
-9. **Audit the frame — the one defect no critique can see.** Run [`audit_aspect.py`](audit_aspect.py) against the SVG and the deliverable PNG from step 7:
+9. **Aspect audit — the one defect no critique can see.** Run [`audit_aspect.py`](audit_aspect.py) against the SVG and the deliverable PNG from step 7:
 
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/audit_aspect.py <output_path> \
@@ -136,11 +131,11 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    Exit 0 = the frame is sound. Exit 1 = the viewBox doesn't fit the art: report `aspect_audit: <the tool's defect line, verbatim>` in step 10 and return it as a **defect**, not a failure — the SVG stays on disk and the illustrator folds the finding into its next-iteration `style_directives` exactly like a critic defect. Exit 2 = the audit itself couldn't run (no viewBox, blank raster); surface as `failed: aspect_audit: <reason>`.
 
-   **Why a script and not the critic.** This is the single defect class visual review is *structurally* incapable of catching. The critique PNG is rasterized **from** the viewBox, so a viewBox declaring 2.30:1 around art that wants 2.91:1 produces a PNG at exactly 2.30:1 — correct-looking, with the surplus reading as deliberate whitespace. There is nothing to see. Left to the eye it survives Polish untouched and only detonates a full render cycle later, when the PPTX slot is sized from the viewBox and the picture lands wrong on the slide. Here it costs one iteration; there it costs a build.
+   **Why a script and not the critic.** This is the single defect class visual review is *structurally* incapable of catching: the critique PNG is rasterized **from** the viewBox, so a wrong viewBox produces a correct-looking PNG with the surplus reading as deliberate whitespace — nothing for an eye to find. Caught here it costs one iteration; uncaught, it detonates a full render cycle later when the PPTX slot is sized from the viewBox.
 
-   **What it does and does not guarantee — read this before trusting it.** It checks that the frame *fits the art*: that the margins around the ink are even. That is what catches a viewBox with dead canvas in it. It does **not** check that you chose the right proportions for the art in the first place — evenly-framed art passes at any aspect. Two renders of the same block at 2.4:1 and 3.1:1 both pass, if each frames its own layout evenly. So an `ok` means "this frame fits this art", never "this was the right shape for this diagram". That second judgement is the renderer's, and nothing verifies it.
+   **What it does and does not guarantee.** It checks that the frame *fits the art* — even margins around the ink. It does **not** check that the proportions were right for the art in the first place: evenly-framed art passes at any aspect, so `ok` means "this frame fits this art", never "this was the right shape". That second judgement is the renderer's, and nothing verifies it.
 
-   Pass the tool's line through **verbatim** — it names the margins in viewBox units and proposes a corrected viewBox that is a pure crop (changing `viewBox` moves no element coordinate), which is precise enough that the re-render usually lands it in one pass. Do **not** apply the suggestion yourself: whitespace is sometimes intentional, and this skill renders one block from one contract — reframing the presenter's diagram on its own initiative isn't its call.
+   Pass the tool's line through **verbatim** — it proposes a corrected viewBox that is a pure crop, precise enough that the re-render usually lands in one pass. Do **not** apply the suggestion yourself: whitespace is sometimes intentional, and reframing the presenter's diagram isn't this skill's call.
 
 10. **Return** a one-line report:
     - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
@@ -174,14 +169,8 @@ This skill cannot ask follow-ups. If the standing rules + slide context + `style
 
 **Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty, render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — an empty SVG is worse than a sparsely-labelled one.
 
-## What this skill is NOT
+## Boundaries
 
-- **Not** a coordinator. It renders one block. The illustrator role walks `final.md` and invokes this skill per block.
-- **Not** allowed to write outside `output_path`. No edits to `final.md`, no creating sibling files.
-- **Not** a `.pptx` renderer. That's [`talksmith:md-to-deck`](../md-to-deck/SKILL.md).
-- **Not** allowed to read network resources. Pure local file work.
-- **Not** dependent on any template catalog. There is no closed style spec or per-shape template library — the standing rules in `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` plus per-render directives are the full styling input. Start simple; rules accumulate in `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` over time as patterns crystallize.
-
-## Why a skill, not just the agent
-
-The illustrator role does per-Talk coordination (which slides have ASCII, what's the per-slide context, what should the output filename be) and judgement (the slug, the alt, optionally collecting per-render directives from the presenter). The actual rendering of one block from one context bundle is repetitive enough to factor out — making it a skill keeps each agent invocation small, surfaces a stable per-block contract, and lets the agent focus on judgement over SVG bookkeeping.
+- **Never write outside `output_path`** (+ its PNG companions) — no edits to `final.md`, no sibling files.
+- **Never read network resources.** Pure local file work.
+- **No template catalog.** The standing rules in `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md` plus per-render directives are the full styling input; rules accumulate there over time as patterns crystallize.
