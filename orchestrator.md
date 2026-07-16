@@ -48,6 +48,13 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
   - **Exception 1 — no context to propose from:** at moments like the very first Topic input at session start, ask free-text. Never fabricate candidates.
   - **Exception 2 — Step 4 Modes B and C:** during Agent Draft and Presenter Outline, question budget is **critical-only**. Defer non-blocking decisions (ordering, wording, keep/cut, tone) to async feedback in Step 5 Review. See Step 4 *Question budget*.
 - **Drive the conversation.** Ask the next useful question rather than waiting.
+- **Show where we are — one line, on every step transition.** The presenter never sees the step numbers this spec is organized around; without a marker they lose the thread of how much is left. On entering **each of Steps 1–8**, open with the rail, then whatever the step normally says:
+
+  ```
+  ✓ Frame → ✓ Collect → ✓ Corpus → ▶ DRAFT → Review → Polish → Render → Learnings
+  ```
+
+  Glyphs are the checklists' own: `✓` done, `▶` current (name in caps), `—` skipped, plain text pending. A skipped Render reads `— Render`. Rules: **one line, never the full Step-0 chart** — that chart is the introduction's job and reprinting it every step turns it into wallpaper. Where the step also has a checklist (3, 4, 6, 7), the rail is the first line of that same edited-in-place message, above the rows. Step 0 and 0.5 show no rail (the chart just ran; the profile isn't a workflow step). Translate the labels to the presenter's language like all other chrome.
 - **Speak human, not internal.** Presenter is non-technical. Chat narration must never expose subagent/skill names (Illustrator, `talksmith:ascii-to-svg`, `polish-ascii`, …), tool-call mechanics (*"dispatching"*, *"args files"*, *"batch N of 5"*), internal IDs (`s1-2-1`, `<basename>`, kebab slugs, `.critique/` paths), or pipeline tags (`[pptx N/8]`, `[cycle N/3] FEEDBACK`, `[block-drop]`). Translate to outcomes. **Don't:** *"21 args files ready. Dispatching Illustrator — batch 1 of 5 (s1-2-1, …)"*. **Do:** *"Rendering diagrams now — this usually takes a minute or two."* **Don't:** *"[cycle 2/3] FEEDBACK — slide 7 · practice 7 …"*. **Do:** *"Reviewing the rendered slides — found 2 small things to fix."* Heartbeats for long-running work are good (*what's happening*, not *how it's wired*). Full technical detail goes into the closing per-step report and `memory.md`, not running chat.
 - **Role dispatch.** When the spec says *"perform the `<Role>` role"*, read its spec from [`${CLAUDE_PLUGIN_ROOT}/agents/`](${CLAUDE_PLUGIN_ROOT}/agents/) and follow it for that work block, then return to the orchestrator. The active Talk folder path is mandatory context.
 - **Presenter signal vocabulary.** When the spec says the presenter signals "ready" / "done" / declares X final, accept any of: *"ready"*, *"done"*, *"looks good"*, *"move on"*, *"move to review"*. Wait for one of these before advancing past a gated step.
@@ -218,6 +225,20 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 
 Per-mode authoring sequences + the critical-only question budget live in [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 4 — per-mode draft recipes*. The Composer milestone schedule (which scopes fire when, per mode) + tag triage live in [`composer.md`](${CLAUDE_PLUGIN_ROOT}/agents/composer.md) → *Step-4 milestone schedule by Draft mode*.
 
+**Show a live progress checklist — mandatory in Modes B and C.** Both draft the whole deck before the presenter sees a word of it: the Editor reads the corpus, writes every slide, the Composer reviews, blockers and majors get applied — minutes of silence with nothing asked. Step 6's rule applies here in full: **never bury this in one opaque dispatch.** On entry, post this checklist and **edit that same message in place**, flipping each row `[ ]` → `[⟳]` → `[✓]` (`[—]` skipped, `[✗]` failed):
+
+```
+  [ ] Reading through your material
+  [ ] Shaping the thesis and the arc
+  [ ] Writing the slides
+  [ ] Reviewing the draft
+  [ ] Applying the fixes
+```
+
+Personalize each row as the numbers land — *"Reading through your material — 12 sources"*, *"Writing the slides — 9 of 24"*, *"Applying the fixes — 6 things worth changing"*. **Writing the slides runs longest**: tick a count as each section lands rather than waiting for the whole draft, and give any row quiet > 30 s a plain-language heartbeat. **Mode A shows no checklist** — the presenter is answering questions throughout, so there is no silence to cover. In Mode C, *"Reading through your material"* covers the brain-dump plus the corpus.
+
+The *Speak human, not internal* rule and Step 7's **suppression rule** apply unchanged: role names (Editor / Composer), scope and tag mechanics (`scope=full`, `[blocker]`, `[major]`), and file basenames are **log-only** — drive the checklist from them, never relay them. *"Reviewing the draft"*, not *"dispatching the Composer at scope=full"*.
+
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
 **On first complete draft, kick the live HTML view.** The moment `draft.md` is first structurally complete (frontmatter + agenda + ≥1 section + ≥1 slide) and Step 4 hands off to Step 5, auto-fire the **Step 5.5 live HTML view** in the background — it must **not** block the presenter from starting their review (see *Step 5.5*).
@@ -272,7 +293,7 @@ On entry, post this checklist and **edit that same message in place**, flipping 
   [ ] Final tidy-up
 ```
 
-Personalize each row as the numbers become known — *"Drawing them — 3 of 12"*, *"Checking how they look — found 2 small things to fix"*, *"Adding them to the deck — 12 diagrams"*. **Drawing is the row that runs longest**: tick a count as each diagram lands rather than waiting for all of them, and give any stage quiet > 30 s a plain-language heartbeat. A Talk with no diagrams marks the middle three rows `[—]` and goes straight to tidy-up; a diagram that fails to draw marks `[✗]` and Polish keeps going (failures are reported at the end, never hidden).
+Personalize each row as the numbers become known — *"Drawing them — 3 of 12"*, *"Checking how they look — found 2 small things to fix"*, *"Adding them to the deck — 12 diagrams, 4 photos"*, *"Final tidy-up — folding in 2 last comments"*. **Drawing is the row that runs longest**, and **Adding them to the deck** is the second: it inlines every diagram *and* converts each photo for the deck, which on an image-heavy Talk is its own multi-minute stretch. Tick a count as each item lands rather than waiting for the batch, and give any row quiet > 30 s a plain-language heartbeat — the last two rows included; they are not instant just because they come last. A Talk with no diagrams still ticks *Finding the diagrams* `[✓]` (*"found none"* — the scan did run), marks *Drawing* and *Checking* `[—]`, and goes on to the last two rows, which still have the photos and the tidy-up to do; a diagram that fails to draw marks `[✗]` and Polish keeps going (failures are reported at the end, never hidden).
 
 The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the checklist from them, never relay them.
 
