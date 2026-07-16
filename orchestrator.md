@@ -54,7 +54,15 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
   ✓ Frame → ✓ Collect → ✓ Corpus → ▶ DRAFT → Review → Polish → Render → Learnings
   ```
 
-  Glyphs are the checklists' own: `✓` done, `▶` current (name in caps), `—` skipped, plain text pending. A skipped Render reads `— Render`. Rules: **one line, never the full Step-0 chart** — that chart is the introduction's job and reprinting it every step turns it into wallpaper. Where the step also has a checklist (3, 4, 6, 7), the rail is the first line of that same edited-in-place message, above the rows. Step 0 and 0.5 show no rail (the chart just ran; the profile isn't a workflow step). Translate the labels to the presenter's language like all other chrome.
+  **Glyph vocabulary (both rails, everywhere):** `✓` done, `▶` current (name in caps), `—` skipped, plain text pending. A skipped Render reads `— Render`. Rules: **one line, never the full Step-0 chart** — that chart is the introduction's job and reprinting it every step turns it into wallpaper. Step 0 and 0.5 show no rail (the chart just ran; the profile isn't a workflow step). Translate the labels to the presenter's language like all other chrome.
+- **Show what's happening inside a long step — one line, the stage rail.** Steps 3, 4, 6 and 7 run for minutes with nothing asked of the presenter; each posts a **second rail** under the step rail, same glyphs, and **edits that same message in place** as stages land. Rendered together they read:
+
+  ```
+  ✓ Frame → ✓ Collect → ▶ CORPUS → Draft → Review → Polish → Render → Learnings
+  ✓ Read 12 sources → ▶ Pulling out the images (34) → Building the knowledge base
+  ```
+
+  Each step below owns its stage names; this bullet owns the form. **Rules — they are why the rail exists, not decoration:** carry counts on the rail as they become known (`(3/12)`) and tick the long stage **per item, not at the end**; any stage quiet > 30 s gets a plain-language heartbeat *below* the rails; a stage that fails marks `✗` and the step **keeps going** — failures are reported when it closes, never hidden; a stage with nothing to do marks `—`. **Two lines is the ceiling** — a rail that needs a third line is too granular; merge stages. **Never both a rail and rows.** Step 5.5 shows neither (see *Step 5.5*): it is background and non-blocking, and the rails exist to cover silence the presenter is *stuck in*, not to narrate work nobody is waiting on.
 - **Speak human, not internal.** Presenter is non-technical. Chat narration must never expose subagent/skill names (Illustrator, `talksmith:ascii-to-svg`, `polish-ascii`, …), tool-call mechanics (*"dispatching"*, *"args files"*, *"batch N of 5"*), internal IDs (`s1-2-1`, `<basename>`, kebab slugs, `.critique/` paths), or pipeline tags (`[pptx N/8]`, `[cycle N/3] FEEDBACK`, `[block-drop]`). Translate to outcomes. **Don't:** *"21 args files ready. Dispatching Illustrator — batch 1 of 5 (s1-2-1, …)"*. **Do:** *"Rendering diagrams now — this usually takes a minute or two."* **Don't:** *"[cycle 2/3] FEEDBACK — slide 7 · practice 7 …"*. **Do:** *"Reviewing the rendered slides — found 2 small things to fix."* Heartbeats for long-running work are good (*what's happening*, not *how it's wired*). Full technical detail goes into the closing per-step report and `memory.md`, not running chat.
 - **Role dispatch.** When the spec says *"perform the `<Role>` role"*, read its spec from [`${CLAUDE_PLUGIN_ROOT}/agents/`](${CLAUDE_PLUGIN_ROOT}/agents/) and follow it for that work block, then return to the orchestrator. The active Talk folder path is mandatory context.
 - **Presenter signal vocabulary.** When the spec says the presenter signals "ready" / "done" / declares X final, accept any of: *"ready"*, *"done"*, *"looks good"*, *"move on"*, *"move to review"*. Wait for one of these before advancing past a gated step.
@@ -195,7 +203,17 @@ Do not proceed to Step 3 on your own.
 
 **Brief the presenter first** (plain language per *Speak human, not internal*): what's about to happen (e.g. *"I'm going to read everything you dropped in and structure it into a knowledge base — every paper, chat export, page, with images preserved."*) plus a source breakdown + ETA rounded to a 1-minute range (~15–30s per text source, ~5–10s per web capture; e.g. *"Working through 12 sources (8 PDFs, 3 chat exports, 1 web page). About 3–5 minutes."*). Informational — don't wait for a reply.
 
-Perform the **Librarian** role ([`librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md)) on `research/articles/`, `research/llm-chats/`, and `research/web/`. It owns the two-phase image handling and the `images_pending` return contract; when it surfaces pending images, ask the presenter *Process now* / *Skip — text only* / *Defer to later* and re-dispatch with the answer.
+**Stage rail — mandatory** (form + rules: *Interaction defaults*). The brief above sets an expectation of minutes; this is what holds it while they pass. Stages:
+
+```
+Reading your sources → Pulling out the images → Building the knowledge base
+```
+
+The source count is known before the work starts, so *Reading your sources* is the per-item stage — carry `(5/12)` and name the current source in plain language (*"the Vaswani paper"*, not a basename). A Talk with no images marks the middle stage `—`.
+
+Perform the **Librarian** role ([`librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md)) on `research/articles/`, `research/llm-chats/`, and `research/web/`. It owns the two-phase image handling and the `images_pending` return contract; when it surfaces pending images, ask the presenter *Process now* / *Skip — text only* / *Defer to later* and re-dispatch with the answer — the ask leaves *Pulling out the images* at `▶`; don't tick it until the answer lands (*Skip* marks it `—`).
+
+The *Speak human, not internal* rule applies unchanged: role names, corpus-record ids, and file basenames are **log-only** — drive the rail from them, never relay them.
 
 ---
 
@@ -225,19 +243,15 @@ Once 1–2 are resolved, ask the presenter for the mode (free-text only when gen
 
 Per-mode authoring sequences + the critical-only question budget live in [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 4 — per-mode draft recipes*. The Composer milestone schedule (which scopes fire when, per mode) + tag triage live in [`composer.md`](${CLAUDE_PLUGIN_ROOT}/agents/composer.md) → *Step-4 milestone schedule by Draft mode*.
 
-**Show a live progress checklist — mandatory in Modes B and C.** Both draft the whole deck before the presenter sees a word of it: the Editor reads the corpus, writes every slide, the Composer reviews, blockers and majors get applied — minutes of silence with nothing asked. Step 6's rule applies here in full: **never bury this in one opaque dispatch.** On entry, post this checklist and **edit that same message in place**, flipping each row `[ ]` → `[⟳]` → `[✓]` (`[—]` skipped, `[✗]` failed):
+**Stage rail — mandatory in Modes B and C** (form + rules: *Interaction defaults*). Both draft the whole deck before the presenter sees a word of it — minutes of silence with nothing asked. Stages:
 
 ```
-  [ ] Reading through your material
-  [ ] Shaping the thesis and the arc
-  [ ] Writing the slides
-  [ ] Reviewing the draft
-  [ ] Applying the fixes
+Reading your material → Shaping the thesis and the arc → Writing the slides → Reviewing the draft → Applying the fixes
 ```
 
-Personalize each row as the numbers land — *"Reading through your material — 12 sources"*, *"Writing the slides — 9 of 24"*, *"Applying the fixes — 6 things worth changing"*. **Writing the slides runs longest**: tick a count as each section lands rather than waiting for the whole draft, and give any row quiet > 30 s a plain-language heartbeat. **Mode A shows no checklist** — the presenter is answering questions throughout, so there is no silence to cover. In Mode C, *"Reading through your material"* covers the brain-dump plus the corpus.
+*Writing the slides* is the per-item stage — carry `(9/24)` per section rather than waiting for the whole draft. **Mode A shows no stage rail** — the presenter is answering questions throughout, so there is no silence to cover. In Mode C, *Reading your material* covers the brain-dump plus the corpus.
 
-The *Speak human, not internal* rule and Step 7's **suppression rule** apply unchanged: role names (Editor / Composer), scope and tag mechanics (`scope=full`, `[blocker]`, `[major]`), and file basenames are **log-only** — drive the checklist from them, never relay them. *"Reviewing the draft"*, not *"dispatching the Composer at scope=full"*.
+The *Speak human, not internal* rule applies unchanged: role names (Editor / Composer), scope and tag mechanics (`scope=full`, `[blocker]`, `[major]`), and file basenames are **log-only** — drive the rail from them, never relay them. *"Reviewing the draft"*, not *"dispatching the Composer at scope=full"*.
 
 After each substantive change, hand the floor back: remind the presenter they can edit `draft.md` directly with `- "..."` bullets or reply in chat. Wait for the ready-signal (see *Interaction defaults*) before advancing to Step 5. Record the chosen mode in `memory.md` so resume continues in the same mode.
 
@@ -273,7 +287,7 @@ A live HTML render of the slides straight from the in-progress `draft.md`, so th
 
 If they look, surface `talks/<Talk>/output/html/index.html` (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes) and frame it as rough — raw diagrams as code surfaces, content pre-Polish; it exists to catch structural surprises. Any change they want becomes ordinary Step-5 feedback, which re-fires the render. If they skip, or the live view isn't ready / failed to render, proceed to Step 6 without ceremony — a missing live view is never fatal.
 
-**Dispatch:** `md-to-deck` with `style: html-strict` on `draft.md` — FILL `output/slide-model.draft.json` per [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md), then RENDER with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft`. **Never hand-roll a render script.** Its `[html]` stage events are log-only (see Step 7 → *Suppression rule*); show the render checklist while it runs. The live view reads `draft.md` read-only, writes only under `output/html/`, and never consumes Step-7's style choice — a later Step 7 still asks fresh.
+**Dispatch:** `md-to-deck` with `style: html-strict` on `draft.md` — FILL `output/slide-model.draft.json` per [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md), then RENDER with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft`. **Never hand-roll a render script.** Its `[html]` stage events are log-only (see Step 7 → *Suppression rule*). **Show neither rail — no step rail, no stage rail.** This render is background and non-blocking, so nobody is waiting on it; the rails exist to cover silence the presenter is *stuck in*, and painting chrome over an active Review is exactly the noise they prevent elsewhere. Consume the stage events silently; the presenter hears about the live view only when it's offered, and a failure surfaces there (*"the live view didn't come together — want me to go straight to polishing?"*), not as a `✗` mid-review. The live view reads `draft.md` read-only, writes only under `output/html/`, and never consumes Step-7's style choice — a later Step 7 still asks fresh.
 
 ---
 
@@ -281,21 +295,15 @@ If they look, surface `talks/<Talk>/output/html/index.html` (Reveal deck: → / 
 
 Triggered when the presenter signals ready in Step 5. Runs end-to-end without prompts. Produces `final.md` + rendered SVGs from a frozen `draft.md` (see *Role* for the two-files contract).
 
-**Show a live progress checklist — mandatory.** Polish is the **longest unattended step in the workflow**: it draws every diagram in the deck, each through its own review loop, and routinely runs several minutes with nothing asked of the presenter. Step 7's rule applies here in full and for the same reason — **never bury this in one opaque, multi-minute dispatch**. Silence past ~a minute is a defect, not a slow render.
-
-On entry, post this checklist and **edit that same message in place**, flipping each row `[ ]` → `[⟳]` → `[✓]` (`[—]` skipped, `[✗]` failed) as the stages land:
+**Stage rail — mandatory** (form + rules: *Interaction defaults*). Polish is the **longest unattended step in the workflow**: it draws every diagram in the deck, each through its own review loop, and routinely runs several minutes with nothing asked of the presenter. Silence past ~a minute is a defect, not a slow render. Stages:
 
 ```
-  [ ] Finding the diagrams
-  [ ] Drawing them
-  [ ] Checking how they look
-  [ ] Adding them to the deck
-  [ ] Final tidy-up
+Finding the diagrams → Drawing them → Checking how they look → Adding them to the deck → Final tidy-up
 ```
 
-Personalize each row as the numbers become known — *"Drawing them — 3 of 12"*, *"Checking how they look — found 2 small things to fix"*, *"Adding them to the deck — 12 diagrams, 4 photos"*, *"Final tidy-up — folding in 2 last comments"*. **Drawing is the row that runs longest**, and **Adding them to the deck** is the second: it inlines every diagram *and* converts each photo for the deck, which on an image-heavy Talk is its own multi-minute stretch. Tick a count as each item lands rather than waiting for the batch, and give any row quiet > 30 s a plain-language heartbeat — the last two rows included; they are not instant just because they come last. A Talk with no diagrams still ticks *Finding the diagrams* `[✓]` (*"found none"* — the scan did run), marks *Drawing* and *Checking* `[—]`, and goes on to the last two rows, which still have the photos and the tidy-up to do; a diagram that fails to draw marks `[✗]` and Polish keeps going (failures are reported at the end, never hidden).
+*Drawing them* is the per-item stage and runs longest — carry `(3/12)`. **Adding them to the deck** is the second-longest: it inlines every diagram *and* converts each photo, which on an image-heavy Talk is its own multi-minute stretch — it and *Final tidy-up* are **not** instant just because they come last, and the heartbeat rule covers them like any other stage. A Talk with no diagrams still ticks *Finding the diagrams* `✓` (*"found none"* — the scan did run) and marks only *Drawing* and *Checking* `—`; the last two stages still have the photos and the tidy-up to do.
 
-The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the checklist from them, never relay them.
+The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the rail from them, never relay them.
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
@@ -328,15 +336,15 @@ The deck is polished — offer to render it now, or skip to wrap-up (**Step 8, L
 
    **The style is a render-time parameter, not a content attribute** — it lives only in the Step-7 invocation. Never write it to `draft.md` or `final.md` frontmatter; those files are style-agnostic so the same content can be rendered in any style at any time. A second Step-7 run on the same Talk can pick a different style with no migration.
 
-2. **Dispatch** [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (per-mode cycle counts are its concern), build-time audits, internal critique iterations, and the stage events that drive the progress checklist.
+2. **Dispatch** [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (per-mode cycle counts are its concern), build-time audits, internal critique iterations, and the stage events that drive the stage rail.
 
    **The deliverable is style-suffixed so styles coexist.** Every render writes `talks/<Talk>/output/final.<style>.pptx` (e.g. `final.pptx-strict.pptx`, `final.pptx-free-form.pptx`) — **never** straight to `final.pptx` — so a strict render and a free-form render of the same Talk sit side by side for comparison. The skill then copies the latest to the canonical `final.pptx` (what the reverse pipeline reads); the suffixed files persist. If a render produced only `final.pptx` with no `final.<style>.pptx`, it bypassed this rule — treat it as a defect. (Mechanics: SKILL.md → *Output layout*.)
 
-3. **Show a live progress checklist — mandatory, every mode (pptx-strict, pptx-free-form, html-strict).** Renders take 30 s – 3 min; the presenter must never be left staring at silence wondering if it hung. On render entry, post the mode's checklist from [SKILL.md *Progress reporting*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) and **edit that same message in place** as the processing **phases** arrive — flip each item to `[⟳]` when it starts and `[✓]` the instant it finishes, personalizing counts (*"Reviewing 12 slides — pass 2 of 3"*).
+3. **Stage rail — mandatory, every mode (pptx-strict, pptx-free-form, html-strict)** (form + rules: *Interaction defaults*). Renders take 30 s – 3 min; the presenter must never be left staring at silence wondering if it hung. On render entry, post the mode's stages from [SKILL.md *Progress reporting*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) as the rail and edit it in place as the processing **phases** arrive, carrying counts (*"Reviewing slides (12/29, pass 2/3)"*).
 
    **Do not bury the render in one opaque, multi-minute dispatch.** If any part runs as a sub-agent (e.g. the pptx-strict or html-strict visual critique), it must **return phase/batch events that you surface as they happen** — after pre-process, after the build, after CONTROL, after each FEEDBACK batch (*"reviewed 10 of 29…"*), after each fix pass — not a single silent call that only reports when finished. If a stage runs quiet > 30 s, surface a plain-language heartbeat (*"still building — 7 of 18 slides…"*). A render that shows only *"Multitasking…"* for more than ~a minute is a defect, in every mode.
 
-   **Suppression rule (hard).** Everything the skill emits — bracketed-tag lines (`[pptx`, `[cycle`, …) and prose containing internal vocabulary (phase / audit / library / XML names) — is **internal log-only**: consume it for the checklist and the closing report, never relay it verbatim. Translate mechanism to outcome — what got fixed, how many, which slides (slide numbers are presenter-actionable and stay; tool/audit/XML names are not). The full suppression vocabulary + don't/do examples: [SKILL.md → *Progress reporting*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md). If a leak is observed, treat it as a behavior bug and log the offending line to `memory.md`.
+   **Suppression rule (hard).** Everything the skill emits — bracketed-tag lines (`[pptx`, `[cycle`, …) and prose containing internal vocabulary (phase / audit / library / XML names) — is **internal log-only**: consume it for the stage rail and the closing report, never relay it verbatim. Translate mechanism to outcome — what got fixed, how many, which slides (slide numbers are presenter-actionable and stay; tool/audit/XML names are not). The full suppression vocabulary + don't/do examples: [SKILL.md → *Progress reporting*](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md). If a leak is observed, treat it as a behavior bug and log the offending line to `memory.md`.
 
 4. **Relay the closing report** in plain language: slide count, output path (`talks/<Talk>/output/final.pptx` — plus the mode-tagged `final.<style>.pptx` if they rendered more than one style and want to compare, or `output/html/index.html` for `html-strict`), and any items the presenter should look at (e.g. *"deferred for your review: slide 12 — three cards drift vertically; consider equalizing heading lengths"*). Full per-defect log lives in `memory.md`.
 

@@ -13,6 +13,29 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.60.0] — 2026-07-15
+
+**Never leave the presenter staring at silence.** Polish and Render already showed a live checklist while they worked; the other long unattended stretches didn't, so the deck would go quiet for minutes with no sign of life. This release extends the pattern to every step that makes the presenter wait, and adds a workflow-wide "you are here".
+
+> **Re-run `/talksmith:init`** in each working directory to pick this up — the stub's session-start contract changed. Everything else here rides along on `/plugin update` with no re-init.
+
+### Added
+- **Two one-line rails, shown together.** A **step rail** on every step transition, so the presenter can see how much is left, and a **stage rail** under it during a long step, so they can see it's alive:
+  ```
+  ✓ Frame → ✓ Collect → ▶ CORPUS → Draft → Review → Polish → Render → Learnings
+  ✓ Read 12 sources → ▶ Pulling out the images (34) → Building the knowledge base
+  ```
+  Deliberately one line each: the step rail is not a reprint of the Step-0 chart, and two lines is the ceiling — a rail needing a third is too granular. Long stages carry counts and tick **per item**, not at the end; a failed stage marks `✗` and the step keeps going.
+- **Stage rails on Steps 3 and 4**, which previously ran silent. Step 3 (reading every source) hid 3–5 minutes behind a single up-front ETA. Step 4 Modes B and C draft the entire deck before the presenter sees a word of it. Mode A shows none — it's Q&A, so there's no silence to cover.
+
+### Changed
+- **Steps 6 and 7 progress: multi-row checklists → the one-line stage rail**, so every step reports progress the same way. The glyph vocabulary and flip/heartbeat/failure rules now live **once** in `orchestrator.md` → *Interaction defaults*; each step (and `md-to-deck`'s SKILL.md, for the three render modes) contributes only its own stage names.
+
+### Fixed
+- **A diagram-free Talk skipped a stage that actually runs.** Step 6 told a Talk with no diagrams to skip "the middle three rows" — but that range includes *Adding them to the deck*, which also converts every photo. An image-heavy deck with no ASCII diagrams went silent for minutes on a stage marked skipped. Only *Drawing* and *Checking* are skipped now, and the heartbeat rule explicitly covers the last two stages, which aren't instant just because they come last.
+- **The live view narrated itself over the review it must not interrupt.** Step 5.5 is designed to be invisible — background, non-blocking, refreshing silently — but also instructed to show the render checklist. It now shows neither rail; a failure surfaces when the view is offered, not as a `✗` mid-review.
+- **Cowork sessions opened with plumbing instead of a greeting.** The stub tells the agent to Read the spec itself when the `@`-import doesn't expand, and it did — but announced it first (*"I need to load the Talksmith spec first…"*). The load is now silent; the first thing a presenter sees is the introduction.
+
 ## [0.59.1] — 2026-07-15
 
 Post-restructure audit sweep: three parallel audits (cross-reference integrity, stale claims, Python bug hunt with fixture repros) over the whole plugin; every confirmed finding fixed.
