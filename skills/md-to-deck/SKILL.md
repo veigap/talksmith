@@ -61,6 +61,22 @@ the ordered section list) and one object per slide. For **each** slide you:
 The judgment is the LLM's, against a fixed field contract. Write to
 `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
 
+**Step 1.5 — CHECK the model (deterministic floor, before RENDER).** The FILL judgment is the
+LLM's, so it can slip; this is the mechanical catch, run on the model alone (no `.pptx` needed —
+it guards every mode, including html-strict, which otherwise runs no deck-parsing audit):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/degenerate_enum.py output/slide-model.json
+```
+
+A non-zero exit is a FILL failure, not a render failure: an enumeration template
+(`content-text` panels, `concept-breakdown`/`card-row` cards, `stat` stats, `icon-list` rows, …)
+was filled with a **single** item, which renders as a stray grid cell — the tell of a
+misclassification (a lead + one point is `single-point`, per the catalog's `labeled_items == 1`
+rule). Surface the FAIL line, **re-classify that slide in the model**, and re-check before
+rendering. Skip with `--warn-only` only for the `--draft` live view, where an in-progress model is
+expected to be incomplete.
+
 **Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)
 loads the model and maps each slide's fields onto its Jinja template — no parsing, no classification:
 

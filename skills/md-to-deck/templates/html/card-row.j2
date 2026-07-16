@@ -3,7 +3,7 @@
 {{ m.lead(s) -}}
 <div class="cardrow">
 {% for c in s.cards %}
-<div class="rcard{{ m.frag(s) }}">{{ chip(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>
+<div class="rcard{{ m.frag(s, loop) }}">{{ chip(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

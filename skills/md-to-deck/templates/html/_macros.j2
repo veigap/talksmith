@@ -16,6 +16,10 @@
 {% endmacro %}
 {# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
    opts out and shows them all at once. Negated on purpose: an unrecognized value animates,
-   which is the default anyone wants — the opt-in form failed silently on every typo. #}
-{% macro frag(s) %}{{ '' if s.reveal == 'together' else ' fragment fade-up' }}{% endmacro %}
+   which is the default anyone wants — the opt-in form failed silently on every typo.
+   Pass the enclosing `loop` for per-item enumerations: the FIRST item never gets `fragment`,
+   so it is on screen the moment the slide is presented (an empty stage that needs a keypress
+   to show anything reads as a broken slide) — only items 2..N animate in. Group containers
+   (e.g. highlights) call `frag(s)` with no loop and stay a single fragment as before. #}
+{% macro frag(s, loop=None) %}{{ '' if s.reveal == 'together' or (loop and loop.first) else ' fragment fade-up' }}{% endmacro %}
 {% macro lead(s) %}{% if s.lead %}<p class="lead">{{ s.lead }}</p>{% endif %}{% endmacro %}

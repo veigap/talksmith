@@ -2,6 +2,6 @@
 {% call m.stage(s) %}
 {{ m.lead(s) -}}
 <div class="stats">
-{% for st in s.stats %}<div class="stat{{ m.frag(s) }}"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}
+{% for st in s.stats %}<div class="stat{{ m.frag(s, loop) }}"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}
 </div>
 {% endcall %}

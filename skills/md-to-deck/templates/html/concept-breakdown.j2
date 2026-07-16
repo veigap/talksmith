@@ -2,7 +2,7 @@
 {% call m.stage(s) %}
 <div class="cards">
 {% for c in s.cards %}
-<div class="ccard{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>
+<div class="ccard{{ m.frag(s, loop) }}">{{ icon(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

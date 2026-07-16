@@ -3,7 +3,7 @@
 {{ m.lead(s) -}}
 <div class="iconlist">
 {% for r in s.rows %}
-<div class="ilrow{{ ' solo' if not r.body else '' }}{{ m.frag(s) }}">{{ icon(r.icon) }}<div><h4>{{ r.label }}</h4>{% if r.body %}<p>{{ r.body }}</p>{% endif %}</div></div>
+<div class="ilrow{{ ' solo' if not r.body else '' }}{{ m.frag(s, loop) }}">{{ icon(r.icon) }}<div><h4>{{ r.label }}</h4>{% if r.body %}<p>{{ r.body }}</p>{% endif %}</div></div>
 {% endfor %}
 </div>
 {% endcall %}

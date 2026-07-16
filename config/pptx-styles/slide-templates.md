@@ -454,6 +454,14 @@ precise rules.
   panels or a stat strip — not a paragraph, not bullets.** **Flag as a restructure
   candidate** in FEEDBACK: most "wall of prose" slides are `card-row`/`icon-list`/
   `content+image` in disguise.
+- **`panels` is a set — never one.** The panel strip is a `repeat(3,1fr)` grid, so a
+  **single** panel renders as a lonely third-width card at the bottom, and an emphatic
+  closing line dropped there reads as demoted afterthought, not punchline. If the slide is
+  *a lead + one restatement/aphorism* (exactly the `labeled_items == 1` case above), it is
+  **`single-point`**, not `content-text`: promote that line to `point.label` and the
+  explanation to `point.body`. Only reach for `content-text` when there are genuinely **2–4**
+  supporting statements of comparable weight. A one-panel `content-text` is always a
+  misclassification — the deterministic `audits/degenerate_enum.py` floor fails it.
 - **Strict recipe:** §13 content-text. **Provenance:** ref S41, final S10/19.
 
 #### `fallback`
