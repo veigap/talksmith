@@ -376,7 +376,10 @@ precise rules.
   from `process` (abstract steps, order-not-date). Primarily **author-directed**
   (`<!-- template: timeline -->`); labeled items with date-like labels are the hint.
 - **Format:** a **vertical rail** with a connecting line and a dot per entry; each row = the
-  date/milestone (mono accent) + a one-line detail. Time flows top→bottom.
+  date/milestone (mono accent) + a one-line detail. Time flows top→bottom. An optional **`lead`**
+  (one intro line) may sit above the rail — use it when the sequence needs framing before the
+  dates; without it the rail starts at the top. (Its presence is what let this template absorb
+  slides that would otherwise fall to `process` only to get a lead.)
 - **Provenance:** roadmap / history slides; common in Gamma-style decks.
 
 ### Two groups — A vs B

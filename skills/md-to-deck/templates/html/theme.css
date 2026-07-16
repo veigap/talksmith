@@ -217,6 +217,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
 /* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
 .timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}
+.lead + .timeline{margin-top:2.6cqw}
 .tlrow{position:relative}
 .tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
 .tldate{margin:0;font-size:2.9cqw;font-weight:800;color:var(--red);font-family:var(--mono)}

@@ -118,7 +118,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
-| `timeline` | `title`, `milestones:[{label,body}]` | per-milestone `marker` |
+| `timeline` | `title`, `milestones:[{label,body}]` | `lead`, per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
 | `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown at right, never cropped), `answer_label` (label on the answer panel; default "Respuesta") |
 | `single-point` | `title`, `point:{label,body}` | — |

@@ -13,6 +13,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.61.0] — 2026-07-16
+
+### Added
+- **`timeline` now takes an optional `lead`** — one intro line above the dated rail. Previously a timeline slide that needed a framing sentence had no place to put it, so such slides were forced over to `process` (numbered cards) purely to gain a lead, losing the time-rail visual. The lead is optional; without it the rail still starts at the top. Slides that only drifted to `process` for this reason can move back to `timeline`.
+
 ## [0.60.0] — 2026-07-15
 
 **Never leave the presenter staring at silence.** Polish and Render already showed a live checklist while they worked; the other long unattended stretches didn't, so the deck would go quiet for minutes with no sign of life. This release extends the pattern to every step that makes the presenter wait, and adds a workflow-wide "you are here".
