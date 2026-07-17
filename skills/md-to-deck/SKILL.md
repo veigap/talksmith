@@ -117,7 +117,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 
 **The base template is mandatory and non-negotiable.** `pptx-strict`'s is a 15-slide foundation (cover + agenda + 12 layout-reference slides + 1 divider example); the renderer substitutes placeholders, deletes the layout-reference zone (slides 3–15), and inserts content per `<spec_path>`. `pptx-free-form`'s is a 1-slide cover-only foundation; it substitutes the cover's four §2 placeholders, then designs every other slide fresh per its §3. Decks built from scratch are a render failure in either style.
 
-**Single responsibility.** This skill prepares the inputs and invokes the pptx skill. ASCII → SVG is the Illustrator's job (Step 6, before this runs); `final.md` arrives cleaned with every referenced image already under `talks/<Talk>/images/`.
+**Single responsibility.** This skill prepares the inputs and invokes the pptx skill. ASCII → SVG is the Diagram-Illustrator's job (Step 6, before this runs); `final.md` arrives cleaned with every referenced image already under `talks/<Talk>/images/`.
 
 ### Prerequisites (Path A)
 
@@ -126,8 +126,8 @@ The rest of this file (Path A) does not apply to `html-strict`.
 | [`skill://antropic-skills:/pptx`](skill://antropic-skills:/pptx) in registry | Skill list includes `pptx` | Stop. Tell the presenter to run inside Cowork. No CLI fallback. |
 | Active `Talk` path | Passed in by orchestrator | Stop and ask. |
 | Cleaned `final.md` | Exists; no `Presenter feedback`; ASCII replaced by `![...](images/...)` | Stop — Polish hasn't run; return to Step 6. |
-| Pre-rendered local images | `talks/<Talk>/images/<file>` exists for every `![...](images/...)` ref | Stop. Dispatch `illustrator` for missing SVGs, or ask the presenter to drop the asset in. |
-| Keynote-safe image extensions | Every `![alt](path)` uses `.png`/`.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote drops them on import. | Stop, list every offending ref. `.svg` → re-dispatch Illustrator for a `.png` companion + Editor's Step-6(b) rewrite; `.webp/.avif/.heic` → re-dispatch Editor (rasterizes inline). |
+| Pre-rendered local images | `talks/<Talk>/images/<file>` exists for every `![...](images/...)` ref | Stop. Dispatch `diagram-illustrator` for missing SVGs, or ask the presenter to drop the asset in. |
+| Keynote-safe image extensions | Every `![alt](path)` uses `.png`/`.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote drops them on import. | Stop, list every offending ref. `.svg` → re-dispatch Diagram-Illustrator for a `.png` companion + Editor's Step-6(b) rewrite; `.webp/.avif/.heic` → re-dispatch Editor (rasterizes inline). |
 | No remote image refs | No `![...](http(s)://...)` refs (pptx skill behavior on URLs is undefined) | Stop and ask the presenter to download into `images/` or explicitly accept the risk. |
 | Base template | `<base_template_path>` exists (style-resolved) | Stop and ask. |
 | Visual spec | `<spec_path>` exists (strict §1–§15 + §17–§20, free-form §1–§4) | Stop and ask — the spec is the contract. |
@@ -189,7 +189,7 @@ The skill owns the entire render loop end-to-end (including strict's internal cr
 talks/<Talk>/
 ├── draft.md                              # working file (Steps 1–5) — read-only here (except html-strict --draft)
 ├── final.md                              # source for this skill (cleaned by Polish)
-├── images/                               # populated by illustrator + editor (Step 6)
+├── images/                               # populated by diagram-illustrator + editor (Step 6)
 └── output/
     ├── slide-model.json                 # the structured model (FILL step) — HTML + PPTX both render from it
     ├── slide-model.draft.json            # in-progress model (html-strict --draft live view)
@@ -228,7 +228,7 @@ html-strict:      Formatting source → Rendering the deck → Ready to view
 - **System fonts only** (Path A, Keynote-compat): every `<a:latin>` must resolve to a font on the import target (Arial / Helvetica / Courier New on the macOS/Keynote path). Custom fonts (Roboto, Consolas, …) fail import even with valid OOXML. Enforced by `audits/palette_fonts.py`. (Path B embeds its own IBM Plex fonts as data-URIs — HTML, not Keynote, so this does not apply.)
 - **The spec is the contract** (Path A): pass `<spec_path>` verbatim to the native renderer; if it's ignored, that's a render failure — rerun, don't patch post-hoc.
 - **Never modify `final.md`/`draft.md`.** All work is in memory or `output/…`. `html-strict --draft` reads `draft.md` read-only.
-- **Never re-render SVGs.** A missing SVG ref → stop, the orchestrator dispatches the Illustrator.
+- **Never re-render SVGs.** A missing SVG ref → stop, the orchestrator dispatches the Diagram-Illustrator.
 - **Speaker notes go into the notes pane** (Path A) / the Reveal `<aside class="notes">` (Path B), never on the slide body.
 
 ## Failure modes to surface

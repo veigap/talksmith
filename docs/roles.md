@@ -11,7 +11,7 @@ Talksmith ships a **Presenter Agent**: an orchestrator that drives the [eight-st
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `research/corpus/`, one record per source with a companion `<source-stem>/images/` folder so the corpus is self-contained. Preserves; does not compress. Runs in Step 3.
 - **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone in Step 4.
 - **Editor** — the muscle. Keeps `draft.md`, `final.md`, and `memory.md` current: bootstraps the file, transcribes decisions, drafts prose from corpus records, applies feedback, then in Step 6 copies `draft.md` → `final.md` and cleans it for delivery.
-- **Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during Polish (Step 6).
+- **Diagram-Diagram-Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during Polish (Step 6).
 - **Global-Librarian** — cross-Talk curator. On Step 8 promotion, curates reusable, topic-organized knowledge from the finalized Talk into a shared `knowledge-library/` at the repo root. Curation, not 1-to-1 copy.
 
 Role specs live under [`agents/`](../agents/) and are dispatched as Claude Code subagents from [`orchestrator.md`](../orchestrator.md), the full operating spec loaded at session start by the [`talksmith-orch.md`](../talksmith-orch.md) stub.

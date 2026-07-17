@@ -83,7 +83,7 @@
   <circle cx="252" cy="619" r="15" fill="#059669"/>
   <text x="252" y="624" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
   <text x="284" y="614" font-size="16" font-weight="700" fill="#0f172a">Polish</text>
-  <text x="284" y="634" font-size="13" fill="#64748b">Copy <tspan font-family="monospace" font-size="12" fill="#475569">draft.md</tspan> &#8594; <tspan font-family="monospace" font-size="12" fill="#475569">final.md</tspan>; <tspan font-weight="600" fill="#475569">Illustrator</tspan> turns ASCII into SVG; clean up.</text>
+  <text x="284" y="634" font-size="13" fill="#64748b">Copy <tspan font-family="monospace" font-size="12" fill="#475569">draft.md</tspan> &#8594; <tspan font-family="monospace" font-size="12" fill="#475569">final.md</tspan>; <tspan font-weight="600" fill="#475569">Diagram-Illustrator</tspan> turns ASCII into SVG; clean up.</text>
 
   <!-- 7 Render (optional) -->
   <rect x="220" y="672" width="700" height="58" rx="10" fill="#ffffff" stroke="#cdeee0" stroke-width="1.5" stroke-dasharray="5 4" filter="url(#shadow)"/>

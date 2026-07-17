@@ -1,16 +1,16 @@
 ---
 name: talksmith:ascii-to-svg
-description: Render one ASCII diagram block into one SVG file, applying the standing visual rules in `config/diagram-style.md` plus optional caller style directives. Invoked by the `illustrator` role once per fenced ASCII block during Step 6 (Polish), with pre-extracted slide context passed in. CLI-safe.
+description: Render one ASCII diagram block into one SVG file, applying the standing visual rules in `config/diagram-style.md` plus optional caller style directives. Invoked by the `diagram-illustrator` role once per fenced ASCII block during Step 6 (Polish), with pre-extracted slide context passed in. CLI-safe.
 ---
 
 # talksmith:ascii-to-svg — Render one ASCII block to one SVG
 
-This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`illustrator`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) role during Step 6 (Polish). Its scope is intentionally narrow:
+This skill renders **a single** ASCII diagram to **a single** SVG file. It is invoked once per fenced ASCII block by the [`diagram-illustrator`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) role during Step 6 (Polish). Its scope is intentionally narrow:
 
-| | Caller (`illustrator` role) does | This skill does |
+| | Caller (`diagram-illustrator` role) does | This skill does |
 |---|---|---|
 | 1 | Invoke [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `scan` once; the scan output enumerates every fenced ASCII block **and** carries each block's pre-extracted slide context (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language`) | — |
-| 2 | Pick the output filename `<slide-id>-<n>-<short-description>.svg` (kebab-case slug — see [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Output filename convention*) | — |
+| 2 | Pick the output filename `<slide-id>-<n>-<short-description>.svg` (kebab-case slug — see [`${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) → *Output filename convention*) | — |
 | 3 | Pass through the scan's `context` bundle + sidecar path + (optional) `style_directives` | — |
 | 4 | — | **Render the SVG for that one block** |
 | 5 | Aggregate results, report rendered/unchanged/failed counts | — |
@@ -22,7 +22,7 @@ The agent is the coordinator; this skill is the worker. One invocation = one SVG
 The agent must pass the following in the skill invocation prompt. **Two input modes** for the ASCII payload — exactly one must be provided:
 
 - **Mode A — inline (legacy / one-off renders):** pass `ascii_block` as a verbatim string. Used when no `.ascii` sidecar exists yet.
-- **Mode B — from file (Step 6 standard):** pass `ascii_file` = absolute path to a `.ascii` sidecar produced by [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `extract`. The skill reads the file and **splits it on the `<!-- ascii-note:` sentinel**: everything before the sentinel (minus the separating blank line) is the ASCII payload; the comment from sentinel through `-->` populates the `ascii_note` context input. This is the canonical input mode during a normal Step 6 pass — the sidecar already carries both the source and the illustrator's render-time intent.
+- **Mode B — from file (Step 6 standard):** pass `ascii_file` = absolute path to a `.ascii` sidecar produced by [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `extract`. The skill reads the file and **splits it on the `<!-- ascii-note:` sentinel**: everything before the sentinel (minus the separating blank line) is the ASCII payload; the comment from sentinel through `-->` populates the `ascii_note` context input. This is the canonical input mode during a normal Step 6 pass — the sidecar already carries both the source and the diagram-illustrator's render-time intent.
 
 | Input | Required? | Example |
 |---|---|---|
@@ -38,7 +38,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 | `talk_thesis` | recommended | top of `final.md` |
 | `presentation_language` | recommended | from `config/profile.md` — determines language of all text in the SVG |
 | `style_directives` | optional | freeform string with per-render visual instructions from the presenter (e.g. *"use orange for the model panel"*, *"don't use arrows, use plain lines"*). Applied **on top of** the standing rules in `${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`; if it conflicts with a standing rule, the directive wins for this render only — note the deviation in the report. |
-| `repo_root` | yes | absolute path to the presenter's **working directory** (the folder where `/talksmith:init` ran — contains `CLAUDE.md`, `config/profile.md`, `talks/`). The skill uses this to anchor Talk-relative paths the caller passes. Plugin-bundled assets like `diagram-style.md` are loaded via `${CLAUDE_PLUGIN_ROOT}/` directly and do **not** depend on `repo_root`. The illustrator role passes it from its own dispatch context. |
+| `repo_root` | yes | absolute path to the presenter's **working directory** (the folder where `/talksmith:init` ran — contains `CLAUDE.md`, `config/profile.md`, `talks/`). The skill uses this to anchor Talk-relative paths the caller passes. Plugin-bundled assets like `diagram-style.md` are loaded via `${CLAUDE_PLUGIN_ROOT}/` directly and do **not** depend on `repo_root`. The diagram-illustrator role passes it from its own dispatch context. |
 
 ## Process
 
@@ -98,7 +98,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    A non-zero exit means the SVG is broken in a way this skill can't mechanically repair (no viewBox, malformed XML, root element isn't `<svg>`). When that happens, **do not return success** — return `failed: svg_validation: <error>` per step 9. A broken SVG must not reach disk: the downstream PPTX renderer trusts the viewBox to size its placement slot, and a faulty viewBox poisons the [`audits/aspect_ratios.py`](../md-to-deck/audits/aspect_ratios.py) gate at PPTX-build time (one full render cycle wasted). Catching it here is cheap; catching it there is expensive. If repair happened, note the fix count in the step-9 report under `svg_validation:`.
 
-7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory, same basename). This is the **build deliverable** the Step-7 PPTX renderer consumes (it loads images via PIL, which cannot decode SVG). Every render produces both files (illustrator's *Output contract*); [`md-to-deck`](../md-to-deck/SKILL.md)'s prereqs stop the build if the `.png` a `final.md` ref points at is missing.
+7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory, same basename). This is the **build deliverable** the Step-7 PPTX renderer consumes (it loads images via PIL, which cannot decode SVG). Every render produces both files (diagram-illustrator's *Output contract*); [`md-to-deck`](../md-to-deck/SKILL.md)'s prereqs stop the build if the `.png` a `final.md` ref points at is missing.
 
    **Always rasterize through [`rasterize.py`](rasterize.py). Never call `cairosvg` (or anything else) inline.**
 
@@ -120,7 +120,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    This PNG is **not** referenced from `final.md`, **not** consumed by the Step-7 PPTX renderer, and **distinct from the deliverable PNG in step 7**. It exists for exactly one reader: the blind [`diagram-critic`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) subagent, whose only view of the render this is. Get its shape wrong and the critique is performed on a diagram that doesn't exist.
 
-   If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
+   If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the diagram-illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
 
 9. **Aspect audit — the one defect no critique can see.** Run [`audit_aspect.py`](audit_aspect.py) against the SVG and the deliverable PNG from step 7:
 
@@ -129,7 +129,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
        --png <output_path with .png>
    ```
 
-   Exit 0 = the frame is sound. Exit 1 = the viewBox doesn't fit the art: report `aspect_audit: <the tool's defect line, verbatim>` in step 10 and return it as a **defect**, not a failure — the SVG stays on disk and the illustrator folds the finding into its next-iteration `style_directives` exactly like a critic defect. Exit 2 = the audit itself couldn't run (no viewBox, blank raster); surface as `failed: aspect_audit: <reason>`.
+   Exit 0 = the frame is sound. Exit 1 = the viewBox doesn't fit the art: report `aspect_audit: <the tool's defect line, verbatim>` in step 10 and return it as a **defect**, not a failure — the SVG stays on disk and the diagram-illustrator folds the finding into its next-iteration `style_directives` exactly like a critic defect. Exit 2 = the audit itself couldn't run (no viewBox, blank raster); surface as `failed: aspect_audit: <reason>`.
 
    **Why a script and not the critic.** This is the single defect class visual review is *structurally* incapable of catching: the critique PNG is rasterized **from** the viewBox, so a wrong viewBox produces a correct-looking PNG with the surplus reading as deliberate whitespace — nothing for an eye to find. Caught here it costs one iteration; uncaught, it detonates a full render cycle later when the PPTX slot is sized from the viewBox.
 
@@ -142,7 +142,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
     - On skip: `skipped: <reason>`
     - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_deliverable: <reason>` — without the PNG the Step-7 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
 
-    An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the illustrator can act on it in the next iteration.
+    An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the diagram-illustrator can act on it in the next iteration.
 
 ## Rasterizer — cairosvg, required, no fallback
 
@@ -165,7 +165,7 @@ If `rasterize.py` reports `cairosvg unavailable`, that is the real message and i
 
 ## You cannot ask questions
 
-This skill cannot ask follow-ups. If the standing rules + slide context + `style_directives` together don't disambiguate a critical choice, return `failed: ambiguous · <what's unresolved>`. The illustrator role surfaces the ambiguity to the orchestrator, which asks the presenter and re-invokes this skill with the disambiguation baked in.
+This skill cannot ask follow-ups. If the standing rules + slide context + `style_directives` together don't disambiguate a critical choice, return `failed: ambiguous · <what's unresolved>`. The diagram-illustrator role surfaces the ambiguity to the orchestrator, which asks the presenter and re-invokes this skill with the disambiguation baked in.
 
 **Sparse-context is not ambiguous.** When `slide_content_prose` and/or `speaker_notes` are empty, render with whatever context is present (`slide_title`, `section_title`, `section_goal`, `talk_thesis`) and pick neutral colors derived from box order rather than slide-prose keywords. Add `deviations: sparse-context (no <field>)` to the success report. Do **not** return `failed: ambiguous` just because prose is empty — an empty SVG is worse than a sparsely-labelled one.
 

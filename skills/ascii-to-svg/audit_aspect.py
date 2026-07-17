@@ -36,7 +36,7 @@ room on both sides, so it is a measured number, not a guess.
 
 ## Reporting only
 
-A finding is emitted as a defect line for the illustrator to fold into its `style_directives`,
+A finding is emitted as a defect line for the diagram-illustrator to fold into its `style_directives`,
 alongside a suggested corrected viewBox. The suggestion is always a pure **crop** — changing
 `viewBox` min-y/height moves no element coordinate — but it is *not* applied automatically:
 whitespace is sometimes intentional, and silently reflowing a diagram the presenter framed

@@ -11,7 +11,7 @@ Captures per-presenter defaults that apply across every Talk in this working dir
 | Reader | Read when | What for |
 |---|---|---|
 | Orchestrator | **Session start, eagerly** | Loaded into session context. If filled, treat sections as global defaults for presenter identity, audience, tone, duration, and language. If absent or any required section is missing/empty, Step 0.5 walks through the missing required sections (no skip). |
-| All five roles (Librarian, Composer, Editor, Illustrator, Global-Librarian) | When performing any role | Profile is in session context — roles read it directly. If the profile is empty, each role falls back to defaults and notes the omission — never stops. |
+| All five roles (Librarian, Composer, Editor, Diagram-Illustrator, Global-Librarian) | When performing any role | Profile is in session context — roles read it directly. If the profile is empty, each role falls back to defaults and notes the omission — never stops. |
 
 The orchestrator writes the file whenever Step 0.5 collects a value for a previously-missing required section. Step 4 (Draft) also writes here as a **safety-net backstop** if it discovers a required section is still empty (i.e. Step 0.5 was bypassed for some reason) — but the canonical collection point is Step 0.5.
 
@@ -26,7 +26,7 @@ The orchestrator writes the file whenever Step 0.5 collects a value for a previo
 | `How my presentations are consumed` | **Required** | Live vs. recorded vs. async, default consumption mode. Drives slide density and speaker-note weight. Set once in Step 0.5 and never re-prompted per-Talk. |
 | `Audience defaults` | **Required** | Typical audience profile across Talks (technical level, role, what they already know, what they care about). Copied into every Talk's `draft.md` frontmatter as the default `audience`. Per-Talk calibration ("alumnos de IA en Biomedicina") happens in Step 5 Review by editing `draft.md` directly — never re-prompted in Step 4. |
 | `Default duration` | **Required** | Typical total talk length including Q&A — e.g. "60 min + 10 min Q&A", "45 min", "90 min lecture". Copied into every Talk's `draft.md` frontmatter as the default `duration`. Per-Talk override: edit the `draft.md` frontmatter directly in Step 5 Review. |
-| `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `draft.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `draft.md` prose. |
+| `Presentation language` | **Required** | Language for slide text, panel labels, captions, SVG `<title>`/`<desc>`, prose in `draft.md`, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Diagram-Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and `draft.md` prose. |
 | `Institution logo` | *Optional* | Records the logo decision, not the image — the image is the file `config/logo.svg\|.png\|.jpg\|.jpeg`, reused on every rendered deck cover. Holds either the filename supplied (e.g. "`config/logo.png`") or a decline ("None — use the neutral placeholder"), so Step 0.5 asks once and never again. Renderers ignore this text and resolve the logo by file presence, so a stale value can't break a render. |
 
 **Do not invent additional sections** (no "Who I am", "Tone and style", "Class structure", "Constraints" — these were intentionally removed). **Do not remove any of the seven canonical sections** — even if empty, keep the heading + an HTML-comment placeholder so the partial-fill detection works.
@@ -64,7 +64,7 @@ The only frontmatter field Step 4 actively prompts for is `date` (always per-Tal
 
 ## Missing-profile fallback (shared rule)
 
-This rule applies when performing any of the five roles (Librarian, Composer, Editor, Illustrator, Global-Librarian). It exists once, here, to keep the role specs consistent.
+This rule applies when performing any of the five roles (Librarian, Composer, Editor, Diagram-Illustrator, Global-Librarian). It exists once, here, to keep the role specs consistent.
 
 **When `config/profile.md` is genuinely empty or missing**, each role:
 
@@ -108,7 +108,7 @@ Bootstrap `config/profile.md` from this form on first creation. The one-line sch
 
 ## Presentation language
 
-<!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and draft.md prose. -->
+<!-- Required. The language used for slide text, panel labels, subtitles, captions, SVG <title>/<desc>, and the conversation with the agent. Single value (e.g. "English", "Spanish", "Portuguese") or a default + exception ("Spanish by default, English for international audiences"). The Diagram-Illustrator uses this for all in-SVG text; the Editor uses it for the conversation and draft.md prose. -->
 
 ## Institution logo
 

@@ -13,7 +13,7 @@ Each Talk has at most one of each. The shape defined here is read downstream by 
 | Frontmatter, Thesis claim, Agenda arc, Section goals, Slide Content / Sources / Speaker notes, Conclusions, Cut material | Present | Present (verbatim copy from `draft.md`) |
 | `Presenter feedback` blocks (Thesis / Agenda / Section / Slide) | Append-only log of `- "..."`, `[open]`, and `[closed]` bullets — the audit trail | **Removed entirely** by Step 6 (d) (the strip targets the field at every level, in all three syntactic forms) |
 | Fenced ` ```ascii ` blocks (render-driving — slide has no Markdown image ref) | Present, with optional trailing `<!-- ascii-note: ... -->` HTML comment | Replaced by `![alt](images/<slide-id>-<n>-<short-description>.svg)` plus a `<!-- ascii-source: ... -->` echo. The `<!-- ascii-note: ... -->` HTML comment stays in place |
-| Fenced ` ```ascii ` blocks (documentation-only — slide already carries a Markdown image ref) | Present | **Left verbatim** — no render, no sidecar, no fence rewrite. The image link wins; the ASCII is inline aid for whoever reads `final.md` source. (See [editor.md](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Optional ASCII alongside an image link* and [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Render-driving vs. documentation-only*.) |
+| Fenced ` ```ascii ` blocks (documentation-only — slide already carries a Markdown image ref) | Present | **Left verbatim** — no render, no sidecar, no fence rewrite. The image link wins; the ASCII is inline aid for whoever reads `final.md` source. (See [editor.md](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Optional ASCII alongside an image link* and [diagram-illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) → *Render-driving vs. documentation-only*.) |
 | `![alt](path)` image refs | Present, may point at corpus-companion paths, external paths, etc. | Present, **all** rewritten to `images/<basename>` (remote URLs are the only exception — left untouched) |
 | Optional slide hints `<!-- template: <type> -->` / `<!-- reveal: together -->` / `<!-- aside: [left\|right] ![alt](path) -->` (author-written under a slide's `##` heading; see [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 4*) | Present when the Editor had a specific intent; optional | **Preserved verbatim** (Step 6 copies them through) — read by the `md-to-deck` FILL as directives when mapping to `slide-model.json`. The `aside:` hint embeds a real `![alt](path)` ref, so the image-ref rewrite in the row above applies to it too |
 | `# Open questions` | Present, anything genuinely undecided | Present, also receives any **un-applied `[open]`** bullets rescued from feedback blocks before the strip |
@@ -35,7 +35,7 @@ The split exists so Step 6 stays re-runnable: re-render diagrams, re-tweak the P
 | Editor role (writer of `draft.md`) | Step 4 (Draft), Step 5 (Review). **Sole writer of `draft.md`.** | Bootstrap on first Step 4 pass from the *Canonical empty form* below; fill thesis / agenda / sections / slides during Draft; apply presenter feedback during Review. |
 | Editor role (writer of `final.md`) | Step 6 (Polish), action 0 onward. **Sole writer of `final.md`.** | Step 6 (0): `cp draft.md final.md`. Step 6 (a)–(d): inline SVGs, consolidate image refs, rescue `[open]` feedback, strip `Presenter feedback`. Never reads or writes `draft.md` after Step 6 begins. |
 | Composer role (reader of `draft.md`) | Every drafting milestone in Step 4 | Critique the scoped slice (`thesis` / `agenda` / `section:N` / `full`) against thesis alignment, audience fit, citations, principles, and learnings. Returns a punch-list; does **not** edit. |
-| Illustrator role (reader of `final.md`) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; invoke the `talksmith:ascii-to-svg` skill per block. Read-only. |
+| Diagram-Illustrator role (reader of `final.md`) | Step 6 (Polish) action 1 | Walk for fenced ASCII blocks and `<!-- ascii-source: ... -->` HTML comments; extract per-slide context; invoke the `talksmith:ascii-to-svg` skill per block. Read-only. |
 | Global-Librarian role (reader of `final.md`) | Step 8 (Learnings) on promotion | Curate reusable knowledge into `knowledge-library/`. Read-only. |
 | `talksmith:md-to-deck` skill (reader of `final.md`) | Step 7 (Render) | FILL `output/slide-model.json` (LLM decomposition), then render it — mechanically to HTML (`build_html.py`), or via `skill://antropic-skills:/pptx` for the `.pptx` styles. Read-only on `final.md`. |
 
@@ -46,7 +46,7 @@ The orchestrator does **not** write either file directly — every change goes t
 1. **Step 1 (Frame).** Folder tree created; neither file exists yet.
 2. **Step 4 (Draft) — first Editor role pass.** Editor bootstraps `draft.md` from the *Canonical empty form* (below): copy the form, strip every HTML comment and every YAML frontmatter comment line, keep all headings / frontmatter keys (with empty values) / field labels. Then fill.
 3. **Steps 4–5 — iterate.** Editor fills `draft.md` and applies presenter feedback rounds.
-4. **Step 6 (Polish).** Editor copies `draft.md` → `final.md` (action 0). Illustrator renders ASCII → SVG. Editor inlines image refs in `final.md` (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, rescues any remaining `[open]` feedback bullets into `# Open questions`, then strips every `Presenter feedback` field from `final.md`. **`draft.md` is never touched.**
+4. **Step 6 (Polish).** Editor copies `draft.md` → `final.md` (action 0). Diagram-Illustrator renders ASCII → SVG. Editor inlines image refs in `final.md` (preserving the ASCII as an HTML comment), consolidates other image refs into `images/`, rescues any remaining `[open]` feedback bullets into `# Open questions`, then strips every `Presenter feedback` field from `final.md`. **`draft.md` is never touched.**
 5. **Step 7 (Render, optional).** The md-to-deck skill FILLs `output/slide-model.json` from `final.md` (LLM), then renders it — `build_html.py` → `output/html/index.html` for `html-strict`, or the native `pptx` skill → `output/final.pptx` for the `.pptx` styles. Neither `draft.md` nor `final.md` is modified.
 6. **Step 8 (Learnings).** `final.md` is finalized; the orchestrator scans the cross-Talk feedback backlog. If the presenter promotes the Talk, the Global-Librarian curates `final.md` + corpus records into `knowledge-library/`.
 
@@ -95,11 +95,11 @@ The `editor` parses composer punch-lists and presenter feedback on this locator 
 - `thesis` — the `# Thesis` block.
 - `agenda` — the `# Agenda` block as a whole (narrative arc, ordering, framing).
 - `agenda.section:<N>` — the n-th bullet inside `**Sections (in delivery order):**` (for reordering, renaming, or keep/cut at the agenda level).
-- `agenda.<n>` — the n-th ASCII diagram embedded under `# Agenda`, matching the illustrator's `s0-<n>.svg` filename.
+- `agenda.<n>` — the n-th ASCII diagram embedded under `# Agenda`, matching the diagram-illustrator's `s0-<n>.svg` filename.
 - `conclusions.N` — slide N under `# Conclusions`.
-- `conclusions.N.<k>` — the k-th ASCII diagram inside that conclusions slide, matching the illustrator's `sc-N-<k>.svg` filename.
+- `conclusions.N.<k>` — the k-th ASCII diagram inside that conclusions slide, matching the diagram-illustrator's `sc-N-<k>.svg` filename.
 
-The illustrator derives SVG filenames from the same numbering: `s<section>-<slide>-<n>.svg` for regular slides, `s0-<n>.svg` for agenda diagrams, `sc-<N>-<n>.svg` for conclusions diagrams. The trailing `-<n>` is mandatory in every case (even when only one diagram exists).
+The diagram-illustrator derives SVG filenames from the same numbering: `s<section>-<slide>-<n>.svg` for regular slides, `s0-<n>.svg` for agenda diagrams, `sc-<N>-<n>.svg` for conclusions diagrams. The trailing `-<n>` is mandatory in every case (even when only one diagram exists).
 
 ## Presenter feedback log (in `draft.md`)
 

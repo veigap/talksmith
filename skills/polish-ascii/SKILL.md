@@ -1,19 +1,19 @@
 ---
 name: talksmith:polish-ascii
-description: Deterministic CLI helper for Step 6 (Polish), used by the editor + illustrator roles — scans a Talk's `final.md` for fenced ASCII diagram blocks (with per-block slide context) and mechanically handles sidecar extraction, render-arg fan-out, idempotency stamping, and fence-to-image cleanup. The canonical subcommand sequence is in the skill body. CLI-safe, stdlib-only Python.
+description: Deterministic CLI helper for Step 6 (Polish), used by the editor + diagram-illustrator roles — scans a Talk's `final.md` for fenced ASCII diagram blocks (with per-block slide context) and mechanically handles sidecar extraction, render-arg fan-out, idempotency stamping, and fence-to-image cleanup. The canonical subcommand sequence is in the skill body. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:polish-ascii — Mechanical ASCII extraction + final.md rewrite
 
-The illustrator picks templates and dispatches `talksmith:ascii-to-svg` per block; the editor owns the surrounding rewrite of `final.md` and the sidecar files. This skill is the editor's deterministic helper for that work — Python where Python belongs, no LLM reasoning needed.
+The diagram-illustrator picks templates and dispatches `talksmith:ascii-to-svg` per block; the editor owns the surrounding rewrite of `final.md` and the sidecar files. This skill is the editor's deterministic helper for that work — Python where Python belongs, no LLM reasoning needed.
 
 **Always operates on `final.md`.** Step 6 begins with the editor copying `draft.md` → `final.md`; every subsequent Step-6 read/write — including every invocation of this skill — targets `final.md`. `draft.md` is read-only from Step 6 onward. The `--final <path>` flag (and the `final_path` positional for `scan`) is deliberately named so a `final draft.md` mix-up surfaces immediately as a mismatched argument rather than silently mutating the working file.
 
-**Canonical Step 6 sequence** (matches the editor + illustrator role specs):
+**Canonical Step 6 sequence** (matches the editor + diagram-illustrator role specs):
 
 1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
 2. **`inspect-intents`** *(optional)* — eyeball the scan as a 3-column table (`slide_id | slide_title | intent`) before authoring slugs. Pure read; no mutation.
-3. **Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
+3. **Diagram-Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
 4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr.
 5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each.
@@ -76,11 +76,11 @@ The plan JSON has this shape:
 
 `context` is emitted by `scan` automatically — derived mechanically from `final.md`'s structure (nearest H2 above the block = `slide_title`; nearest H1 above = `section_title`; `**Goal of this section:**` line under the H1 = `section_goal`; `### Content` and `### Speaker notes` bodies inside the slide; `# Thesis` block at top of file). Fenced code blocks, HTML comments, and `---` horizontal rules are stripped from prose. `presentation_language` is present only when the caller passes `--language`.
 
-`render` is added by the illustrator (judgement: template choice, slug, alt) before `extract` / `cleanup` / `apply` is invoked.
+`render` is added by the diagram-illustrator (judgement: template choice, slug, alt) before `extract` / `cleanup` / `apply` is invoked.
 
 A block with `"render": null` is skipped (not rewritten, no sidecar).
 
-A block with `"documentation_only": true` is **also skipped automatically** — the slide already carries a Markdown image reference, so any ASCII in that slide is treated as inline visual aid for the source reader and bypassed by every Step-6 stage (no render, no sidecar, no fence rewrite). The flag is set by `scan` based on the surrounding slide content; the illustrator does not need to annotate it.
+A block with `"documentation_only": true` is **also skipped automatically** — the slide already carries a Markdown image reference, so any ASCII in that slide is treated as inline visual aid for the source reader and bypassed by every Step-6 stage (no render, no sidecar, no fence rewrite). The flag is set by `scan` based on the surrounding slide content; the diagram-illustrator does not need to annotate it.
 
 `start_line` / `end_line` are **1-based**, **inclusive**, and refer to the opening and closing fence lines respectively (the fences themselves, not just the payload). For notes, they refer to the `<!-- ascii-note:` line and the line containing the terminal `-->`.
 
@@ -93,7 +93,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
 
 # Phase 2 — eyeball (optional) and author a renders map
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py inspect-intents --plan /tmp/plan.json
-#   illustrator writes /tmp/renders.json:
+#   diagram-illustrator writes /tmp/renders.json:
 #     {"s1-2-1": {"svg_basename": "s1-2-1-cuatro-senales.svg", "alt": "Cuatro señales"}, ...}
 
 # Phase 3 — annotate the plan, write sidecars, fan args out for parallel rendering
@@ -123,7 +123,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
 
 ### `scan` — JSON (default)
 
-Exactly the plan shape shown under *Inputs* above, with `render: null` on every block (the illustrator's `annotate-renders` fills it later).
+Exactly the plan shape shown under *Inputs* above, with `render: null` on every block (the diagram-illustrator's `annotate-renders` fills it later).
 
 ### `scan` — human
 
@@ -145,7 +145,7 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 ## Detection rules (used by `scan`)
 
-- **ASCII block** — two tiers, same rules as [illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md) → *Detection rule*: the canonical ` ```ascii ` fence (`detection_mode: "canonical"`, no glyph inspection) or the legacy glyph heuristic on empty/`text`/`diagram`-tagged fences (`detection_mode: "legacy-heuristic"`, migration warning per block in `human` output). Real-language fences (`python`, `bash`, …) are ignored under both tiers.
+- **ASCII block** — two tiers, same rules as [diagram-illustrator.md](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) → *Detection rule*: the canonical ` ```ascii ` fence (`detection_mode: "canonical"`, no glyph inspection) or the legacy glyph heuristic on empty/`text`/`diagram`-tagged fences (`detection_mode: "legacy-heuristic"`, migration warning per block in `human` output). Real-language fences (`python`, `bash`, …) are ignored under both tiers.
 - **Note** = an HTML comment of shape `<!-- ascii-note: ... -->` whose opening `<!-- ascii-note:` line appears **within 1 blank-line tolerance** after the closing fence. The comment is captured verbatim from its opening sentinel through the line containing `-->`.
 - **`slide_id`** = `s<section-N>-<slide-M>-<n>`. Section is the most recent `# N.` H1; slide is the most recent `## M.` H2 inside that section; `n` is the 1-based ordinal of the ASCII block within the current slide. Special locators: `# Agenda` → section `0`; `# Conclusiones` / `# Conclusions` → section `c`.
 - **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` HTML comment left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads the source and are skipped by `extract`/`cleanup`/`apply`.
@@ -154,7 +154,7 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 
 For each block with `render` non-null:
 
-**`svg_basename` is accepted with or without the `.svg` extension.** The canonical form (per the illustrator's filename convention in [`${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md)) includes `.svg` — e.g. `s1-2-1-cuatro-senales.svg`. If a stem-only form is passed (`s1-2-1-cuatro-senales`), both `extract` and `cleanup` normalize it: the sidecar lands at `<stem>.ascii` and the `final.md` image reference resolves to `images/<stem>.svg`. Mismatched leniency between the two subcommands was a real bug — an extension-less annotation used to land a correct sidecar but a 404-ing image reference. Both paths are now symmetric.
+**`svg_basename` is accepted with or without the `.svg` extension.** The canonical form (per the diagram-illustrator's filename convention in [`${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md)) includes `.svg` — e.g. `s1-2-1-cuatro-senales.svg`. If a stem-only form is passed (`s1-2-1-cuatro-senales`), both `extract` and `cleanup` normalize it: the sidecar lands at `<stem>.ascii` and the `final.md` image reference resolves to `images/<stem>.svg`. Mismatched leniency between the two subcommands was a real bug — an extension-less annotation used to land a correct sidecar but a 404-ing image reference. Both paths are now symmetric.
 
 1. **Sidecar.** Write `talks/<Talk>/images/<stem>.ascii` where `<stem>` is `svg_basename` minus `.svg`. Content layout:
    - ASCII payload verbatim (no fence, no leading/trailing blank-line manipulation).
@@ -180,7 +180,7 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 - Writes only under `talks/<Talk>/images/` (sidecars) and to `final.md` itself.
 - Never reads or writes `draft.md`.
 - Does **not** render SVGs — that's `talksmith:ascii-to-svg`.
-- Does **not** assign `svg_basename` — the illustrator does (filename convention spec in `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md`).
+- Does **not** assign `svg_basename` — the diagram-illustrator does (filename convention spec in `${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`).
 - Does **not** strip `Presenter feedback` (Step 6 (d)) or consolidate non-ASCII image refs (Step 6 (b)) — those remain editor responsibilities.
 
 ## Exit codes

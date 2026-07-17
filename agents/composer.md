@@ -35,7 +35,7 @@ If the scope target doesn't exist in `draft.md`, return: `failed: scope <scope> 
 
 - Typos, grammar, punctuation.
 - Slide-title wording preferences.
-- ASCII diagram aesthetics — that's the Illustrator's domain.
+- ASCII diagram aesthetics — that's the Diagram-Illustrator's domain.
 - `Presenter feedback` log content.
 - Issues the presenter already marked `[closed]` — don't re-litigate decided questions.
 

@@ -273,7 +273,7 @@ The wow moment, stated plainly and demonstrated by the slide before it.
 
 ### Speaker notes
 
-How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering.
+How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering.
 
 ### Presenter feedback
 
@@ -511,7 +511,7 @@ Who's actually doing the work.
 - **Librarian** Restructures raw sources into a uniform corpus. Preserves; doesn't compress.
 - **Composer** Reviews slides against thesis, audience, sources, and learned rules.
 - **Editor** The muscle: writes `draft.md`, applies feedback, produces `final.md`.
-- **Illustrator** Turns your ASCII into styled SVGs at Polish.
+- **Diagram-Illustrator** Turns your ASCII into styled SVGs at Polish.
 - **Global-Librarian** Curates finalized Talks into the shared knowledge library.
 
 ### Sources
@@ -520,7 +520,7 @@ Who's actually doing the work.
 
 ### Speaker notes
 
-The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language.
+The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Diagram-Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language.
 
 ### Presenter feedback
 

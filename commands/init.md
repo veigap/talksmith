@@ -1,10 +1,12 @@
 ---
-description: Drop the Talksmith working-directory stub (CLAUDE.md) and a build-artifact .gitignore into the current project root.
+description: Drop the Talksmith working-directory stubs (CLAUDE.md + AGENTS.md) and a build-artifact .gitignore into the current project root.
 ---
 
 # /talksmith:init
 
-One-shot bootstrap, run **once per working directory**. It writes the Talksmith working-directory stub as `CLAUDE.md` in the current directory, and adds a `.gitignore` covering Talksmith's regenerable build artifacts and caches (so they never get committed to the shared subject repo). On the next session, that stub loads the full operating spec and Talksmith introduces itself and starts; this command does not replicate that, it just puts the stub in place.
+One-shot bootstrap, run **once per working directory**. It writes the Talksmith working-directory stub as `CLAUDE.md` in the current directory, writes a thin `AGENTS.md` pointer so **Codex** (and other agents that read `AGENTS.md`) start the same workflow, and adds a `.gitignore` covering Talksmith's regenerable build artifacts and caches (so they never get committed to the shared subject repo). On the next session, that stub loads the full operating spec and Talksmith introduces itself and starts; this command does not replicate that, it just puts the stubs in place.
+
+**`CLAUDE.md` is the single source of truth; `AGENTS.md` only points at it.** The real boot instructions live in `CLAUDE.md`; `AGENTS.md` is a short stub that tells a non-Claude-Code agent to open `CLAUDE.md` and follow it (with the two Claude-Code-specific fallbacks — the `@`-import and `${CLAUDE_PLUGIN_ROOT}` — spelled out). Nothing is duplicated between them, so they can't drift.
 
 The stub is intentionally minimal and stable — it only knows how to load the real spec from `${CLAUDE_PLUGIN_ROOT}/orchestrator.md`. The spec itself is **not** copied; it lives in the plugin install and refreshes automatically on `/plugin update`, so `/talksmith:init` rarely needs re-running.
 
@@ -18,13 +20,14 @@ This command does **not** scaffold `config/` files, the `talks/` directory, or t
    [init] Refusing to run: this directory is the Talksmith plugin source repo (./.claude-plugin/plugin.json exists). /talksmith:init is for user subject working directories, not the plugin source. The dev CLAUDE.md here is the plugin development notes — overwriting it would clobber documentation. cd into a separate working directory and re-run.
    ```
    Do not write anything. This guard exists because `/talksmith:init` always overwrites — without it, running this command in the plugin repo would destroy the dev `CLAUDE.md`.
-3. **Write the stub**, byte-for-byte, **always overwriting** any existing `./CLAUDE.md`:
+3. **Write both stubs**, byte-for-byte, **always overwriting** any existing `./CLAUDE.md` and `./AGENTS.md`:
    ```bash
-   cp -f "${CLAUDE_PLUGIN_ROOT}/talksmith-orch.md" ./CLAUDE.md
+   cp -f "${CLAUDE_PLUGIN_ROOT}/talksmith-orch.md"   ./CLAUDE.md
+   cp -f "${CLAUDE_PLUGIN_ROOT}/talksmith-agents.md" ./AGENTS.md
    ```
-   If `${CLAUDE_PLUGIN_ROOT}` is unset or that path fails, **locate the plugin install** (find `talksmith-orch.md` under the Claude Code plugins directory) and copy that file to `./CLAUDE.md`. Re-running `/talksmith:init` is the supported way to pick up stub changes; user content belongs in `config/`, `talks/`, never in `CLAUDE.md`. Emit:
+   If `${CLAUDE_PLUGIN_ROOT}` is unset or those paths fail, **locate the plugin install** (find `talksmith-orch.md` / `talksmith-agents.md` under the Claude Code plugins directory) and copy both files. Re-running `/talksmith:init` is the supported way to pick up stub changes; user content belongs in `config/`, `talks/`, never in `CLAUDE.md` or `AGENTS.md`. `AGENTS.md` is a pointer to `CLAUDE.md` — it carries no independent content, so keeping it in sync is automatic. Emit:
    ```
-   [init] CLAUDE.md written from the Talksmith stub (talksmith-orch.md). Any prior CLAUDE.md was overwritten.
+   [init] CLAUDE.md written from the Talksmith stub (talksmith-orch.md), and AGENTS.md written as the Codex pointer to it. Any prior copies were overwritten.
    ```
 4. **Add a `.gitignore` for build artifacts.** Talksmith regenerates decks, icon caches, and critique previews on every render — those must never be committed to the shared subject repo. Append the Talksmith ignore block to `./.gitignore` (creating the file if it doesn't exist), **guarded by a marker so it's idempotent and any pre-existing `.gitignore` is preserved** — never overwrite the user's own entries:
    ```bash
@@ -45,11 +48,11 @@ This command does **not** scaffold `config/` files, the `talks/` directory, or t
 5. Finish by telling the user to restart:
    ```
    Done. Close this session and open a new one in this directory to start creating —
-   the stub will load Talksmith, which introduces itself and walks you through
-   Step 0 → Step 0.5 (profile) → Step 1 (Frame your first Talk).
+   in Claude Code or Codex, the stub loads Talksmith, which introduces itself and
+   walks you through Step 0 → Step 0.5 (profile) → Step 1 (Frame your first Talk).
 
    Everything else — config/profile.md, config/learnings.md, the feedback logs,
    and the talks/ tree — is created by the orchestrator on demand. Nothing to scaffold by hand.
    ```
 
-That's the entire command: write the stub, add the `.gitignore`, then hand off to the next session. Do not load the spec, run the workflow, or create `config/` / `talks/` here — the freshly-opened session does all of that.
+That's the entire command: write the two stubs, add the `.gitignore`, then hand off to the next session. Do not load the spec, run the workflow, or create `config/` / `talks/` here — the freshly-opened session does all of that.

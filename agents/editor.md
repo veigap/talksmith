@@ -44,15 +44,15 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 
 | Situation | Action |
 |---|---|
-| An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](research/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` (in `final.md`) and rewrite the reference. The illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
+| An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](research/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` (in `final.md`) and rewrite the reference. The diagram-illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
 | Multiple existing images could plausibly fit; the choice matters | Ask the presenter with the candidate filenames + their `depiction` lines as options. Never silently pick. |
-| No existing image fits (or all candidates are clearly off-topic) | **Only then** draft a fresh ASCII per the syntax below. The illustrator will render it to SVG in Step 6. |
+| No existing image fits (or all candidates are clearly off-topic) | **Only then** draft a fresh ASCII per the syntax below. The diagram-illustrator will render it to SVG in Step 6. |
 
 **Never invent an ASCII when a corpus image already shows the same thing.** Re-drawing what an article already provides loses fidelity and creates double-maintenance. The presenter's source material is canonical; the deck rides on top of it.
 
 **Pre-flight check when writing the image ref.** Before committing the `![alt](<path>)` to `draft.md`, verify the file exists at the declared path. If it doesn't (typo, file moved, librarian Phase 1 stub never resolved a real filename), fail loudly to the orchestrator — do not write a broken reference.
 
-**Optional ASCII alongside an image link (documentation-only).** When a slide already carries a Markdown image reference, the editor *may* add a small ASCII representation immediately after — purely as inline visual aid for whoever reads the source. The pipeline treats any ASCII block in a slide with an image link as **documentation-only**: the illustrator never renders it, `polish-ascii` never sidecars or rewrites it, and Step 6 leaves it in place verbatim. The image link is the slide's visual; the ASCII is for the human reader. Keep doc-only ASCII short — if it's elaborate, the image is probably the wrong choice and a fresh render is warranted.
+**Optional ASCII alongside an image link (documentation-only).** When a slide already carries a Markdown image reference, the editor *may* add a small ASCII representation immediately after — purely as inline visual aid for whoever reads the source. The pipeline treats any ASCII block in a slide with an image link as **documentation-only**: the diagram-illustrator never renders it, `polish-ascii` never sidecars or rewrites it, and Step 6 leaves it in place verbatim. The image link is the slide's visual; the ASCII is for the human reader. Keep doc-only ASCII short — if it's elaborate, the image is probably the wrong choice and a fresh render is warranted.
 
 **ASCII diagrams — predefined block syntax + render-time hints.** Every ASCII diagram the editor writes into `draft.md` **must** use the explicit `ascii` language tag on its opening fence. This is what makes diagram detection deterministic (no glyph-heuristic guessing) — exactly the same role `<!-- ascii-note: ... -->` plays for the note half. The full block convention:
 
@@ -75,11 +75,11 @@ Hard rules for the editor when *producing* ASCII:
 - The fence pair brackets the diagram bytes only — no headings, no prose, no Markdown list markers inside.
 - The optional `<!-- ascii-note: ... -->` HTML comment follows the closing fence with at most one blank line between them.
 
-Downstream extractors key on the `ascii` tag alone (the glyph heuristic survives only as a legacy fallback — detection priority order: [`illustrator.md`](illustrator.md) → *Detection rule*).
+Downstream extractors key on the `ascii` tag alone (the glyph heuristic survives only as a legacy fallback — detection priority order: [`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
 
-The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines) and factual. The illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent. **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
+The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent. **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
 
-An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
+An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the diagram-illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
 ### Step 4 — per-mode draft recipes
 
@@ -164,19 +164,19 @@ From here on, **read and write `final.md` only**. `draft.md` is read-only for th
 
 **(a)–(d) Clean `final.md`.** Apply (a), (b), (c) in any order; apply (d) last.
 
-(a) **Inline SVGs.** This is mechanical work — delegate the parsing and the line-based rewrite to the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill rather than re-implementing it inline. The skill has three subcommands matching the canonical five-stage Step 6 sequence below — the editor performs only stages 1 and 5; stages 2 / 3 / 4 are the illustrator's.
+(a) **Inline SVGs.** This is mechanical work — delegate the parsing and the line-based rewrite to the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill rather than re-implementing it inline. The skill has three subcommands matching the canonical five-stage Step 6 sequence below — the editor performs only stages 1 and 5; stages 2 / 3 / 4 are the diagram-illustrator's.
 
 ```bash
 # 1) editor: capture every fenced ASCII block + trailing ascii-note (line ranges) in final.md
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/<Talk>.plan.json
 
-# 2) illustrator: annotate each block with render = {svg_basename, alt}
-#    (svg_basename slug derivation lives in ${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md → Output filename convention)
+# 2) diagram-illustrator: annotate each block with render = {svg_basename, alt}
+#    (svg_basename slug derivation lives in ${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md → Output filename convention)
 
-# 3) illustrator: write .ascii sidecars (NOT final.md yet)
+# 3) diagram-illustrator: write .ascii sidecars (NOT final.md yet)
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
 
-# 4) illustrator: per-sidecar render loop — once per .ascii file, invoke talksmith:ascii-to-svg
+# 4) diagram-illustrator: per-sidecar render loop — once per .ascii file, invoke talksmith:ascii-to-svg
 #    in Mode B (ascii_file: <path>) so the skill reads source + note straight from the sidecar.
 #    One sidecar → one skill invocation → one SVG written next to it.
 
@@ -186,14 +186,14 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py cleanup --fina
 
 The `apply` subcommand (sidecars + cleanup in one shot) exists for quick passes where rendering happened out of band — prefer the staged `extract` → render → `cleanup` flow for normal Step 6.
 
-The per-block transform — fence → image ref + `<!-- ascii-source: -->` echo, post-fence `ascii-note` left in place, `.ascii` sidecar layout, write idempotency — is the polish-ascii skill's contract: see [SKILL.md](../skills/polish-ascii/SKILL.md) → *Rewrite rules*. Understand it so you can audit results, but **do not re-implement it** in ad-hoc Python. (Filename convention is the illustrator's — see `${CLAUDE_PLUGIN_ROOT}/agents/illustrator.md` → *Output filename convention*.)
+The per-block transform — fence → image ref + `<!-- ascii-source: -->` echo, post-fence `ascii-note` left in place, `.ascii` sidecar layout, write idempotency — is the polish-ascii skill's contract: see [SKILL.md](../skills/polish-ascii/SKILL.md) → *Rewrite rules*. Understand it so you can audit results, but **do not re-implement it** in ad-hoc Python. (Filename convention is the diagram-illustrator's — see `${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md` → *Output filename convention*.)
 
 (b) **Consolidate image refs (in `final.md`) AND enforce Keynote-safe raster-only extensions.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave the prefix. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
 
 **After consolidation, audit every ref's extension.** `final.md` must reference only `.png` or `.jpg`/`.jpeg`. Forbidden extensions: **`.svg`, `.webp`, `.avif`, `.heic`** — Keynote refuses to embed WebP and refuses to render embedded SVG as media (both surface as empty placeholder boxes on `.pptx` import); other modern formats are similarly inconsistent across PowerPoint / Google Slides import paths. Fix per source type:
 
-- **Illustrator-produced SVGs** (rendered in stage 4 above) have a deliverable `<stem>.png` companion at `images/<stem>.png` per the ascii-to-svg skill's *PNG companion* contract. Rewrite the `images/<stem>.svg` reference to `images/<stem>.png`. The `.svg` stays on disk as source-of-truth; the `<!-- ascii-source: ... -->` and `<!-- ascii-note: ... -->` comments are preserved.
-- **External SVG sources** — the illustrator already rasterized these to `.png` companions in its Step 6 step 9 (per [`illustrator.md`](illustrator.md)). The editor only **rewrites the ref** from `.svg` → `.png` here; no rasterization. If a `.svg` ref exists with no `.png` sibling on disk, surface as `unresolved: illustrator missed external SVG <path>` — do **not** rasterize from the editor (single-owner contract: all SVG → PNG lives with the illustrator).
+- **Diagram-Illustrator-produced SVGs** (rendered in stage 4 above) have a deliverable `<stem>.png` companion at `images/<stem>.png` per the ascii-to-svg skill's *PNG companion* contract. Rewrite the `images/<stem>.svg` reference to `images/<stem>.png`. The `.svg` stays on disk as source-of-truth; the `<!-- ascii-source: ... -->` and `<!-- ascii-note: ... -->` comments are preserved.
+- **External SVG sources** — the diagram-illustrator already rasterized these to `.png` companions in its Step 6 step 9 (per [`diagram-illustrator.md`](diagram-illustrator.md)). The editor only **rewrites the ref** from `.svg` → `.png` here; no rasterization. If a `.svg` ref exists with no `.png` sibling on disk, surface as `unresolved: diagram-illustrator missed external SVG <path>` — do **not** rasterize from the editor (single-owner contract: all SVG → PNG lives with the diagram-illustrator).
 - **External WebP / AVIF / HEIC sources** (typically corpus images — a `.webp` downloaded by the librarian) are rasterized to PNG at the same basename here, before the reference is rewritten. These are *not* SVG-generation territory so they stay with the editor. Recipes: `Image.open('<in.webp>').save('<out.png>', 'PNG')` (Pillow) or `cwebp`/`sips`/`magick` CLI. Keep the original file alongside the PNG for traceability.
 - **Refs already pointing to `.png`/`.jpg`** pass through unchanged.
 

@@ -8,7 +8,7 @@
     {
       "name": "talksmith",
       "source": "./",
-      "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow — Frame → Collect → Corpus → Draft → Review → Polish → Render → Learnings — to a structured outline (draft.md), a polished deliverable (final.md), and optionally a .pptx. Five subagents (Librarian, Composer, Editor, Illustrator, Global-Librarian) plus skills for ingestion, ASCII→SVG, polish, PPTX rendering, and a reverse pipeline (pptx-extract → pptx-diff → pptx-merge) that reconciles an externally-edited deck back into draft.md.",
+      "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow — Frame → Collect → Corpus → Draft → Review → Polish → Render → Learnings — to a structured outline (draft.md), a polished deliverable (final.md), and optionally a .pptx. Five subagents (Librarian, Composer, Editor, Diagram-Illustrator, Global-Librarian) plus skills for ingestion, ASCII→SVG, polish, PPTX rendering, and a reverse pipeline (pptx-extract → pptx-diff → pptx-merge) that reconciles an externally-edited deck back into draft.md.",
       "license": "MIT"
     }
   ]

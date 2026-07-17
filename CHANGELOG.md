@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.63.0] — 2026-07-17
+
+### Changed
+- **The `illustrator` agent is renamed to `diagram-illustrator`**, everywhere — frontmatter `name:`, filename, every spec/skill/schema/doc reference, the presenter-facing role list, and the demo talk. The new name pairs with its sibling `diagram-critic` (draws / reviews) and states plainly that this role handles **diagrams** (ASCII → SVG), not imagery — leaving the name "illustrator" free for a possible future generative-image role. No re-init required: agents and the orchestrator refresh on `/plugin update` and the next session.
+
+## [0.62.0] — 2026-07-17
+
+### Added
+- **`/talksmith:init` now also writes `AGENTS.md`**, so a Talksmith working directory boots the same workflow under **Codex** (and any agent that reads `AGENTS.md`), not only Claude Code. To avoid duplication, `CLAUDE.md` stays the single source of the boot instructions and `AGENTS.md` is a thin **pointer** to it — it only re-states the two Claude-Code-specific fallbacks a non-Claude agent needs (the `@`-import is inert; `${CLAUDE_PLUGIN_ROOT}` is unset, so locate `orchestrator.md` under the plugins directory and read it). The two files can't drift because only one carries content.
+
+> **Re-run `/talksmith:init`** in each working directory to drop the new `AGENTS.md`. Existing `CLAUDE.md` behavior is unchanged.
+
 ## [0.61.0] — 2026-07-16
 
 ### Added

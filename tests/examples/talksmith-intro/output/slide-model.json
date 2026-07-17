@@ -178,7 +178,7 @@
     "label": "You don't draw diagrams",
     "body": "Talksmith proposes an outline version of each diagram as ASCII right in your draft — edit it if you want — then renders it to a clean, styled SVG at Polish. No more time spent making diagrams look nicer. Every diagram in this talk was generated that way."
    },
-   "notes": "How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering."
+   "notes": "How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering."
   },
   {
    "template": "section-agenda",
@@ -382,7 +382,7 @@
      "body": "The muscle: writes draft.md, applies feedback, produces final.md."
     },
     {
-     "label": "Illustrator",
+     "label": "Diagram-Illustrator",
      "body": "Turns your ASCII into styled SVGs at Polish."
     },
     {
@@ -390,7 +390,7 @@
      "body": "Curates finalized Talks into the shared knowledge library."
     }
    ],
-   "notes": "The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language."
+   "notes": "The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Diagram-Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language."
   },
   {
    "template": "content+cards+image",
