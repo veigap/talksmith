@@ -11,7 +11,7 @@ Maintains `draft.md` (Steps 1–5), `final.md` (Step 6 onward), and `memory.md` 
 
 `config/profile.md` is in context — use it. Apply `Presentation language` to all prose written into `draft.md` / `final.md`.
 
-**Anti-slop authoring standard (Steps 4–5, always on).** Before writing or rewriting any presentation prose (thesis, agenda, section goals, slide titles, `### Content`), load the anti-slop skill matching the profile's `Presentation language` and author under its criteria from the first draft — this is prevention, not a cleanup pass:
+**Anti-slop authoring standard (Steps 4–5, always on — the *only* anti-slop enforcement point).** Before writing or rewriting any presentation prose (thesis, agenda, section goals, slide titles, `### Content`), load the anti-slop skill matching the profile's `Presentation language` and author under its criteria from the first draft. This is prevention applied at `draft.md` creation, not a cleanup pass — it runs unconditionally, never asks the presenter's permission, and there is **no** separate anti-slop pass later in Step 6 (Polish assumes the prose is already clean):
 
 | `Presentation language` | User-level skill (preferred) | Bundled fallback |
 |---|---|---|
@@ -70,10 +70,10 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 This is **mood, not information**: the aside reinforces the slide's tone while the audience reads the words beside it. Author a directive under the slide's `### Content`:
 
 ```
-<!-- generate-image: right | a cold, minimal sense of vast scale — a lone figure at dawn -->
+<!-- generate-image: right | the vertigo of scale — how small a single choice feels against a whole system -->
 ```
 
-- **`<side>`** is `left` or `right` (default `right`). **`<description>`** is a **short, high-level idea** — enough to convey what the image should evoke, kept concise and editable in `draft.md` like an ASCII diagram is. **Do not write a full generation prompt here.** The [`image-illustrator`](image-illustrator.md) enriches this line into a complete prompt at Step 6 (folding in the deck palette, portrait aspect, and a no-text guardrail); over-specifying in `draft.md` just clutters the working file. The description **is** what the presenter edits and what re-render idempotency keys off, so make it a faithful one-line brief.
+- **`<side>`** is `left` or `right` (default `right`). **`<description>`** is a **short, high-level idea** — enough to convey **what the image should evoke** (the slide's emotion and the concept behind it), kept concise and editable in `draft.md` like an ASCII diagram is. Write the *feeling and the idea*, not a literal scene: the aside is realized as a **symbolic editorial illustration**, so a brief like *"the vertigo of scale"* is right, while *"a lone figure at dawn"* wrongly prescribes a literal, photographic scene the illustrator is told to avoid (no people, no realistic places). **Do not write a full generation prompt here.** The [`image-illustrator`](image-illustrator.md) enriches this line into a complete prompt at Step 6 (folding in the deck palette, the editorial visual language, portrait aspect, and the no-text/no-literal-scene guardrails); over-specifying in `draft.md` just clutters the working file. The description **is** what the presenter edits and what re-render idempotency keys off, so make it a faithful one-line brief.
 - **When to reach for it:** sparse text **and** a visual would help **and** no corpus image already fits **and** the need is *atmospheric*, not structural. If the slide needs something the audience must **read** — a chart, a screenshot, a labeled diagram — that is **not** a generate-image aside: use a corpus image, or draft an ASCII diagram (→ diagram-illustrator). Generated imagery never carries readable content.
 - **Don't double up.** One aside per slide, and never on a slide that already carries a body `![](…)` image ref or an authored `<!-- aside: … -->` hint (`polish-images scan` flags such a slide as a conflict and skips it).
 - **Graceful by design.** The image is produced at Step 6 only where the session has an image-generation capability; where it doesn't, the directive is simply left unfulfilled and the slide keeps its text (nothing breaks). So a `generate-image` suggestion is always safe to author.
@@ -190,13 +190,7 @@ cp talks/<Talk>/draft.md talks/<Talk>/final.md
 
 From here on, **read and write `final.md` only**. `draft.md` is read-only for the rest of the workflow.
 
-**(0.5) Anti-slop pass — optional, presenter-gated, one slide at a time.** Runs **only** if the presenter accepted the orchestrator's Step-6 offer (see `orchestrator.md` → Step 6 action 0.5); if declined, skip to (a). When it runs:
-
-- Load the anti-slop skill for the profile's `Presentation language` (same table and fallback as the *Anti-slop authoring standard* above), **including every `references/` file**.
-- Walk `final.md` **one slide unit at a time** — each H2 block (title + `### Content`), plus the thesis, the agenda, and each H1 section goal. Never batch: apply the skill's full checklist to one unit, fix it in place, then move to the next. Out of scope: speaker notes (registro hablado; the skills' own scoping applies), `### Sources`, feedback logs, and the *interior* of fenced ASCII/code blocks (diagram label text is handled by the diagram-illustrator's render pass).
-- Fixes are in-place rewrites in `final.md` (never `draft.md`). A fix must preserve meaning; when a slop pattern wraps real content, rewrite plainly — don't delete.
-- **Report with evidence.** Return a per-slide table `<locator> | clean / N rewrites | patterns hit`, and for greppable families (em-dashes, banned words, formula stems) the grep count before/after — a "clean" claim without evidence is a defect.
-- Runs **before** the diagram-illustrator pass, so text that also appears inside a diagram gets rendered already corrected.
+Anti-slop is **not** a Step-6 pass. The prose in `final.md` was authored under the *Anti-slop authoring standard* (top of this file) at draft time and is already clean — Polish does mechanical work (SVGs, image refs, feedback rescue), not prose rewriting. Do not re-run the anti-slop skill over `final.md`, and do not prompt the presenter about it.
 
 **(a)–(d) Clean `final.md`.** Apply (a), (b), (c) in any order; apply (d) last.
 

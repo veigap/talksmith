@@ -28,6 +28,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
 import html_style as _hs              # noqa: E402
+import model_freshness as _fresh       # noqa: E402
 
 
 def _norm(t: str) -> str:
@@ -74,6 +75,8 @@ def main(argv=None) -> int:
     ap.add_argument("--model", type=Path, default=None, help="a slide-model.json to render directly")
     ap.add_argument("--talk-root", type=Path, default=None, help="asset root for --model (image resolution)")
     ap.add_argument("-o", "--output", type=Path, default=None, help="output .html")
+    ap.add_argument("--allow-stale", action="store_true",
+                    help="skip the source-freshness guard (--talk mode); render the on-disk model as-is")
     args = ap.parse_args(argv)
 
     if args.model:
@@ -93,6 +96,18 @@ def main(argv=None) -> int:
         return 2
     out_dir.mkdir(parents=True, exist_ok=True)
     model = json.loads(src.read_text(encoding="utf-8"))
+
+    # Freshness guard. In the workflow (--talk) path, refuse to render a model that is stale or
+    # unstamped relative to its source markdown — never silently fall back to an existing model.
+    # --model direct mode (ad-hoc renders, the committed style test) has no resolvable source and
+    # is exempt; --allow-stale is the explicit, documented override.
+    if args.talk and not args.allow_stale:
+        source_md = _fresh.source_path(args.talk, args.draft)
+        ok, reason = _fresh.verify_fresh(model, source_md)
+        if not ok:
+            print(f"[html] FAILED: {reason}. Refusing to render — re-run the md-to-deck FILL step "
+                  f"(or pass --allow-stale to override).", file=sys.stderr)
+            return 2
 
     html, n = render(model, talk_root, out_dir)
     out = args.output or (out_dir / "index.html")

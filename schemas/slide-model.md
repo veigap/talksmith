@@ -16,6 +16,16 @@ both **load this JSON and render fields** — no classification, no regex, no `f
 Written to `talks/<Talk>/output/slide-model.json`. One file per rendered deck (`final.md` →
 deliverable; `draft.md` → live in-progress view).
 
+> **This is a generated artifact — not a hand-maintained file.** It is (re)produced by the FILL
+> step from the *current* source on **every** render; a renderer must never consume a model left
+> over from a prior source. To make that enforceable, FILL stamps the model with a top-level
+> **`_source`** block — `{"file": "final.md", "sha256": "<hex>", "bytes": <n>}` (via
+> [`model_freshness.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py) `stamp`).
+> Before rendering, the digest is re-checked against the live source; a mismatch or a missing stamp
+> is a **stale model** and the render refuses rather than silently using it. `_source` is metadata,
+> not slide content — renderers ignore it. (`slide-model.draft.json` is stamped the same way from
+> `draft.md`.)
+
 ## Top-level shape
 
 ```json

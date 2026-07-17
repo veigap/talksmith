@@ -9,18 +9,39 @@ description: Step 6 (Polish) coordinator for the generated-aside pass. Walks fin
 
 **Atmosphere, not information.** A generated image is mood and reinforcement, never content the audience must *read*. Anything that must be legible — a chart, a screenshot, a labeled diagram — is the diagram-illustrator's job (ASCII → SVG) or a real corpus image, never a generated aside. If a directive's description asks for readable text, data, or a specific diagram, treat it as mis-authored: skip it, and report it back so the editor can re-route it (see *Boundaries*).
 
+**Editorial and symbolic, never a generic backdrop.** Atmosphere does *not* mean a decorative "nice background." A generated aside must be an **editorial, symbolic illustration** — abstract enough to avoid a literal stock-photo scene, but connected enough that the viewer can infer *why this image belongs with this slide*. The goal is a **visual metaphor** for the slide's idea, not a real scene and not free-floating geometry. A slide about, say, competing incentives earns an image that evokes tension or divergence through symbolic form; it does not earn a stock office, a sunrise, or a random gradient. If the enriched prompt could plausibly attach to any slide in any deck, it is too generic — push it back toward the slide's specific idea.
+
 The image-illustrator **never reads or writes `draft.md`**. By the time it runs, the editor has already copied `draft.md` → `final.md`, and every Step-6 operation targets `final.md` so Polish stays re-runnable.
 
-## Palette — match the deck, always
+## Aesthetic — editorial illustration in the deck palette
 
-Generated imagery must read as part of the same deck as the diagrams. Before composing any generation prompt, load [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md) — the same standing rules the diagram renders obey — and fold its **palette discipline** into every prompt as a hard constraint:
+Generated imagery must read as part of the same deck as the diagrams. Before composing any generation prompt, load [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md) — the same standing rules the diagram renders obey — and fold both the **visual language** and the **palette discipline** below into every prompt as hard constraints.
+
+**Visual language — bold flat editorial illustration.** The house style for an aside is a **flat, poster-like editorial vector illustration**, not a photograph and not a rendered 3D scene:
+
+- symbolic **system / idea-flow** composition — shapes and lines that stand for the slide's concept, not a depicted place;
+- **coral/red flow lines or focal accents** carrying the eye; **black/navy grounding shapes** as mass;
+- **strong white negative space** — the composition breathes, it does not fill the frame edge to edge;
+- **thin contour or hand-drawn linework**, high contrast, flat fills;
+- **no readable text** anywhere in the image.
+
+**Palette discipline — match the deck.** On top of that visual language, hold the deck's colors:
 
 - a **light ground** (predominantly white / near-white), flat, no 3D, no drop shadows;
 - neutral **dark tone** `#3B3535` for any darker mass;
 - **one red accent** `#DA1B2E`, used sparingly as the single focal warmth — never a rainbow of categorical colors;
 - richer categorical color only when the deck's own palette (the strict prompt's §2 inks + fills, referenced from `diagram-style.md`) explicitly carries it — never arbitrary pastels.
 
-The image is photographic/painterly where a diagram is line-art, so it will not look *identical* to an SVG — but its **color language is the deck's**, so an aside and a diagram on adjacent slides feel like one system. If the presenter has issued visual guidance earlier in the session (e.g. *"keep it cold and minimal"*), fold that in too, exactly as the diagram-illustrator carries `style_directives`.
+The aside is a flat editorial illustration, so it *will* differ in texture from a line-art SVG — but its **visual and color language are the deck's**, so an aside and a diagram on adjacent slides feel like one system. If the presenter has issued visual guidance earlier in the session (e.g. *"keep it cold and minimal"*), fold that in too, exactly as the diagram-illustrator carries `style_directives`.
+
+**Negative list — carry this into every prompt.** These are the failure modes an editorial aside must exclude; state them as an explicit exclusion in the enriched prompt:
+
+- **no photorealism or realistic scenes** — this is illustration, not a photo;
+- **no literal scenes**: no classrooms, offices, horizons, landscapes, people, furniture, buildings;
+- **no generic abstract geometry** with no semantic link to the slide — every form must earn its place from the idea;
+- **no decorative "nice background"** filler;
+- **no UI, screenshots, dashboards, or charts**;
+- **no readable text, letters, numbers, logos, watermarks, or signatures**.
 
 ## The loop
 
@@ -30,8 +51,18 @@ Mirrors the diagram-illustrator's, with generation in place of SVG rendering. Th
 
 2. **Compose the generation prompt (expand + overlay).** The editor's directive carries a **high-level description** — a short idea of what the aside should convey, kept concise and presenter-editable in `draft.md` (that authoring is the editor's job; see [`editor.md`](editor.md)). This role turns that idea into a full generation prompt in two moves, producing `{<slide_id>: {"png_basename": "<slide-id>-<n>-aside.png", "alt": "<caption>", "description": "<the editor's original high-level line, verbatim>", "prompt": "<enriched prompt + overlay>"}}`:
 
-   - **Expand** the high-level description into concrete subject / mood / composition detail an image model can act on — enrich it, stay **faithful to the idea, never redirect it**. This is the step that turns *"a cold, minimal sense of scale"* into a prompt with setting, light, texture, and framing.
-   - **Overlay** the systemic constraints the editor never repeats per slide: (a) the **palette constraints** above verbatim, (b) the aspect — **portrait / tall** (the aside is a vertical full-bleed strip; generate ~2:3, it crops to fill), (c) a guardrail forbidding embedded text, watermarks, logos, and readable UI.
+   - **Expand** the high-level description into a concrete editorial illustration an image model can act on — enrich it, stay **faithful to the idea, never redirect it**. Keep the creative space open: do **not** collapse onto one fixed composition, object, or metaphor. Instead, the enriched prompt must **name each of these five**, drawn from the directive's `context` bundle:
+     1. the slide's **emotional role** (the tone the aside reinforces — from `slide_title` / `slide_content_prose` / `speaker_notes`);
+     2. the **conceptual metaphor** the image should evoke — a symbolic idea-flow related to the slide's idea, not a literal scene;
+     3. the **visual language** — editorial vector / poster-like / flat graphic (from the *Aesthetic* section);
+     4. the **deck palette and contrast discipline** (from the *Aesthetic* section — light ground, `#3B3535` mass, single `#DA1B2E` accent, strong negative space);
+     5. the **negative list** (from the *Aesthetic* section) that forbids photorealism, literal scenes, readable text, logos, screenshots, and UI.
+
+     A serviceable template — adapt, don't recite verbatim:
+
+     > *"Create an editorial vector-style symbolic illustration for a presentation aside. The image should evoke [slide emotion] through a conceptual metaphor related to [slide idea]. Use [visual language / flow / structure] while staying abstract and non-literal. Keep strong white negative space and the deck palette — light ground, `#3B3535` grounding shapes, a single `#DA1B2E` accent. No readable text, no logos, no literal scene, no photorealism."*
+
+   - **Overlay** the remaining systemic constraint the editor never repeats per slide: the aspect — **portrait / tall** (the aside is a vertical full-bleed strip; generate ~2:3, it crops to fill). The palette and negative list are already folded in via the five elements above.
 
    The sidecar records **both** the original description (provenance, and the anchor the presenter's edits and re-run idempotency key off) **and** the enriched prompt (what generation actually consumes).
 
@@ -42,7 +73,7 @@ Mirrors the diagram-illustrator's, with generation in place of SVG rendering. Th
 5. **Generate per directive — tool-agnostic (the sliding window of 5).** Keep **five generations in flight** (same rule and rationale as the diagram-illustrator's window; never prompt the presenter about it). For each args file, dispatch [`talksmith:generate-image`](../skills/generate-image/SKILL.md), which calls **whatever image-generation capability the session exposes** (an MCP image tool, the host's native image generation) and writes the PNG to `output_path`.
 
    - **No capability present → graceful skip.** If no image-generation tool is available in the session, `generate-image` returns `unavailable`. Record the directive `unresolved: no_image_capability`, **leave the slide's text intact** (the aside simply doesn't appear), and keep going. This mirrors how the `.pptx` render modes are Cowork-only: the feature degrades, it never blocks Polish. Report the count at the end so the presenter knows an aside was requested but not produced.
-   - **Light review (one pass, optional).** After generation, glance at the PNG for the two failure modes that defeat an atmospheric aside: embedded/garbled text, or a palette that clashes with the deck. If either is present, re-dispatch once with a tightened prompt; on a second miss, record `unresolved: <what>` and move on (cap at 2, exactly like the diagram loop). Full blind-critic machinery is not warranted here — the image is mood, not a load-bearing diagram.
+   - **Light review (one pass, optional).** After generation, glance at the PNG for the failure modes that defeat an editorial aside: (a) embedded/garbled text; (b) a palette that clashes with the deck; (c) **the image went photorealistic, literal (a real scene — office, classroom, landscape, people), or fell back to generic decorative geometry with no link to the slide** — i.e. it stopped being a symbolic illustration. If any is present, re-dispatch once with a tightened prompt (re-assert the visual language + negative list); on a second miss, record `unresolved: <what>` and move on (cap at 2, exactly like the diagram loop). Full blind-critic machinery is not warranted here — the image is mood, not a load-bearing diagram.
 
 6. **Stamp — mandatory.** `polish-images stamp-renders --final <final.md> --plan <plan.annotated.json>` writes each PNG's `<!-- talksmith-imgprompt-sha256: … -->` stamp — the **only** signal `prepare-render-args` consults next pass to skip unchanged directives. An unstamped image regenerates every pass forever; never skip this. **The idempotency key is the digest of the editor's original high-level description + `side`** — *not* the enriched prompt. This is deliberate: the enrichment is an LLM expansion that varies run to run, so hashing it would defeat idempotency entirely; the authored description is the stable, presenter-owned input. Editing the description in `draft.md` regenerates; a re-expansion alone does not.
 

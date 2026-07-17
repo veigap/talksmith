@@ -61,6 +61,19 @@ the ordered section list) and one object per slide. For **each** slide you:
 The judgment is the LLM's, against a fixed field contract. Write to
 `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
 
+**`slide-model.json` is a generated artifact, refreshed every render — never a hand-maintained
+file.** FILL always runs from the *current* source immediately before RENDER; a renderer must never
+consume a model left over from a prior source. Right after writing the model, **stamp it** with the
+source digest so the render step can prove freshness:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py stamp --talk talks/<Talk>          # final.md → slide-model.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py stamp --talk talks/<Talk> --draft  # draft.md → slide-model.draft.json
+```
+
+This writes a `_source` block (`{file, sha256, bytes}`) into the model. **If FILL fails, stop the
+render and surface the failure — do not fall back to an existing model.**
+
 **Step 1.5 — CHECK the model (deterministic floor, before RENDER).** The FILL judgment is the
 LLM's, so it can slip; this is the mechanical catch, run on the model alone (no `.pptx` needed —
 it guards every mode, including html-strict, which otherwise runs no deck-parsing audit):
@@ -84,6 +97,13 @@ loads the model and maps each slide's fields onto its Jinja template — no pars
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk>          # output/slide-model.json → deliverable
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft  # output/slide-model.draft.json → live view
 ```
+
+**Built-in freshness guard.** In `--talk` mode `build_html.py` re-verifies the model's `_source`
+stamp against the current `final.md`/`draft.md` before rendering and **refuses (exit 2) on a stale
+or unstamped model** — it never silently renders an outdated one. So if FILL+stamp ran (as it always
+should, immediately before), the render proceeds; if the source changed underneath a stale model, it
+stops with a clear message telling you to re-run FILL. (`--model` direct mode — the committed style
+test — has no resolvable source and is exempt; `--allow-stale` is the explicit override.)
 
 The **same `slide-model.json` is the shared IR for PPTX** — both renderers read fields, so a slide
 looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see Path A.)
@@ -143,7 +163,14 @@ The rest of this file (Path A) does not apply to `html-strict`.
 
 0. **Resolve style** (see *Style resolution*). Cache `<spec_path>` (verify it exists for the style) and `<base_template_path>` (verify for the two `.pptx` styles). Emit `[pptx 0/8] Style resolved: <style> (spec=<spec_path>).`
 1. **Verify prerequisites** (table above). Stop on any failure.
-2. **FILL `slide-model.json`** — the shared semantic step, **identical to Path B's Step 1** (classify per the catalog, decompose into the template's required fields, lift notes verbatim, drop scaffolding — see Path B above + [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)). HTML and PPTX author from this same structured model, so a slide looks the same in both.
+2. **FILL `slide-model.json`** — the shared semantic step, **identical to Path B's Step 1** (classify per the catalog, decompose into the template's required fields, lift notes verbatim, drop scaffolding — see Path B above + [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)). HTML and PPTX author from this same structured model, so a slide looks the same in both. **Always re-FILL from the current `final.md` on every render — the model is a generated artifact, never reused stale.** Then stamp it, exactly as Path B does, and gate the render on the stamp:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py stamp --talk talks/<Talk>   # after FILL
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py check --talk talks/<Talk>   # before RENDER — exit 3 ⇒ STOP
+   ```
+
+   `build_html.py` runs this guard internally, but the `.pptx` render is driven by the native skill, so **run `check` explicitly here and stop the render on a non-zero exit** (surface the message; re-run FILL). If FILL itself fails, stop and report — never render from a pre-existing model.
 
    > **Author from the model ONLY; never re-parse `final.md`.** The model has already resolved every field — `template`, structured content, `notes`, `section`.
 
@@ -191,8 +218,8 @@ talks/<Talk>/
 ├── final.md                              # source for this skill (cleaned by Polish)
 ├── images/                               # populated by diagram-illustrator + editor (Step 6)
 └── output/
-    ├── slide-model.json                 # the structured model (FILL step) — HTML + PPTX both render from it
-    ├── slide-model.draft.json            # in-progress model (html-strict --draft live view)
+    ├── slide-model.json                 # GENERATED by FILL (never hand-edited) — HTML + PPTX both render from it; carries a `_source` freshness stamp
+    ├── slide-model.draft.json            # GENERATED in-progress model (html-strict --draft live view)
     ├── final.pptx                        # canonical deliverable — a copy of the most recent .pptx render
     ├── final.pptx-strict.pptx            # per-mode .pptx render, persists for comparison
     ├── final.pptx-free-form.pptx
@@ -246,6 +273,8 @@ Operational/IO failures (visual-spec violations are catalogued in `<spec_path>` 
 - **`final.md` not produced / still has `Presenter feedback` or raw ASCII fences**, or the path points at `draft.md` → stop; return to Step 6 / ask.
 - **A section has zero slides**, or **H1 rendered as a content slide** (must be exactly one divider per numbered section, §5.6) → contract violation, do not ship.
 - **pptx skill exits non-zero** → surface its error verbatim.
+- **Stale / unstamped `slide-model.json`** → the render is refusing an outdated model (Path B exit 2; Path A `check` exit 3). This is the freshness guard working — **re-run FILL + `model_freshness.py stamp` from the current source**, then re-render. Never bypass with `--allow-stale` to ship a deck (it exists only for deliberate ad-hoc renders).
+- **FILL failed / produced no model** → stop the render and surface it; do **not** fall back to a pre-existing `slide-model.json`.
 - **html-strict render error** (Path B) → report the deck/live view is unavailable (never fatal).
 
 ## Why Cowork-only (Path A)

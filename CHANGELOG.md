@@ -13,6 +13,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.67.0] — 2026-07-17
+
+### Added
+- **Render freshness guard — a deck is never built from a stale `slide-model.json`.** `slide-model.json` (and `slide-model.draft.json`) is a **generated artifact**, re-produced by the FILL step from the current source before every render. The FILL step now **stamps** the model with the SHA-256 of the exact `final.md` / `draft.md` bytes it was filled from (new `model_freshness.py stamp`), and every generator **verifies that stamp before rendering** and refuses on a mismatch or a missing stamp — it never silently falls back to an existing model. `html-strict` (including the `--draft` live view) enforces this inside `build_html.py` (refuses with exit 2); `pptx-strict` and `pptx-free-form` run `model_freshness.py check` as an explicit pre-render gate. If FILL fails, the render stops and reports rather than reusing an old model. The committed HTML style test (`--model` direct mode) is exempt — it has no resolvable source — and `--allow-stale` is an explicit override for deliberate ad-hoc renders. Documented across the md-to-deck SKILL.md and the `slide-model.json` schema so future generators treat the model as generated, not maintained.
+
+## [0.66.0] — 2026-07-17
+
+### Changed
+- **Generated asides are now editorial, symbolic illustrations — not generic atmospheric backdrops.** The image-illustrator's guidance was rewritten around a house visual language: a **flat, poster-like editorial vector illustration** that reads as a **visual metaphor** for the slide's idea (abstract enough to avoid a literal stock-photo scene, connected enough that the viewer infers why the image belongs with the slide). The enriched prompt must now name five things — the slide's **emotional role**, the **conceptual metaphor**, the **visual language** (editorial vector / poster-like / flat graphic), the **deck palette + contrast discipline** (light ground, `#3B3535` mass, single `#DA1B2E` accent, strong white negative space, thin contour linework), and an explicit **negative list** (no photorealism, no literal scenes/people/places, no generic decorative geometry, no UI/screenshots, no readable text/logos). The Editor's one-line brief now describes the *emotion + concept* to evoke rather than a literal scene (e.g. *"the vertigo of scale"*, not *"a lone figure at dawn"*), and the light post-generation review now also catches drift into photorealism/literal/decorative-geometry.
+- **Anti-slop is now enforced once, at draft authoring — no longer a presenter-gated Step-6 pass.** The Editor's *Anti-slop authoring standard* (always-on, at `draft.md` creation) is now the sole enforcement point; it runs unconditionally and never asks permission. The optional opt-in anti-slop offer in Step 6 (Polish) and the corresponding one-time prompt were removed — Polish now runs fully unattended and assumes the prose is already clean.
+
 ## [0.65.0] — 2026-07-17
 
 ### Changed

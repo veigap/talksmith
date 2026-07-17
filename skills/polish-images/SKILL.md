@@ -14,11 +14,11 @@ The **sibling of [`talksmith:polish-ascii`](../polish-ascii/SKILL.md)**: same sh
 Authored by the editor into `draft.md` (see [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md)) on a **sparse-text slide** where an atmospheric image improves the slide:
 
 ```
-<!-- generate-image: right | a cold, minimal sense of vast scale — a lone figure at dawn -->
+<!-- generate-image: right | the vertigo of scale — how small a single choice feels against a whole system -->
 ```
 
 - **`<side>`** — `left` or `right` (default `right` if omitted). Which edge the full-bleed aside column sits on.
-- **`<description>`** — a **short, high-level** idea of what the image should convey. It stays concise and presenter-editable in `draft.md`; the image-illustrator **enriches** it into a full generation prompt at Step 6 (that enrichment is *not* stored in `draft.md`). The directive may span multiple lines up to the closing `-->`.
+- **`<description>`** — a **short, high-level** idea of the emotion + concept the image should evoke (not a literal scene — the aside is realized as a symbolic editorial illustration). It stays concise and presenter-editable in `draft.md`; the image-illustrator **enriches** it into a full generation prompt at Step 6 (that enrichment is *not* stored in `draft.md`). The directive may span multiple lines up to the closing `-->`.
 
 ## Canonical Step 6 sequence
 
