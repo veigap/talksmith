@@ -293,7 +293,7 @@ If they look, surface `talks/<Talk>/output/html/index.html` (Reveal deck: → / 
 
 ## Step 6 — Polish *(mandatory, runs on Review approval)*
 
-Triggered when the presenter signals ready in Step 5. Runs end-to-end without prompts. Produces `final.md` + rendered SVGs from a frozen `draft.md` (see *Role* for the two-files contract).
+Triggered when the presenter signals ready in Step 5. Runs end-to-end with **exactly one prompt** (the anti-slop offer in 0.5). Produces `final.md` + rendered SVGs from a frozen `draft.md` (see *Role* for the two-files contract).
 
 **Stage rail — mandatory** (form + rules: *Interaction defaults*). Polish is the **longest unattended step in the workflow**: it draws every diagram in the deck, each through its own review loop, and routinely runs several minutes with nothing asked of the presenter. Silence past ~a minute is a defect, not a slow render. Stages:
 
@@ -306,6 +306,8 @@ Finding the diagrams → Drawing them → Checking how they look → Adding them
 The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the rail from them, never relay them.
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
+
+0.5. **Offer the anti-slop pass (single ask, opt-in).** Ask the presenter one plain question — e.g. *"¿Querés que antes de dibujar los diagramas haga una pasada anti-slop slide por slide sobre el texto?"* (phrase it in the profile's language). **If they accept**, perform the **Editor** role's *Step 6 (0.5) Anti-slop pass* ([`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md)): the language-matched bundled skill ([`talksmith:desrobotizar`](${CLAUDE_PLUGIN_ROOT}/skills/desrobotizar/SKILL.md) for Español, [`talksmith:stop-slop`](${CLAUDE_PLUGIN_ROOT}/skills/stop-slop/SKILL.md) for English) applied **one slide at a time** over `final.md`, with the per-slide evidence report; condense the report for the presenter (slides touched / clean) and persist it in `memory.md`. **If they decline**, skip with no further mention. Never run it unasked, and never re-ask within the same Polish run. Log the ask + answer in the `Asks log`.
 
 1. **Render every ASCII diagram to SVG** — drives the *Finding* / *Drawing* / *Checking* rows. Perform the **Diagram-Illustrator** role ([`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md)). It owns the full recipe (scan, dispatch, batching, narration). Narrate to the presenter in plain language only.
 
