@@ -52,6 +52,19 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 
 **Pre-flight check when writing the image ref.** Before committing the `![alt](<path>)` to `draft.md`, verify the file exists at the declared path. If it doesn't (typo, file moved, librarian Phase 1 stub never resolved a real filename), fail loudly to the orchestrator — do not write a broken reference.
 
+**Suggest an atmospheric aside on a sparse slide (`generate-image`).** Separately from the structural-visual decision above, the editor **proposes** a generated atmospheric image when a slide is **light on text** — a single statement, a short lead, one or two lines — and a full-bleed image down one edge would make it read better. This is **mood, not information**: it reinforces the slide's tone while the audience reads the words beside it. Author a directive under the slide's `### Content`:
+
+```
+<!-- generate-image: right | a cold, minimal sense of vast scale — a lone figure at dawn -->
+```
+
+- **`<side>`** is `left` or `right` (default `right`). **`<description>`** is a **short, high-level idea** — enough to convey what the image should evoke, kept concise and editable in `draft.md` like an ASCII diagram is. **Do not write a full generation prompt here.** The [`image-illustrator`](image-illustrator.md) enriches this line into a complete prompt at Step 6 (folding in the deck palette, portrait aspect, and a no-text guardrail); over-specifying in `draft.md` just clutters the working file. The description **is** what the presenter edits and what re-render idempotency keys off, so make it a faithful one-line brief.
+- **When to reach for it:** sparse text **and** a visual would help **and** no corpus image already fits **and** the need is *atmospheric*, not structural. If the slide needs something the audience must **read** — a chart, a screenshot, a labeled diagram — that is **not** a generate-image aside: use a corpus image, or draft an ASCII diagram (→ diagram-illustrator). Generated imagery never carries readable content.
+- **Don't double up.** One aside per slide, and never on a slide that already carries a body `![](…)` image ref or an authored `<!-- aside: … -->` hint (`polish-images scan` flags such a slide as a conflict and skips it).
+- **Graceful by design.** The image is produced at Step 6 only where the session has an image-generation capability; where it doesn't, the directive is simply left unfulfilled and the slide keeps its text (nothing breaks). So a `generate-image` suggestion is always safe to author.
+
+This is the *to-be-generated* sibling of the `<!-- aside: [left|right] ![alt](path) -->` hint below (which points at an image that already exists): same left/right full-bleed column, same "atmosphere, not information" rule — the difference is only whether the image exists yet.
+
 **Optional ASCII alongside an image link (documentation-only).** When a slide already carries a Markdown image reference, the editor *may* add a small ASCII representation immediately after — purely as inline visual aid for whoever reads the source. The pipeline treats any ASCII block in a slide with an image link as **documentation-only**: the diagram-illustrator never renders it, `polish-ascii` never sidecars or rewrites it, and Step 6 leaves it in place verbatim. The image link is the slide's visual; the ASCII is for the human reader. Keep doc-only ASCII short — if it's elaborate, the image is probably the wrong choice and a fresh render is warranted.
 
 **ASCII diagrams — predefined block syntax + render-time hints.** Every ASCII diagram the editor writes into `draft.md` **must** use the explicit `ascii` language tag on its opening fence. This is what makes diagram detection deterministic (no glyph-heuristic guessing) — exactly the same role `<!-- ascii-note: ... -->` plays for the note half. The full block convention:
@@ -187,6 +200,12 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py cleanup --fina
 The `apply` subcommand (sidecars + cleanup in one shot) exists for quick passes where rendering happened out of band — prefer the staged `extract` → render → `cleanup` flow for normal Step 6.
 
 The per-block transform — fence → image ref + `<!-- ascii-source: -->` echo, post-fence `ascii-note` left in place, `.ascii` sidecar layout, write idempotency — is the polish-ascii skill's contract: see [SKILL.md](../skills/polish-ascii/SKILL.md) → *Rewrite rules*. Understand it so you can audit results, but **do not re-implement it** in ad-hoc Python. (Filename convention is the diagram-illustrator's — see `${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md` → *Output filename convention*.)
+
+(a′) **Rewrite generated-aside directives.** After the [`image-illustrator`](image-illustrator.md) has generated every aside (Step 6 step 1b), rewrite each `<!-- generate-image: … -->` directive in `final.md` to an `<!-- aside: … -->` ref via the sibling [`talksmith:polish-images`](../skills/polish-images/SKILL.md) skill — the same staged shape, `cleanup` being the editor's stage:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.img-plan.json
+```
+The skill owns the rewrite (directive → `<!-- aside: <side> ![alt](images/<basename>.png) -->` + `<!-- generate-source: -->` echo). A directive with no generated image (mis-authored, or the session had no image capability) is left in place untouched and reported — never rewritten to a broken ref. Do **not** re-implement this inline. Directives the image-illustrator flagged as conflicting (slide already has an image) are skipped by the skill.
 
 (b) **Consolidate image refs (in `final.md`) AND enforce Keynote-safe raster-only extensions.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave the prefix. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
 

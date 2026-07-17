@@ -27,25 +27,24 @@ import sys
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
+from _context import (  # noqa: E402  (shared slide-context scanner)
+    FENCE_OPEN, FENCE_CLOSE, COMMENT_CLOSE,
+    H1_ANY, H1_SECTION, H1_AGENDA, H1_CONCL, H2_SLIDE, H1_OR_H2, IMAGE_REF,
+    strip_prose as _strip_prose,
+    skip_frontmatter as _skip_frontmatter,
+    extract_thesis as _extract_thesis,
+    strip_h1 as _strip_h1,
+    strip_h2 as _strip_h2,
+    is_section_heading as _is_section_heading,
+    section_of_h1 as _section_of_h1,
+    fence_line_mask as _fence_line_mask,
+    extract_block_context as _extract_block_context,
+)
+
 CANONICAL_ASCII_TAG = "ascii"
 LEGACY_ASCII_LANG_TAGS = {"", "text", "diagram"}
 BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓⇒⇐⇑⇓]|->|==>|<-|=>")
-# Any ```-prefixed line toggles fence state (mirrors _pptxlib.FENCE). The old `^```(\w*)\s*$`
-# failed to match openers like ```c++ or ```python title=x, flipping fence parity: the block's
-# closing ``` then opened a phantom fence that swallowed following slides. Group 1 is the full
-# info string; scan() takes its first token as the language tag.
-FENCE_OPEN = re.compile(r"^```(.*)$")
-FENCE_CLOSE = re.compile(r"^```\s*$")
-# End-of-line comment closer (mirrors _pptxlib.COMMENT_CLOSE): a mid-line `-->` — e.g. an
-# `emphasize: the input --> model arrow` note line — must not terminate the comment.
-COMMENT_CLOSE = re.compile(r"(?<!-)-->\s*$")
-H1_ANY = re.compile(r"^# (?!#)")
-H1_SECTION = re.compile(r"^# (\d+)\.")
-H1_AGENDA = re.compile(r"^# (?:Agenda|Índice|Indice)\b", re.IGNORECASE)
-H1_CONCL = re.compile(r"^# (?:Conclusion|Conclusiones|Conclusions)\b", re.IGNORECASE)
-H2_SLIDE = re.compile(r"^## (\d+)\.")
-H1_OR_H2 = re.compile(r"^#{1,2} ")
-IMAGE_REF = re.compile(r"!\[[^\]]*\]\([^)]+\)")
 NOTE_OPEN = "<!-- ascii-note:"
 
 
@@ -53,226 +52,6 @@ def is_ascii_payload(payload: str) -> bool:
     if BOX_OR_ARROW.search(payload):
         return True
     return payload.count("\n") >= 2
-
-
-# ── per-block context extraction ────────────────────────────────────────────
-
-_H3 = re.compile(r"^###\s+(.+?)\s*$")
-_GOAL_LINE = re.compile(r"^\*\*Goal of this section:\*\*\s*(.*)$")
-_H1_NUMBERED_STRIP = re.compile(r"^#\s+\d+\.\s*")
-_H2_NUMBERED_STRIP = re.compile(r"^##\s+\d+\.\s*")
-_H1_PLAIN_STRIP = re.compile(r"^#\s+")
-_INLINE_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
-
-
-def _strip_prose(body_lines: list[str]) -> str:
-    """Return body text with fenced code blocks, HTML comments, and `---` horizontal rules removed."""
-    if not body_lines:
-        return ""
-    text = "\n".join(body_lines)
-    # Strip single-line and multi-line HTML comments first (handles nested ascii-source / ascii-note echoes).
-    text = _INLINE_COMMENT.sub("", text)
-    # Strip fenced code blocks (any language) and horizontal rules.
-    out_lines: list[str] = []
-    in_fence = False
-    for ln in text.splitlines():
-        if FENCE_OPEN.match(ln) or FENCE_CLOSE.match(ln):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        if ln.strip() in ("---", "***", "___"):
-            continue
-        out_lines.append(ln)
-    return "\n".join(out_lines).strip()
-
-
-def _skip_frontmatter(lines: list[str]) -> int:
-    """If `lines` opens with a YAML `---` frontmatter block, return the 0-based index
-    of the first line *after* the closing `---`. Otherwise return 0."""
-    if not lines or lines[0].strip() != "---":
-        return 0
-    for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
-            return i + 1
-    # Unclosed frontmatter — treat whole file as frontmatter-less to be safe.
-    return 0
-
-
-def _extract_thesis(lines: list[str]) -> str:
-    """Body of the `# Thesis` block (Claim + Why it matters paragraphs), stripped.
-
-    Skips YAML frontmatter so that comments like `# thesis: ...` inside it aren't
-    misread as the Thesis heading. Matches the heading exactly (case-insensitively
-    after strip) to avoid matching ad-hoc headings like `# Thesis revision 2`.
-    """
-    start = _skip_frontmatter(lines)
-    body: list[str] = []
-    in_thesis = False
-    for ln in lines[start:]:
-        if ln.startswith("# ") and not ln.startswith("## "):
-            if ln.strip().lower() == "# thesis":
-                in_thesis = True
-                continue
-            if in_thesis:
-                break
-        if in_thesis:
-            body.append(ln)
-    return _strip_prose(body)
-
-
-def _strip_h1(line: str) -> str:
-    """Strip the leading `# ` (and any numbered prefix `N. `) from an H1 heading, preserving the heading text."""
-    if H1_SECTION.match(line):
-        return _H1_NUMBERED_STRIP.sub("", line).strip()
-    # Agenda, Conclusions, anything else: strip just the `# ` prefix and preserve the rest verbatim.
-    return _H1_PLAIN_STRIP.sub("", line).strip()
-
-
-def _strip_h2(line: str) -> str:
-    return _H2_NUMBERED_STRIP.sub("", line).strip()
-
-
-def _is_section_heading(ln: str) -> bool:
-    """Every H1 is a section boundary. The title only labels it — see `_section_of_h1`.
-
-    Detection must not depend on recognizing the title. Matching only the titles we know
-    made an unknown H1 (`# Cut material`, `# Open questions`, `# Thesis`) invisible, so the
-    preceding section leaked past it and blocks under it were attributed to that section's
-    last slide. Mirrors feedback_cycle.py, which matches any H1 and classifies afterwards.
-    """
-    return bool(H1_ANY.match(ln))
-
-
-def _section_of_h1(ln: str) -> str | int | None:
-    """Section id for an H1 line, or None when the heading carries no slides.
-
-    None covers Thesis, Open questions, Cut material, and any section the schema grows
-    later; `scan` skips ASCII found under those rather than minting a slide_id for it.
-    """
-    m = H1_SECTION.match(ln)
-    if m:
-        return int(m.group(1))
-    if H1_AGENDA.match(ln):
-        return 0
-    if H1_CONCL.match(ln):
-        return "c"
-    return None
-
-
-def _fence_line_mask(lines: list[str]) -> list[bool]:
-    """True for every line inside (or delimiting) a fenced code block.
-
-    Heading/boundary detection must skip these — a payload line like `# legend: ...`
-    inside an ASCII fence is content, not a structural boundary. Same parity walk scan() uses.
-    """
-    mask = [False] * len(lines)
-    in_f = False
-    for i, ln in enumerate(lines):
-        if not in_f:
-            if FENCE_OPEN.match(ln):
-                in_f = True
-                mask[i] = True
-        else:
-            mask[i] = True
-            if FENCE_CLOSE.match(ln):
-                in_f = False
-    return mask
-
-
-def _extract_block_context(lines: list[str], ascii_start_line: int, fence_mask: list[bool] | None = None) -> dict[str, str]:
-    """Walk back from the ASCII block (1-based line) to gather slide + section context."""
-    start_idx = ascii_start_line - 1  # 0-based
-    if fence_mask is None:
-        fence_mask = _fence_line_mask(lines)
-
-    # Walk back to find the most recent H2 (slide), then the most recent section H1 —
-    # skipping lines inside fences (a `# ...` line in an earlier diagram is not a heading).
-    slide_idx = -1
-    section_idx = -1
-    for i in range(start_idx - 1, -1, -1):
-        if fence_mask[i]:
-            continue
-        ln = lines[i]
-        if slide_idx < 0 and H2_SLIDE.match(ln):
-            slide_idx = i
-            continue
-        if _is_section_heading(ln):
-            section_idx = i
-            break
-
-    slide_title = _strip_h2(lines[slide_idx]) if slide_idx >= 0 else ""
-    section_title = _strip_h1(lines[section_idx]) if section_idx >= 0 else ""
-
-    # section_goal: scan lines between section heading and the first H2 inside the section.
-    section_goal = ""
-    if section_idx >= 0:
-        end_idx = slide_idx if slide_idx >= 0 else len(lines)
-        # If no slide above us, scan to next H2 or H1 below the section heading.
-        if slide_idx < 0:
-            for j in range(section_idx + 1, len(lines)):
-                if not fence_mask[j] and (H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j])):
-                    end_idx = j
-                    break
-        for j in range(section_idx + 1, end_idx):
-            m = _GOAL_LINE.match(lines[j])
-            if not m:
-                continue
-            goal_text = m.group(1).strip()
-            # If the goal continues on subsequent lines, accumulate until a blank line / structural marker.
-            if not goal_text:
-                continuation: list[str] = []
-                for k in range(j + 1, end_idx):
-                    nxt = lines[k]
-                    if not nxt.strip():
-                        if continuation:
-                            break
-                        continue
-                    if nxt.startswith("**") or nxt.startswith("#") or nxt.strip() == "---":
-                        break
-                    continuation.append(nxt.strip())
-                section_goal = " ".join(continuation).strip()
-            else:
-                section_goal = goal_text
-            break
-
-    # slide body: from the H2 line up to the next H2 / H1.
-    slide_content_prose = ""
-    speaker_notes = ""
-    if slide_idx >= 0:
-        slide_end = len(lines)
-        for j in range(slide_idx + 1, len(lines)):
-            if not fence_mask[j] and (H2_SLIDE.match(lines[j]) or _is_section_heading(lines[j])):
-                slide_end = j
-                break
-        # Walk H3 fields within the slide.
-        j = slide_idx + 1
-        while j < slide_end:
-            m = _H3.match(lines[j]) if not fence_mask[j] else None
-            if not m:
-                j += 1
-                continue
-            h3_title = m.group(1).strip().lower()
-            body_start = j + 1
-            body_end = slide_end
-            for k in range(j + 1, slide_end):
-                if not fence_mask[k] and _H3.match(lines[k]):
-                    body_end = k
-                    break
-            body = lines[body_start:body_end]
-            if h3_title == "content":
-                slide_content_prose = _strip_prose(body)
-            elif h3_title in ("speaker notes", "notes"):
-                speaker_notes = _strip_prose(body)
-            j = body_end
-
-    return {
-        "slide_title": slide_title,
-        "section_title": section_title,
-        "section_goal": section_goal,
-        "slide_content_prose": slide_content_prose,
-        "speaker_notes": speaker_notes,
-    }
 
 
 def scan(final_path: Path, presentation_language: str | None = None) -> dict[str, Any]:

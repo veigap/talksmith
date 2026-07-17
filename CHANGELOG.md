@@ -13,6 +13,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.64.0] — 2026-07-17
+
+### Added
+- **Generated atmospheric aside images** — a new visual path for sparse-text slides, mirroring the diagram pipeline end to end. On a slide with little text where a full-bleed image down one edge would help, the **Editor** now suggests a generated aside by authoring a short, high-level, presenter-editable directive in `draft.md`:
+  ```
+  <!-- generate-image: right | a cold, minimal sense of vast scale — a lone figure at dawn -->
+  ```
+  At Polish, the new **`image-illustrator`** agent enriches that one-line idea into a full generation prompt — **folding in the deck's own palette** (`config/diagram-style.md`: light ground, `#3B3535`, single `#DA1B2E` accent) so a generated aside and a rendered diagram read as one system — and produces the image via the new **`talksmith:generate-image`** skill. The directive is then rewritten into a normal `<!-- aside: … -->` ref the existing left/right column already renders.
+  - **Tool-agnostic and graceful.** Generation uses whatever image capability the session exposes (an MCP image tool, the host's native generation). Where none is present, the directive is left unfulfilled, the slide keeps its text, and the count is reported — it never blocks Polish (the same way `.pptx` modes are Cowork-only).
+  - **Atmosphere, not information.** Generated imagery is mood only; anything the audience must *read* stays a diagram (ASCII → SVG) or a corpus image. The image-illustrator refuses text-bearing directives.
+  - Extraction is the new **`talksmith:polish-images`** skill — the sibling of `polish-ascii`, with the same staged `scan` / `annotate` / `extract` / `prepare-render-args` / `stamp-renders` / `cleanup` shape and idempotency (keyed on the presenter's original description, stamped in a companion `.imgstamp` since a raster can't carry an inline comment).
+
+### Changed
+- **Shared slide-context scanner** factored into `skills/_shared/_context.py` (headings, prose stripping, thesis, the per-block context bundle) and imported by both `polish-ascii` and `polish-images` — one implementation, no duplication. The `polish-ascii` refactor was verified to produce byte-identical scan output.
+
 ## [0.63.0] — 2026-07-17
 
 ### Changed

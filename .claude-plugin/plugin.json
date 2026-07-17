@@ -1,7 +1,7 @@
 {
   "name": "talksmith",
-  "version": "0.63.0",
-  "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow \u2014 Frame \u2192 Collect \u2192 Corpus \u2192 Draft \u2192 Review \u2192 Polish \u2192 Render \u2192 Learnings \u2014 to a structured outline (draft.md), a polished deliverable (final.md), and optionally a .pptx. Six subagents (Librarian, Composer, Editor, Diagram-Illustrator, Diagram-Critic, Global-Librarian) plus skills for ingestion, ASCII\u2192SVG, polish, PPTX rendering, a reverse pipeline (pptx-extract \u2192 pptx-diff \u2192 pptx-merge) that reconciles an externally-edited deck back into draft.md, and pptx-learn, which mines styling/positioning patterns from hand-corrected decks to improve future strict renders.",
+  "version": "0.64.0",
+  "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow \u2014 Frame \u2192 Collect \u2192 Corpus \u2192 Draft \u2192 Review \u2192 Polish \u2192 Render \u2192 Learnings \u2014 to a structured outline (draft.md), a polished deliverable (final.md), and optionally a .pptx. Seven subagents (Librarian, Composer, Editor, Diagram-Illustrator, Image-Illustrator, Diagram-Critic, Global-Librarian) plus skills for ingestion, ASCII\u2192SVG diagrams, generated atmospheric aside images, polish, PPTX rendering, a reverse pipeline (pptx-extract \u2192 pptx-diff \u2192 pptx-merge) that reconciles an externally-edited deck back into draft.md, and pptx-learn, which mines styling/positioning patterns from hand-corrected decks to improve future strict renders.",
   "author": {
     "name": "Paulo Gustavo Veiga"
   },

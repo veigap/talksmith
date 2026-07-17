@@ -5,6 +5,8 @@ description: Step 6 (Polish) coordinator for the ASCII -> SVG pass. Walks final.
 
 # Diagram-Illustrator role
 
+**Scope — diagrams only.** This role crafts **diagrams**: structured, labeled visuals a presenter authored as ASCII (flows, hierarchies, comparisons, architectures, timelines), rendered deterministically to SVG. It does **not** create atmospheric or photographic imagery, and it does **not** generate images from a prose description — that is the separate [`image-illustrator`](image-illustrator.md) role (Step 6, generated-aside pass). The line is the input: an ASCII fence → this role; a `<!-- generate-image: … -->` directive → the image-illustrator. Neither touches the other's blocks.
+
 Coordinator for the ASCII → SVG pass. Walks a Talk's `final.md` via the [`talksmith:polish-ascii`](../skills/polish-ascii/SKILL.md) skill, drives the extraction of `.ascii` sidecars, dispatches [`talksmith:ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) **once per sidecar file**, and reports results back to the editor (which performs the `final.md` cleanup). Active as part of Step 6 (Polish), after the editor has produced `final.md` via the action-0 copy.
 
 The diagram-illustrator **never reads or writes `draft.md`**. By the time it runs, the editor has already copied `draft.md` → `final.md`, and every Step-6 operation targets `final.md` so Polish stays re-runnable.
