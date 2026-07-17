@@ -11,6 +11,15 @@ Maintains `draft.md` (Steps 1–5), `final.md` (Step 6 onward), and `memory.md` 
 
 `config/profile.md` is in context — use it. Apply `Presentation language` to all prose written into `draft.md` / `final.md`.
 
+**Anti-slop authoring standard (Steps 4–5, always on).** Before writing or rewriting any presentation prose (thesis, agenda, section goals, slide titles, `### Content`), load the anti-slop skill matching the profile's `Presentation language` and author under its criteria from the first draft — this is prevention, not a cleanup pass:
+
+| `Presentation language` | User-level skill (preferred) | Bundled fallback |
+|---|---|---|
+| Español | `desrobotizar` | [`talksmith:desrobotizar`](${CLAUDE_PLUGIN_ROOT}/skills/desrobotizar/SKILL.md) |
+| English | `stop-slop` | [`talksmith:stop-slop`](${CLAUDE_PLUGIN_ROOT}/skills/stop-slop/SKILL.md) |
+
+**Loading order:** (1) the **user-installed** skill of that name, if it appears in the session's skill list — it is the live version, kept current in its own repo, and may carry the presenter's own evolving rules; (2) the **bundled copy** shipped with this plugin (a snapshot, refreshed on plugin updates); (3) if the Skill tool can't load either, Read the bundled `SKILL.md` **plus every file under its `references/`** directly from the plugin path — the `references/reglas-propias.md` rules (desrobotizar) are part of the contract, not optional extras. Speaker notes follow the skills' own scoping rules (e.g. the second-person rule exempts notes). If every path fails, proceed and surface a one-line warning to the orchestrator — never block authoring on a missing skill.
+
 **Canonical slide locator** (used in composer punch-lists and presenter feedback): `<section-N>.<slide-M>` — e.g. `2.1` = Section 2 → Slide 1. Special tokens: `thesis`, `agenda`, `agenda.section:<N>` (n-th section bullet), `agenda.<n>` (n-th agenda ASCII block), `conclusions.N`, `conclusions.N.<k>` (k-th ASCII in conclusions slide N). Parse this notation before applying any change. If the target doesn't exist, report `target not found: <expected location>` — never apply to a best-guess neighbor.
 
 **Pending-stub awareness.** When a slide's `### Sources` cites a `research/corpus/` record that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub corpus/<file>.md — re-verify after librarian Phase 2`.
@@ -140,7 +149,7 @@ Per-round loop:
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
           --draft talks/<Talk>/draft.md --line <N>
       ```
-   b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
+   b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Every rewritten line of presentation prose follows the *Anti-slop authoring standard* (top of this file) — a feedback fix that introduces a slop pattern is a defect. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
    c. **Close** with the resolution wording.
       ```bash
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
@@ -174,6 +183,14 @@ cp talks/<Talk>/draft.md talks/<Talk>/final.md
 ```
 
 From here on, **read and write `final.md` only**. `draft.md` is read-only for the rest of the workflow.
+
+**(0.5) Anti-slop pass — optional, presenter-gated, one slide at a time.** Runs **only** if the presenter accepted the orchestrator's Step-6 offer (see `orchestrator.md` → Step 6 action 0.5); if declined, skip to (a). When it runs:
+
+- Load the anti-slop skill for the profile's `Presentation language` (same table and fallback as the *Anti-slop authoring standard* above), **including every `references/` file**.
+- Walk `final.md` **one slide unit at a time** — each H2 block (title + `### Content`), plus the thesis, the agenda, and each H1 section goal. Never batch: apply the skill's full checklist to one unit, fix it in place, then move to the next. Out of scope: speaker notes (registro hablado; the skills' own scoping applies), `### Sources`, feedback logs, and the *interior* of fenced ASCII/code blocks (diagram label text is handled by the diagram-illustrator's render pass).
+- Fixes are in-place rewrites in `final.md` (never `draft.md`). A fix must preserve meaning; when a slop pattern wraps real content, rewrite plainly — don't delete.
+- **Report with evidence.** Return a per-slide table `<locator> | clean / N rewrites | patterns hit`, and for greppable families (em-dashes, banned words, formula stems) the grep count before/after — a "clean" claim without evidence is a defect.
+- Runs **before** the diagram-illustrator pass, so text that also appears inside a diagram gets rendered already corrected.
 
 **(a)–(d) Clean `final.md`.** Apply (a), (b), (c) in any order; apply (d) last.
 
