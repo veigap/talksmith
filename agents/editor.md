@@ -55,13 +55,19 @@ The orchestrator owns live-state lines (`**Awaiting:**`, `Status: in_progress|aw
 |---|---|
 | An existing image from any of the above sources clearly fits the slide's intent (depiction matches what you'd otherwise draw) | **Use it directly.** Write a plain Markdown image reference in the slide's `### Content` pointing at the corpus companion path (e.g. `![<alt>](research/corpus/<source-stem>/images/<file>.png)`). Step 6 (b) — *Consolidate image refs* — will copy the file into `talks/<Talk>/images/<basename>` (in `final.md`) and rewrite the reference. The diagram-illustrator only walks ASCII blocks, so a plain image ref is automatically passed through — no `talksmith:ascii-to-svg` invocation, no sidecar, no regeneration. |
 | Multiple existing images could plausibly fit; the choice matters | Ask the presenter with the candidate filenames + their `depiction` lines as options. Never silently pick. |
-| No existing image fits (or all candidates are clearly off-topic) | **Only then** draft a fresh ASCII per the syntax below. The diagram-illustrator will render it to SVG in Step 6. |
+| No existing image fits (or all candidates are clearly off-topic), and the need is **structural** (a flow, hierarchy, comparison) | **Only then** draft a fresh ASCII per the syntax below. The diagram-illustrator will render it to SVG in Step 6. |
+| No existing image fits, and the need is **atmospheric** (a sparse slide, or a presenter asked for an image "to fill" with no readable content) | **Propose a `generate-image` directive** (see *Actively propose atmospheric asides* below) — do **not** leave the need as an `[open]` question just because no file exists. Generation is the answer to a missing atmospheric asset. |
 
 **Never invent an ASCII when a corpus image already shows the same thing.** Re-drawing what an article already provides loses fidelity and creates double-maintenance. The presenter's source material is canonical; the deck rides on top of it.
 
 **Pre-flight check when writing the image ref.** Before committing the `![alt](<path>)` to `draft.md`, verify the file exists at the declared path. If it doesn't (typo, file moved, librarian Phase 1 stub never resolved a real filename), fail loudly to the orchestrator — do not write a broken reference.
 
-**Suggest an atmospheric aside on a sparse slide (`generate-image`).** Separately from the structural-visual decision above, the editor **proposes** a generated atmospheric image when a slide is **light on text** — a single statement, a short lead, one or two lines — and a full-bleed image down one edge would make it read better. This is **mood, not information**: it reinforces the slide's tone while the audience reads the words beside it. Author a directive under the slide's `### Content`:
+**Actively propose atmospheric asides (`generate-image`) — a standing pass, not an afterthought.** On **every draft and every review round**, the editor **actively looks** for two triggers and, when either fires, **authors a `generate-image` directive rather than leaving the need open**:
+
+1. **A sparse slide that would read better with imagery.** A slide light on text — a single statement, a short lead, one or two lines — where a full-bleed image down one edge lifts it. Don't wait to be asked; proposing these is part of the editor's job, exactly like proposing an ASCII diagram for a slide with shape.
+2. **A presenter image request with no available asset.** When the presenter asks for an image (*"pongamos una imagen a la izquierda"*, *"buscá algo para llenar"*) and **no corpus image or existing asset fits**, the answer is **not** to document the gap and leave an `[open]` — that was the old, too-conservative behavior. The answer is to **author a `generate-image` directive that captures what the image should evoke.** A missing file is a reason to *propose generation*, never a dead end. (Only leave it `[open]` if the request is for something that must be *read* — a specific chart/screenshot — which generation can't supply; then say so explicitly.)
+
+This is **mood, not information**: the aside reinforces the slide's tone while the audience reads the words beside it. Author a directive under the slide's `### Content`:
 
 ```
 <!-- generate-image: right | a cold, minimal sense of vast scale — a lone figure at dawn -->

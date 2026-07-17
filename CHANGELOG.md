@@ -13,6 +13,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.65.0] — 2026-07-17
+
+### Changed
+- **The Editor now *actively* proposes generated atmospheric asides, and never leaves an image need `[open]` just because no file exists.** The 0.64.0 capability existed but the Editor treated it as optional, so in practice it stayed conservative — when a presenter asked for an image and no corpus asset fit, it documented the gap as an open question instead of proposing generation. The spec is now explicit: proposing `generate-image` directives is a **standing pass on every draft and review round**, with two triggers — (1) a sparse slide that would read better with imagery, and (2) **a presenter image request with no available asset**, which now becomes an authored `generate-image` proposal, not an `[open]`. A missing file is a reason to propose generation, not a dead end. (The only thing still left open is a request for something that must be *read* — a specific chart/screenshot — which generation can't supply.)
+
 ## [0.64.0] — 2026-07-17
 
 ### Added
