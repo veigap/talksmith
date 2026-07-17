@@ -13,6 +13,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.67.1] — 2026-07-17
+
+### Changed
+- **Compacted the intro workflow chart.** The Step-0 workflow overview now shows the eight steps as a single one-line flow (`[1] Frame → … → [8] Learnings`) plus a tight aligned list of what the agent says at each step, dropping the tall vertical `v`-arrow ladder that consumed most of the screen.
+
 ## [0.67.0] — 2026-07-17
 
 ### Added
