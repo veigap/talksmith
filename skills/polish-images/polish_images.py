@@ -419,10 +419,21 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
     if not final_path.exists():
         print(f"error: plan's final.md not found: {final_path} — stale plan; re-run `scan`", file=sys.stderr)
         return 2
-    images_dir = (final_path.parent / "images").resolve()
+    talk_root = final_path.parent
+    images_dir = (talk_root / "images").resolve()
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     repo_root = Path(args.repo_root).resolve() if args.repo_root else None
+
+    # Mount-portable anchoring (same rationale as polish_ascii): emit Talk-relative twins + `talk_rel`
+    # so a differently-mounted generate-image worker can re-anchor on its own repo_root.
+    talk_rel: str | None = None
+    if repo_root:
+        try:
+            talk_rel = str(talk_root.resolve().relative_to(repo_root))
+        except ValueError:
+            print(f"warning: --repo-root {repo_root} is not an ancestor of the Talk at "
+                  f"{talk_root.resolve()} — emitting absolute paths only", file=sys.stderr)
 
     renderables = [d for d in plan.get("directives", []) if d.get("render")]
     skipped = len(plan.get("directives", [])) - len(renderables)
@@ -456,6 +467,10 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
             "prompt_file": str(images_dir / f"{stem}.imgprompt"),
             "prompt": d["render"]["prompt"],
             "output_path": str(png_path),
+            # Talk-portable twins (mount independence — see anchoring note above).
+            "prompt_file_rel": f"images/{stem}.imgprompt",
+            "output_path_rel": f"images/{basename}",
+            "talk_rel": talk_rel,
             "aspect": "portrait",
             "side": d["directive"]["side"],
             "slide_title": ctx.get("slide_title", ""),
@@ -563,6 +578,75 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── gc: prune orphaned generated aside triplets ─────────────────────────────
+_IMG_REF_RE = re.compile(r"!\[[^\]]*\]\(\s*(?:\./)?images/([^)\s]+?)\s*\)")
+_IMG_EXT_RE = re.compile(r"\.(svg|png|jpe?g|gif|webp|avif)$", re.IGNORECASE)
+
+
+def _referenced_stems(final_text: str) -> set[str]:
+    """Every `images/<name>` basename referenced by final.md (incl. inside `aside:` comments)."""
+    out: set[str] = set()
+    for m in _IMG_REF_RE.finditer(final_text):
+        name = m.group(1).rsplit("/", 1)[-1]
+        out.add(_IMG_EXT_RE.sub("", name))
+    return out
+
+
+def _generated_aside_stems(images_dir: Path) -> set[str]:
+    """Stems that are *generated aside* assets — proven by a `.imgprompt` sidecar or `.imgstamp`
+    companion. A bare `.png` is never treated as generated, so presenter-owned images are safe."""
+    stems: set[str] = set()
+    for p in images_dir.glob("*.imgprompt"):
+        stems.add(p.stem)
+    for p in images_dir.glob(f"*{STAMP_SUFFIX}"):
+        stems.add(p.name[: -len(STAMP_SUFFIX)])
+    return stems
+
+
+def cmd_gc(args: argparse.Namespace) -> int:
+    """List (or --apply delete) generated aside triplets (`<stem>.png` + `.imgprompt` + `.imgstamp`)
+    no longer referenced by final.md. Non-destructive by default; only assets proven generated (a
+    sidecar or stamp) are candidates, so a presenter-owned image is never a deletion target."""
+    final_path = Path(args.final).resolve()
+    if not final_path.exists():
+        print(f"error: final.md not found: {final_path}", file=sys.stderr)
+        return 2
+    images_dir = final_path.parent / "images"
+    if not images_dir.is_dir():
+        print("gc: no images/ directory — nothing to collect")
+        return 0
+
+    referenced = _referenced_stems(final_path.read_text())
+    orphans = sorted(s for s in _generated_aside_stems(images_dir) if s not in referenced)
+
+    targets: list[Path] = []
+    for s in orphans:
+        for cand in (images_dir / f"{s}.png", images_dir / f"{s}.imgprompt",
+                     images_dir / f"{s}{STAMP_SUFFIX}"):
+            if cand.exists():
+                targets.append(cand)
+
+    if not orphans:
+        print("gc: no orphaned generated aside assets — images/ is clean")
+        return 0
+
+    print(f"gc: {len(orphans)} orphaned generated aside(s), {len(targets)} file(s):")
+    for f in targets:
+        print(f"  {f.relative_to(final_path.parent)}")
+    if args.apply:
+        removed = 0
+        for f in targets:
+            try:
+                f.unlink()
+                removed += 1
+            except OSError as e:
+                print(f"  ⚠  could not remove {f}: {e}", file=sys.stderr)
+        print(f"gc: removed {removed} file(s)")
+    else:
+        print("gc: dry-run — pass --apply to delete")
+    return 0
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main(argv: list[str]) -> int:
@@ -604,6 +688,12 @@ def main(argv: list[str]) -> int:
     p_cleanup = sub.add_parser("cleanup", help="rewrite generate-image directives in final.md to aside image refs")
     _add_plan_args(p_cleanup)
     p_cleanup.set_defaults(func=cmd_cleanup)
+
+    p_gc = sub.add_parser("gc", help="list (or --apply delete) generated aside triplets (png + .imgprompt + .imgstamp) no longer referenced by final.md; presenter-owned images are never touched")
+    p_gc.add_argument("--final", required=True, help="path to the Talk's final.md")
+    p_gc.add_argument("--apply", action="store_true", help="delete the orphaned files (default: dry-run list only)")
+    p_gc.add_argument("--dry-run", action="store_true", help="explicit no-op; gc is dry by default (kept for symmetry)")
+    p_gc.set_defaults(func=cmd_gc)
 
     args = parser.parse_args(argv)
     return args.func(args)

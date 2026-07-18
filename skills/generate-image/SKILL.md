@@ -17,6 +17,7 @@ The generation backend the [`image-illustrator`](${CLAUDE_PLUGIN_ROOT}/agents/im
 | `aspect` | `portrait` (the aside column is a tall full-bleed strip → target ~2:3, e.g. 832×1248). `landscape` / `square` are accepted for completeness but the aside pass always passes `portrait`. |
 | `output_path` | Absolute path to write the PNG to (e.g. `talks/<Talk>/images/<slide-id>-<n>-aside.png`). |
 | `prompt_file` | The `.imgprompt` sidecar (original description + enriched prompt), for reference only. |
+| `output_path_rel` / `prompt_file_rel` / `talk_rel` | Optional Talk-portable path twins (`images/<name>` + the Talk dir relative to `repo_root`). **Prefer these when present:** write to `<your repo_root>/<talk_rel>/<output_path_rel>` so the file lands correctly even when this worker runs in a different mount than the session that built the args. Fall back to the absolute `output_path` only when the twins are absent. |
 
 ## Procedure
 

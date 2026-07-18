@@ -82,6 +82,12 @@ This is the *to-be-generated* sibling of the `<!-- aside: [left|right] ![alt](pa
 
 **Optional ASCII alongside an image link (documentation-only).** When a slide already carries a Markdown image reference, the editor *may* add a small ASCII representation immediately after — purely as inline visual aid for whoever reads the source. The pipeline treats any ASCII block in a slide with an image link as **documentation-only**: the diagram-illustrator never renders it, `polish-ascii` never sidecars or rewrites it, and Step 6 leaves it in place verbatim. The image link is the slide's visual; the ASCII is for the human reader. Keep doc-only ASCII short — if it's elaborate, the image is probably the wrong choice and a fresh render is warranted.
 
+**Override the default with an explicit render hint** when the image-ref heuristic is too blunt — the "banner + screenshot" slide is the case it gets wrong (an interstitial ASCII banner you *do* want rendered to SVG, plus a screenshot fallback below). Put a comment on the line **immediately above** the opening fence:
+- `<!-- ascii-render: force -->` — render this block to SVG **even though** the slide also has an image ref (the banner renders; the screenshot stays a normal image).
+- `<!-- ascii-render: documentation-only -->` — leave this block as source-only **even though** the slide has no image ref.
+
+With no hint, the default holds (image on the slide → documentation-only). The scan surfaces the hint so the choice is auditable; author it in `draft.md` and it carries into `final.md` at Step 6.
+
 **ASCII diagrams — predefined block syntax + render-time hints.** Every ASCII diagram the editor writes into `draft.md` **must** use the explicit `ascii` language tag on its opening fence. This is what makes diagram detection deterministic (no glyph-heuristic guessing) — exactly the same role `<!-- ascii-note: ... -->` plays for the note half. The full block convention:
 
 ```markdown
@@ -242,7 +248,13 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-ope
 ```
 The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "<verbatim>"` under `# Open questions` (creating the section before `# Cut material` if missing), and skips entries already present. `[closed]` bullets and raw un-stamped bullets are ignored. (`draft.md` retains the full feedback log verbatim — this rescue only mutates `final.md`.)
 
-(d) **Strip `Presenter feedback` fields (from `final.md`).** Remove at every level (Thesis, Agenda, Section, Slide). Recognize all three forms: H3 (`### Presenter feedback`), paragraph (`**Presenter feedback:**`), legacy bullet (`- **Presenter feedback:**`).
+(d) **Strip `Presenter feedback` fields (from `final.md`).** This is deterministic, not a hand-edit — delegate it to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill's `strip_feedback.py`, which removes all three forms at every level (Thesis, Agenda, Section, Slide) — H3 (`### Presenter feedback`), paragraph (`**Presenter feedback:**`), legacy bullet (`- **Presenter feedback:**`) — **and guarantees a blank line before every `---` slide boundary**, so a strip can never leave `text\n---` for Markdown to misread as a setext-H2 underline (the bug this replaces):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md
+```
+
+Do **not** hand-strip these blocks — the blank-line-before-boundary guard is load-bearing and lives in the script + its test, not in operator memory.
 
 **Step 8 — two passes, in order.**
 

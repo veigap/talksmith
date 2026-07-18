@@ -13,9 +13,14 @@ Owns the **mechanical bookkeeping** of the Step 5 feedback loop end-to-end:
 4. **Mirror** every `[closed]` row to `config/feedback-backlog.md` for the cross-Talk audit trail.
 5. **Sanity-check** that no `[closed]` bullet in `draft.md` is missing its mirror row.
 
-Plus a sixth subcommand used at Step 6:
+Plus two Step-6 helpers:
 
-6. **Rescue** still-`[open]` bullets from `final.md` into the `# Open questions` section (so they survive the strip pass).
+6. **Rescue** still-`[open]` bullets from `final.md` into the `# Open questions` section (so they survive the strip pass) — `find_open_notes.py` / `rescue-open`.
+7. **Strip** every `Presenter feedback` field out of `final.md` at Step 6 (d) — `strip_feedback.py` — removing all three authored forms (H3 / paragraph / legacy bullet) and **guaranteeing a blank line before every `---` slide boundary** so a strip can never fuse two slides into a setext-H2 heading. Deterministic; the Editor never hand-strips these blocks.
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md [--dry-run]
+   ```
 
 The LLM Editor calls these as CLI subcommands and **only authors three things per bullet**: the per-slide content fix, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through this skill — the Editor does not read `draft.md` end-to-end during a normal Review round.
 

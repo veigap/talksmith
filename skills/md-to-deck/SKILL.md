@@ -82,7 +82,18 @@ it guards every mode, including html-strict, which otherwise runs no deck-parsin
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/degenerate_enum.py output/slide-model.json
 ```
 
-A non-zero exit is a FILL failure, not a render failure: an enumeration template
+Alongside it, two **coverage preflights** catch content that would silently vanish — both model-only, so they guard every mode (advisory by default, `--strict` to fail):
+
+```bash
+# fields the chosen template will ignore (e.g. an image on a `divider`, a second image on `content-image`)
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/field_coverage.py output/slide-model.json
+# image refs in final.md that never made it into the model (a slide would render with no image)
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py final.md output/slide-model.json
+```
+
+`field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — skip it for the `--draft` live view (which fills from `draft.md`).
+
+A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: an enumeration template
 (`content-text` panels, `concept-breakdown`/`card-row` cards, `stat` stats, `icon-list` rows, …)
 was filled with a **single** item, which renders as a stray grid cell — the tell of a
 misclassification (a lead + one point is `single-point`, per the catalog's `labeled_items == 1`

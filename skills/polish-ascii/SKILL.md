@@ -23,6 +23,13 @@ The diagram-illustrator picks templates and dispatches `talksmith:ascii-to-svg` 
 
 A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup). **`apply` does not stamp** — if you use it after rendering SVGs by hand, run `stamp-renders` yourself or the next pass re-renders everything.
 
+A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references. It is **non-destructive by default** (lists only); pass `--apply` to delete. Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md           # list
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # delete
+```
+
 ## When to use
 
 - Step 6 (Polish), transformation (a) — replacing every fenced ASCII block in `final.md` with an image reference and producing the matching sidecar.
@@ -149,6 +156,11 @@ applied 22 block(s) to talks/senales-1d-biomedicina/final.md:
 - **Note** = an HTML comment of shape `<!-- ascii-note: ... -->` whose opening `<!-- ascii-note:` line appears **within 1 blank-line tolerance** after the closing fence. The comment is captured verbatim from its opening sentinel through the line containing `-->`.
 - **`slide_id`** = `s<section-N>-<slide-M>-<n>`. Section is the most recent `# N.` H1; slide is the most recent `## M.` H2 inside that section; `n` is the 1-based ordinal of the ASCII block within the current slide. Special locators: `# Agenda` → section `0`; `# Conclusiones` / `# Conclusions` → section `c`.
 - **`documentation_only`** = `true` when the ASCII block's containing slide (lines from the most recent H1/H2 to the next H1/H2) carries a Markdown image reference (`![alt](path)`) outside the ASCII fence itself and outside any `<!-- ascii-source: ... -->` HTML comment left by an earlier Polish pass. These blocks exist purely as inline visual aid for whoever reads the source and are skipped by `extract`/`cleanup`/`apply`.
+- **`render_hint`** — an explicit per-block override, written as a comment on the line **immediately above** the opening fence (one blank line of tolerance), that beats the image-ref heuristic in either direction:
+  - `<!-- ascii-render: force -->` → the block is **render-driving even on a slide that also has an image** (the "banner + screenshot" case: an interstitial ASCII banner rendered to SVG *plus* a screenshot fallback below). Sets `documentation_only=false`.
+  - `<!-- ascii-render: documentation-only -->` (alias `doc-only`) → the block is **skipped even with no image ref** (an explanatory ASCII the author wants left as source-only). Sets `documentation_only=true`.
+
+  The hint is echoed in the scan output as `render_hint` (JSON) / `[hint:…]` (human). With no hint, the image-ref heuristic above decides as before.
 
 ## Rewrite rules (used by `apply` / `cleanup`)
 

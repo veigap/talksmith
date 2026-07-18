@@ -551,6 +551,7 @@
       "template": "content+cards+image",
       "section": "Visual & data",
       "title": "content+cards+image: cards beside one image",
+      "lead": "A short lead sits above the cards (regression guard for the lead field).",
       "cards": [
         {
           "label": "Cards on one side",

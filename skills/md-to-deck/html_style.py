@@ -25,7 +25,7 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
-from icon_fetch import fetch_icon, fetch_catalog  # noqa: E402
+from icon_fetch import fetch_icon, fetch_catalog, _slug as _icon_slug  # noqa: E402
 
 ACCENT = "DA1B2E"
 _DEFAULT_ICON = "bolt"
@@ -414,13 +414,32 @@ def _highlights(items) -> list:
     return out
 
 
+def _catalog_names() -> set[str] | None:
+    """The set of valid Material Symbols slugs, or None when the catalog isn't loaded (offline /
+    seed mode) — in which case suggestions can't be validated and are trusted as-is."""
+    if not _CAT_INDEX:                      # None or [] → catalog unavailable; skip validation
+        return None
+    return {name for name, _tset, _pop in _CAT_INDEX}
+
+
 def _resolve_item_icons(items: list) -> None:
     """Resolve each item's icon in place. The fill may **suggest** an `icon` (a Material Symbols
-    name) per item, choosing distinct ones; those are reserved first, then any item without a
-    suggestion is content-matched — and `icon_for` won't reuse an icon already on this slide."""
+    name) per item, choosing distinct ones. A suggestion is honored only when it exists in the live
+    catalog: an invalid name (a typo) would fetch nothing and fall to a generic placeholder circle,
+    so instead we **drop it and content-match** via `icon_for`, logging `invalid_icon` so the render
+    report can surface it. Valid suggestions are reserved first so content-matching fills around
+    them; `icon_for` never repeats an icon already on this slide."""
+    valid = _catalog_names()
     for it in items:
-        if it.get("icon"):
-            _USED_ICONS.add(it["icon"])
+        sug = it.get("icon")
+        if not sug:
+            continue
+        if valid is not None and _icon_slug(sug) not in valid:
+            print(f"[html] invalid_icon: {sug!r} not in the Material Symbols catalog — "
+                  f"content-matching instead", file=sys.stderr)
+            it["icon"] = ""                 # drop the bad suggestion; content-matched below
+        else:
+            _USED_ICONS.add(sug)
     for it in items:
         it["icon"] = it.get("icon") or icon_for(it.get("label", ""), it.get("body", ""))
 

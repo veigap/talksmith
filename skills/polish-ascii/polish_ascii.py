@@ -46,6 +46,11 @@ CANONICAL_ASCII_TAG = "ascii"
 LEGACY_ASCII_LANG_TAGS = {"", "text", "diagram"}
 BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓⇒⇐⇑⇓]|->|==>|<-|=>")
 NOTE_OPEN = "<!-- ascii-note:"
+# Per-block render override: `<!-- ascii-render: force -->` makes a block render-driving even on a
+# slide that also carries an image ref (the default would mark it documentation-only); `<!-- ascii-
+# render: documentation-only -->` suppresses a block that would otherwise render. Binds to the fence
+# it sits immediately above.
+_RENDER_HINT = re.compile(r"<!--\s*ascii-render:\s*(force|documentation-only|doc-only)\s*-->", re.IGNORECASE)
 
 
 def is_ascii_payload(payload: str) -> bool:
@@ -114,6 +119,22 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                     if accept:
                         ascii_n += 1
                         slide_id = f"s{section}-{slide}-{ascii_n}"
+                        # Render-override hint on the line(s) immediately above the fence (1 blank
+                        # line of tolerance) binds to THIS block — same proximity idea as ascii-note.
+                        render_hint = None
+                        p = fence_open_line - 2  # 0-based index of the line just above the fence
+                        blanks_before = 0
+                        while p >= 0:
+                            if lines[p].strip() == "":
+                                blanks_before += 1
+                                if blanks_before > 1:
+                                    break
+                                p -= 1
+                                continue
+                            hm = _RENDER_HINT.search(lines[p])
+                            if hm:
+                                render_hint = hm.group(1).lower().replace("doc-only", "documentation-only")
+                            break
                         # Look for ascii-note right after, with up to 1 blank line tolerance
                         note = None
                         j = i + 1
@@ -144,6 +165,7 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                             "note": note,
                             "render": None,
                             "detection_mode": detection_mode,
+                            "render_hint": render_hint,   # force | documentation-only | None
                             "documentation_only": False,  # filled by _annotate_documentation_only below
                         })
                 in_fence = False
@@ -211,6 +233,14 @@ def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]],
         return any(lo <= line_no <= hi for lo, hi in ignored_ranges)
 
     for b in blocks:
+        # An explicit render override wins over the image-ref heuristic (both directions).
+        hint = b.get("render_hint")
+        if hint == "force":
+            b["documentation_only"] = False
+            continue
+        if hint == "documentation-only":
+            b["documentation_only"] = True
+            continue
         ascii_start = b["ascii"]["start_line"]
         ascii_end = b["ascii"]["end_line"]
         s_start, s_end = slide_range(ascii_start)
@@ -256,6 +286,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
                 flags.append("legacy")
             if b.get("documentation_only"):
                 flags.append("doc-only")
+            if b.get("render_hint"):
+                flags.append(f"hint:{b['render_hint']}")
             tag_part = f"  [{', '.join(flags)}]" if flags else ""
             print(f"  {b['slide_id']:<10} lines {a['start_line']}–{a['end_line']} ({ascii_lines} ASCII lines)   {note_part}{tag_part}")
     else:
@@ -588,10 +620,26 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         print(f"error: plan's final.md not found: {final_path} — the plan is stale or from a different "
               f"session/mount; re-run `scan` in this session", file=sys.stderr)
         return 2
-    images_dir = (final_path.parent / "images").resolve()
+    talk_root = final_path.parent
+    images_dir = (talk_root / "images").resolve()
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     repo_root = Path(args.repo_root).resolve() if args.repo_root else None
+
+    # Path anchoring (mount-portability). The absolute paths below are captured in *this* session's
+    # filesystem view; a render worker in a different mount (VM vs host) can't use them. So we also
+    # emit Talk-root-relative paths (`images/<name>`) plus `talk_rel` (the Talk dir relative to
+    # repo_root), letting the worker re-anchor on the repo_root *it* was dispatched with. If the
+    # Talk isn't under repo_root, that mapping is impossible — warn loudly rather than emit a
+    # relative path that resolves nowhere.
+    talk_rel: str | None = None
+    if repo_root:
+        try:
+            talk_rel = str(talk_root.resolve().relative_to(repo_root))
+        except ValueError:
+            print(f"warning: --repo-root {repo_root} is not an ancestor of the Talk at "
+                  f"{talk_root.resolve()} — emitting absolute paths only; a differently-mounted "
+                  f"worker may not resolve them", file=sys.stderr)
 
     # Pre-flight: every renderable block needs its `.ascii` sidecar (written by `extract`). Check them
     # all before writing any args, so a missing sidecar is a loud precondition error — never a silent
@@ -632,6 +680,11 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         payload: dict[str, Any] = {
             "ascii_file": str(images_dir / f"{stem}.ascii"),
             "output_path": str(images_dir / basename),
+            # Talk-root-relative twins (mount-portable — see anchoring note above). `talk_rel` is the
+            # Talk dir relative to repo_root, so the worker resolves <its repo_root>/<talk_rel>/<*_rel>.
+            "ascii_file_rel": f"images/{stem}.ascii",
+            "output_path_rel": f"images/{basename}",
+            "talk_rel": talk_rel,
             "slide_title": ctx.get("slide_title", ""),
             "slide_content_prose": ctx.get("slide_content_prose", ""),
             "speaker_notes": ctx.get("speaker_notes", ""),
@@ -687,6 +740,80 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
         print(f"  ⚠  {len(missing)} render(s) produced no SVG — they will re-render next pass:", file=sys.stderr)
         for sid, p in missing:
             print(f"     {sid} → {p}", file=sys.stderr)
+    return 0
+
+
+# ── gc: prune orphaned generated diagram triplets ───────────────────────────
+_IMG_REF_RE = re.compile(r"!\[[^\]]*\]\(\s*(?:\./)?images/([^)\s]+?)\s*\)")
+_IMG_EXT_RE = re.compile(r"\.(svg|png|jpe?g|gif|webp|avif)$", re.IGNORECASE)
+
+
+def _referenced_stems(final_text: str) -> set[str]:
+    """Every `images/<name>` basename referenced by final.md, extension stripped → stem."""
+    out: set[str] = set()
+    for m in _IMG_REF_RE.finditer(final_text):
+        name = m.group(1).rsplit("/", 1)[-1]
+        out.add(_IMG_EXT_RE.sub("", name))
+    return out
+
+
+def _generated_diagram_stems(images_dir: Path) -> set[str]:
+    """Stems that are *generated diagram* assets — proven by a digest-stamped `.svg` or a `.ascii`
+    sidecar. A bare `.png` is NEVER treated as generated, so presenter-owned images are untouchable."""
+    stems: set[str] = set()
+    for p in images_dir.glob("*.ascii"):
+        stems.add(p.stem)
+    for p in images_dir.glob("*.svg"):
+        if read_svg_digest(p) is not None:      # carries talksmith-ascii-sha256 → we drew it
+            stems.add(p.stem)
+    return stems
+
+
+def cmd_gc(args: argparse.Namespace) -> int:
+    """List (and, with --apply, delete) generated diagram triplets no longer referenced by final.md.
+
+    Non-destructive by default. Only assets *proven generated* (stamped `.svg` or `.ascii` sidecar)
+    are ever considered — orphaned `<stem>.svg` / `<stem>.png` / `<stem>.ascii` plus the
+    `.critique/<stem>.png` companion. Presenter-owned images (a plain screenshot with no sidecar or
+    stamp) are never candidates, so a missing reference can never delete a source asset.
+    """
+    final_path = Path(args.final).resolve()
+    if not final_path.exists():
+        print(f"error: final.md not found: {final_path}", file=sys.stderr)
+        return 2
+    images_dir = (final_path.parent / "images")
+    if not images_dir.is_dir():
+        print("gc: no images/ directory — nothing to collect")
+        return 0
+
+    referenced = _referenced_stems(final_path.read_text())
+    orphans = sorted(s for s in _generated_diagram_stems(images_dir) if s not in referenced)
+
+    targets: list[Path] = []
+    for s in orphans:
+        for cand in (images_dir / f"{s}.svg", images_dir / f"{s}.png",
+                     images_dir / f"{s}.ascii", images_dir / ".critique" / f"{s}.png"):
+            if cand.exists():
+                targets.append(cand)
+
+    if not orphans:
+        print("gc: no orphaned generated diagram assets — images/ is clean")
+        return 0
+
+    print(f"gc: {len(orphans)} orphaned generated diagram(s), {len(targets)} file(s):")
+    for f in targets:
+        print(f"  {f.relative_to(final_path.parent)}")
+    if args.apply:
+        removed = 0
+        for f in targets:
+            try:
+                f.unlink()
+                removed += 1
+            except OSError as e:
+                print(f"  ⚠  could not remove {f}: {e}", file=sys.stderr)
+        print(f"gc: removed {removed} file(s)")
+    else:
+        print("gc: dry-run — pass --apply to delete")
     return 0
 
 
@@ -756,6 +883,12 @@ def main(argv: list[str]) -> int:
     p_apply = sub.add_parser("apply", help="extract + cleanup in one pass (convenience)")
     _add_plan_args(p_apply)
     p_apply.set_defaults(func=cmd_apply)
+
+    p_gc = sub.add_parser("gc", help="list (or --apply delete) generated diagram triplets (.svg/.png/.ascii + .critique png) no longer referenced by final.md; presenter-owned images are never touched")
+    p_gc.add_argument("--final", required=True, help="path to the Talk's final.md")
+    p_gc.add_argument("--apply", action="store_true", help="delete the orphaned files (default: dry-run list only)")
+    p_gc.add_argument("--dry-run", action="store_true", help="explicit no-op; gc is dry by default (kept for symmetry)")
+    p_gc.set_defaults(func=cmd_gc)
 
     args = parser.parse_args(argv)
     return args.func(args)

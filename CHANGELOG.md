@@ -13,6 +13,22 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.68.0] — 2026-07-17
+
+Bug-triage batch from the `claude-cowork` production run — correctness fixes and new guardrails across Polish and Render.
+
+### Added
+- **Two render preflights that catch content before it silently vanishes** ([`md-to-deck`](skills/md-to-deck/audits/)). `field_coverage.py` flags model fields the chosen template will ignore (an image on a `divider`, a second image on `content-image`) — a misclassification tell. `image_coverage.py` compares every `![](…)` in `final.md` against the model and lists any dropped image ref (a slide would render with no image), ignoring `ascii-source` echoes, `# Cut material` / `# Open questions`, and refs waived with `<!-- deck-omit: <path> -->`. Both are advisory (exit 0 + a stderr list; `--strict` to fail) and run in the CHECK step.
+- **`gc` subcommand on both Polish skills** — `polish-ascii gc` and `polish-images gc` prune orphaned generated triplets left after a re-architecture/renumber (`.svg`/`.png`/`.ascii` + `.critique` png; `.png`/`.imgprompt`/`.imgstamp`). Non-destructive by default (`--apply` to delete), and a stem is a candidate **only when proven generated** (a stamped `.svg` / `.ascii` sidecar, or an `.imgprompt` / `.imgstamp`), so presenter-owned images are never deletion targets.
+- **Deterministic `Presenter feedback` stripper** ([`feedback-cycle/strip_feedback.py`](skills/feedback-cycle/strip_feedback.py)) replaces the hand-strip at Step 6 (d). It removes all three authored forms and **guarantees a blank line before every `---` slide boundary**, so a strip can never leave `text\n---` for Markdown to misread as a setext-H2 heading (which had silently fused slides). Covered by a test.
+- **Explicit ASCII render-override hints** — `<!-- ascii-render: force -->` renders a block to SVG even on a slide that also has an image (the "banner + screenshot" case), and `<!-- ascii-render: documentation-only -->` suppresses one that would otherwise render. With no hint, the image-ref default is unchanged; the scan surfaces the hint for auditing.
+- **Mount-portable render args** — `prepare-render-args` (both Polish skills) now emits Talk-relative path twins (`images/<name>`) plus `talk_rel` (the Talk dir relative to `repo_root`) alongside the absolute paths, and warns loudly when the Talk isn't under `repo_root`. `ascii-to-svg` / `generate-image` prefer the twins, re-anchoring on the `repo_root` they were dispatched with, so a render worker in a different mount (VM vs host) resolves paths correctly. The absolute paths stay as a same-session fast path.
+- **Diagram-style rules promoted** ([`config/diagram-style.md`](config/diagram-style.md)) from recurring visual defects: `markerUnits="userSpaceOnUse"` for arrowheads, arrow-shaft termination on the destination edge, no inline `<tspan>` under centered text (cairosvg overprint), `xml:space="preserve"` for leading whitespace, a broadened no-Unicode-symbol-glyphs rule (checks/crosses/bullets, not just arrows), and no decorative XML comments (`--` is illegal inside a comment and rejected as malformed). A regression test asserts `validate_svg` rejects `--` comments.
+
+### Fixed
+- **`content+cards+image` silently dropped its `lead`** — the schema declared `lead` optional but the template never rendered it. It now renders above the cards (regression-guarded in the style fixture).
+- **Invalid suggested icons fell to a generic placeholder circle** instead of a real icon. A per-item `icon` suggestion is now validated against the live Material Symbols catalog; an unknown name is dropped, content-matched via `icon_for`, and logged as `invalid_icon`.
+
 ## [0.67.1] — 2026-07-17
 
 ### Changed
