@@ -1,8 +1,7 @@
 ---
 name: desrobotizar
-description: Elimina patrones de escritura de IA en prosa en español. Usar al redactar, editar o revisar texto para quitar las marcas predecibles que delatan a un modelo. Incluye modo aprendizaje para extraer el estilo propio del usuario desde textos, archivos o links que él provea.
+description: Elimina patrones de escritura de IA en prosa en español. Usar solo cuando el usuario invoque explicitamente desrobotizar o pida aplicar esta skill por nombre. No activar por redactar, editar o revisar texto en español sin esa solicitud explicita.
 metadata:
-  trigger: Redactar prosa en español, editar borradores, revisar contenido en busca de patrones de IA, aprender el estilo de escritura del usuario desde muestras
   inspired-by: stop-slop de Hardik Pandya (https://hvpandya.com)
 ---
 

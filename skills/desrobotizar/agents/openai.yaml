@@ -1,0 +1,6 @@
+interface:
+  display_name: "Desrobotizar"
+  short_description: "Quita patrones de IA de prosa en español"
+  default_prompt: "Aplica desrobotizar al texto que te proporciono."
+policy:
+  allow_implicit_invocation: false
