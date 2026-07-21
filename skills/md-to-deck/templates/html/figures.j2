@@ -1,6 +1,6 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
-<div class="figs">
+<div class="figs" style="grid-template-columns:repeat({{ s.figures|length }},1fr)">
 {% for f in s.figures %}
 <div class="figc">{{ embed_img(f.image) }}<h4>{{ f.label }}</h4><p>{{ f.body }}</p></div>
 {% endfor %}
