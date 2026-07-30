@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.68.4] — 2026-07-30
+
+### Fixed
+
+- **Label separators stranded in the model.** A source line like `- **Problemas bien definidos**:
+  cuando el objetivo está claro` was split at the `**` rather than at the separator, so the model
+  carried `body: ": cuando el objetivo…"` and the slide showed a dangling `:` under its heading.
+  (The mirror-image slip left it on the label instead.) The fill contract now names both wrong
+  outputs explicitly and states the rule: the separator is consumed, the body's first letter is
+  capitalized once it's gone, a colon *inside* either side is content and stays, and the rule
+  covers every `{label, body}` field rather than the one template where it was first noticed.
+
 ## [0.68.3] — 2026-07-30
 
 ### Fixed

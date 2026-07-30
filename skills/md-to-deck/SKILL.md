@@ -55,7 +55,9 @@ the ordered section list) and one object per slide. For **each** slide you:
 - **decompose** the body into exactly that template's **required fields** (e.g. `stat` →
   `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`; `comparison` →
   `columns:[{header,cells}]`) — splitting a metric from its caption, grouping symmetric blocks into
-  columns, honouring the universal invariant (labeled sets → cards, never bullets);
+  columns, honouring the universal invariant (labeled sets → cards, never bullets), and **consuming
+  the separator** when splitting `- **Label**: body` (it belongs to neither side — see the schema's
+  *colon lead-ins* rule);
 - lift every `### Speaker notes` block **verbatim** into `notes` (never onto the slide face), and
   set `section` to the section the slide belongs to.
 The judgment is the LLM's, against a fixed field contract. Write to

@@ -198,16 +198,39 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   **Never rewrite the extension.** A `.svg` ref stays `.svg`: the HTML render inlines it as vector
   markup, and swapping it for the `.png` companion silently downgrades a crisp diagram to a raster.
   (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
-  not a rule about filling the model.)
-  on `content-image`, add `"layout":"image-top"` when the text is very short. A fenced code block
-  fills `code-example.code` (+ `explanation`).
-- **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a
-  colon), split it into `{label, body}` yourself — the renderer bolds `label` and never parses the
-  colon. This applies to `content-image` `facts` and `highlights` (both accept `{label, body}`), and
-  matches how `cards`/`rows`/`steps` already carry an explicit `label`. **Leave the colon behind:**
-  it was only the separator, and the layout replaces it — the label lands in its own heading, or
-  the renderer emits its own `: `. (The HTML render strips a trailing colon anyway, so a stray one
-  is cosmetic rather than broken; the `.pptx` render doesn't.)
+  not a rule about filling the model.) On `content-image`, add `"layout":"image-top"` when the text
+  is very short. A fenced code block fills `code-example.code` (+ `explanation`).
+- **Labeled lines (colon lead-ins) — the separator is CONSUMED, never carried.** When a line reads
+  `Label: rest` or `- **Label**: rest` (a short lead-in before a separator), split it into
+  `{label, body}` yourself. The renderer never parses the separator: it either puts `label` in its
+  own heading or emits its own `: `. So whichever side you leave it on, it renders twice or dangles.
+
+  Split at the **separator**, not at the `**`. These are the two ways to get it wrong — both were
+  shipped in real decks:
+
+  ```jsonc
+  // source line:  - **Problemas bien definidos**: cuando el objetivo y los datos están claros.
+  { "label": "Problemas bien definidos", "body": ": cuando el objetivo y los datos están claros." }  // ✗ stranded on the body
+  { "label": "Problemas bien definidos:", "body": "cuando el objetivo y los datos están claros." }   // ✗ stranded on the label
+  { "label": "Problemas bien definidos", "body": "Cuando el objetivo y los datos están claros." }    // ✓
+  ```
+
+  The rule, precisely:
+  - `label` never **ends** with `:` `：` `—` `–` `-`; `body` never **begins** with one.
+  - Separator forms all behave the same: `**Label**: body`, `**Label:** body`, `**Label** — body`,
+    `Label: body`.
+  - **Capitalize the body's first letter** once the separator is gone (`cuando` → `Cuando`,
+    `épocas` → `Épocas`, `¿cuál` → `¿Cuál` — the letter, not the opening punctuation). A body that
+    was already a standalone sentence keeps the casing it had.
+  - **Only the head of `body` and the tail of `label`.** A colon *inside* either is content and
+    stays: `body: "el ratio recomendado: 3 a 1"`, `label: "Ratio 3:1"`. A body opening with a minus
+    sign (`-5% de margen`) is a value, not a separator.
+  - A line with **no** separator (`- **Label** body`) splits the same way and the body keeps its
+    original first letter — there is nothing to consume.
+
+  This applies to **every** field that carries `{label, body}`, not just the one you are filling:
+  `cards`, `rows`, `steps`, `figures`, `milestones`, `items`, `facts`, `highlights`, `point`,
+  `callout`.
 - **Highlights over dropping.** If a line is a comment or the key takeaway (often what a diagram
   builds to, e.g. "PII es un subconjunto de Personal Data"), put it in the slide's `highlights`
   rather than omitting it — content is never dropped (see the top-level rule).
