@@ -200,7 +200,10 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 - **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a
   colon), split it into `{label, body}` yourself — the renderer bolds `label` and never parses the
   colon. This applies to `content-image` `facts` and `highlights` (both accept `{label, body}`), and
-  matches how `cards`/`rows`/`steps` already carry an explicit `label`.
+  matches how `cards`/`rows`/`steps` already carry an explicit `label`. **Leave the colon behind:**
+  it was only the separator, and the layout replaces it — the label lands in its own heading, or
+  the renderer emits its own `: `. (The HTML render strips a trailing colon anyway, so a stray one
+  is cosmetic rather than broken; the `.pptx` render doesn't.)
 - **Highlights over dropping.** If a line is a comment or the key takeaway (often what a diagram
   builds to, e.g. "PII es un subconjunto de Personal Data"), put it in the slide's `highlights`
   rather than omitting it — content is never dropped (see the top-level rule).

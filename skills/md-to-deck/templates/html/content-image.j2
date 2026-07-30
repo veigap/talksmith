@@ -2,7 +2,7 @@
 {% macro citext(s) %}
 <div class="citext">
 {{ m.lead(s) -}}
-{% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
+{% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label | nocolon }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
 </div>
 {% endmacro %}
 {% call m.stage(s) %}

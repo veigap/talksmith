@@ -2,6 +2,6 @@
 {% call m.stage(s) %}
 {{ m.lead(s) -}}
 <div class="cci"><div class="ccicards">
-{% for c in s.cards %}<div class="ccard sm{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label }}</h3><p>{{ c.body }}</p></div>{% endfor %}
+{% for c in s.cards %}<div class="ccard sm{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3><p>{{ c.body }}</p></div>{% endfor %}
 </div>{{ embed_img(s.image) }}</div>
 {% endcall %}

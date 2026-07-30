@@ -2,7 +2,7 @@
 {% call m.stage(s) %}
 <div class="figs">
 {% for f in s.figures %}
-<div class="figc">{{ embed_img(f.image) }}<h4>{{ f.label }}</h4><p>{{ f.body }}</p></div>
+<div class="figc">{{ embed_img(f.image) }}<h4>{{ f.label | nocolon }}</h4><p>{{ f.body }}</p></div>
 {% endfor %}
 </div>
 {% endcall %}

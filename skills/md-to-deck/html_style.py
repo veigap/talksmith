@@ -248,6 +248,7 @@ _ENV.globals.update(
     correct_index=lambda options, correct: _correct_index(options, correct),
     lines=lambda code: code.splitlines() if isinstance(code, str) else (code or []),
 )
+_ENV.filters["nocolon"] = lambda text: _nocolon(text)
 
 # catalog template id → template file
 _TMPL = {
@@ -383,6 +384,16 @@ def _correct_index(options, correct) -> int:
         else:
             ci = next((k for k, o in enumerate(opts) if str(o).strip() == correct.strip()), -1)
     return ci if 0 <= ci < len(opts) else -1
+
+
+def _nocolon(text) -> str:
+    """Drop a label's trailing colon. The fill splits `Label: rest` into `{label, body}` and is
+    told to leave the colon behind, but it often carries it into `label` anyway. Wherever the
+    layout *already* separates the two — a label in its own heading, or a template that emits its
+    own `: ` — that colon renders as a dangling `Label:` or a doubled `Label::`. Templates apply
+    this filter at those sites; the inline `<b>label</b> body` callouts don't, since there the
+    colon is the only separator there is."""
+    return str(text or "").rstrip().rstrip(":：：").rstrip()
 
 
 def _labeled(items) -> list:

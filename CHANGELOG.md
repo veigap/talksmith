@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.68.2] — 2026-07-30
+
+### Fixed
+
+- **Dangling colons on card and row labels.** The fill splits a `Label: rest` source line into
+  `{label, body}` and is told to drop the separator, but it often carried it into `label` — so a
+  card heading read `Leave feedback:` with nothing after it, and the inline sites that emit their
+  own separator (`highlights`, `content-image` facts, `process` steps) read `Leave feedback::`.
+  The HTML render now strips a label's trailing colon at the eleven sites where the layout already
+  separates label from body. The `single-point`/`callout` panels are deliberately untouched: they
+  render `**label** body` inline with no separator of their own, so a colon there is doing work.
+
 ## [0.68.1] — 2026-07-30
 
 ### Changed

@@ -11,7 +11,7 @@
 <div class="stage{{ (' aside-' + (s.aside.side or 'right')) if s.aside else '' }}">
 {% if s.aside %}<div class="sasi">{{ embed_img(s.aside.image) }}</div>{% endif %}
 <div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
-{% if s.highlights %}<div class="highlights{{ frag(s) }}">{% for h in s.highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
+{% if s.highlights %}<div class="highlights{{ frag(s) }}">{% for h in s.highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label | nocolon }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
 </div></div></div>
 {% endmacro %}
 {# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
