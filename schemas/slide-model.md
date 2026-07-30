@@ -131,8 +131,8 @@ when the content warrants. Field names are the contract — the renderers read e
 | `timeline` | `title`, `milestones:[{label,body}]` | `lead`, per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
 | `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown at right, never cropped), `answer_label` (label on the answer panel; default "Respuesta") |
-| `single-point` | `title`, `point:{label,body}` | — |
-| `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title` |
+| `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched) |
+| `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched) |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |
 | `content-text` | `title`, `big`, `panels:[str]` | — *(last-resort prose; flag to restructure)* |
 | `closing-hero` | `title` | `body` |
@@ -238,7 +238,10 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `content+cards+image`, `closing-cta`, `callout`, `single-point`) show one icon per item. The
   fill **may suggest** a per-item `icon` (a Material Symbols name), choosing a **distinct** one per
   item; when none is given the renderer content-matches — and never repeats an icon within a slide
-  either way. Because an icon stands in for the emoji, **strip leading/inline emoji from the labels
+  either way. This includes the single-item templates: `single-point` takes `point.icon` and
+  `callout` takes `callout.icon`, both optional in exactly the same way. A suggestion the renderer
+  cannot resolve falls back to a real glyph and warns; it is never dropped and never becomes a
+  bare shape. Because an icon stands in for the emoji, **strip leading/inline emoji from the labels
   and bodies of those slides** — keeping both is redundant. (Emoji on a non-icon template, e.g. a
   `statement`, may stay.)
 

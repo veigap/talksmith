@@ -33,6 +33,11 @@ import urllib.request
 from pathlib import Path
 
 CDN = "https://cdn.jsdelivr.net/npm/@material-symbols/svg-{weight}/{style}/{name}.svg"
+# Icons bundled with the plugin (Apache-2.0, see icons/NOTICE) — the offline floor. A deck must
+# render real glyphs with no network and an empty cache, so a curated set covering the seed map,
+# the neutral fallbacks and the common concepts ships in the repo. Consulted only *after* the
+# cache and the network, so an online render still picks any icon in the full catalog.
+BUNDLED_DIR = Path(__file__).resolve().parent / "icons"
 # The full Material Symbols catalog metadata (icon name + English search tags + categories +
 # popularity) — the source of truth for content-matched icon selection, instead of a hardcoded map.
 CATALOG_URL = "https://fonts.google.com/metadata/icons?incomplete=true"
@@ -94,9 +99,27 @@ def _recolor(svg: str, color: str) -> str:
     return re.sub(r"<svg\b", f'<svg fill="{hexv}"', svg, count=1)
 
 
+def bundled_icon(name: str, style: str = "outlined") -> Path | None:
+    """Return the plugin-bundled SVG for `name`, or None if this icon isn't in the shipped set.
+
+    No network, no cache, no side effects — the offline floor for `fetch_icon`, and the reason a
+    deck built with no connectivity still shows real glyphs instead of a placeholder.
+    """
+    slug = _slug(name)
+    if not slug:
+        return None
+    p = BUNDLED_DIR / f"{slug}.{style}.svg"
+    return p if p.is_file() and p.stat().st_size > 0 else None
+
+
 def fetch_icon(name: str, cache_dir, weight: int = 400, style: str = "outlined",
                color: str | None = None, timeout: int = 10) -> Path | None:
-    """Return a local path to the named Material Symbols icon (cached), or None on failure."""
+    """Return a local path to the named Material Symbols icon, or None if it can't be resolved.
+
+    Resolution order: **cache → network → bundled**. The bundled set is last so that an online
+    render still gets any icon in the full catalog; it only catches the offline / fetch-failure
+    case, where the alternative is no icon at all.
+    """
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     slug = _slug(name)
@@ -110,13 +133,11 @@ def fetch_icon(name: str, cache_dir, weight: int = 400, style: str = "outlined",
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "talksmith-icon-fetch"})
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            if r.status != 200:
-                return None
-            svg = r.read().decode("utf-8")
+            svg = r.read().decode("utf-8") if r.status == 200 else ""
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-        return None
+        svg = ""
     if "<svg" not in svg:
-        return None
+        return bundled_icon(slug, style)        # offline, or a name the CDN doesn't carry
     if color:
         svg = _recolor(svg, color)
     dest.write_text(svg, encoding="utf-8")

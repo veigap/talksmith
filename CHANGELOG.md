@@ -13,6 +13,33 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.69.0] — 2026-07-30
+
+### Added
+
+- **A bundled icon set, so HTML decks build offline.** 75 Material Symbols (outlined, Apache-2.0,
+  `skills/md-to-deck/icons/`) covering the offline concept map, the neutral fallback chain and the
+  concepts most decks reach for. Resolution order is unchanged — cache, then CDN, then these — so
+  an online render still picks from the full catalog; the bundle only catches the case that used
+  to fail. Icons still ship inlined, so the deck remains a single self-contained file.
+
+### Fixed
+
+- **Icons degraded to a meaningless bullet with no network.** `icon_for()` chose a semantic icon
+  name, but the glyph itself came from the CDN — so with no connection and a cold cache every icon
+  on every slide rendered as a plain disc. Silently: no warning, and a slide about metacognition
+  looked identical to one about payments. There is no longer any shape fallback; an icon that
+  can't be resolved renders a real generic glyph and warns, naming what was asked for and what was
+  substituted. Offline concept matching also learned cognition, creativity, adaptation, judgment
+  and human capital (→ `psychology` and neighbours) instead of dropping them on the default.
+- **Icon names that 404 even when online.** `insights`, `message`, `business`, `emoji_emotions`
+  and others are listed in the Google Fonts catalog but absent from the CDN package the renderer
+  pulls from — and `insights` was in the offline seed map, so metrics slides were rendering a
+  placeholder whether or not there was a connection. Known cases now map to an equivalent that
+  exists; anything left over hits the warning path rather than failing silently.
+- `circle` and `adjust` are gone from the neutral fallback chain: both draw a plain disc, which is
+  the exact bullet the chain exists to avoid.
+
 ## [0.68.4] — 2026-07-30
 
 ### Fixed

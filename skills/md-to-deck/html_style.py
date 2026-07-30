@@ -25,14 +25,18 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
-from icon_fetch import fetch_icon, fetch_catalog, _slug as _icon_slug  # noqa: E402
+from icon_fetch import (fetch_icon, fetch_catalog, bundled_icon,  # noqa: E402
+                        _slug as _icon_slug)
 
 ACCENT = "DA1B2E"
 _DEFAULT_ICON = "bolt"
 # Neutral, distinct icons used (in order) when a label content-matches nothing — so unmatched
 # items on a slide still get *different* icons instead of all falling to the same default.
+# All must be in the bundled set (see `icons/`), or an offline deck loses them. `circle` and
+# `adjust` used to be here and were dropped on purpose: both draw a plain disc, which is exactly
+# the meaningless bullet this fallback chain exists to avoid.
 _FALLBACK_ICONS = ["check_circle", "chevron_right", "star", "flag", "label",
-                   "done", "arrow_forward", "adjust", "circle", "info"]
+                   "done", "arrow_forward", "info"]
 
 # The icon *choice* comes from the live Material Symbols catalog (fetch_catalog) — not a hardcoded
 # icon map. This is only a thin **Spanish → English** bridge so a Spanish concept word can match
@@ -70,15 +74,32 @@ _ES_EN = {
     "perimetro": "security", "frontera": "location", "vocabulario": "menu book", "concepto": "lightbulb",
     "arquitectura": "account tree", "fundamento": "foundation",
 }
-# Offline fallback only (catalog unavailable): a minimal regex seed so icons still resolve.
+# Offline path only (catalog unavailable): a regex seed so icons still resolve to something
+# *semantic* rather than to the neutral fallbacks. Every target here must exist in the bundled
+# set — an offline seed pointing at an unbundled name resolves to the generic icon, defeating
+# the point. Order matters: the first pattern that matches wins, so the specific ones lead.
 _SEED = [
+    # cognition / judgment — a talk about thinking, learning or deciding is not a generic bullet
+    (r"cognici|cognitiv|metacogni|pensa|piensa|mental|aprendiz|razona|comprensi|thinking|mind",
+     "psychology"),
+    (r"creativ|imagina|innova|origina|ingenio", "auto_awesome"),
+    (r"juicio|criterio|discernim|etica|ética|judgment|balance", "balance"),
+    (r"adapta|flexib|cambio|evoluci|resilien|ajustar", "autorenew"),
+    (r"capital humano|talento|habilidad|competenc|destreza|skill", "psychology"),
+    (r"colabora|acuerdo|alianza|negocia", "handshake"),
+    # domain concepts
     (r"segur|privac|riesgo|amenaza|protec", "shield"), (r"cifr|lock|credencial|secreto|clave", "lock"),
     (r"cost|precio|pago|presupuest|money", "payments"), (r"tiempo|latenc|schedule", "schedule"),
     (r"dato|data|base", "database"), (r"usuari|equipo|gente|persona|group", "group"),
     (r"cod|code|api|program", "code"), (r"idea|tip|analog|insight", "lightbulb"),
-    (r"metric|result|número|analytic", "insights"), (r"conect|integr|hub|red|network", "hub"),
+    (r"metric|result|número|numero|analytic|medici", "monitoring"),
+    (r"conect|integr|hub|red|network", "hub"),
     (r"config|ajuste|setting", "settings"), (r"valid|verif|check|cumpl", "verified"),
-    (r"agent|automat|acción|ejecut", "bolt"),
+    (r"agent|automat|acción|accion|ejecut", "bolt"),
+    (r"pregunta|duda|consulta|qué es|que es", "help"),
+    (r"aprend|curso|clase|ense|educa|estudi", "school"),
+    (r"observ|monitor|visib|transparen", "visibility"),
+    (r"regla|norma|polít|polit|gobern|ley", "policy"),
 ]
 
 _STOP = {"de", "la", "el", "los", "las", "un", "una", "y", "o", "que", "en", "con", "para", "por",
@@ -167,14 +188,64 @@ def icon_for(label: str, body: str = "") -> str:
     return _DEFAULT_ICON
 
 
-def _svg(name: str, cache):
+# Names the Google Fonts catalog lists but the CDN package does not carry. `icon_for` picks from
+# the catalog, so these 404 even with a working connection and then miss the bundled set too —
+# `insights` was in `_SEED`, which made every metrics slide a placeholder, online or off. Mapped
+# to the nearest icon that actually exists.
+#
+# This map covers the cases observed so far; the two Google sources disagree in ways we can't
+# enumerate from here, so the generic-icon fallback below is what catches the tail. A warning
+# naming an unresolved icon is the signal to add it here.
+_ICON_ALIAS = {
+    "insights": "monitoring", "analytics": "monitoring", "message": "chat",
+    "business": "business_center", "location": "location_on", "bug": "bug_report",
+    "place": "location_on", "tip": "emoji_objects", "people": "groups", "team": "groups",
+    "emoji_emotions": "mood", "emoji_people": "groups", "sentiment": "sentiment_satisfied",
+    "trending": "trending_up",
+}
+# Last resort when a name resolves to nothing at all: a real, meaningful glyph — never a shape.
+_GENERIC_ICON = "info"
+_WARNED_ICONS: set[str] = set()             # warn once per name per build, not once per use
+
+
+def _icon_path(name: str, cache):
+    """Resolve an icon name to a local SVG: as asked, then via alias, then the generic icon.
+    Returns `(path, used_name)`. Emits one stderr warning per name that had to be substituted."""
+    if not name or not isinstance(name, str):   # unresolved suggestion — still draw a real glyph
+        return (fetch_icon(_GENERIC_ICON, cache, color=ACCENT)
+                or bundled_icon(_GENERIC_ICON)), _GENERIC_ICON
     p = fetch_icon(name, cache, color=ACCENT)
-    if not p:
-        return '<svg viewBox="0 -960 960 960"><circle cx="480" cy="-480" r="360" fill="currentColor"/></svg>'
+    if p:
+        return p, name
+    alias = _ICON_ALIAS.get(_icon_slug(name))
+    if alias:
+        p = fetch_icon(alias, cache, color=ACCENT)
+        if p:
+            return p, alias
+    p = fetch_icon(_GENERIC_ICON, cache, color=ACCENT) or bundled_icon(_GENERIC_ICON)
+    if name not in _WARNED_ICONS:
+        _WARNED_ICONS.add(name)
+        print(f"[icons] '{name}' could not be resolved (not in the cache, not on the CDN, not in "
+              f"the bundled set) — rendering '{_GENERIC_ICON}' instead. To keep the concept, add "
+              f"an alias for it in _ICON_ALIAS or bundle it under skills/md-to-deck/icons/.",
+              file=sys.stderr)
+    return p, _GENERIC_ICON
+
+
+def _svg(name: str, cache):
+    """Inline an icon as `currentColor` markup. There is deliberately **no shape fallback**: a
+    bare `<circle>` reads as a bullet, so a deck that promised a semantic icon silently delivered
+    decoration. Every path here ends at a real glyph — the bundled set guarantees one exists."""
+    p, _used = _icon_path(name, cache)
+    if not p:                                  # bundled set missing/corrupt — nothing to draw
+        return ""
     s = p.read_text()
     # inline as currentColor so CSS drives the tint (accent token via .ic, white inside .chip)
-    # and the selectable deck styles recolor every icon without re-fetching
+    # and the selectable deck styles recolor every icon without re-fetching. Bundled icons carry
+    # no fill at all, so set one on the root rather than only rewriting the fetched accent.
     s = s.replace(f'fill="#{ACCENT}"', 'fill="currentColor"', 1)
+    if 'fill="currentColor"' not in s:
+        s = re.sub(r"<svg\b", '<svg fill="currentColor"', s, count=1)
     s = re.sub(r'\swidth="\d+"', '', s, 1)
     s = re.sub(r'\sheight="\d+"', '', s, 1)
     return s

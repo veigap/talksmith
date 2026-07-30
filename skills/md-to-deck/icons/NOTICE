@@ -1,0 +1,21 @@
+Material Symbols
+Copyright 2022 Google LLC
+Licensed under the Apache License, Version 2.0
+https://www.apache.org/licenses/LICENSE-2.0
+
+The .svg files in this directory are unmodified Material Symbols (outlined, weight 400),
+retrieved from https://cdn.jsdelivr.net/npm/@material-symbols/svg-400/outlined/.
+
+Why they are vendored
+---------------------
+Talksmith fetches icons by name at render time, so a deck pulls only the handful it uses.
+That works until there is no network and no warm cache — and then a deck that promised
+semantic icons rendered a placeholder shape instead. This curated subset is the offline
+floor: it covers the offline seed map, the neutral fallback chain, and the concepts that
+show up in most decks, so `html-strict` always produces real glyphs.
+
+It is deliberately a subset, not the library. An online render still resolves any icon in
+the full Material Symbols catalog; these files are consulted only after the cache and the
+network have both come up empty.
+
+To add one: python3 skills/md-to-deck/icon_fetch.py <name> --cache skills/md-to-deck/icons
