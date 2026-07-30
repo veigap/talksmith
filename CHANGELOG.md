@@ -13,6 +13,25 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.68.3] — 2026-07-30
+
+### Fixed
+
+- **Generated diagrams rendered as raster instead of vector in HTML decks.** `final.md` correctly
+  referenced `images/<name>.svg`, but the FILL step rewrote the extension to the `.png` companion
+  while building `slide-model.json` — so the HTML deck embedded a flat raster and never inlined the
+  SVG. The cause was the `.svg`-forbidden prerequisite, which exists for the Keynote import path
+  and was being applied to the HTML fill as well. That rule is now explicitly scoped to the `.pptx`
+  path, and both the fill step and the model schema state that an image `src` is copied verbatim,
+  extension included. Re-render an affected talk to pick up the vector version.
+- **Colliding `id`s between inlined SVGs.** Every diagram in an HTML deck lands in one document, but
+  the generator names its `defs` for their role rather than for uniqueness (`a` = grey arrowhead,
+  `r` = red one), so a deck with three diagrams carried three `id="a"` and every `url(#a)` resolved
+  to the first one in document order — diagrams 2..N silently painted with diagram 1's marker. It
+  stayed invisible only because those definitions happened to be identical; one differently
+  coloured arrowhead would have made it a wrong-colour bug with no error. Each inlined SVG now gets
+  its `id`s namespaced as it goes in, references rewritten to match.
+
 ## [0.68.2] — 2026-07-30
 
 ### Fixed

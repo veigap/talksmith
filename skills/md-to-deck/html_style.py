@@ -192,15 +192,46 @@ def _esc(s: str) -> str:
     return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+# Every inline SVG lands in the *same* document, so their `id`s share one namespace. The
+# generator names them for their role, not for uniqueness (`a` = grey arrowhead, `r` = red one),
+# and each diagram is authored by an isolated per-block subagent that can't know what its siblings
+# used — so collisions are structural, not an authoring slip. With three `id="a"` in one deck every
+# `url(#a)` resolves to the FIRST in document order, silently painting diagrams 2..N with diagram
+# 1's marker. Identical definitions make that invisible today; one differently-coloured arrowhead
+# makes it a wrong-colour bug with no error. So namespace each embed as it goes in.
+_SVG_ID_RE = re.compile(r'\bid="([^"]+)"')
+_SVG_URL_RE = re.compile(r'url\(\s*#([^)\s]+)\s*\)')
+_SVG_HREF_RE = re.compile(r'\b((?:xlink:)?href)\s*=\s*"#([^"]+)"')
+_EMBED_N = 0                               # per-embed counter → a unique prefix per inlined SVG
+
+
+def _ns_svg_ids(svg: str, prefix: str) -> str:
+    """Prefix every `id` this SVG defines, and rewrite the references that point at them
+    (`url(#x)`, `href="#x"`, `xlink:href="#x"`). A reference to an id this SVG does *not* define is
+    left alone — it isn't ours to rename."""
+    ids = set(_SVG_ID_RE.findall(svg))
+    if not ids:
+        return svg
+    svg = _SVG_ID_RE.sub(
+        lambda m: f'id="{prefix}{m.group(1)}"' if m.group(1) in ids else m.group(0), svg)
+    svg = _SVG_URL_RE.sub(
+        lambda m: f"url(#{prefix}{m.group(1)})" if m.group(1) in ids else m.group(0), svg)
+    return _SVG_HREF_RE.sub(
+        lambda m: f'{m.group(1)}="#{prefix}{m.group(2)}"' if m.group(2) in ids else m.group(0), svg)
+
+
 def _embed(alt, path):
     """Embed a resolved image self-contained: inline SVG, or a data-URI <img>, else a placeholder."""
     import base64
+    global _EMBED_N
     if path is not None:
         try:
             p = Path(path)
             if p.suffix.lower() == ".svg":
                 svg = p.read_text(encoding="utf-8")
                 svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.DOTALL).strip()
+                _EMBED_N += 1
+                svg = _ns_svg_ids(svg, f"e{_EMBED_N}-")
                 return f'<div class="imgph svg">{svg}</div>'
             mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
                     "gif": "image/gif", "webp": "image/webp"}.get(p.suffix.lower().lstrip("."))
@@ -307,7 +338,7 @@ def _cover_logo(fm: dict, talk_root) -> str:
                 continue
             if c.suffix.lower() == ".svg":
                 svg = re.sub(r"<\?xml.*?\?>", "", c.read_text(encoding="utf-8"), flags=re.DOTALL).strip()
-                return f'<span class="covlogoimg">{svg}</span>'
+                return f'<span class="covlogoimg">{_ns_svg_ids(svg, "logo-")}</span>'
             mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg"}.get(c.suffix.lower().lstrip("."), "image/png")
             b64 = base64.b64encode(c.read_bytes()).decode("ascii")
             return f'<img class="covlogoimg" alt="logo" src="data:{mime};base64,{b64}">'

@@ -61,6 +61,12 @@ the ordered section list) and one object per slide. For **each** slide you:
 The judgment is the LLM's, against a fixed field contract. Write to
 `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
 
+> **Copy every image `src` verbatim — extension included.** A `final.md` ref to
+> `images/<name>.svg` fills the model as `images/<name>.svg`. This render **inlines SVG as vector
+> markup**; silently substituting the `.png` companion downgrades the diagram to a raster and is a
+> render defect. The `.svg`-forbidden rule in *Prerequisites (Path A)* below belongs to the `.pptx`
+> path alone — it is a prerequisite check on `final.md`, never an instruction for this fill step.
+
 **`slide-model.json` is a generated artifact, refreshed every render — never a hand-maintained
 file.** FILL always runs from the *current* source immediately before RENDER; a renderer must never
 consume a model left over from a prior source. Right after writing the model, **stamp it** with the
@@ -158,7 +164,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 | Active `Talk` path | Passed in by orchestrator | Stop and ask. |
 | Cleaned `final.md` | Exists; no `Presenter feedback`; ASCII replaced by `![...](images/...)` | Stop — Polish hasn't run; return to Step 6. |
 | Pre-rendered local images | `talks/<Talk>/images/<file>` exists for every `![...](images/...)` ref | Stop. Dispatch `diagram-illustrator` for missing SVGs, or ask the presenter to drop the asset in. |
-| Keynote-safe image extensions | Every `![alt](path)` uses `.png`/`.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote drops them on import. | Stop, list every offending ref. `.svg` → re-dispatch Diagram-Illustrator for a `.png` companion + Editor's Step-6(b) rewrite; `.webp/.avif/.heic` → re-dispatch Editor (rasterizes inline). |
+| Keynote-safe image extensions *(this path only — `html-strict` inlines `.svg` and must keep it)* | Every `![alt](path)` uses `.png`/`.jpg`/`.jpeg`. **Forbidden: `.svg`, `.webp`, `.avif`, `.heic`** — Keynote drops them on import. | Stop, list every offending ref. `.svg` → re-dispatch Diagram-Illustrator for a `.png` companion + Editor's Step-6(b) rewrite; `.webp/.avif/.heic` → re-dispatch Editor (rasterizes inline). |
 | No remote image refs | No `![...](http(s)://...)` refs (pptx skill behavior on URLs is undefined) | Stop and ask the presenter to download into `images/` or explicitly accept the risk. |
 | Base template | `<base_template_path>` exists (style-resolved) | Stop and ask. |
 | Visual spec | `<spec_path>` exists (strict §1–§15 + §17–§20, free-form §1–§4) | Stop and ask — the spec is the contract. |

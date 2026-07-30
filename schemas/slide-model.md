@@ -194,7 +194,11 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 - **A pipe table** → `comparison.columns:[{header,cells}]` (header row → `header`, body cells in
   column order); a label/value table decomposes as `cards`. *(Which template a given shape gets is
   the catalog's Match rules — not restated here.)*
-- **Images** — carry `src` paths exactly as written into `image:{src,alt}` / `images` / `figures`;
+- **Images** — carry `src` paths exactly as written into `image:{src,alt}` / `images` / `figures`.
+  **Never rewrite the extension.** A `.svg` ref stays `.svg`: the HTML render inlines it as vector
+  markup, and swapping it for the `.png` companion silently downgrades a crisp diagram to a raster.
+  (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
+  not a rule about filling the model.)
   on `content-image`, add `"layout":"image-top"` when the text is very short. A fenced code block
   fills `code-example.code` (+ `explanation`).
 - **Labeled lines (colon lead-ins).** When a line reads `Label: rest` (a short lead-in before a
