@@ -13,6 +13,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.68.1] — 2026-07-30
+
+### Changed
+
+- **Animated slides now start empty.** An enumeration slide (`stat`, `card-row`,
+  `concept-breakdown`, `icon-list`, `content+cards+image`) used to show its first card
+  immediately and animate in only items 2..N. Every item is a fragment now, so the slide opens
+  on its heading alone and the presenter clicks each item in — including the first. Unchanged:
+  `reveal: together` still shows the whole slide at once, the runtime animations toggle still
+  flattens every fragment, and `.pptx` is static as before.
+
 ## [0.68.0] — 2026-07-17
 
 Bug-triage batch from the `claude-cowork` production run — correctness fixes and new guardrails across Polish and Render.
