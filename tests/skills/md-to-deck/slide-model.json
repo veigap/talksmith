@@ -72,6 +72,16 @@
       "tone": "pink"
     },
     {
+      "template": "callout",
+      "section": "Statement & emphasis",
+      "title": "callout: the blue tone",
+      "callout": {
+        "label": "The other tone",
+        "body": "Blue is the declarative takeaway — a conclusion the audience should carry out of the slide. Pink (previous slide) is the lateral note: an aside, analogy, or caution."
+      },
+      "tone": "blue"
+    },
+    {
       "template": "single-point",
       "section": "Statement & emphasis",
       "title": "single-point: one lead plus one point",
@@ -87,17 +97,20 @@
     {
       "template": "concept-breakdown",
       "section": "Enumerations",
-      "title": "concept-breakdown: 2 cards (edge case)",
+      "title": "concept-breakdown: 2 cards, explicit icons, reveal together",
       "cards": [
         {
           "label": "Two is valid",
-          "body": "A two-item labeled set is a real concept-breakdown, not something to drop to prose."
+          "body": "A two-item labeled set is a real concept-breakdown, not something to drop to prose.",
+          "icon": "rocket_launch"
         },
         {
           "label": "Iconed",
-          "body": "Each card still gets its own distinct, content-matched icon beside the label."
+          "body": "Each card still gets its own distinct, content-matched icon beside the label.",
+          "icon": "balance"
         }
-      ]
+      ],
+      "reveal": "together"
     },
     {
       "template": "concept-breakdown",
@@ -323,6 +336,30 @@
       ]
     },
     {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "process: steps beside a supporting diagram",
+      "lead": "With an image, the steps become a narrow column and the diagram takes the other half:",
+      "steps": [
+        {
+          "label": "Own layout",
+          "body": "An image switches process to a two-column arrangement, not the full-width numbered cards."
+        },
+        {
+          "label": "Rows, not cards",
+          "body": "Each step compresses to a numbered row so the diagram keeps its space."
+        },
+        {
+          "label": "Never cropped",
+          "body": "The supporting image is contained, so a diagram here stays readable."
+        }
+      ],
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      }
+    },
+    {
       "template": "timeline",
       "section": "Ordered & comparison",
       "title": "timeline: a dated milestone sequence",
@@ -341,6 +378,29 @@
         }
       ],
       "lead": "An optional lead can frame the sequence before the dates begin."
+    },
+    {
+      "template": "timeline",
+      "section": "Ordered & comparison",
+      "title": "timeline: milestones carrying an explicit marker",
+      "milestones": [
+        {
+          "label": "Day 1",
+          "body": "Reach for timeline when the labels read as dates or milestones.",
+          "marker": "1"
+        },
+        {
+          "label": "Day 2",
+          "body": "Time flows top to bottom along a connecting rail with a dot per entry.",
+          "marker": "2"
+        },
+        {
+          "label": "Day 3",
+          "body": "It differs from process only in that here, when matters more than the step.",
+          "marker": "3"
+        }
+      ],
+      "lead": "The optional per-milestone marker rides inside the dot:"
     },
     {
       "template": "comparison",
@@ -440,6 +500,58 @@
       ]
     },
     {
+      "template": "stat",
+      "section": "Visual & data",
+      "title": "stat: two numbers (the low edge)",
+      "lead": "Each number is a value with a short caption beneath it:",
+      "stats": [
+        {
+          "value": "2–4",
+          "caption": "the number of metrics a stat slide holds"
+        },
+        {
+          "value": "1",
+          "caption": "caption line per value, baselines aligned across the row"
+        }
+      ],
+      "highlights": [
+        {
+          "body": "A hero single metric goes on big-number instead.",
+          "kind": "note"
+        }
+      ]
+    },
+    {
+      "template": "stat",
+      "section": "Visual & data",
+      "title": "stat: four numbers (the high edge)",
+      "lead": "Each number is a value with a short caption beneath it:",
+      "stats": [
+        {
+          "value": "2–4",
+          "caption": "the number of metrics a stat slide holds"
+        },
+        {
+          "value": "1",
+          "caption": "caption line per value, baselines aligned across the row"
+        },
+        {
+          "value": "0",
+          "caption": "bullets — the numbers themselves are the payload"
+        },
+        {
+          "value": "4×",
+          "caption": "the fourth slot, wrapping to a second row"
+        }
+      ],
+      "highlights": [
+        {
+          "body": "A hero single metric goes on big-number instead.",
+          "kind": "note"
+        }
+      ]
+    },
+    {
       "template": "content-image",
       "section": "Visual & data",
       "title": "content-image: text beside an image",
@@ -454,8 +566,8 @@
           "body": "the image is never cropped or forced into a box."
         },
         {
-          "label": "Two layouts",
-          "body": "text-left, shown here, or image-top."
+          "label": "Three layouts",
+          "body": "text-left, shown here, plus image-left and image-top."
         }
       ],
       "image": {
@@ -470,6 +582,31 @@
           "kind": "important"
         }
       ]
+    },
+    {
+      "template": "content-image",
+      "section": "Visual & data",
+      "title": "content-image: image-left mirrors the columns",
+      "layout": "image-left",
+      "lead": "Same slide, image first — the enumeration is untouched:",
+      "facts": [
+        {
+          "label": "Columns swap",
+          "body": "the image takes the left half, the text the right."
+        },
+        {
+          "label": "Enumeration unchanged",
+          "body": "facts keep their order, left-edge dots and left alignment."
+        },
+        {
+          "label": "Never cropped",
+          "body": "aspect is preserved here exactly as in text-left."
+        }
+      ],
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      }
     },
     {
       "template": "content-image",
@@ -678,6 +815,17 @@
           "label": "Repo",
           "body": "github.com/austral/talksmith"
         }
+      ]
+    },
+    {
+      "template": "fallback",
+      "section": "Visual & data",
+      "title": "fallback: the last resort when nothing matches",
+      "big": "A slide reaching fallback means the catalog is missing an entry — the render now warns.",
+      "points": [
+        "fallback still refuses plain bullets: its points render as accented panels.",
+        "big defaults to the title when the fill omits it.",
+        "A recurring fallback is a signal to add a real template, not to style this one."
       ]
     }
   ]

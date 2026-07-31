@@ -71,7 +71,8 @@ Decide the template **from the content**, as a discriminator walk — not first-
 3. **Apply the disambiguators** (each entry's *Match* names what it is **not**) to pick
    **exactly one**. The decisive discriminators, in order (first match wins **only** after
    the richer-template rule — never fall to a plainer template when a richer one fits):
-   - `is_divider` → `agenda` / section-divider.
+   - `is_divider` → `section-agenda` if the title names a `deck.sections` entry (the
+     roadmap has a position to highlight), else `divider`.
    - `has_code` → `code-example` (before anything else — code dominates).
    - `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
    - `has_table`: **two comparable value-columns** (A-vs-B, before/after) → `comparison`;
@@ -86,9 +87,9 @@ Decide the template **from the content**, as a discriminator walk — not first-
      image disqualifies it (its per-card icons are renderer-added, not source pictures);
      labeled items *with* images → `figures`.
    - `labeled_items == 1` (a lead + one point) → `single-point` (one card or callout; if an
-     image supports it → `content+image`). **Never a lone bullet under a title.**
+     image supports it → `content-image`). **Never a lone bullet under a title.**
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
-     `content+image`; cards **and** one supporting image → `content+cards+image`.
+     `content-image`; cards **and** one supporting image → `content+cards+image`.
    - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
      one counter-point — e.g. a myth→reality slide) → `statement`.
    - `one_two_words` + `is_terminal` → `closing-hero`.
@@ -125,13 +126,13 @@ sub-category follows, grouped by family.
 
 | Family — what the slide does | Sub-categories | Picks the sub-category by |
 |---|---|---|
-| **Frame** — structure, not content | `cover` · `agenda` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
+| **Frame** — structure, not content | `cover` · `section-agenda` · `divider` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
 | **One claim / emphasis** — a single message | `statement` · `quote` · `quiz` · `callout` | attributed/voiced → `quote`; question→answer → `quiz`; an aside *inside* another slide → `callout`; else `statement` |
 | **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `card-row` · `icon-list` · `concept-breakdown` | **count + body length**: 1 item → `single-point`; lead + 3–5 short → `card-row`; lead + 3–5 prose → `icon-list`; any other 2+ set → `concept-breakdown` |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Two groups** — A vs B | `comparison` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; a neutral compare → `comparison` |
-| **Visual** — images carry the content | `content+image` · `content+cards+image` · `figures` · `image-grid` | 1–3 supporting → `content+image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
+| **Visual** — images carry the content | `content-image` · `content+cards+image` · `figures` · `image-grid` | 1–3 supporting → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
 | **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
 
 The signal *definitions* are in *Classification procedure* above; the row-level tie-breaks
@@ -165,14 +166,28 @@ precise rules.
   optional hero image or logo at right. White background. No section pill.
 - **Strict recipe:** §4. **Provenance:** ref S1, final S1, gov S1.
 
-#### `agenda`
+#### `section-agenda`
 - **Match:** an H1-only slide (numbered section header). Re-shown before each section's
   first content slide. Not a content choice.
+- **Name:** the `template` value is **`section-agenda`** — spell it exactly. (`agenda`
+  alone is the *source* block in `draft.md`/`final.md` that feeds `deck.sections`; it is
+  not a template value and renders as `fallback`.)
 - **Format:** the heading "Agenda" + the full numbered section list; the **active
   section is accent-highlighted** (`#DA1B2E`), the rest muted `#3B3535`. **No body
   prose, no images.** All instances identical except which item is active. Warn if
   sections > 8 (tight) or > 10 (out of room).
 - **Strict recipe:** §5. **Provenance:** ref S2/12/17…, final S4/7/14/18, gov S2/20/26….
+
+#### `divider`
+- **Match:** a section break that is **not** one of the deck's `deck.sections` entries —
+  an H1 (or a `〔divisor〕`/`〔Backup〕`-marked heading) that opens a sub-part *within* a
+  section, so there is no roadmap position to highlight. The discriminator against
+  `section-agenda` is exactly that: title names a `deck.sections` entry → `section-agenda`;
+  it doesn't → `divider`. Not a content choice.
+- **Format:** the title alone, full-bleed, no roadmap, no body prose, no images. A beat of
+  visual silence between sub-parts — if it wants a claim, it is a `statement`; if it wants
+  the section list, it is a `section-agenda`.
+- **Strict recipe:** §5 (section break, roadmap omitted).
 
 #### `closing-cta`
 - **Match:** the **final** slide (or a section's last), content = call-to-action /
@@ -294,7 +309,7 @@ precise rules.
   concept-breakdown (two cards) — do **not** drop it to bullets or prose.
   **Hard rule — no source image.** A concept-breakdown carries **zero `![]()` images**; its
   per-card icons are renderer-added §17 glyphs, never source pictures. **If the slide has any
-  `![]()` image, it is NOT concept-breakdown** → `figures` (a per-item image), `content+image`
+  `![]()` image, it is NOT concept-breakdown** → `figures` (a per-item image), `content-image`
   (1–3 supporting), or `content+cards+image` (cards + one image).
   **Also not:** ordered/numbered (→ `process`); a lead paragraph + exactly 3–5 items
   (→ `card-row`/`icon-list`).
@@ -319,7 +334,7 @@ precise rules.
   single ≤16-word claim with no supporting prose (→ `statement`).
 - **Format:** the lead as the slide's body (a short statement or 1–2 sentences) + the single
   point rendered as **one card/panel or a callout**, never a lone bullet floating under a
-  title. If an image supports it → `content+image` with the point as a caption card. The
+  title. If an image supports it → `content-image` with the point as a caption card. The
   rule: one labeled point is *emphasis*, so give it a shape (card/callout), not a bullet.
 - **Strict recipe:** §7.2 single card or §8 callout. **Provenance:** gov S36/38/42–47
   (many "one claim + one beat" slides).
@@ -333,7 +348,7 @@ precise rules.
   (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`).
 - **Format:** a row of **stat cards**, each = the **number set large (24–40 pt Bold, often
   `#DA1B2E`)** + a short label/unit beneath (11 pt). Equal size, aligned baselines. May
-  appear as the lower band of a `content+image` slide (a stat pair).
+  appear as the lower band of a `content-image` slide (a stat pair).
 - **Strict recipe:** §7.2 card variant with an enlarged number run. **Provenance:** ref
   S6 (📚~750K / 🏥~800K pair).
 
@@ -404,12 +419,23 @@ precise rules.
 
 ### Visual — images carry the content
 
-#### `content+image`
+#### `content-image`
 - **Match:** one main claim supported by **1–3** `![]()` images; the prose leads, the
   images are evidence.
+- **Name:** the `template` value is **`content-image`** (hyphen), even though the strict
+  PPTX recipe for it is named "§13 content+image". Recipe names and `template` values are
+  different namespaces; `"content+image"` in the model renders as `fallback`.
 - **Format:** text column (lead + a few short facts / a callout) on one half; **1–3
   images aligned to the text columns** on the other, **aspect preserved**, no full-bleed.
-  Not a grid.
+  Not a grid. **Three layouts** (`layout` field): `text-left` (default — text left, image
+  right), `image-left` (mirrored — image left, text right: the image leads the eye and the
+  text follows, for a diagram the prose walks through or to break a run of `text-left`
+  slides), and
+  `image-top` (stacked, image over a short caption — for text too short to hold a column).
+  The image is **never cropped** in any of them, so all three are safe for a diagram the
+  audience must read — unlike the `aside` column (see above), which crops to fill. Pick the
+  layout from the content (short text → `image-top`; image to be read first → `image-left`);
+  an author `<!-- layout: <value> -->` hint pins it and overrides that judgement.
 - **Strict recipe:** §13 content+image. **Provenance:** ref S6/19/20, final
   S3/9/15/16/17/20, gov case-study slides.
 
@@ -456,7 +482,7 @@ precise rules.
 - **Format:** one lead statement (larger) + 2–4 short supporting statements as **light
   panels or a stat strip — not a paragraph, not bullets.** **Flag as a restructure
   candidate** in FEEDBACK: most "wall of prose" slides are `card-row`/`icon-list`/
-  `content+image` in disguise.
+  `content-image` in disguise.
 - **`panels` is a set — never one.** The panel strip is a `repeat(3,1fr)` grid, so a
   **single** panel renders as a lonely third-width card at the bottom, and an emphatic
   closing line dropped there reads as demoted afterthought, not punchline. If the slide is
@@ -524,14 +550,14 @@ row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be `icon
 → `figures`. `labeled_items=3` **and each carries its own image** (`n_images=3`, one per
 item) → image+label+body cards. Without the per-item images this is `concept-breakdown`.
 
-**`content+image` vs `image-grid`** — image count + intent:
+**`content-image` vs `image-grid`** — image count + intent:
 ```
 ## ¿Cuánto es 1 millón de tokens?
 Un millón de tokens es más contexto del que parece.
 ![scale](images/tokens-scale.png)
 📚 ~750K tokens — toda la obra de Tolkien.  🏥 ~800K tokens — historial clínico completo.
 ```
-→ `content+image`. Prose leads, `n_images=1` supports it. (The 📚/🏥 pair is a `stat`
+→ `content-image`. Prose leads, `n_images=1` supports it. (The 📚/🏥 pair is a `stat`
 sub-band, not its own slide.) With `n_images ≥ 4` where the *variety* is the point, it would
 be `image-grid`.
 
@@ -583,14 +609,14 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 ```
 → `content-text` (a `fallback`-adjacent last resort). No labeled items, no images, no code,
 > 16 words. Emit as a lead statement + light panels; **flag as a restructure candidate**
-(most such slides are a hidden `card-row`/`content+image`).
+(most such slides are a hidden `card-row`/`content-image`).
 
 ## Disambiguation quick-reference
 
 | If the slide is… | and… | → |
 |---|---|---|
 | a labeled set (**≥2**) | ordered (steps/1./Paso) | `process` |
-| a labeled set (**≥2**) | **any `![]()` image present** | `figures` / `content+image` — **never `concept-breakdown`** |
+| a labeled set (**≥2**) | **any `![]()` image present** | `figures` / `content-image` — **never `concept-breakdown`** |
 | a labeled set (**≥2**) | each item has an image | `figures` |
 | a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars, no image | `card-row` |
 | a labeled set (**≥2**) | lead + 3–5 items, prose bodies, no image | `icon-list` |
@@ -601,10 +627,10 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | a table | label/value or **N-level/N-column** | `concept-breakdown` (card-per-row) |
 | two prose groups | A vs B / before-after | `comparison` |
 | images | ≥4, variety is the message | `image-grid` |
-| images | 1–3 supporting prose | `content+image` |
+| images | 1–3 supporting prose | `content-image` |
 | cards **and** an image | hybrid | `content+cards+image` |
 | one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
 | one emphasized aside | inside another slide | `callout` |
-| section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `agenda`/divider |
+| section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `section-agenda`/`divider` |
 | only prose | no visual, no enumeration | `content-text` (flag) |
 | code | meant to be read | `code-example` |

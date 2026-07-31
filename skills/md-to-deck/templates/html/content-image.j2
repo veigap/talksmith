@@ -9,6 +9,8 @@
 {% if s.layout == 'image-top' %}
 <div class="ci ci-top">{{ embed_img(s.image) }}{{ citext(s) }}</div>
 {% else %}
-<div class="ci">{{ citext(s) }}{{ embed_img(s.image) }}</div>
+{# side-by-side: markup order is always text-then-image (reading order); `image-left`
+   swaps the visual columns in CSS. #}
+<div class="ci{{ ' ci-imgleft' if s.layout == 'image-left' else '' }}">{{ citext(s) }}{{ embed_img(s.image) }}</div>
 {% endif %}
 {% endcall %}

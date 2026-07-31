@@ -122,7 +122,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `content-image` | `title`, `image:{src,alt}`, `facts:[{body,label?}]` | `lead`, `layout` (`text-left`\|`image-top`) |
+| `content-image` | `title`, `image:{src,alt}`, `facts:[{body,label?}]` | `lead`, `layout` (`text-left`\|`image-left`\|`image-top`) |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead` |
 | `comparison` | `title`, `columns:[{header,cells:[str]}]` (2–3) | — |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
@@ -137,6 +137,11 @@ when the content warrants. Field names are the contract — the renderers read e
 | `content-text` | `title`, `big`, `panels:[str]` | — *(last-resort prose; flag to restructure)* |
 | `closing-hero` | `title` | `body` |
 | `closing-cta` | `title`, `items:[{label,body}]` | — |
+| `fallback` | `title` | `big` (the dominant line; defaults to `title`), `points:[str]` (rendered as accent panels, never plain bullets) — *last resort; the renderer warns, and a recurring fallback means the catalog needs a new entry* |
+
+> `cover` takes no row: it is **synthesized from the `deck` object**, never authored as a slide
+> (see `deck` above). Every other `template` value the renderers accept is listed here — a value
+> outside this table renders as `fallback` and the HTML build warns on stderr, naming the slide.
 
 The universal invariant still holds: **a parallel labeled set becomes `cards`/`rows`/`figures`,
 never a plain bullet list.** Template *choice* is governed by the catalog
@@ -164,8 +169,9 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   the standalone `# Agenda` slide (it only feeds `deck.sections`), every `### Sources` and
   `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers. **Exception — honour author
   directives:** a `<!-- template: <type> -->` comment pins that slide's `template` (skip
-  classification), and `<!-- reveal: together -->` sets its `reveal` field. These are the only
-  HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
+  classification), `<!-- layout: <value> -->` pins its `layout` field (the arrangement *within*
+  that template — skip the layout judgement below), and `<!-- reveal: together -->` sets its
+  `reveal` field. These are the only HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
   Polish only strips `Presenter feedback` and rewrites ASCII fences — so the hint the author wrote
   while drafting is exactly what reaches this FILL step.)
 - **An H1 that names a `deck.sections` entry** → a `section-agenda` slide (`title` = the section
@@ -199,7 +205,11 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   markup, and swapping it for the `.png` companion silently downgrades a crisp diagram to a raster.
   (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
   not a rule about filling the model.) On `content-image`, add `"layout":"image-top"` when the text
-  is very short. A fenced code block fills `code-example.code` (+ `explanation`).
+  is very short, or `"layout":"image-left"` when the image should lead the eye (it reads first,
+  left of the text) — e.g. a diagram the prose then walks through, or to break up a run of
+  text-left slides. Default (omitted) is `text-left`. The enumeration is unaffected: `facts` keep
+  their order, their left-edge markers, and their left alignment in every layout. An author
+  `<!-- layout: <value> -->` hint **pins** this field — copy it through instead of judging. A fenced code block fills `code-example.code` (+ `explanation`).
 - **Labeled lines (colon lead-ins) — the separator is CONSUMED, never carried.** When a line reads
   `Label: rest` or `- **Label**: rest` (a short lead-in before a separator), split it into
   `{label, body}` yourself. The renderer never parses the separator: it either puts `label` in its

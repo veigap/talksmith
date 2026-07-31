@@ -244,6 +244,16 @@ Un millón de tokens es más contexto del que parece: toda la obra de Tolkien en
 
 ---
 
+## Content + image · imagen a la izquierda
+<!-- template: content-image -->
+<!-- layout: image-left -->
+
+El diagrama se lee primero; el texto lo recorre después.
+
+![pipeline](images/pipeline.svg)
+
+---
+
 ## Figures · 3 con diagrama
 <!-- template: figures -->
 
@@ -323,7 +333,7 @@ Todos hicimos algo parecido alguna vez.
 ---
 
 ## Roadmap de la charla
-<!-- template: agenda -->
+<!-- template: section-agenda -->
 
 - **Fundamentos** Los modelos base.
 - **Interfaz y projects** Lo básico de Cowork.

@@ -13,6 +13,58 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.71.0] — 2026-07-31
+
+### Fixed
+
+- **Two catalog template names didn't match the renderer, so decks using them silently rendered
+  as `fallback`.** The catalog published `content+image` and `agenda`; the renderer's registry
+  keys are `content-image` and `section-agenda`. An LLM classifying against the catalog and
+  copying the name it read there produced a model the renderer couldn't dispatch — and because an
+  unknown `template` falls through to `fallback.j2` without a word, the result looked like a bad
+  classification rather than a typo. The bundled test fixture had the bug too (`<!-- template:
+  agenda -->`). Catalog headings and every cross-reference now use the real values, each with a
+  note on why the near-miss exists (`content+image` remains the *strict PPTX recipe* name — a
+  separate namespace from `template` values). **`build_html.py` now warns on stderr** when a slide
+  names a template it doesn't know, naming the slide, so this class of drift can't be silent again.
+- **A timeline's per-milestone `marker` was documented but never rendered.** The schema has listed
+  it as an optional field all along; `timeline.j2` never read it, so a fill step that emitted one
+  had it silently dropped. It now rides inside the milestone dot, which grows to hold it; a
+  milestone with no marker keeps the plain dot exactly as before.
+- **`divider` had no catalog entry** — it exists in the schema, the renderer and the fixture, but
+  the catalog documented no Match criteria, leaving the fill step no rule for choosing it. Added,
+  with the discriminator against `section-agenda` stated explicitly: title names a `deck.sections`
+  entry → `section-agenda`, otherwise → `divider`.
+
+### Added
+
+- **`content+image` can put the image on the left.** Until now the only side-by-side arrangement
+  was text-left / image-right, and the sole alternative was `image-top` (stacked). The one layout
+  that did accept a left image — the `aside` column — crops to fill and is explicitly off-limits
+  for a diagram the audience has to read, so there was no way to lead with a readable image. The
+  new `"layout": "image-left"` on `content-image` mirrors the two columns: image left, text right,
+  **aspect still preserved, never cropped**. Reach for it when the image should be read first (a
+  diagram the prose then walks through) or to break up a run of text-left slides. The enumeration
+  is deliberately untouched — `facts` keep their order, their left-edge dot markers and their left
+  alignment in all three layouts; only the column positions swap, and the markup order stays
+  text-then-image so reading order (PDF export, screen readers) is unchanged. Default is still
+  `text-left` when `layout` is omitted, so existing decks render identically.
+- **`<!-- layout: <value> -->` author directive** — forces the arrangement *within* a template
+  when the type is right but the default placement isn't, the sibling of `<!-- template: … -->`
+  (which pins the type). Currently read by `content-image` (`text-left` | `image-left` |
+  `image-top`); an unrecognized value falls back to the template's default rather than erroring,
+  matching how `reveal:` already behaves. Declared in the four places a directive has to be
+  declared to work: the author-facing list in `editor.md`, the preserved-verbatim row in
+  `schemas/draft.md`, the honour-directives rule in the `slide-model.json` fill step, and the
+  catalog's `content-image` entry.
+- **The style reference now covers every render path, not just every template.** It had one slide
+  per template but left whole branches unexercised, so a regression in them would ship unseen:
+  `fallback` had no slide at all, `process` with a supporting image (a distinct two-column layout,
+  not the numbered cards), the blue `callout` tone, `stat` at its 2- and 4-number edges (the grid
+  is count-driven), explicit per-card `icon` suggestions (vs. content-matched), timeline markers,
+  and `reveal: together`. Added, taking the deck from 43 to 49 slides; both the default and the
+  variant path is now present for each, so a diff shows which one moved.
+
 ## [0.69.1] — 2026-07-31
 
 ### Changed

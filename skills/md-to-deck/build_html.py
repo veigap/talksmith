@@ -48,8 +48,14 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     if deck.get("title"):                                          # contractually-fixed cover first
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
+    unknown = []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
+        # An unrecognized `template` silently renders as fallback, which looks like a bad
+        # classification rather than a typo — surface it so a misspelled catalog name
+        # (`content+image` for `content-image`, `agenda` for `section-agenda`) is visible.
+        if t not in _hs._TMPL and t != "section-agenda":
+            unknown.append((s.get("title", "") or "(untitled)", t))
         sid = ""
         if t == "section-agenda":                                 # roadmap: active index from deck.sections
             name = _norm(s.get("title", ""))
@@ -62,6 +68,9 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         notes = s.get("notes", "")
         aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
         slides_html.append(f'<section class="slide"{sid} data-kind="{t}">{inner}{aside}</section>')
+
+    for slide_title, bad in unknown:
+        print(f"[html] warning: unknown template {bad!r} → fallback  ({slide_title})", file=sys.stderr)
 
     title = deck.get("title", talk_root.name if talk_root else "")
     subtitle = " · ".join(x for x in (deck.get("class", ""), deck.get("presenter", "")) if x)
