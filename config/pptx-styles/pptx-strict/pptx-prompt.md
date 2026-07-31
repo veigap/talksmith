@@ -518,6 +518,29 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 | **image-grid** | 14 | 3, 4, 10, 31, 33–38, 44, 46, 49, 50 | 3+ images arranged in row or grid; each typically a PNG+SVG pair |
 | **closing-cta** | 1 | 53 | Title + 4-card grid of next-step resources |
 
+> **`layout` is not honored on the `.pptx` path — by decision, not by oversight.** Any slide that
+> carries its own image (`content+image`, `content+cards+image`, `process`/`quiz` with one) may
+> carry `layout: image-left` (and `content+image` also `image-top`), which mirrors or stacks the
+> two columns in the HTML render. The strict recipes above are base-template-precise EMU geometry:
+> every one of the 53 reference slides places its text/cards left and its image right, so honoring
+> a mirror here would mean inventing geometry the base template never demonstrates — exactly what
+> strict exists to prevent. **Emit these slides text-left/cards-left regardless of `layout`**, and
+> do not report it as an unresolved audit. A deck that needs the mirrored reading order should ship
+> the HTML render (or use free-form, which honors it as a design call). If the reference template
+> ever gains a mirrored exemplar, bind it here and delete this note.
+>
+> **`highlights[].position` *is* honored — it costs no new geometry.** A highlights band is a §8
+> panel; `position: top` only changes which vertical block it occupies. Emit the `top` entries as
+> one band **between the title block and the body block** (reserving its height before laying out
+> the body, per §8.3, exactly as for a closing band), and the `bottom` entries as one band below
+> the body as today. A slide may carry both, and each band keeps its per-`kind` accent. There is no
+> reveal on the `.pptx` path, so the difference is purely where the audience's eye lands first —
+> which is the whole point of the field.
+>
+> **An image-only `content+image`** (no `lead`, no `facts`) emits **no text frame at all** — the
+> picture takes the full content width. An empty placeholder is the same defect on this path that
+> an empty text column is in HTML.
+
 ### 13.1 Layout files — one bespoke layout per slide
 
 The .pptx contains **55 `slideLayout*.xml` files** (54 in use + 1 `DEFAULT`) named `Slide 1 master` … `Slide N master` — i.e. **one bespoke layout per slide**. Layouts are *not* reusable templates with placeholders; they are slide-specific carriers. Downstream `md-to-deck` should **generate shape geometry directly** rather than expect named placeholders.

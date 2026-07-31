@@ -4,16 +4,32 @@
 {% if s.section %}<span class="pill">{{ s.section }}</span>{% endif %}
 {% if s.title %}<h2 class="stitle">{{ s.title }}</h2>{% endif %}
 {% endmacro %}
+{# One accented band of highlights. Called twice by `stage()` — once above the body for the
+   entries marked `position: top`, once below for the rest — so both bands are literally the same
+   piece in a different place: same classes, same per-`kind` colour and icon. #}
+{% macro hlband(items, extra, f) %}<div class="highlights{{ extra }}{{ f }}">{% for h in items %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label | nocolon }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endmacro %}
 {# `aside: {image, side}` → a full-bleed image column on that edge (default right), reinforcing
    the content visually. Available to every stage-based slide; the stage's side padding keeps the
-   head and body clear of it. #}
+   head and body clear of it.
+   Highlights split by `position`: the **top** band frames what follows, so it is on screen from
+   the moment the slide opens (no `frag`) — a frame that arrives after the body frames nothing.
+   The **bottom** band comments on what precedes it, so it keeps its place as the final fragment. #}
 {% macro stage(s) %}
+{% set hl = s.highlights or [] %}
+{% set hltop = hl | selectattr('position', 'eq', 'top') | list %}
+{% set hlbot = hl | rejectattr('position', 'eq', 'top') | list %}
 <div class="stage{{ (' aside-' + (s.aside.side or 'right')) if s.aside else '' }}">
 {% if s.aside %}<div class="sasi">{{ embed_img(s.aside.image) }}</div>{% endif %}
-<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{{ caller() }}
-{% if s.highlights %}<div class="highlights{{ frag(s) }}">{% for h in s.highlights %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label | nocolon }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endif %}
+<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}
+{% if hlbot %}{{ hlband(hlbot, '', frag(s)) }}{% endif %}
 </div></div></div>
 {% endmacro %}
+{# `layout` composes a slide's own supporting image against its body. It is a **composition**
+   concern, not a per-template one, so every template that pairs a body with one image reads it
+   through this macro: `text-left` (default) leads with the body, `image-left` mirrors the two
+   columns. The mirror is CSS-only (theme.css) — the markup stays body-then-image in every
+   layout, so the reading order for PDF export and screen readers never changes. #}
+{% macro imgpos(s) %}{{ ' imgleft' if s.layout == 'image-left' else '' }}{% endmacro %}
 {# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
    opts out and shows them all at once. Negated on purpose: an unrecognized value animates,
    which is the default anyone wants — the opt-in form failed silently on every typo.

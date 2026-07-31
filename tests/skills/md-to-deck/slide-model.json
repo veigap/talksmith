@@ -360,6 +360,31 @@
       }
     },
     {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "process: diagram first, steps following (image-left)",
+      "lead": "The same steps with the diagram leading the eye:",
+      "steps": [
+        {
+          "label": "Own layout",
+          "body": "An image switches process to a two-column arrangement, not the full-width numbered cards."
+        },
+        {
+          "label": "Rows, not cards",
+          "body": "Each step compresses to a numbered row so the diagram keeps its space."
+        },
+        {
+          "label": "Never cropped",
+          "body": "The supporting image is contained, so a diagram here stays readable."
+        }
+      ],
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "layout": "image-left"
+    },
+    {
       "template": "timeline",
       "section": "Ordered & comparison",
       "title": "timeline: a dated milestone sequence",
@@ -622,6 +647,43 @@
       }
     },
     {
+      "template": "content-image",
+      "section": "Visual & data",
+      "title": "content-image: image-only takes the full width",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "notes": "Same model without a layout: with no text column the two-column grid collapses to one track, so the image uses the whole slide instead of sitting in its half with the other half blank."
+    },
+    {
+      "template": "content-image",
+      "section": "Visual & data",
+      "title": "content-image: the image-only slide (image-top)",
+      "layout": "image-top",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "notes": "This is the shape a screenshot slide takes: the image carries the slide and the detail lives here in the notes, where the presenter reads it. The renderer emits no text column at all — before the guard, image-top projected an empty accent-bordered note box under the picture."
+    },
+    {
+      "template": "content-image",
+      "section": "Visual & data",
+      "title": "content-image: image-only, with a closing remark",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "label": "Still a band",
+          "body": "an image-only slide can carry highlights; only the text column is gone."
+        }
+      ]
+    },
+    {
       "template": "figures",
       "section": "Visual & data",
       "title": "figures: a set where each item has its own image",
@@ -705,6 +767,31 @@
       }
     },
     {
+      "template": "content+cards+image",
+      "section": "Visual & data",
+      "title": "content+cards+image: image-left mirrors the columns",
+      "layout": "image-left",
+      "lead": "Same slide, image first — the cards are untouched:",
+      "cards": [
+        {
+          "label": "Columns swap",
+          "body": "the image takes the left column, the cards the right."
+        },
+        {
+          "label": "Cards unchanged",
+          "body": "they keep their order, their icons and their left alignment."
+        },
+        {
+          "label": "Widths stay put",
+          "body": "the wider grid track remains the cards', not the image's."
+        }
+      ],
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      }
+    },
+    {
       "template": "code-example",
       "section": "Visual & data",
       "title": "code-example: a readable code surface",
@@ -713,6 +800,13 @@
         "The code sits on a monospace surface with syntax colors.",
         "A short explanation column reads alongside it."
       ],
+      "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)"
+    },
+    {
+      "template": "code-example",
+      "section": "Visual & data",
+      "title": "code-example: code alone takes the full width",
+      "language": "python",
       "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)"
     },
     {
@@ -764,6 +858,61 @@
       ]
     },
     {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "title": "Highlights: a framing band opens the slide",
+      "highlights": [
+        {
+          "kind": "quote",
+          "label": "Anthropic",
+          "position": "top",
+          "body": "Menos una sesión de chat, más asignarle tareas a un colega."
+        }
+      ],
+      "cards": [
+        {
+          "label": "Frames, not remarks",
+          "body": "The band sets up the cards instead of summarizing them."
+        },
+        {
+          "label": "No fragment",
+          "body": "It is on screen from the moment the slide opens."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "title": "Highlights: a slide can carry both bands",
+      "highlights": [
+        {
+          "kind": "definition",
+          "label": "Composición",
+          "position": "top",
+          "body": "los campos que valen para cualquier template, no para uno solo."
+        },
+        {
+          "kind": "takeaway",
+          "label": "Two bands",
+          "body": "the framing line opens the slide, the takeaway closes it — one band each."
+        }
+      ],
+      "cards": [
+        {
+          "label": "Grouped by position",
+          "body": "Every top entry lands above, every bottom entry below."
+        },
+        {
+          "label": "Same component",
+          "body": "Identical classes, colours and icons in both bands."
+        },
+        {
+          "label": "Reveal differs",
+          "body": "Only the closing band waits for the last click."
+        }
+      ]
+    },
+    {
       "template": "section-agenda",
       "title": "Interactive (quiz)"
     },
@@ -787,6 +936,46 @@
       },
       "answer_label": "Answer",
       "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
+    },
+    {
+      "template": "quiz",
+      "section": "Interactive (quiz)",
+      "title": "Quiz with a supporting image",
+      "question": "Where does a quiz slide put its image?",
+      "options": [
+        "Cropped as a full-bleed background",
+        "Beside the quiz, never cropped",
+        "Only in the speaker notes"
+      ],
+      "correct": "Beside the quiz, never cropped",
+      "answer": "Beside the quiz — contained, sized to its own aspect.",
+      "explanation": "The quiz body and the image split the slide; the image is never cropped.",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "answer_label": "Answer",
+      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
+    },
+    {
+      "template": "quiz",
+      "section": "Interactive (quiz)",
+      "title": "Quiz with the image on the left",
+      "question": "Does image-left change which choice is correct?",
+      "options": [
+        "Yes — the options mirror too",
+        "No — only the two columns swap"
+      ],
+      "correct": "No — only the two columns swap",
+      "answer": "No. The options keep their order, their letters and their alignment.",
+      "explanation": "image-left is a composition choice; it never touches the enumeration.",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "answer_label": "Answer",
+      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away.",
+      "layout": "image-left"
     },
     {
       "template": "section-agenda",

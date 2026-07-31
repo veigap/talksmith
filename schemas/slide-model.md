@@ -67,11 +67,11 @@ deliverable; `draft.md` → live in-progress view).
   verbatim → Reveal `<aside class="notes">` / the PPTX notes pane, **never** on the slide face), and
   **`highlights`** (see below). Beyond those, each template requires exactly the fields in its row.
 - **`highlights`** — an **optional** common field on any content slide: a list of one or more
-  emphasized lines, rendered in an accented band under the slide body. Each entry is a string **or**
-  `{body, label?, kind?}` (the `label` renders bold before a colon). Use it for a line that deserves
-  emphasis — e.g. the takeaway a diagram builds to — instead of dropping or burying it. The **fill
-  picks the `kind`** (it's a semantic choice, like a callout's tone); each kind has its own accent
-  colour + icon. Defaults to `takeaway`.
+  emphasized lines, rendered in an accented band beside the slide body. Each entry is a string **or**
+  `{body, label?, kind?, position?}` (the `label` renders bold before a colon). Use it for a line that
+  deserves emphasis — e.g. the takeaway a diagram builds to — instead of dropping or burying it. The
+  **fill picks the `kind`** (it's a semantic choice, like a callout's tone); each kind has its own
+  accent colour + icon. Defaults to `takeaway`.
 
   | `kind` | The job the line does | e.g. |
   |---|---|---|
@@ -81,6 +81,19 @@ deliverable; `draft.md` → live in-progress view).
   | `example` | an illustration / concrete scenario | "Ej.: pegar la lista de clientes en un chatbot gratuito." |
   | `quote` | a pull-quote / cited line (rendered italic) | "Una falla de seguridad no siempre tiene un atacante." |
   | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
+
+  **`position`** — where the entry's band sits, `"bottom"` *(default)* or `"top"`. It is **per
+  entry, not per slide**: the render groups all `top` entries into one band above the body and all
+  `bottom` entries into one below, each in array order, so a slide can open with a framing line and
+  still close with a takeaway. Choose by the job the line does, not by its `kind`:
+
+  | `position` | The line's relation to the body | Typical kinds |
+  |---|---|---|
+  | `bottom` *(default)* | a **remark** — it comments on, concludes, or qualifies what the audience has just read | `takeaway`, `note`, `example` |
+  | `top` | a **frame** — it has to be in the audience's head *before* the body makes sense | `quote` that sets the theme, `definition` a term the items use, `important` that is a warning up front |
+
+  Both bands are the same piece in a different place: identical classes, accent colour and icon.
+  An unrecognized value falls back to `bottom`, like an unrecognized `kind` falls back to `takeaway`.
 - **`aside`** — an **optional** common field on any content slide: `{image: {src, alt}, side?}`,
   where `side` is `"right"` *(default)* or `"left"`. Renders the image as a **full-bleed column down
   that edge** of the slide, with the title and body laid out in the remaining width. Its job is
@@ -90,13 +103,33 @@ deliverable; `draft.md` → live in-progress view).
   `content+cards+image`, `process`), because the aside column crops to fill and is not read closely.
   Set it from an author `<!-- aside: ... -->` hint (see [`draft.md`](draft.md)). Don't put an `aside`
   on a template that already carries an image.
+- **`layout`** — an **optional** common field on any slide that pairs a body with **its own
+  supporting image** (`content-image`, `content+cards+image`, and `process`/`quiz` when they carry
+  an `image`). Where that image sits is a **composition** choice, not a property of the template,
+  so the field means the same thing everywhere it applies:
+
+  | `layout` | Effect |
+  |---|---|
+  | `text-left` *(default, omitted)* | the body leads: body column left, image right |
+  | `image-left` | mirrored: image left, body right — the image is read first and the body follows |
+  | `image-top` | stacked: full-width image over a short caption — **`content-image` only** |
+
+  Only the two columns swap. The enumeration never mirrors: facts keep their left-edge dots, cards
+  their icons, steps their numbering, all still left-aligned and in source order; each side also
+  keeps its own column width. Reading order is unchanged too (the markup stays body-then-image in
+  every layout), so PDF export and screen readers are unaffected. `image-top` is deliberately
+  **not** generalized: a card set, a step list or a quiz stacked under a full-width image is a
+  different slide, not a layout of this one. A value a template doesn't define — or a `layout` on a
+  slide with no image — renders as the default and warns at render rather than failing silently.
 - **`reveal`** — an **optional opt-out** on any slide that reveals progressively. By **default** —
   field absent — the HTML deck steps through the slide on click (Reveal fragments):
   first the enumerated items one at a time (`stat`, `card-row`, `concept-breakdown`, `icon-list`,
-  `content+cards+image`), then `highlights` as one final block, so the takeaway text below the
-  body lands *after* what it comments on rather than being readable from the start.
-  `"reveal": "together"` shows the whole slide at once instead. A slide with only `highlights`
-  and no enumeration still gets that one closing step.
+  `content+cards+image`), then the `bottom` `highlights` as one final block, so the takeaway text
+  below the body lands *after* what it comments on rather than being readable from the start.
+  The **`top` band is the symmetric case and therefore does not fragment**: it is on screen from
+  the moment the slide opens, because a line that frames what is coming frames nothing if it
+  arrives last. `"reveal": "together"` shows the whole slide at once instead. A slide with only
+  `bottom` highlights and no enumeration still gets that one closing step.
   The `.pptx` render is static and always shows everything at once, whatever this says.
   Set it from an author `<!-- reveal: together -->` hint in `draft.md`/`final.md`.
   Only `"together"` is recognized; any other value (including the legacy `"sequential"`) leaves
@@ -119,18 +152,18 @@ when the content warrants. Field names are the contract — the renderers read e
 | `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6) | per-card `icon` (else content-matched) |
 | `card-row` | `title`, `cards:[{label,body}]` (3, short) | `lead` |
 | `icon-list` | `title`, `rows:[{label,body}]` (3–5; `body` "" for a bare anaphora line) | `lead` |
-| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example) |
+| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example), `layout` (with an image) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `content-image` | `title`, `image:{src,alt}`, `facts:[{body,label?}]` | `lead`, `layout` (`text-left`\|`image-left`\|`image-top`) |
-| `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead` |
+| `content-image` | `title`, `image:{src,alt}` | `facts:[{body,label?}]`, `lead`, `layout` (the only template taking `image-top`) — **with neither `lead` nor `facts` this *is* the image-only slide**: the image renders full width, no empty text column |
+| `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead`, per-card `icon` (else content-matched), `layout` |
 | `comparison` | `title`, `columns:[{header,cells:[str]}]` (2–3) | — |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
 | `timeline` | `title`, `milestones:[{label,body}]` | `lead`, per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
-| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown at right, never cropped), `answer_label` (label on the answer panel; default "Respuesta") |
+| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown beside the quiz, never cropped), `layout` (with an image), `answer_label` (label on the answer panel; default "Respuesta") |
 | `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched) |
 | `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched) |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |
@@ -204,12 +237,31 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   **Never rewrite the extension.** A `.svg` ref stays `.svg`: the HTML render inlines it as vector
   markup, and swapping it for the `.png` companion silently downgrades a crisp diagram to a raster.
   (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
-  not a rule about filling the model.) On `content-image`, add `"layout":"image-top"` when the text
-  is very short, or `"layout":"image-left"` when the image should lead the eye (it reads first,
-  left of the text) — e.g. a diagram the prose then walks through, or to break up a run of
-  text-left slides. Default (omitted) is `text-left`. The enumeration is unaffected: `facts` keep
-  their order, their left-edge markers, and their left alignment in every layout. An author
-  `<!-- layout: <value> -->` hint **pins** this field — copy it through instead of judging. A fenced code block fills `code-example.code` (+ `explanation`).
+  not a rule about filling the model.) A fenced code block fills `code-example.code`
+  (+ `explanation`).
+- **`layout` — the image's place is chosen after the template, never instead of it.** Add
+  `"layout":"image-left"` whenever the image should lead the eye (a diagram the prose then walks
+  through, or to break up a run of text-left slides); it means the same thing on **all four**
+  templates that carry their own image — `content-image`, `content+cards+image`, and
+  `process`/`quiz` when they have one. `"layout":"image-top"` (stacked) exists on `content-image`
+  only, for text too short to hold a column. Default (omitted) is `text-left`.
+  **Never pick the template to get the placement.** Wanting the image first is not a reason to
+  demote a labeled set to `content-image` `facts` (which lose their per-concept icons) — keep
+  `content+cards+image` and set `layout`. An author `<!-- layout: <value> -->` hint **pins** the
+  field: copy it through instead of judging.
+- **A slide that is only an image is `content-image` with no `lead` and no `facts`.** A screenshot
+  or diagram the presenter narrates, its detail in `notes`, is a normal slide shape: fill `title` +
+  `image` and stop. The render drops the text column and gives the image the full width. Do **not**
+  reach for `image-grid` (which wants ≥4 images) to get chrome-free art, and do not invent filler
+  prose to justify a text column.
+- **`lead` vs `highlights` — a line that *introduces* the body is the `lead`.** A single line before
+  a slide's enumeration or image is its sub-line: it fills `lead`. Only a line that *comments on*
+  the body belongs in `highlights` — and then its `position` follows the same test: a **remark**
+  closes (`bottom`, the default), a **frame** the audience needs before the body makes sense opens
+  (`top`). The `**Label:** text` shape is not evidence either way — an `**Idea clave:** …` line
+  written above the diagram is a lead, not a takeaway; routing it to `highlights` both empties the
+  lead and moves the line to the foot of the slide, where it reads as a summary of something the
+  audience has not seen yet.
 - **Labeled lines (colon lead-ins) — the separator is CONSUMED, never carried.** When a line reads
   `Label: rest` or `- **Label**: rest` (a short lead-in before a separator), split it into
   `{label, body}` yourself. The renderer never parses the separator: it either puts `label` in its

@@ -513,17 +513,20 @@ _HL_ICON = {
 
 
 def _highlights(items) -> list:
-    """Normalize the `highlights` list into `{kind, icon, label, body}`. The **fill** picks each
-    entry's `kind` (one of _HL_ICON); the renderer maps it to its icon + accent style. Defaults to
-    `takeaway`. Entries may be a string or `{body, label?, kind?}`."""
+    """Normalize the `highlights` list into `{kind, icon, label, body, position}`. The **fill**
+    picks each entry's `kind` (one of _HL_ICON); the renderer maps it to its icon + accent style.
+    Defaults to `takeaway`. Entries may be a string or `{body, label?, kind?, position?}`.
+    `position` is `bottom` (default — the band remarks on the body) or `top` (it frames it); like
+    `kind`, an unrecognized value falls back to the default rather than erroring."""
     out = []
     for x in (items or []):
         h = x if isinstance(x, dict) else {"body": x}
         kind = (h.get("kind") or "takeaway").lower()
         if kind not in _HL_ICON:
             kind = "takeaway"
+        pos = "top" if str(h.get("position", "")).lower() == "top" else "bottom"
         out.append({"label": h.get("label", ""), "body": h.get("body", ""),
-                    "kind": kind, "icon": _HL_ICON[kind]})
+                    "kind": kind, "icon": _HL_ICON[kind], "position": pos})
     return out
 
 

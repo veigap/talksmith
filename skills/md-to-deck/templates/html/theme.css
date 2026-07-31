@@ -180,8 +180,14 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts b{font-weight:800;color:var(--ink)}   /* the colon lead-in label */
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
-/* highlights — optional emphasized takeaways / comments, one or more, in a soft accent band */
+/* highlights — optional emphasized takeaways / comments, one or more, in a soft accent band.
+   Two bands, same piece: the default one *remarks* on the body below it, and `.hl-top` *frames*
+   the body above it. Identical classes, colours and icons — only the position differs, and the
+   spacing between band and body comes from `.cfit`'s own gap in both directions. */
 .highlights{margin-top:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
+/* a lead is the title's own sub-line, so it stays glued to the title even when a framing band
+   follows: the band is emitted before the body, the lead is pulled ahead of it. */
+.cfit>.lead{order:-1}
 /* a highlight's `kind` sets the accent (border + icon) via currentColor; the body stays ink */
 .highlight{display:flex;gap:1.4cqw;align-items:flex-start;background:var(--card);border-left:.6cqw solid currentColor;border-radius:.8cqw;padding:1.4cqw 1.8cqw;color:var(--red)}
 .highlight .ic{width:3.2cqw;height:3.2cqw;flex:0 0 auto;margin-top:.2cqw}.highlight .ic svg{fill:currentColor}
@@ -189,11 +195,34 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.takeaway{color:var(--red)}.highlight.important{color:#C77700}.highlight.definition{color:#5B4BC4}
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
-/* `image-left` mirrors the two columns visually only — the markup keeps text-then-image so the
-   reading order (and PDF/screen-reader order) is unchanged. The facts keep their left-edge dots
-   and left alignment; only the column positions swap, never the enumeration itself. */
-.ci.ci-imgleft .citext{order:2}
-.ci.ci-imgleft .imgph{order:1}
+/* ── body + image compositions ────────────────────────────────────────────────────────────────
+   Four templates pair a body with one supporting image — `content-image` (.ci), its cards
+   sibling (.cci), `process` with a diagram (.procgrid) and an illustrated `quiz` (.quiz-split).
+   Where the image sits is a *composition* choice (the model's `layout`), not a property of the
+   template, so all four share one idiom instead of each inventing its own.
+
+   `image-left` mirrors the two columns **visually only** — the markup keeps body-then-image, so
+   the reading order (and PDF/screen-reader order) is unchanged, and the enumeration itself never
+   flips: facts keep their left-edge dots, cards their icons, steps their numbering, all still
+   left-aligned. Only the column positions swap.
+
+   Track sizes flip with them. Grid auto-placement runs in *order-modified* document order, so
+   `order` alone would hand the leading track to the image — and three of these four grids are
+   deliberately asymmetric (the wider track belongs to a specific side's content, not to a
+   position). Mirroring the template-columns keeps each side the width it had. */
+.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body{order:2}
+.imgleft>.imgph,.imgleft>.procmedia,.imgleft>.quiz-media{order:1}
+.cci.imgleft{grid-template-columns:1fr 1.1fr}
+.procgrid.imgleft{grid-template-columns:1.08fr 1fr}
+.quiz.quiz-split.imgleft{grid-template-columns:1fr 1.45fr}
+/* The body column is optional: a slide that is *only* an image (a screenshot the presenter talks
+   over, its detail in the speaker notes) drops the column entirely rather than projecting an empty
+   one — so the grid must collapse to a single track and let the image use the full width. Same
+   rule for a `code-example` missing one of its two panels. */
+.ci:not(:has(.citext)),.cci:not(:has(.ccicards)),.procgrid:not(:has(.procmain)),
+.quiz.quiz-split:not(:has(.quiz-body)),.split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
+/* a lone image is the slide's whole body, so it may claim the height the text column would have */
+.ci:not(:has(.citext)) .imgph.svg svg,.ci:not(:has(.citext)) .imgph.has img{max-height:52cqw}
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
 /* width-relative height (cqw, like every other component) — cqh is unreliable under an
    inline-size container and left the caption clipping; this keeps image + caption in view */

@@ -1,8 +1,10 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
-<div class="split"><div class="explain">
+{# Both columns are guarded: an empty `.codebox` would project a bare dark panel, and a missing
+   column collapses the split to one full-width track rather than leaving half the slide blank. #}
+<div class="split">{% if s.explanation %}<div class="explain">
 {% for e in s.explanation[:3] %}<p>{{ e }}</p>{% endfor %}
-</div><div class="codebox">
+</div>{% endif %}{% if s.code %}<div class="codebox">
 {% for l in lines(s.code)[:18] %}{{ l }}{% if not loop.last %}<br>{% endif %}{% endfor %}
-</div></div>
+</div>{% endif %}</div>
 {% endcall %}

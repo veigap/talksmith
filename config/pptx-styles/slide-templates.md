@@ -66,6 +66,13 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `big_metrics` | 2–4 standalone numbers/metrics with labels (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`). |
    | `one_claim` | A single dominant assertion (≤ ~16 words) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
    | `one_two_words` | The whole slide is 1–2 words (`Q&A`, `Gracias`). |
+   | `is_voiced` | The dominant line is **someone else's words**: a `>` blockquote, a line wrapped in quotation marks, and/or an attribution line opening `—`/`–` or naming a source (`Anthropic:`, `— Ana Pérez, CISO`). A claim in the presenter's own voice is not voiced. |
+   | `is_question` | The title or the body's dominant line **asks** something the slide then answers — a `¿…?`/`…?` line followed by its resolution, a `Pregunta … Respuesta …` split, or multiple-choice options (A/B/C/D). A rhetorical question with no answer on the slide does **not** count. |
+   | `date_labels` | ≥2 labeled items whose **labels are dates or periods** (`2023`, `Marzo 2023`, `Q1`, `20 días después`, `Semana 3`). *When* is what the labels carry. |
+   | `polarity` | The two groups are explicitly **upside vs downside**, not just A vs B — `Ventajas`/`Riesgos`, `Pros`/`Contras`, `Beneficios`/`Limitaciones`, `Qué gana`/`Qué cuesta`. |
+   | `one_metric` | **One** dominant figure is the whole slide (`$2.50`, `18%`, `1M`) with a one-line caption and nothing else competing. (2–4 figures is `big_metrics`.) |
+   | `is_cta` | A terminal (or section-terminal) slide whose items are **next steps / resources / links / where-to-go** — names + URLs + one-line descriptors, not concepts. |
+   | `image_only` | `n_images ≥ 1` and the body carries **no prose and no enumeration** beyond the title — a screenshot or diagram the presenter narrates, its detail in `### Notes`. An explicit "just the image" author instruction produces exactly this. |
 
 2. **Enumerate every catalog entry whose _Match_ fires** given those signals.
 3. **Apply the disambiguators** (each entry's *Match* names what it is **not**) to pick
@@ -74,28 +81,46 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - `is_divider` → `section-agenda` if the title names a `deck.sections` entry (the
      roadmap has a position to highlight), else `divider`.
    - `has_code` → `code-example` (before anything else — code dominates).
-   - `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
+   - `is_question` (the slide asks and then answers) → `quiz`. Before the enumeration rules:
+     multiple-choice options are *choices*, not a labeled set.
+   - `is_voiced` (someone else's words carry the slide) → `quote`, **not** `statement`.
+   - `one_metric` → `big-number`; `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
    - `has_table`: **two comparable value-columns** (A-vs-B, before/after) → `comparison`;
      a **label/value or N-level/N-column** table → `concept-breakdown` (card-per-row grid),
      **not** `comparison`. (A pipe-table is never a native `<a:tbl>`.)
-   - `two_groups` (two symmetric prose blocks compared) → `comparison`.
-   - `labeled_items ≥ 2` and `is_ordered` → `process`.
+   - `two_groups` → `pros-cons` when `polarity` (the two groups are upside vs downside, and the
+     colour-coding is the point), else `comparison` (a neutral compare).
+   - `labeled_items ≥ 2` and `date_labels` → `timeline` (the rail; *when* is the axis), else
+     `is_ordered` → `process`. Check `date_labels` **first**: dated milestones are also ordered,
+     so testing `is_ordered` first is what silently swallows every timeline into `process`.
    - `labeled_items ≥ 2`, each item has its own image → `figures`.
+   - **`labeled_items ≥ 2` and exactly one shared supporting image → `content+cards+image`.**
+     The labeled set stays a card set; the image sits beside it. Do **not** dissolve the labels
+     into `content-image` `facts` (they lose their per-concept icon) and do **not** drop the
+     image to keep `concept-breakdown` — this hybrid exists precisely for this shape, and
+     wanting the image on the left is a `layout` choice, never a reason to reclassify.
    - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `card-row` (lead + 3–5 short) /
      `icon-list` (lead + 3–5 prose) / `concept-breakdown` (the general case, **including a
      2-item set** → two cards). **`concept-breakdown` requires `images == 0`** — any source
-     image disqualifies it (its per-card icons are renderer-added, not source pictures);
-     labeled items *with* images → `figures`.
-   - `labeled_items == 1` (a lead + one point) → `single-point` (one card or callout; if an
-     image supports it → `content-image`). **Never a lone bullet under a title.**
+     image disqualifies it (its per-card icons are renderer-added, not source pictures).
+   - `labeled_items == 1` (a lead + one point) → `single-point`, or `callout` when that point is
+     a **tone-carrying aside** (a tip, a warning, an analogy — the pink/blue panel *is* the
+     message) rather than the slide's substance. If an image supports it → `content-image`.
+     **Never a lone bullet under a title.**
+   - `image_only` → **`content-image` with no `lead` and no `facts`** — the image renders full
+     width, no text column. Not `image-grid` (which wants ≥4 images and treats variety as the
+     message) and not an invented paragraph to justify a column.
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
-     `content-image`; cards **and** one supporting image → `content+cards+image`.
+     `content-image`.
    - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
      one counter-point — e.g. a myth→reality slide) → `statement`.
-   - `one_two_words` + `is_terminal` → `closing-hero`.
+   - `is_cta` (resources / next steps / links) → `closing-cta`; `one_two_words` + `is_terminal`
+     → `closing-hero`.
    - only prose, none of the above → `content-text` (flag as restructure candidate).
    **Never fall to a plainer template** (plain bullets, raw table, `content-text`) when a
-   richer one matches.
+   richer one matches. The same rule applies *within* a walk step: when two entries both fire,
+   take the one that keeps more structure — a card set over a fact list, a timeline over a
+   step list, a quote over a statement.
 4. **No entry matches → `fallback`** (log it).
 
 See **Matching examples** below for worked classifications, including the tricky ties.
@@ -141,13 +166,29 @@ precise rules.
 
 > **Reveal, on by default.** With no author action, the HTML deck steps through a slide on click
 > (Reveal fragments): every enumeration slide (`stat`, `card-row`, `concept-breakdown`,
-> `icon-list`, `content+cards+image`) reveals its items **one at a time**, and any slide's
-> `highlights` then land as **one final step** — so the takeaway text below the body arrives after
-> what it comments on, instead of being readable before the presenter gets there. To show a whole
-> slide at once instead, carry `reveal: together` — set from an author `<!-- reveal: together -->`
-> hint. The `.pptx` render is static and shows everything at once regardless. Viewers can also
-> toggle every fragment off at runtime from the deck's animations button, so `together` is for
-> slides whose parts must be read as one, not for viewer preference.
+> `icon-list`, `content+cards+image`) reveals its items **one at a time**, and a slide's
+> **closing** `highlights` band then lands as **one final step** — so the takeaway below the body
+> arrives after what it comments on, instead of being readable before the presenter gets there. To
+> show a whole slide at once instead, carry `reveal: together` — set from an author
+> `<!-- reveal: together -->` hint. The `.pptx` render is static and shows everything at once
+> regardless. Viewers can also toggle every fragment off at runtime from the deck's animations
+> button, so `together` is for slides whose parts must be read as one, not for viewer preference.
+>
+> **Optional highlights — two bands, one piece.** Any content slide may carry `highlights`: one or
+> more emphasized lines in an accented band, each with its own `kind` (colour + icon at the left).
+> Each entry also chooses its `position`. A **remark** — it comments on, concludes or qualifies the
+> body — sits in the band **below** it (`bottom`, the default) and reveals last. A **frame** — a
+> voiced line that sets the theme, a definition the items depend on, a warning that has to land
+> first — sits in the band **above** the body (`top`) and is **visible from the moment the slide
+> opens**, because a frame that arrives last frames nothing. Both bands are the same component in a
+> different place: same classes, same per-`kind` colour and icon. A slide may carry both.
+>
+> **Optional layout.** A slide that pairs a body with **its own** supporting image
+> (`content-image`, `content+cards+image`, `process`/`quiz` with an image) may carry `layout` to
+> place that image: `text-left` (default), `image-left` (mirrored, so the image is read first), and
+> on `content-image` also `image-top` (stacked). It is a *composition* choice made **after** the
+> template — never a reason to pick a different template (full contract:
+> [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)).
 >
 > **Optional aside.** Any slide type in this catalog *except* the full-bleed ones (`cover`,
 > `divider`, `statement`, `quote`, `closing-hero`) and the image-owning ones (`content-image`,
@@ -237,8 +278,10 @@ precise rules.
 #### `quote` (pull-quote, full-bleed)
 - **Match:** the slide **is a quotation** in someone's voice — a dominant quoted line
   (optionally with an attribution line starting `—`/`–`). A claim in the *presenter's* voice
-  is a `statement`; a quote is attributed / voiced. Primarily **author-directed**
-  (`<!-- template: quote -->`); a leading quotation mark is the auto-hint.
+  is a `statement`; a quote is attributed / voiced. **Fires on `is_voiced` on its own** — a
+  blockquote, quotation marks or a named source is enough, no hint required; `<!-- template:
+  quote -->` only pins it. *(A voiced line that **frames** another slide's body is not this
+  template at all: it is a `highlights` entry with `kind: quote`, `position: top`.)*
 - **Format:** full-bleed, vertically centred: a large accent quotation mark, the quote in
   large bold (≤~35 words), then a muted `— attribution` line. No cards, no header pill body.
 - **Provenance:** gov deck testimonial slides; common in Gamma-style decks.
@@ -354,8 +397,10 @@ precise rules.
 
 #### `big-number` (one hero metric)
 - **Match:** a **single** dominant figure is the whole slide (`$2.50`, `18%`, `1M`) with a
-  one-line caption. Distinct from `stat` (2–4 metrics in a grid). Author-directed
-  (`<!-- template: big-number -->`); `body[0]` is the number, the rest is the caption.
+  one-line caption. Distinct from `stat` (2–4 metrics in a grid). **Fires on `one_metric` on its
+  own** — a lone headline figure does not need a hint to earn the hero treatment, and letting it
+  fall to prose wastes the deck's loudest slide; `<!-- template: big-number -->` only pins it.
+  `body[0]` is the number, the rest is the caption.
 - **Format:** the number set **very large** in `#DA1B2E`, a bold caption beneath, optional
   supporting line. Left-aligned, vertically centred.
 - **Provenance:** impact / headline-stat slides; common in Gamma-style decks.
@@ -388,8 +433,10 @@ precise rules.
 #### `timeline` (dated / milestone sequence)
 - **Match:** an ordered sequence whose labels are **dates / periods / milestones** (`2023`,
   `Marzo 2023`, `20 días después`, `Q1`), where *when* matters — a history or roadmap. Distinct
-  from `process` (abstract steps, order-not-date). Primarily **author-directed**
-  (`<!-- template: timeline -->`); labeled items with date-like labels are the hint.
+  from `process` (abstract steps, order-not-date). **Fires on `date_labels` on its own** — no
+  hint required, and it is tested **before** `is_ordered`, since dated milestones are ordered too
+  and testing order first is what used to swallow every timeline into `process`.
+  `<!-- template: timeline -->` only pins it.
 - **Format:** a **vertical rail** with a connecting line and a dot per entry; each row = the
   date/milestone (mono accent) + a one-line detail. Time flows top→bottom. An optional **`lead`**
   (one intro line) may sit above the rail — use it when the sequence needs framing before the
@@ -411,8 +458,10 @@ precise rules.
 
 #### `pros-cons` (two colour-coded columns)
 - **Match:** a **decision framed as upside vs downside** — two labelled groups (Ventajas /
-  Riesgos, Pros / Cons, Consumo / Enterprise). Author-directed (`<!-- template: pros-cons -->`);
-  content is two `### Group` items (first = the "pro", second = the "con").
+  Riesgos, Pros / Cons, Consumo / Enterprise). **Fires on `two_groups` + `polarity` on its own**
+  — when the two groups are valenced, the colour-coding *is* the information, so this beats the
+  neutral `comparison`; `<!-- template: pros-cons -->` only pins it. Content is two `### Group`
+  items (first = the "pro", second = the "con").
 - **Format:** two panels — the pro in the **blue** callout tint with a `verified` check, the
   con in the **pink** tint with an `error`/`dangerous` mark; each = label + a short body.
 - **Provenance:** trade-off / decision slides; common in Gamma-style decks.
@@ -421,7 +470,12 @@ precise rules.
 
 #### `content-image`
 - **Match:** one main claim supported by **1–3** `![]()` images; the prose leads, the
-  images are evidence.
+  images are evidence. **Also the image-only slide** (`image_only`): with no `lead` and no
+  `facts` the text column is not emitted at all and the image renders full width — a screenshot
+  or diagram the presenter narrates, its detail in the notes. That is a first-class shape, not a
+  degenerate one: don't force it into `image-grid` (≥4 images, variety is the message) and don't
+  invent prose to fill a column. **Not:** a labeled set of ≥2 concepts that happens to have one
+  image — that is `content+cards+image`, and demoting its cards to `facts` costs them their icons.
 - **Name:** the `template` value is **`content-image`** (hyphen), even though the strict
   PPTX recipe for it is named "§13 content+image". Recipe names and `template` values are
   different namespaces; `"content+image"` in the model renders as `fallback`.
@@ -442,9 +496,17 @@ precise rules.
 #### `content+cards+image`
 - **Match:** labeled **cards/steps on one side AND a supporting image/example/code on the
   other** — the hybrid (strict's own 4th type). Both a card set *and* a single evidence
-  visual.
+  visual. **This is the default for `labeled_items ≥ 2` + one shared image** — it is not a rare
+  hybrid to reach for only when nothing else fits.
 - **Format:** ~50/50 split: cards or a numbered list on one half + one supporting
-  image/worked-example/code panel on the other, aligned to a shared baseline.
+  image/worked-example/code panel on the other, aligned to a shared baseline. **Two layouts**
+  (`layout` field): `text-left` (default — cards left, image right) and `image-left` (mirrored —
+  image left, cards right). Pick the layout from the content the same way `content-image` does
+  (image to be read first → `image-left`); an author `<!-- layout: <value> -->` hint pins it and
+  overrides that judgement. Only the two columns swap: the cards keep their order, their icons
+  and their left alignment, and the cards' column stays the wider of the two. There is **no
+  `image-top`** here — a stack of cards under a full-width image is a different slide, not a
+  variant of this one; the value is rejected with a warning rather than half-honored.
 - **Strict recipe:** §13 content+cards+image (§7 cards + §12 image). **Provenance:** ref
   S7, S30, S42.
 
@@ -615,22 +677,29 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 
 | If the slide is… | and… | → |
 |---|---|---|
-| a labeled set (**≥2**) | ordered (steps/1./Paso) | `process` |
-| a labeled set (**≥2**) | **any `![]()` image present** | `figures` / `content-image` — **never `concept-breakdown`** |
-| a labeled set (**≥2**) | each item has an image | `figures` |
+| a labeled set (**≥2**) | labels are **dates/periods** | `timeline` (check before `process`) |
+| a labeled set (**≥2**) | ordered (steps/1./Paso), labels not dates | `process` |
+| a labeled set (**≥2**) | **each item** has an image | `figures` |
+| a labeled set (**≥2**) | **one shared** supporting image | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts |
 | a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars, no image | `card-row` |
 | a labeled set (**≥2**) | lead + 3–5 items, prose bodies, no image | `icon-list` |
 | a labeled set (**≥2**) | otherwise, **no image** (incl. a **2-item** grid) | `concept-breakdown` (renderer adds per-card icons) |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
+| **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |
+| numbers/metrics | **1** hero figure + caption | `big-number` |
 | numbers/metrics | 2–4 big figures + labels | `stat` |
 | a table | **2 comparable value-columns** (A vs B) | `comparison` |
 | a table | label/value or **N-level/N-column** | `concept-breakdown` (card-per-row) |
-| two prose groups | A vs B / before-after | `comparison` |
+| two groups | upside vs downside (`polarity`) | `pros-cons` |
+| two groups | a neutral A vs B / before-after | `comparison` |
 | images | ≥4, variety is the message | `image-grid` |
 | images | 1–3 supporting prose | `content-image` |
-| cards **and** an image | hybrid | `content+cards+image` |
+| images | **image only** — no prose, no enumeration | `content-image` with no `lead`/`facts` (renders full width); **not** `image-grid` |
 | one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
-| one emphasized aside | inside another slide | `callout` |
+| one big claim | it is **someone else's words** (quoted/attributed) | `quote` |
+| a question | the slide answers it (opt. A/B/C/D choices) | `quiz` |
 | section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `section-agenda`/`divider` |
+| terminal slide | next steps / resources / links | `closing-cta` |
+| terminal slide | 1–2 words (`Q&A`, `Gracias`) | `closing-hero` |
 | only prose | no visual, no enumeration | `content-text` (flag) |
 | code | meant to be read | `code-example` |

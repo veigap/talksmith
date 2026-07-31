@@ -1,7 +1,7 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
 {% if s.image %}
-<div class="procgrid"><div class="procmain">
+<div class="procgrid{{ m.imgpos(s) }}"><div class="procmain">
 {% endif %}
 {{ m.lead(s) -}}
 {% if s.image %}

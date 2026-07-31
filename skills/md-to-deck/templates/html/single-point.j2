@@ -1,5 +1,9 @@
 {% import "_macros.j2" as m %}
 {% set p = s.point or s.callout or {} %}
 {% call m.stage(s) %}
+{# guarded: the callout is a filled panel, so emitting it without a point projects a coloured
+   empty box #}
+{% if p.label or p.body %}
 <div class="callout {{ s.tone or ('blue' if s.template == 'callout' else 'pink') }}">{{ icon(p.icon) }}<p><b>{{ p.label }}</b> {{ p.body }}</p></div>
+{% endif %}
 {% endcall %}

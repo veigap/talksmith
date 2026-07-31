@@ -13,6 +13,73 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.72.0] — 2026-07-31
+
+Three composition fields that used to belong to one template each now mean the same thing on
+every slide that can carry them — plus an audit of the metadata the fill step uses to pick a
+template at all.
+
+### Added
+
+- **`layout` works on every slide that carries its own image**, not just `content-image`. Where a
+  supporting image sits is a *composition* choice, so `content+cards+image`, `process` and `quiz`
+  now read the same field with the same meaning: `text-left` (default) or `image-left` (mirrored,
+  so the image is read first). `image-top` stays `content-image`-only — a card set or a step list
+  under a full-width image is a different slide, not a layout of this one. This closes the trap
+  that forced authors to choose between per-concept icons and an image-first reading order: a
+  labeled set with a diagram stays `content+cards+image` and pins `layout: image-left` instead of
+  being demoted to `content-image` facts. The mirror is CSS-only — markup stays body-then-image, so
+  PDF and screen-reader order never change, the enumeration keeps its order/icons/alignment, and
+  each side keeps its own column width (grid tracks flip along with the content, since grid
+  auto-placement follows `order`). A `layout` a template doesn't define, or one on a slide with no
+  image, renders as the default **and warns on stderr**.
+- **`highlights` entries choose their band with `position`.** The accent band used to be hardwired
+  below the body, which only fits a *remark* — a line that comments on what the audience just read.
+  A line that *frames* what follows (a voiced line that sets the theme, a definition the items
+  depend on, a warning that has to land first) now sets `position: "top"` and renders in a band
+  between the title and the body. It is **per entry, not per slide**, so one slide can open with a
+  frame and still close with a takeaway; both bands are the same component (same classes, colours,
+  icons). Reveal follows the same logic it always did: the closing band arrives on the last click,
+  and the framing band is on screen from the moment the slide opens, because a frame that arrives
+  last frames nothing.
+
+### Fixed
+
+- **An image-only slide no longer projects an empty text column.** `content-image` emitted its text
+  wrapper unconditionally, so a slide with just an image (a screenshot the presenter narrates, its
+  detail in the notes) produced a blank half-slide — or, under `image-top`, a bordered accent box
+  with nothing in it. The column is now emitted only when there is a `lead` or `facts`, and when it
+  is absent the image takes the **full width** instead of staying in its half. This shape is now
+  documented as first-class: `content-image` with no text *is* the image-only slide, so there is no
+  longer a reason to abuse `image-grid` (≥4 images) to get chrome-free art.
+- **The same guard applied across every other template** in one pass: `code-example` no longer
+  emits an empty dark code panel (and a missing panel collapses the split to full width),
+  `callout`/`single-point` no longer emits a coloured box with no point, `quiz` no longer emits an
+  empty answer panel, and `content-text`/`pros-cons` no longer emit empty prose containers.
+- **Template selection was defaulting to a handful of types.** The catalog's discriminator walk —
+  the prescriptive part the fill step actually executes — named only ~14 of 25 templates, so the
+  rest were reachable in practice only through an explicit author hint. `timeline`, `quote`,
+  `quiz`, `pros-cons`, `big-number`, `callout` and `closing-cta` now have their own signals
+  (`date_labels`, `is_voiced`, `is_question`, `polarity`, `one_metric`, `is_cta`, `image_only`) and
+  their own branch in the walk, and the four entries that described themselves as "author-directed"
+  now state the signal they fire on by themselves. Two ordering bugs are fixed with them:
+  `is_ordered` was tested before dates (so every timeline was swallowed by `process`), and the
+  disambiguation table sent *any* labeled set with an image to `content-image`/`figures`, which is
+  what dissolved card sets into fact lists. The FILL guide also gains the `lead`-vs-`highlights`
+  rule — a line that introduces the body is the `lead`, only a line that comments on it is a
+  highlight.
+
+### Changed
+
+- The `.pptx` path states what it does with the new fields instead of diverging in silence: strict
+  **honors** `highlights[].position` (a band above the body costs no new geometry) and an
+  image-only slide (no empty text frame), but **ignores** `layout` by decision — its EMU geometry
+  is bound to a base template with no mirrored exemplar. Free-form honors all three as design calls.
+- The style-reference fixture gains an example of **every new permutation** — `image-left` on all
+  four image-bearing templates, the image-only slide in both layouts and with a highlights band,
+  a framing band alone and both bands together, and a one-panel `code-example` — so any of them
+  regressing shows up in the committed `style-reference.html` diff.
+
 ## [0.71.0] — 2026-07-31
 
 ### Fixed

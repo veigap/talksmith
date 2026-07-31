@@ -31,6 +31,19 @@ import html_style as _hs              # noqa: E402
 import model_freshness as _fresh       # noqa: E402
 
 
+# Which `layout` values each template understands (schemas/slide-model.md). `image-left` is
+# universal to every body+image composition; `image-top` stacks the image over the body and is
+# defined only where that body is prose — a card set, a step list or a quiz under a full-width
+# image is a different slide, not a layout of this one. Templates absent from this map (including
+# `process`/`quiz` without an image) take no `layout` at all.
+_LAYOUTS = {
+    "content-image":        ("text-left", "image-left", "image-top"),
+    "content+cards+image":  ("text-left", "image-left"),
+    "process":              ("text-left", "image-left"),
+    "quiz":                 ("text-left", "image-left"),
+}
+
+
 def _norm(t: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (t or "").lower())).strip()
 
@@ -48,9 +61,17 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     if deck.get("title"):                                          # contractually-fixed cover first
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
-    unknown = []
+    unknown, bad_layouts = [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
+        # `layout` places the slide's own image against its body, so it means nothing without one
+        # and not every template defines every value. Either way it renders as the default — say
+        # so rather than let an author's pinned intent disappear silently.
+        lay, name = s.get("layout"), s.get("title", "") or "(untitled)"
+        if lay and lay not in _LAYOUTS.get(t, ()):
+            bad_layouts.append((name, t, lay, f"expected {'|'.join(_LAYOUTS.get(t, ())) or 'no layout'}"))
+        elif lay and not s.get("image"):
+            bad_layouts.append((name, t, lay, "the slide carries no image"))
         # An unrecognized `template` silently renders as fallback, which looks like a bad
         # classification rather than a typo — surface it so a misspelled catalog name
         # (`content+image` for `content-image`, `agenda` for `section-agenda`) is visible.
@@ -71,6 +92,9 @@ def render(model: dict, talk_root: Path, out_dir: Path):
 
     for slide_title, bad in unknown:
         print(f"[html] warning: unknown template {bad!r} → fallback  ({slide_title})", file=sys.stderr)
+    for slide_title, tmpl, bad, why in bad_layouts:
+        print(f"[html] warning: layout {bad!r} ignored on {tmpl!r} ({why}) "
+              f"→ default  ({slide_title})", file=sys.stderr)
 
     title = deck.get("title", talk_root.name if talk_root else "")
     subtitle = " · ".join(x for x in (deck.get("class", ""), deck.get("presenter", "")) if x)

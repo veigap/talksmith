@@ -222,8 +222,14 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts b{font-weight:800;color:var(--ink)}   /* the colon lead-in label */
 .cifacts li::before{content:"";position:absolute;left:0;top:.9cqw;width:1cqw;height:1cqw;border-radius:50%;background:var(--red)}
-/* highlights — optional emphasized takeaways / comments, one or more, in a soft accent band */
+/* highlights — optional emphasized takeaways / comments, one or more, in a soft accent band.
+   Two bands, same piece: the default one *remarks* on the body below it, and `.hl-top` *frames*
+   the body above it. Identical classes, colours and icons — only the position differs, and the
+   spacing between band and body comes from `.cfit`'s own gap in both directions. */
 .highlights{margin-top:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
+/* a lead is the title's own sub-line, so it stays glued to the title even when a framing band
+   follows: the band is emitted before the body, the lead is pulled ahead of it. */
+.cfit>.lead{order:-1}
 /* a highlight's `kind` sets the accent (border + icon) via currentColor; the body stays ink */
 .highlight{display:flex;gap:1.4cqw;align-items:flex-start;background:var(--card);border-left:.6cqw solid currentColor;border-radius:.8cqw;padding:1.4cqw 1.8cqw;color:var(--red)}
 .highlight .ic{width:3.2cqw;height:3.2cqw;flex:0 0 auto;margin-top:.2cqw}.highlight .ic svg{fill:currentColor}
@@ -231,11 +237,34 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.takeaway{color:var(--red)}.highlight.important{color:#C77700}.highlight.definition{color:#5B4BC4}
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
-/* `image-left` mirrors the two columns visually only — the markup keeps text-then-image so the
-   reading order (and PDF/screen-reader order) is unchanged. The facts keep their left-edge dots
-   and left alignment; only the column positions swap, never the enumeration itself. */
-.ci.ci-imgleft .citext{order:2}
-.ci.ci-imgleft .imgph{order:1}
+/* ── body + image compositions ────────────────────────────────────────────────────────────────
+   Four templates pair a body with one supporting image — `content-image` (.ci), its cards
+   sibling (.cci), `process` with a diagram (.procgrid) and an illustrated `quiz` (.quiz-split).
+   Where the image sits is a *composition* choice (the model's `layout`), not a property of the
+   template, so all four share one idiom instead of each inventing its own.
+
+   `image-left` mirrors the two columns **visually only** — the markup keeps body-then-image, so
+   the reading order (and PDF/screen-reader order) is unchanged, and the enumeration itself never
+   flips: facts keep their left-edge dots, cards their icons, steps their numbering, all still
+   left-aligned. Only the column positions swap.
+
+   Track sizes flip with them. Grid auto-placement runs in *order-modified* document order, so
+   `order` alone would hand the leading track to the image — and three of these four grids are
+   deliberately asymmetric (the wider track belongs to a specific side's content, not to a
+   position). Mirroring the template-columns keeps each side the width it had. */
+.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body{order:2}
+.imgleft>.imgph,.imgleft>.procmedia,.imgleft>.quiz-media{order:1}
+.cci.imgleft{grid-template-columns:1fr 1.1fr}
+.procgrid.imgleft{grid-template-columns:1.08fr 1fr}
+.quiz.quiz-split.imgleft{grid-template-columns:1fr 1.45fr}
+/* The body column is optional: a slide that is *only* an image (a screenshot the presenter talks
+   over, its detail in the speaker notes) drops the column entirely rather than projecting an empty
+   one — so the grid must collapse to a single track and let the image use the full width. Same
+   rule for a `code-example` missing one of its two panels. */
+.ci:not(:has(.citext)),.cci:not(:has(.ccicards)),.procgrid:not(:has(.procmain)),
+.quiz.quiz-split:not(:has(.quiz-body)),.split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
+/* a lone image is the slide's whole body, so it may claim the height the text column would have */
+.ci:not(:has(.citext)) .imgph.svg svg,.ci:not(:has(.citext)) .imgph.has img{max-height:52cqw}
 .ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
 /* width-relative height (cqw, like every other component) — cqh is unreliable under an
    inline-size container and left the caption clipping; this keeps image + caption in view */
@@ -635,6 +664,30 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </svg></div></div></div>
 
 </div></div></div>
+</section><section class="slide" data-kind="process"><div class="stage">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">process: diagram first, steps following (image-left)</h2></div><div class="cbody"><div class="cfit"><div class="procgrid imgleft"><div class="procmain">
+<p class="lead">The same steps with the diagram leading the eye:</p><div class="procsteps">
+<div class="steprow"><span class="stepn">1</span><p><b>Own layout</b>: An image switches process to a two-column arrangement, not the full-width numbered cards.</p></div>
+<div class="steprow"><span class="stepn">2</span><p><b>Rows, not cards</b>: Each step compresses to a numbered row so the diagram keeps its space.</p></div>
+<div class="steprow"><span class="stepn">3</span><p><b>Never cropped</b>: The supporting image is contained, so a diagram here stays readable.</p></div>
+</div>
+</div><div class="procmedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e4-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e4-a)"/>
+  </g>
+  <defs><marker id="e4-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div></div>
+
+</div></div></div>
 </section><section class="slide" data-kind="timeline"><div class="stage">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">timeline: a dated milestone sequence</h2></div><div class="cbody"><div class="cfit"><p class="lead">An optional lead can frame the sequence before the dates begin.</p><div class="timeline">
 <div class="tlrow"><span class="tldot"></span><div class="tlbody"><h4 class="tldate">Day 1</h4><p>Reach for timeline when the labels read as dates or milestones.</p></div></div>
@@ -714,7 +767,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 
 <div class="highlights fragment fade-up"><div class="highlight important"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.91-120q-28.91 0-49.41-20.59-20.5-20.59-20.5-49.5t20.59-49.41q20.59-20.5 49.5-20.5t49.41 20.59q20.5 20.59 20.5 49.5t-20.59 49.41q-20.59 20.5-49.5 20.5ZM410-360v-480h140v480H410Z"/></svg></span><p><b>Never cropped</b>: the tall portrait must show its full height, edge to edge.</p></div></div></div></div></div>
 </section><section class="slide" data-kind="content-image"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-left mirrors the columns</h2></div><div class="cbody"><div class="cfit"><div class="ci ci-imgleft"><div class="citext">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-left mirrors the columns</h2></div><div class="cbody"><div class="cfit"><div class="ci imgleft"><div class="citext">
 <p class="lead">Same slide, image first — the enumeration is untouched:</p><ul class="cifacts"><li><b>Columns swap</b>: the image takes the left half, the text the right.</li><li><b>Enumeration unchanged</b>: facts keep their order, left-edge dots and left alignment.</li><li><b>Never cropped</b>: aspect is preserved here exactly as in text-left.</li></ul></div>
 <div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
@@ -722,10 +775,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e5-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e5-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e6-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e6-a)"/>
   </g>
-  <defs><marker id="e5-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e6-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -740,10 +793,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e6-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e6-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e7-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e7-a)"/>
   </g>
-  <defs><marker id="e6-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e7-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -753,24 +806,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div>
 
 </div></div></div>
-</section><section class="slide" data-kind="figures"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: a set where each item has its own image</h2></div><div class="cbody"><div class="cfit"><div class="figs">
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
-  <rect width="640" height="360" fill="#FFFFFF"/>
-  <g stroke="#DA1B2E" stroke-width="3">
-    <rect x="40" y="150" width="140" height="60" rx="10"/>
-    <rect x="250" y="150" width="140" height="60" rx="10"/>
-    <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e7-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e7-a)"/>
-  </g>
-  <defs><marker id="e7-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
-  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
-    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
-  </g>
-</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</section><section class="slide" data-kind="content-image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-only takes the full width</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -784,8 +821,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div></div>
+
+</div></div></div>
+<aside class="notes">Same model without a layout: with no text column the two-column grid collapses to one track, so the image uses the whole slide instead of sitting in its half with the other half blank.</aside></section><section class="slide" data-kind="content-image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: the image-only slide (image-top)</h2></div><div class="cbody"><div class="cfit"><div class="ci ci-top"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -799,13 +839,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
-</div>
+</svg></div></div>
 
 </div></div></div>
-</section><section class="slide" data-kind="image-grid"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
-<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+<aside class="notes">This is the shape a screenshot slide takes: the image carries the slide and the detail lives here in the notes, where the presenter reads it. The renderer emits no text column at all — before the guard, image-top projected an empty accent-bordered note box under the picture.</aside></section><section class="slide" data-kind="content-image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-only, with a closing remark</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -819,7 +857,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div></div>
+
+<div class="highlights fragment fade-up"><div class="highlight takeaway"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M200-120v-680h343l19 86h238v370H544l-18.93-85H260v309h-60Zm300-452Zm95 168h145v-250H511l-19-86H260v251h316l19 85Z"/></svg></span><p><b>Still a band</b>: an image-only slide can carry highlights; only the text column is gone.</p></div></div></div></div></div>
+</section><section class="slide" data-kind="figures"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: a set where each item has its own image</h2></div><div class="cbody"><div class="cfit"><div class="figs">
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -833,7 +876,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -847,7 +891,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -861,7 +906,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
+</div>
+
+</div></div></div>
+</section><section class="slide" data-kind="image-grid"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -889,12 +940,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div></div>
-
-</div></div></div>
-</section><section class="slide" data-kind="content+cards+image"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: cards beside one image</h2></div><div class="cbody"><div class="cfit"><p class="lead">A short lead sits above the cards (regression guard for the lead field).</p><div class="cci"><div class="ccicards">
-<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards on one side</h3><p>A labeled set fills one half of the slide.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm56-97h489L578-473 446-302l-93-127-117 152Zm-56 97v-600 600Z"/></svg></span><h3>Image on the other</h3><p>A single supporting visual fills the rest.</p></div></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -908,6 +954,86 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e17-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e17-a)"/>
+  </g>
+  <defs><marker id="e17-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e18-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e18-a)"/>
+  </g>
+  <defs><marker id="e18-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e19-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e19-a)"/>
+  </g>
+  <defs><marker id="e19-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div>
+
+</div></div></div>
+</section><section class="slide" data-kind="content+cards+image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: cards beside one image</h2></div><div class="cbody"><div class="cfit"><p class="lead">A short lead sits above the cards (regression guard for the lead field).</p><div class="cci"><div class="ccicards">
+<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards on one side</h3><p>A labeled set fills one half of the slide.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm56-97h489L578-473 446-302l-93-127-117 152Zm-56 97v-600 600Z"/></svg></span><h3>Image on the other</h3><p>A single supporting visual fills the rest.</p></div></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e20-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e20-a)"/>
+  </g>
+  <defs><marker id="e20-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div>
+
+</div></div></div>
+</section><section class="slide" data-kind="content+cards+image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: image-left mirrors the columns</h2></div><div class="cbody"><div class="cfit"><p class="lead">Same slide, image first — the cards are untouched:</p><div class="cci imgleft"><div class="ccicards">
+<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M273-160 80-353l193-193 42 42-121 121h316v60H194l121 121-42 42Zm414-254-42-42 121-121H450v-60h316L645-758l42-42 193 193-193 193Z"/></svg></span><h3>Columns swap</h3><p>the image takes the left column, the cards the right.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards unchanged</h3><p>they keep their order, their icons and their left alignment.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M100-200q-24 0-42-18t-18-42v-438q0-24.75 17.63-42.38Q75.25-758 100-758h150q3-18 16.95-30 13.96-12 31.63-12H373q19 0 33 12t17 30h437q24.75 0 42.38 17.62Q920-722.75 920-698v438q0 24.75-17.62 42.37Q884.75-200 860-200H100Zm760-60v-438H100v438h760ZM100-698v438-438Zm110 249q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Z"/></svg></span><h3>Widths stay put</h3><p>the wider grid track remains the cards&#39;, not the image&#39;s.</p></div></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e21-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e21-a)"/>
+  </g>
+  <defs><marker id="e21-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
 </svg></div></div>
 
 </div></div></div>
@@ -917,16 +1043,35 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>    &#34;type&#34;: &#34;text&#34;,<br>    &#34;text&#34;: SYSTEM_PROMPT,<br>    &#34;cache_control&#34;: {&#34;type&#34;: &#34;ephemeral&#34;}<br>  }],<br>  messages=msgs,<br>)</div></div>
 
 </div></div></div>
+</section><section class="slide" data-kind="code-example"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: code alone takes the full width</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="codebox">
+client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>    &#34;type&#34;: &#34;text&#34;,<br>    &#34;text&#34;: SYSTEM_PROMPT,<br>    &#34;cache_control&#34;: {&#34;type&#34;: &#34;ephemeral&#34;}<br>  }],<br>  messages=msgs,<br>)</div></div>
+
+</div></div></div>
 </section><section class="slide" data-kind="content-text"><div class="stage">
 <div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-text: the prose last resort</h2></div><div class="cbody"><div class="cfit"><div class="ctext"><p class="big2">content-text carries only prose — a definition or a framing — when nothing richer fits.</p><div class="ctpanels">
 <div class="ctp">It renders as one lead line plus a few light panels, never a paragraph and never bullets.</div><div class="ctp">The fill flags it as a restructure candidate: most prose slides are really cards in disguise.</div></div></div>
 
 </div></div></div>
 </section><section class="slide" data-kind="content-text"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">Highlights: the six kinds</h2></div><div class="cbody"><div class="cfit"><div class="ctext"><p class="big2">Any content slide can carry a highlights band; the fill picks each line&#39;s kind:</p><div class="ctpanels">
-</div></div>
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">Highlights: the six kinds</h2></div><div class="cbody"><div class="cfit"><div class="ctext"><p class="big2">Any content slide can carry a highlights band; the fill picks each line&#39;s kind:</p></div>
 
 <div class="highlights fragment fade-up"><div class="highlight takeaway"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M200-120v-680h343l19 86h238v370H544l-18.93-85H260v309h-60Zm300-452Zm95 168h145v-250H511l-19-86H260v251h316l19 85Z"/></svg></span><p><b>Takeaway</b>: the one idea to remember (the default kind).</p></div><div class="highlight important"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.91-120q-28.91 0-49.41-20.59-20.5-20.59-20.5-49.5t20.59-49.41q20.59-20.5 49.5-20.5t49.41 20.59q20.5 20.59 20.5 49.5t-20.59 49.41q-20.59 20.5-49.5 20.5ZM410-360v-480h140v480H410Z"/></svg></span><p><b>Important</b>: a risk, a limit, or a hard &#39;do not&#39;.</p></div><div class="highlight definition"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M560-574v-48q33-14 67.5-21t72.5-7q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-610q-38 0-73 9.5T560-574Zm0 220v-49q33-13.5 67.5-20.25T700-430q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-390q-38 0-73 9t-67 27Zm0-110v-48q33-14 67.5-21t72.5-7q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-500q-38 0-73 9.5T560-464ZM248-300q53.57 0 104.28 12.5Q403-275 452-250v-427q-45-30-97.62-46.5Q301.76-740 248-740q-38 0-74.5 9.5T100-707v434q31-14 70.5-20.5T248-300Zm264 50q50-25 98-37.5T712-300q38 0 78.5 6t69.5 16v-429q-34-17-71.82-25-37.82-8-76.18-8-54 0-104.5 16.5T512-677v427Zm-30 90q-51-38-111-58.5T248-239q-36.54 0-71.77 9T106-208q-23.1 11-44.55-3Q40-225 40-251v-463q0-15 7-27.5T68-761q42-20 87.39-29.5 45.4-9.5 92.61-9.5 63 0 122.5 17T482-731q51-35 109.5-52T712-800q46.87 0 91.93 9.5Q849-781 891-761q14 7 21.5 19.5T920-714v463q0 27.89-22.5 42.45Q875-194 853-208q-34-14-69.23-22.5Q748.54-239 712-239q-63 0-121 21t-109 58ZM276-489Z"/></svg></span><p><b>Definition</b>: a term being defined.</p></div><div class="highlight example"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M422.5-103.5Q399-127 399-161h162q0 34-23.5 57.5T480-80q-34 0-57.5-23.5ZM318-223v-60h324v60H318Zm5-121q-66-43-104.5-107.5T180-597q0-122 89-211t211-89q122 0 211 89t89 211q0 81-38 145.5T637-344H323Zm22-60h271q48-32 76-83t28-110q0-99-70.5-169.5T480-837q-99 0-169.5 70.5T240-597q0 59 28 110t77 83Zm135 0Z"/></svg></span><p><b>Example</b>: a concrete case or scenario.</p></div><div class="highlight quote"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m248-240 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T458-480L320-240h-72Zm360 0 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T818-480L680-240h-72ZM376.5-503.5Q400-527 400-560t-23.5-56.5Q353-640 320-640t-56.5 23.5Q240-593 240-560t23.5 56.5Q287-480 320-480t56.5-23.5Zm360 0Q760-527 760-560t-23.5-56.5Q713-640 680-640t-56.5 23.5Q600-593 600-560t23.5 56.5Q647-480 680-480t56.5-23.5ZM680-560Zm-360 0Z"/></svg></span><p>&#34;A cited line — rendered in italics.&#34;</p></div><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p><b>Note</b>: an aside or minor context.</p></div></div></div></div></div>
+</section><section class="slide" data-kind="concept-breakdown"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">Highlights: a framing band opens the slide</h2></div><div class="cbody"><div class="cfit"><div class="highlights hl-top"><div class="highlight quote"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m248-240 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T458-480L320-240h-72Zm360 0 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T818-480L680-240h-72ZM376.5-503.5Q400-527 400-560t-23.5-56.5Q353-640 320-640t-56.5 23.5Q240-593 240-560t23.5 56.5Q287-480 320-480t56.5-23.5Zm360 0Q760-527 760-560t-23.5-56.5Q713-640 680-640t-56.5 23.5Q600-593 600-560t23.5 56.5Q647-480 680-480t56.5-23.5ZM680-560Zm-360 0Z"/></svg></span><p><b>Anthropic</b>: Menos una sesión de chat, más asignarle tareas a un colega.</p></div></div><div class="cards">
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M809-56 635-230 594-80H366l-47-171q-57-35-88-96t-31-133q0-36 9.5-75t29.5-71L57-808l41-41L850-97l-41 41ZM480-260q28 0 53-6t48-18L284-581q-12 24-18 49t-6 52q0 92 64 156t156 64Zm232-60-44-44q14-23 23-52t9-64q0-92-64-156t-156-64q-35 0-64 9t-52 23l-44-44 46-168h228l47 171q57 35 88 96t31 133q0 42-12.5 85T712-320ZM411-820h138-138Zm0 680h138-138Zm-18-604q23-7 44.5-10.5T480-758q21 0 42.5 3.5T567-744l-18-76H411l-18 76Zm18 604h138l18-76q-23 6-44.5 9.5T480-203q-21 0-42.5-3.5T393-216l18 76Z"/></svg></span><h3>Frames, not remarks</h3><p>The band sets up the cards instead of summarizing them.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h600v-375L555-780H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h400l260 260v400q0 24.75-17.62 42.37Q804.75-120 780-120H180Zm99-171h402v-60H279v60Zm0-159h402v-60H279v60Zm0-159h276v-60H279v60Zm-99 429v-600 600Z"/></svg></span><h3>No fragment</h3><p>It is on screen from the moment the slide opens.</p></div>
+</div>
+
+</div></div></div>
+</section><section class="slide" data-kind="concept-breakdown"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">Highlights: a slide can carry both bands</h2></div><div class="cbody"><div class="cfit"><div class="highlights hl-top"><div class="highlight definition"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M560-574v-48q33-14 67.5-21t72.5-7q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-610q-38 0-73 9.5T560-574Zm0 220v-49q33-13.5 67.5-20.25T700-430q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-390q-38 0-73 9t-67 27Zm0-110v-48q33-14 67.5-21t72.5-7q26 0 51 4t49 10v44q-24-9-48.5-13.5T700-500q-38 0-73 9.5T560-464ZM248-300q53.57 0 104.28 12.5Q403-275 452-250v-427q-45-30-97.62-46.5Q301.76-740 248-740q-38 0-74.5 9.5T100-707v434q31-14 70.5-20.5T248-300Zm264 50q50-25 98-37.5T712-300q38 0 78.5 6t69.5 16v-429q-34-17-71.82-25-37.82-8-76.18-8-54 0-104.5 16.5T512-677v427Zm-30 90q-51-38-111-58.5T248-239q-36.54 0-71.77 9T106-208q-23.1 11-44.55-3Q40-225 40-251v-463q0-15 7-27.5T68-761q42-20 87.39-29.5 45.4-9.5 92.61-9.5 63 0 122.5 17T482-731q51-35 109.5-52T712-800q46.87 0 91.93 9.5Q849-781 891-761q14 7 21.5 19.5T920-714v463q0 27.89-22.5 42.45Q875-194 853-208q-34-14-69.23-22.5Q748.54-239 712-239q-63 0-121 21t-109 58ZM276-489Z"/></svg></span><p><b>Composición</b>: los campos que valen para cualquier template, no para uno solo.</p></div></div><div class="cards">
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-80 200-360l42-42 208 208v-686h60v686l208-208 42 42L480-80Z"/></svg></span><h3>Grouped by position</h3><p>Every top entry lands above, every bottom entry below.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M160-290v-100h640v100H160Zm0-280v-100h640v100H160Z"/></svg></span><h3>Same component</h3><p>Identical classes, colours and icons in both bands.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m492-240 19-63q64-11 106.5-60.5T660-480q0-75-52.5-127.5T480-660q-68 0-117 42.5T303-511l-63 20q5-97 74-163t166-66q100 0 170 70t70 170q0 97-66 166t-162 74ZM139-60l-79-79 171-171-151-50 400-120L360-80l-50-151L139-60Z"/></svg></span><h3>Reveal differs</h3><p>Only the closing band waits for the last click.</p></div>
+</div>
+
+<div class="highlights fragment fade-up"><div class="highlight takeaway"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M200-120v-680h343l19 86h238v370H544l-18.93-85H260v309h-60Zm300-452Zm95 168h145v-250H511l-19-86H260v251h316l19 85Z"/></svg></span><p><b>Two bands</b>: the framing line opens the slide, the takeaway closes it — one band each.</p></div></div></div></div></div>
 </section><section class="slide" id="sec-5" data-kind="section-agenda"><div class="stage"><div class="secag">
 <div class="secaglist">
 <a class="secagrow " href="#sec-0"><span class="secagn">01</span><span>Frames &amp; openers</span></a>
@@ -964,6 +1109,67 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
   <rect x="60" y="410" width="360" height="120" rx="10" fill="#F2EEEE"/>
   <text x="240" y="480" text-anchor="middle" font-size="22" font-weight="700" fill="#1F1E1E">Level 3</text>
   <text x="240" y="600" text-anchor="middle" font-size="18" font-weight="800" fill="#DA1B2E">This bottom line must NOT be cropped</text>
+</svg></div></div></div>
+
+</div></div></div>
+<aside class="notes">Let the room commit to an answer before you advance; the reveal is one navigation step away.</aside></section><section class="slide" data-kind="quiz"><div class="stage">
+<div class="shead"><span class="pill">Interactive (quiz)</span><h2 class="stitle">Quiz with a supporting image</h2></div><div class="cbody"><div class="cfit"><div class="quiz quiz-split">
+<div class="quiz-body">
+<p class="quiz-q">Where does a quiz slide put its image?</p>
+<ol class="quiz-opts">
+<li class="qopt">Cropped as a full-bleed background</li>
+<li class="qopt correct fragment custom" data-fragment-index="0">Beside the quiz, never cropped</li>
+<li class="qopt">Only in the speaker notes</li>
+</ol>
+<div class="quiz-ans fragment fade-up" data-fragment-index="0">
+<span class="quiz-lab"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m421-298 283-283-46-45-237 237-120-120-45 45 165 166Zm59 218q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"/></svg></span>Answer</span>
+<p class="quiz-a">Beside the quiz — contained, sized to its own aspect.</p>
+<p class="quiz-exp">The quiz body and the image split the slide; the image is never cropped.</p></div>
+</div>
+<div class="quiz-media"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e23-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e23-a)"/>
+  </g>
+  <defs><marker id="e23-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div></div>
+
+</div></div></div>
+<aside class="notes">Let the room commit to an answer before you advance; the reveal is one navigation step away.</aside></section><section class="slide" data-kind="quiz"><div class="stage">
+<div class="shead"><span class="pill">Interactive (quiz)</span><h2 class="stitle">Quiz with the image on the left</h2></div><div class="cbody"><div class="cfit"><div class="quiz quiz-split imgleft">
+<div class="quiz-body">
+<p class="quiz-q">Does image-left change which choice is correct?</p>
+<ol class="quiz-opts">
+<li class="qopt">Yes — the options mirror too</li>
+<li class="qopt correct fragment custom" data-fragment-index="0">No — only the two columns swap</li>
+</ol>
+<div class="quiz-ans fragment fade-up" data-fragment-index="0">
+<span class="quiz-lab"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m421-298 283-283-46-45-237 237-120-120-45 45 165 166Zm59 218q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"/></svg></span>Answer</span>
+<p class="quiz-a">No. The options keep their order, their letters and their alignment.</p>
+<p class="quiz-exp">image-left is a composition choice; it never touches the enumeration.</p></div>
+</div>
+<div class="quiz-media"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+  </g>
+  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
 </svg></div></div></div>
 
 </div></div></div>

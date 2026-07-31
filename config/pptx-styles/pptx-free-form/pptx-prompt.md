@@ -54,6 +54,16 @@ template's *Match*). When a template matches, **render that template following i
 *Format*** — the same templates `pptx-strict` and `html-strict` use. When nothing matches, **design
 freely** (the catalog's `fallback`).
 
+**Honor the slide's composition fields**, whether the model filled them or an author hint pinned
+them: `layout` (where a slide's own image sits — `text-left`/`image-left`, plus `image-top` on
+`content-image`), `highlights[].position` (a `top` entry frames the body and must sit **above** it,
+a `bottom` entry remarks on it and sits below — a slide may carry both bands), and an image-only
+`content-image` (no `lead`, no `facts` → the picture takes the full width, never an empty text
+frame). These are composition, not styling, so they are not yours to redesign — the type, colour
+and spacing of the band are. *(Free-form and `pptx-strict` deliberately differ on `layout`: strict
+emits every such slide text-left because its EMU geometry is bound to a base template with no
+mirrored exemplar — see strict's §13 note.)*
+
 Free-form's freedom is in the **execution**, not the taxonomy: the catalog fixes *what
 shape* the content takes (a labeled set is cards, not bullets; an ordered sequence is a
 process; a big claim is a `statement`) and free-form chooses the fonts, colours, palette,

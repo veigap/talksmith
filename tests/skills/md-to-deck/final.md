@@ -283,6 +283,18 @@ El diagrama se lee primero; el texto lo recorre después.
 
 ---
 
+## Content + cards + image · imagen a la izquierda
+<!-- template: content+cards+image -->
+<!-- layout: image-left -->
+
+- **Projects** Todo en un lugar fijo.
+- **Skills** Enseñar una vez, reusar.
+- **Connectors** Manos hacia sistemas externos.
+
+![screenshot](images/pipeline.svg)
+
+---
+
 ## Code-example · caching
 <!-- template: code-example -->
 

@@ -1,9 +1,15 @@
 {% import "_macros.j2" as m %}
+{# The text column is optional: a slide carrying only an image (the screenshot a presenter talks
+   over, with the detail in the speaker notes) is a legitimate `content-image` — emitting an empty
+   `.citext` would project a blank half-slide, or under `image-top` a bordered, empty note box.
+   With the column gone, CSS collapses the grid so the image takes the full width. #}
 {% macro citext(s) %}
+{% if s.lead or s.facts %}
 <div class="citext">
 {{ m.lead(s) -}}
 {% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label | nocolon }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
 </div>
+{% endif %}
 {% endmacro %}
 {% call m.stage(s) %}
 {% if s.layout == 'image-top' %}
@@ -11,6 +17,6 @@
 {% else %}
 {# side-by-side: markup order is always text-then-image (reading order); `image-left`
    swaps the visual columns in CSS. #}
-<div class="ci{{ ' ci-imgleft' if s.layout == 'image-left' else '' }}">{{ citext(s) }}{{ embed_img(s.image) }}</div>
+<div class="ci{{ m.imgpos(s) }}">{{ citext(s) }}{{ embed_img(s.image) }}</div>
 {% endif %}
 {% endcall %}
