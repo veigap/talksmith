@@ -95,7 +95,7 @@
         },
         {
           "label": "Iconed",
-          "body": "Each card still gets its own distinct, content-matched icon above the label."
+          "body": "Each card still gets its own distinct, content-matched icon beside the label."
         }
       ]
     },

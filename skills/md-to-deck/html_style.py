@@ -201,7 +201,7 @@ _ICON_ALIAS = {
     "business": "business_center", "location": "location_on", "bug": "bug_report",
     "place": "location_on", "tip": "emoji_objects", "people": "groups", "team": "groups",
     "emoji_emotions": "mood", "emoji_people": "groups", "sentiment": "sentiment_satisfied",
-    "trending": "trending_up",
+    "trending": "trending_up", "source": "description", "question_answer": "forum",
 }
 # Last resort when a name resolves to nothing at all: a real, meaningful glyph — never a shape.
 _GENERIC_ICON = "info"

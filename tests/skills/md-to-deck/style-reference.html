@@ -170,9 +170,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
 /* 5 or more: three columns */
 .cards:has(>.ccard:nth-child(5)){grid-template-columns:repeat(3,1fr)}
-.ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
-.ccard .ic{width:5.8cqw;height:5.8cqw}.ccard h3{margin:0;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
-.ccard p{margin:0;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw}.ccard.sm .ic{width:5cqw;height:5cqw}
+/* icon leads on the left, spanning label + body — no dead row above the text */
+.ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:grid;grid-template-columns:auto 1fr;column-gap:1.7cqw;row-gap:.5cqw;align-content:start}
+.ccard>.ic{width:5.8cqw;height:5.8cqw;grid-column:1;grid-row:1/3;align-self:start}
+.ccard h3{margin:0;grid-column:2;grid-row:1;align-self:center;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
+.ccard p{margin:0;grid-column:2;grid-row:2;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw;column-gap:1.4cqw}.ccard.sm>.ic{width:5cqw;height:5cqw}
 .cardrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
@@ -445,7 +447,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div></div></section><section class="slide" data-kind="concept-breakdown"><div class="stage">
 <div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">concept-breakdown: 2 cards (edge case)</h2></div><div class="cbody"><div class="cfit"><div class="cards">
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M294-242 70-466l43-43 181 181 43 43-43 43Zm170 0L240-466l43-43 181 181 384-384 43 43-427 427Zm0-170-43-43 257-257 43 43-257 257Z"/></svg></span><h3>Two is valid</h3><p>A two-item labeled set is a real concept-breakdown, not something to drop to prose.</p></div>
-<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M350-160q-14.25 0-27-6.38-12.75-6.37-21-17.62L80-480l221-296q8.25-11.25 21-17.63 12.75-6.37 27-6.37h472q24.75 0 42.38 17.62Q881-764.75 881-740v520q0 24.75-17.62 42.37Q845.75-160 821-160H350ZM155-480l195 260h471v-520H350L155-480Zm269 29q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm-142-29Z"/></svg></span><h3>Iconed</h3><p>Each card still gets its own distinct, content-matched icon above the label.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M350-160q-14.25 0-27-6.38-12.75-6.37-21-17.62L80-480l221-296q8.25-11.25 21-17.63 12.75-6.37 27-6.37h472q24.75 0 42.38 17.62Q881-764.75 881-740v520q0 24.75-17.62 42.37Q845.75-160 821-160H350ZM155-480l195 260h471v-520H350L155-480Zm269 29q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm-142-29Z"/></svg></span><h3>Iconed</h3><p>Each card still gets its own distinct, content-matched icon beside the label.</p></div>
 </div>
 
 </div></div></div>

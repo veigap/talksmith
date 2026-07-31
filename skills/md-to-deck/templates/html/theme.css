@@ -128,9 +128,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
 /* 5 or more: three columns */
 .cards:has(>.ccard:nth-child(5)){grid-template-columns:repeat(3,1fr)}
-.ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
-.ccard .ic{width:5.8cqw;height:5.8cqw}.ccard h3{margin:0;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
-.ccard p{margin:0;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw}.ccard.sm .ic{width:5cqw;height:5cqw}
+/* icon leads on the left, spanning label + body — no dead row above the text */
+.ccard{background:var(--card);border-radius:2cqw;padding:2.8cqw 2.4cqw;display:grid;grid-template-columns:auto 1fr;column-gap:1.7cqw;row-gap:.5cqw;align-content:start}
+.ccard>.ic{width:5.8cqw;height:5.8cqw;grid-column:1;grid-row:1/3;align-self:start}
+.ccard h3{margin:0;grid-column:2;grid-row:1;align-self:center;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
+.ccard p{margin:0;grid-column:2;grid-row:2;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw;column-gap:1.4cqw}.ccard.sm>.ic{width:5cqw;height:5cqw}
 .cardrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}

@@ -13,6 +13,29 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.69.1] — 2026-07-31
+
+### Changed
+
+- **Concept cards lead with the icon on the left instead of stacking it on top.** The icon used to
+  occupy a full-width row of its own above the label, leaving a wide band of dead space beside it
+  and pushing the text down. It now sits in its own column, spanning the label and the body, so a
+  card reads icon → label → body left-to-right and reclaims the vertical space. Applies everywhere
+  concept cards appear — `concept-breakdown` at every card count (2/3/4/6) and the narrower cards
+  in `content+cards+image`. Layout-only, in `theme.css`; no template or renderer change, and the
+  slide model is untouched. Note this now differs from the PPTX recipe for the same template
+  (§7.2.1 still places the icon above the label).
+
+### Fixed
+
+- **`source` and `question_answer` rendered as a generic info glyph.** Neither name is in the
+  bundled icon set, so a deck built without network lost the concept the icon was carrying. Both
+  now alias to a bundled equivalent — `description` and `forum`.
+- **The committed tutorial deck was stale.** `tests/examples/talksmith-intro` had been rendered by
+  an older build and never regenerated, so it was missing fragment reveals and the SVG id
+  namespacing that keeps two inlined diagrams from sharing arrow-marker ids — and three of its
+  icons drew nothing at all. Rebuilt from its `slide-model.json`; all 46 icons now draw.
+
 ## [0.69.0] — 2026-07-30
 
 ### Added
