@@ -651,9 +651,14 @@ function fitAll(scope){ var r=(scope||document);
 window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configure){
   Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
   if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
+// Reveal's `hash` writes each slide into the URL via history.replaceState — which throws
+// SecurityError inside an `about:srcdoc` iframe (the Artifact preview), where no http URL is a
+// legal history entry. Probe it once and drop deep-linking rather than let Reveal throw.
+var canHash=(function(){try{history.replaceState(null,'',location.href);return true;}catch(e){return false;}})();
 Reveal.initialize({
   width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
-  controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,
+  controls:true, progress:true, slideNumber:'c/t',
+  hash:canHash, respondToHashChanges:canHash, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
   keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();

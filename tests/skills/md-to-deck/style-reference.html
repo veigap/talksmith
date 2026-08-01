@@ -286,7 +286,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* ── body + image compositions ────────────────────────────────────────────────────────────────
    Five templates pair a body with one supporting image — `content-image` (.ci), its cards
    sibling (.cci), `process` with a diagram (.procgrid), an illustrated `quiz` (.quiz-split) and
-   a `comparison` beside a supporting diagram (.cmpgrid).
+   a `value-columns` grid beside a supporting diagram (.cmpgrid).
    Where the image sits is a *composition* choice (the model's `layout`), not a property of the
    template, so all five share one idiom instead of each inventing its own.
 
@@ -325,7 +325,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
-/* a comparison beside a supporting diagram. The compare-strip keeps the wider track — it holds a
+/* a value-columns grid beside a supporting diagram. The strip keeps the wider track — it holds a
    header row plus N aligned cells and is what the slide is *about*; the diagram supports it. The
    strip stays a grid at half width (columns must still read as columns — collapsing it to one row
    per cell would undo the whole point), so it only gives up type size and cell padding. */
@@ -1340,9 +1340,14 @@ function fitAll(scope){ var r=(scope||document);
 window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configure){
   Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
   if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
+// Reveal's `hash` writes each slide into the URL via history.replaceState — which throws
+// SecurityError inside an `about:srcdoc` iframe (the Artifact preview), where no http URL is a
+// legal history entry. Probe it once and drop deep-linking rather than let Reveal throw.
+var canHash=(function(){try{history.replaceState(null,'',location.href);return true;}catch(e){return false;}})();
 Reveal.initialize({
   width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
-  controls:true, progress:true, slideNumber:'c/t', hash:true, center:false,
+  controls:true, progress:true, slideNumber:'c/t',
+  hash:canHash, respondToHashChanges:canHash, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
   keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();
