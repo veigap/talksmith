@@ -106,7 +106,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .quiz.quiz-split{display:grid;grid-template-columns:1.45fr 1fr;gap:4.5cqw;align-items:center}
 .quiz-media{display:flex;align-items:center;justify-content:center}
 .quiz-media .imgph{width:100%}
-.quiz-media .imgph.has img,.quiz-media .imgph.svg svg{width:100%;height:auto;max-height:46cqw;object-fit:contain}
+.quiz-media .imgph.has img,.quiz-media .imgph.svg svg{width:auto;height:auto;max-width:100%;max-height:46cqw}
 .quiz-q{margin:0;font-size:3.9cqw;font-weight:800;color:var(--ink);line-height:1.16;text-wrap:balance}
 .quiz-opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.5cqw;counter-reset:opt}
 .quiz-opts li{counter-increment:opt;display:flex;align-items:center;gap:1.8cqw;font-size:2.4cqw;font-weight:600;color:var(--body);line-height:1.25;
@@ -156,7 +156,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .procmain .lead{margin:0;max-width:none}
 .procsteps{display:flex;flex-direction:column;gap:1.6cqw}
 .procsteps .steprow p{font-size:2.25cqw}.procsteps .steprow p b{font-weight:800;color:var(--ink)}
-.procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:100%;height:auto;max-height:38cqw;object-fit:contain}
+.procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:auto;height:auto;max-width:100%;max-height:38cqw}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -173,7 +173,19 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .imgph{background:repeating-linear-gradient(45deg,#eee,#eee 6px,#e4e4e4 6px,#e4e4e4 12px);border:1px solid #ddd;border-radius:1.4cqw;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.imgph span{font-family:var(--mono);font-size:1.9cqw;color:#999}
 /* a real image sizes to its own aspect ratio (never cropped) — the placeholder keeps 16:9 */
 .imgph.svg,.imgph.has{background:#fff;border:1px solid var(--card);aspect-ratio:auto;overflow:visible}
-.imgph.svg svg,.imgph.has img{width:100%;height:auto;max-height:42cqw;display:block;object-fit:contain}
+/* Image sizing — two rules, and both matter:
+   1. `width:auto` + the two max-* bounds, NOT `width:100%`. The element box then *hugs* the
+      picture, so whichever bound binds, the frame (border + white fill) wraps the image exactly.
+      With `width:100%` the box stayed column-wide while the height cap shortened the picture, and
+      `object-fit` letterboxed it — a small picture marooned inside a big empty bordered frame.
+   2. The cap stays in plain `cqw` — a share of the *slide*. It must NOT be scaled by the fit
+      pass's layout inflation (see fitContent in html_style.py): the picture giving up height is
+      the only lever that pass has besides text reflow, and a cap that scales with the inflation
+      makes the content scale-invariant, so the solver runs to its floor and clips the slide.
+      To make images bigger, raise the cap — that is safe and self-balancing (a taller image lowers
+      the fit scale, which shrinks it back), and it was measured to the largest value that leaves
+      every reference slide overflow-free. */
+.imgph.svg svg,.imgph.has img{width:auto;height:auto;max-width:100%;max-height:56cqw;display:block}
 .imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;margin-top:auto}
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}

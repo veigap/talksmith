@@ -35,6 +35,12 @@ _UNIVERSAL = {
 # template renders that the schema table omits (e.g. `divider` draws `number`). Source of truth for
 # the schema half: schemas/slide-model.md → *Per-template field contract*. Keep in sync when a
 # template gains/loses a field.
+#
+# `layout` is deliberately listed per-template rather than in _UNIVERSAL: it is a composition field,
+# but only for the templates that pair a body with their own image, and on any other template it
+# really is an ignored field worth flagging. `build_html._LAYOUTS` is the finer-grained authority —
+# it also knows which *values* each template takes, and warns when `layout` rides a slide that
+# carries no image at all (a case this set-based audit can't express).
 _CONSUMES = {
     "section-agenda": {"title"},
     "divider": {"title", "number"},
@@ -42,18 +48,18 @@ _CONSUMES = {
     "concept-breakdown": {"title", "cards"},
     "card-row": {"title", "cards", "lead"},
     "icon-list": {"title", "rows", "lead"},
-    "process": {"title", "steps", "lead", "image"},
+    "process": {"title", "steps", "lead", "image", "layout"},
     "figures": {"title", "figures", "lead"},
     "image-grid": {"images", "title"},
     "content-image": {"title", "image", "facts", "lead", "layout"},
-    "content+cards+image": {"title", "cards", "image", "lead"},
+    "content+cards+image": {"title", "cards", "image", "lead", "layout"},
     "comparison": {"title", "columns"},
     "stat": {"title", "stats", "lead"},
     "big-number": {"number", "caption", "title"},
     "quote": {"quote", "attribution"},
     "timeline": {"title", "milestones", "lead"},
     "pros-cons": {"title", "pros", "cons"},
-    "quiz": {"question", "answer", "title", "options", "correct", "explanation", "image", "answer_label"},
+    "quiz": {"question", "answer", "title", "options", "correct", "explanation", "image", "answer_label", "layout"},
     "single-point": {"title", "point"},
     "callout": {"callout", "tone", "title"},
     "code-example": {"title", "code", "language", "explanation"},

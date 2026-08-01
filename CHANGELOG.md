@@ -52,6 +52,24 @@ template at all.
   is absent the image takes the **full width** instead of staying in its half. This shape is now
   documented as first-class: `content-image` with no text *is* the image-only slide, so there is no
   longer a reason to abuse `image-grid` (≥4 images) to get chrome-free art.
+- **A diagram rendered to `.pptx` came back as a blurry raster in the HTML deck.** `final.md`
+  carries `.svg` refs, but the `.pptx` prerequisite check rewrites them to the `.png` companion
+  (Keynote drops SVG on import) and never rewrites them back — so a talk rendered to `.pptx` and
+  then to HTML shipped rasterized diagrams, unreadable at the small type a diagram uses, with the
+  vector original sitting right beside them. The HTML render now inlines the `.svg` twin when one
+  exists **and is provably generated** (an `.ascii` sidecar or the `talksmith-ascii-sha256` stamp —
+  the same provenance test `polish-ascii gc` uses), so a presenter's own `chart.png` is never
+  swapped for an unrelated `chart.svg`. No re-run of the pipeline needed.
+- **An image on a busy slide shrank into a letterbox.** Images were sized `width:100%` with a
+  height cap in `cqw`. The content-fit pass lays a slide out wider and scales it down, so on a
+  crowded slide the image's column inflated while its cap — a share of the *slide* — did not: the
+  picture was clamped short, and `object-fit` centred it inside a column-wide box, leaving a small
+  diagram marooned in a big empty bordered frame (worse the busier the slide). Images now size to
+  hug the picture, so the frame wraps the image exactly at any scale, and the cap was raised to the
+  largest value that keeps every reference slide overflow-free. On a real 6-card slide the diagram
+  went from 51% to 96% of its column. The cap is deliberately still unscaled — a comment in
+  `theme.css` and one in `fitContent` explain why scaling it makes the fit unsolvable, since that
+  is the tempting "fix".
 - **The same guard applied across every other template** in one pass: `code-example` no longer
   emits an empty dark code panel (and a missing panel collapses the split to full width),
   `callout`/`single-point` no longer emits a coloured box with no point, `quiz` no longer emits an
@@ -75,6 +93,10 @@ template at all.
   **honors** `highlights[].position` (a band above the body costs no new geometry) and an
   image-only slide (no empty text frame), but **ignores** `layout` by decision — its EMU geometry
   is bound to a base template with no mirrored exemplar. Free-form honors all three as design calls.
+- `audits/field_coverage.py` knows `layout` is consumed by `content+cards+image`, `process` and
+  `quiz`, so it no longer reports the field as ignored on the very slides that render it. It stays
+  listed per-template rather than universal — on a template with no image of its own, `layout`
+  really is dead weight and should still be flagged.
 - The style-reference fixture gains an example of **every new permutation** — `image-left` on all
   four image-bearing templates, the image-only slide in both layouts and with a highlights band,
   a framing band alone and both bands together, and a one-panel `code-example` — so any of them

@@ -291,6 +291,33 @@ def _ns_svg_ids(svg: str, prefix: str) -> str:
         lambda m: f'{m.group(1)}="#{prefix}{m.group(2)}"' if m.group(2) in ids else m.group(0), svg)
 
 
+def _vector_twin(p: Path) -> Path | None:
+    """The `.svg` companion of a raster, when that pair is a **generated diagram** — i.e. the
+    `.ascii` sidecar or the `talksmith-ascii-sha256` stamp proves `polish-ascii` produced it.
+
+    Why: `final.md` carries `.svg` refs, but the `.pptx` prerequisite check rewrites them to the
+    `.png` companion (Keynote drops SVG on import), and that rewrite is not undone. A deck rendered
+    to `.pptx` and then to HTML would silently ship rasterized diagrams — blurry, unreadable at the
+    small type a diagram uses — even though the vector original sits right beside them. This render
+    inlines SVG as vector markup, so it upgrades back.
+
+    The provenance test is the same one `polish-ascii gc` uses, and it is what keeps this safe: a
+    presenter's own `chart.png` is never swapped for an unrelated `chart.svg` that happens to share
+    a stem, because neither proof exists for it.
+    """
+    if p.suffix.lower() not in (".png", ".jpg", ".jpeg"):
+        return None
+    twin = p.with_suffix(".svg")
+    if not twin.is_file():
+        return None
+    if p.with_suffix(".ascii").is_file():
+        return twin
+    try:
+        return twin if "talksmith-ascii-sha256" in twin.read_text(encoding="utf-8")[:400] else None
+    except OSError:
+        return None
+
+
 def _embed(alt, path):
     """Embed a resolved image self-contained: inline SVG, or a data-URI <img>, else a placeholder."""
     import base64
@@ -298,6 +325,7 @@ def _embed(alt, path):
     if path is not None:
         try:
             p = Path(path)
+            p = _vector_twin(p) or p
             if p.suffix.lower() == ".svg":
                 svg = p.read_text(encoding="utf-8")
                 svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.DOTALL).strip()
@@ -592,6 +620,11 @@ function fitContent(cb){
   var cf=cb.querySelector('.cfit'); if(!cf) return;
   var rw=cb.clientWidth, rh=cb.clientHeight; if(rh<20||rw<20) return;
   var s=1;                                   // solve: laid out at width rw/s, visual height (h*s) must fit rh
+  // NB: an image's height cap (theme.css) is deliberately left in plain cqw — a share of the
+  // *slide*, which does not grow when .cfit is laid out wider here. That is what lets a picture
+  // give up height on a crowded slide, and it is the only term this loop can move besides text
+  // reflow; scaling the caps with the inflation makes the content scale-invariant and the loop
+  // unsolvable (it runs to the floor and the content clips).
   for(var k=0;k<5;k++){ cf.style.transform='none'; cf.style.width=(rw/s)+'px';
     var h=cf.scrollHeight; var ns=Math.max(0.35, Math.min(1, rh/h));
     if(Math.abs(ns-s)<0.005){ s=ns; break; } s=ns; }
