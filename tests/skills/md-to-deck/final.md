@@ -10,7 +10,7 @@ date: 2026-07-13
 **Sections (in delivery order):**
 
 - Enumeration templates — cards, lists, steps
-- Statement, stat & comparison — claims & numbers
+- Statement, stat & value-columns — claims & numbers
 - Visual, code & prose — images, code, fallback
 - Frame templates — cover, agenda, dividers, closing
 
@@ -149,7 +149,7 @@ No todo dato puede ir a un modelo externo. Antes de pegar, mirá qué estás peg
 
 ---
 
-# 2. Statement, stat & comparison
+# 2. Statement, stat & value-columns
 
 ---
 
@@ -221,8 +221,8 @@ Datos fuera de control, sin contrato ni borrado, incumplimiento posible.
 
 ---
 
-## Value-columns con el id legado `comparison` · 2 columnas (mito vs realidad)
-<!-- template: comparison -->
+## Value-columns · 2 columnas (mito vs realidad)
+<!-- template: value-columns -->
 
 | Mito | Realidad |
 | --- | --- |

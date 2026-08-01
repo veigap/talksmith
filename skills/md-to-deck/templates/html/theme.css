@@ -241,7 +241,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* ── body + image compositions ────────────────────────────────────────────────────────────────
    Five templates pair a body with one supporting image — `content-image` (.ci), its cards
    sibling (.cci), `process` with a diagram (.procgrid), an illustrated `quiz` (.quiz-split) and
-   a `comparison` beside a supporting diagram (.cmpgrid).
+   a `value-columns` grid beside a supporting diagram (.cmpgrid).
    Where the image sits is a *composition* choice (the model's `layout`), not a property of the
    template, so all five share one idiom instead of each inventing its own.
 
@@ -280,7 +280,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
-/* a comparison beside a supporting diagram. The compare-strip keeps the wider track — it holds a
+/* a value-columns grid beside a supporting diagram. The strip keeps the wider track — it holds a
    header row plus N aligned cells and is what the slide is *about*; the diagram supports it. The
    strip stays a grid at half width (columns must still read as columns — collapsing it to one row
    per cell would undo the whole point), so it only gives up type size and cell padding. */

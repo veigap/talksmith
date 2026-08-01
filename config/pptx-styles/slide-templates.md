@@ -429,7 +429,7 @@ precise rules.
 
 ### Aligned columns — parallel values, read across
 
-#### `value-columns` *(legacy id: `comparison` — still accepted, renders identically)*
+#### `value-columns`
 - **Match:** **2–3 aligned columns of parallel values**, read row by row against a shared
   left-hand factor or against each other. Two symmetric groups set against each other is the
   common case — A-vs-B, before/after, single-model vs cascade, myth vs reality — but it is not
@@ -437,7 +437,9 @@ precise rules.
   belong here too. What selects this template is **the columns being parallel and comparable**,
   not the slide being adversarial. **Not** a label/value table (that is `concept-breakdown`,
   card-per-row); **not** a valenced upside/downside pair (that is `pros-cons`, colour-coded).
-  *The id was `comparison` until 0.75.0; the old name outlived the shape's actual range.*
+  *This template was called `comparison` until 0.75.0 — the old name described only the common
+  case and kept pushing three-column parallel listings to the wrong template. The old id is gone;
+  a model still carrying it renders as `fallback` and the build warns, naming the slide.*
 - **Format:** either **two equal columns** (left = A, right = B; parallel headings, equal
   weight/height) or a **compare-strip**: header row (Factor · A · B) + N aligned rows,
   rendered as a **card-per-row grid, never a native table**. Uniform column widths,

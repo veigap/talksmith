@@ -35,7 +35,7 @@ What it does:
       figures        -> figures
       stat           -> stats
       timeline       -> milestones
-      value-columns (a.k.a. comparison) -> columns
+      value-columns  -> columns
       closing-cta    -> items
       content-text   -> panels
 

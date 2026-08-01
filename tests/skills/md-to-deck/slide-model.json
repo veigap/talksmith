@@ -459,9 +459,9 @@
       ]
     },
     {
-      "template": "comparison",
+      "template": "value-columns",
       "section": "Ordered & comparison",
-      "title": "value-columns via the legacy `comparison` id: two columns (myth vs reality)",
+      "title": "value-columns: two columns (myth vs reality)",
       "columns": [
         {
           "header": "Myth",

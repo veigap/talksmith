@@ -15,22 +15,34 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ## [0.75.0] — 2026-08-01
 
+### Changed
+
+- **`comparison` is now `value-columns` — a rename with no alias.** The shape it renders is 2–3
+  aligned columns of parallel values read row by row; "comparison" described only its most common
+  use, and the narrow name kept pushing slides that merely *list* parallel values across columns
+  (three options judged on the same factors) toward the wrong template. The catalog entry now
+  matches on **the columns being parallel and comparable**, not on the slide being adversarial.
+  **This is breaking, deliberately:** the old id is gone rather than aliased, so a hand-pinned
+  `<!-- template: comparison -->` or a stale `slide-model.json` renders as `fallback` and the build
+  warns naming the slide — visible, not silent. Migration is a find-and-replace of the id in
+  `draft.md` hints; models are refilled on every render anyway.
+
 ### Added
 
-- **A comparison table and a supporting diagram no longer compete for the same slide.** A slide
+- **A table and a supporting diagram no longer compete for the same slide.** A slide
   that compares A vs B in a table *and* carries a diagram the prose walks through had no template:
-  `comparison` renders the aligned grid but had no image slot, and `content+cards+image` has the
+  `value-columns` renders the aligned grid but had no image slot, and `content+cards+image` has the
   image but only one enumerable slot, so a `factor | A | B` table filled into it collapsed each row
   into a single card body (`"A: … B: …"`) — the parallelism between columns, which is what the
   slide teaches, survived as punctuation inside a sentence. Authors were pinning one template to
-  save the diagram and paying with the table. `comparison` now takes three optional fields with the
-  meaning they already have everywhere else: **`image`** (a supporting diagram beside the grid),
+  save the diagram and paying with the table. `value-columns` now takes three optional fields with
+  the meaning they already have everywhere else: **`image`** (a supporting diagram beside the grid),
   **`layout`** (`text-left` default, `image-left` mirrored), and **`lead`** (a framing line above
   the grid, with or without an image). It is the fifth body-plus-image composition, not a new
   template — the mirror is CSS-only, so reading order for PDF export and screen readers is
   unchanged, and the compare-strip keeps the wider track in both layouts.
-  **Nothing existing changes:** a `comparison` without `image` or `lead` emits byte-identical
-  markup and still anchors to the bottom edge. Beside an image the grid stays a grid (columns keep
+  **Nothing existing renders differently:** a `value-columns` slide without `image` or `lead` emits
+  byte-identical markup to the old `comparison` and still anchors to the bottom edge. Beside an image the grid stays a grid (columns keep
   their alignment; it never degrades to one row per cell), so it wants **≤3 columns × ≤5 rows** —
   past that the build warns instead of letting the slide squeeze silently. `image-top` is
   deliberately not accepted here: a grid under a full-width image is a different slide.

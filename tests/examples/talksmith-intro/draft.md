@@ -169,7 +169,7 @@ What's actually on screen: a normal Claude Code (Cowork) session in a subject re
 ---
 
 ## 2. Not a slide generator
-<!-- template: comparison -->
+<!-- template: value-columns -->
 
 Kill the wrong mental model before it forms: this is not "AI makes slides."
 

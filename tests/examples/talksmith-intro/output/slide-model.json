@@ -108,7 +108,7 @@
    "notes": "What's actually on screen: a normal Claude Code (Cowork) session in a subject repo. The repo's CLAUDE.md stub — written once by /talksmith:init — loads the Talksmith orchestrator at session start; the greeting, the workflow chart, and the new-vs-resume prompt are the orchestrator introducing itself. 'Resume' works because every talk keeps a memory.md progress log — the agent reads it and continues from the last completed step. The Progress and Context panels are standard Cowork UI: they show which files the agent is reading and what it's doing, so the work is observable rather than a black box."
   },
   {
-   "template": "comparison",
+   "template": "value-columns",
    "section": "What is Talksmith?",
    "title": "Not a slide generator",
    "columns": [

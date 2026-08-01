@@ -171,7 +171,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
 | `content-image` | `title`, `image:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `layout` (the only template taking `image-top`). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead`, per-card `icon` (else content-matched), `layout` |
-| `value-columns` *(legacy id: `comparison`)* | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `image:{src,alt}` (supporting diagram/example), `layout` (with an image). Beside an image the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
+| `value-columns` | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `image:{src,alt}` (supporting diagram/example), `layout` (with an image). Beside an image the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |

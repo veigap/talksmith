@@ -172,9 +172,7 @@ def _is_emoji_bullet(line: str) -> tuple[bool, bool]:
 # emitted side. Templates it cannot check emit "skip" and are ignored (no false mismatches).
 _TEMPLATE_TO_LAYOUT = {
     "code-example": "code-example", "callout": "callout",
-    # `comparison` is the legacy id for `value-columns` — same emitted shape
-    "value-columns": "card-grid-from-table", "comparison": "card-grid-from-table",
-    "image-grid": "image-grid",
+    "value-columns": "card-grid-from-table", "image-grid": "image-grid",
     "card-row": "card-row", "icon-list": "icon-bullet-list",
     "concept-breakdown": "card-grid", "content-image": "content+image",
     "closing-cta": "closing-cta",
@@ -196,7 +194,7 @@ def parse_model(path: str) -> list[SourceSignals]:
         # A `value-columns` slide carrying its own `image` emits a different shape — the grid
         # beside a picture — so it predicts its own layout. Without this it would predict the
         # bare card grid and every such slide would report a mismatch that isn't one.
-        if t in ("value-columns", "comparison") and s.get("image"):
+        if t == "value-columns" and s.get("image"):
             sig.predicted_layout = "card-grid-from-table+image"
             sig.image_count = 1
         out.append(sig)
