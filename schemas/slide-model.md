@@ -121,9 +121,24 @@ deliverable; `draft.md` → live in-progress view).
   **not** generalized: a card set, a step list or a quiz stacked under a full-width image is a
   different slide, not a layout of this one. A value a template doesn't define — or a `layout` on a
   slide with no image — renders as the default and warns at render rather than failing silently.
+- **`format`** — an **optional** field on `concept-breakdown`, choosing how the labeled set is
+  arranged. Like `layout`, it is a *formatting* decision made **after** the template, not a second
+  classification: the shape ("N parallel labeled concepts") is what picks the template, and this
+  picks its presentation. Pick it by count and body length:
+
+  | `format` | When | Layout |
+  |---|---|---|
+  | `grid` *(default, omitted)* | short bodies, any count 2–6 | equal cards, icon **above** the label; 2 → side by side, 3 → a row, 4 → 2×2, 5–6 → 3×N |
+  | `row` | a lead + 3–5 items, **every** body ≤ ~80 chars | one horizontal row of N cards, each headed by a filled accent chip |
+  | `list` | a lead + 3–5 items, **any** body > ~80 chars, or a bare anaphora | a vertical stack, line-art icon at the left, heading + prose to the right |
+
+  The legacy template ids **`card-row`** and **`icon-list`** are still accepted and simply mean
+  `concept-breakdown` with `format: row` / `format: list` — existing models render unchanged. New
+  models should emit `concept-breakdown`. Items go in `cards:[{label,body}]`; `rows:` is accepted
+  as the legacy spelling of the same list.
 - **`reveal`** — an **optional opt-out** on any slide that reveals progressively. By **default** —
   field absent — the HTML deck steps through the slide on click (Reveal fragments):
-  first the enumerated items one at a time (`stat`, `card-row`, `concept-breakdown`, `icon-list`,
+  first the enumerated items one at a time (`stat`, `concept-breakdown`,
   `content+cards+image`), then the `bottom` `highlights` as one final block, so the takeaway text
   below the body lands *after* what it comments on rather than being readable from the start.
   The **`top` band is the symmetric case and therefore does not fragment**: it is on screen from
@@ -149,9 +164,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `section-agenda` | `title` (section name) | — (roadmap + active index derived from `deck.sections`) |
 | `divider` | `title` | — (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
-| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6) | per-card `icon` (else content-matched) |
-| `card-row` | `title`, `cards:[{label,body}]` (3, short) | `lead` |
-| `icon-list` | `title`, `rows:[{label,body}]` (3–5; `body` "" for a bare anaphora line) | `lead` |
+| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`list`) — see below |
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example), `layout` (with an image) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
@@ -221,7 +234,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 **Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
 - **Labeled set** (`- **Label** body`, `### Subhead` + paragraph) → `cards` / `rows` / `steps` /
   `figures` `[{label,body}]`, **never plain bullets**. A short unlabeled parallel enumeration (an
-  anaphora) → `icon-list` `rows:[{label}]` with `body:""`; drop a row that just repeats the title.
+  anaphora) → `concept-breakdown` with `format:"list"`, `cards:[{label}]` and `body:""`; drop an item that just repeats the title.
 - **Process ordinals** are renderer chrome, not content. When filling `process.steps`, strip any
   ordinal/step marker from the extracted `label` or `body`. Then apply the colon lead-in rule:
   anything before `:` becomes the highlighted `label`, anything after becomes `body`. Examples:
@@ -298,7 +311,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 - **Highlights over dropping.** If a line is a comment or the key takeaway (often what a diagram
   builds to, e.g. "PII es un subconjunto de Personal Data"), put it in the slide's `highlights`
   rather than omitting it — content is never dropped (see the top-level rule).
-- **Icons vs. emoji.** Icon-bearing templates (`concept-breakdown`, `card-row`, `icon-list`,
+- **Icons vs. emoji.** Icon-bearing templates (`concept-breakdown`,
   `content+cards+image`, `closing-cta`, `callout`, `single-point`) show one icon per item. The
   fill **may suggest** a per-item `icon` (a Material Symbols name), choosing a **distinct** one per
   item; when none is given the renderer content-matches — and never repeats an icon within a slide

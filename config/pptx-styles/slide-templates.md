@@ -41,8 +41,8 @@ deterministically by `audits/notes_coverage.py` (CONTROL floor) in every mode th
 > **A set of parallel *labeled* concepts renders as cards / panels / figures, NEVER as a
 > plain bullet list.** Plain unlabeled bullets are a rare last resort — a ≤3-item caveat
 > aside under another template, nothing more. If a slide reads as "a title and some
-> bullets," it is a mis-classified `concept-breakdown`, `card-row`, `icon-list`,
-> `process`, or `figures`. This holds in every mode, at GENERATE and in FEEDBACK.
+> bullets," it is a mis-classified `concept-breakdown`, `process`, or `figures`.
+> This holds in every mode, at GENERATE and in FEEDBACK.
 
 ## Classification procedure (all modes)
 
@@ -99,10 +99,12 @@ Decide the template **from the content**, as a discriminator walk — not first-
      into `content-image` `facts` (they lose their per-concept icon) and do **not** drop the
      image to keep `concept-breakdown` — this hybrid exists precisely for this shape, and
      wanting the image on the left is a `layout` choice, never a reason to reclassify.
-   - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `card-row` (lead + 3–5 short) /
-     `icon-list` (lead + 3–5 prose) / `concept-breakdown` (the general case, **including a
-     2-item set** → two cards). **`concept-breakdown` requires `images == 0`** — any source
-     image disqualifies it (its per-card icons are renderer-added, not source pictures).
+   - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `concept-breakdown` (**including a
+     2-item set** → two cards). It requires `images == 0` — any source image disqualifies it (its
+     per-card icons are renderer-added, not source pictures). Then pick its `format` by count and
+     body length: `row` for a lead + 3–5 short items, `list` for a lead + 3–5 prose items or an
+     anaphora, `grid` otherwise. That is a **formatting** choice made after the template, not a
+     second classification.
    - `labeled_items == 1` (a lead + one point) → `single-point`, or `callout` when that point is
      a **tone-carrying aside** (a tip, a warning, an analogy — the pink/blue panel *is* the
      message) rather than the slide's substance. If an image supports it → `content-image`.
@@ -153,7 +155,7 @@ sub-category follows, grouped by family.
 |---|---|---|
 | **Frame** — structure, not content | `cover` · `section-agenda` · `divider` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
 | **One claim / emphasis** — a single message | `statement` · `quote` · `quiz` · `callout` | attributed/voiced → `quote`; question→answer → `quiz`; an aside *inside* another slide → `callout`; else `statement` |
-| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `card-row` · `icon-list` · `concept-breakdown` | **count + body length**: 1 item → `single-point`; lead + 3–5 short → `card-row`; lead + 3–5 prose → `icon-list`; any other 2+ set → `concept-breakdown` |
+| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list) is then picked by count + body length |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Two groups** — A vs B | `comparison` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; a neutral compare → `comparison` |
@@ -165,8 +167,8 @@ are in *Disambiguation quick-reference* below. This overview is the map; those t
 precise rules.
 
 > **Reveal, on by default.** With no author action, the HTML deck steps through a slide on click
-> (Reveal fragments): every enumeration slide (`stat`, `card-row`, `concept-breakdown`,
-> `icon-list`, `content+cards+image`) reveals its items **one at a time**, and a slide's
+> (Reveal fragments): every enumeration slide (`stat`, `concept-breakdown`,
+> `content+cards+image`) reveals its items **one at a time**, and a slide's
 > **closing** `highlights` band then lands as **one final step** — so the takeaway below the body
 > arrives after what it comments on, instead of being readable before the presenter gets there. To
 > show a whole slide at once instead, carry `reveal: together` — set from an author
@@ -309,65 +311,41 @@ precise rules.
 
 ### Labeled set — parallel labeled concepts (cards, never bullets)
 
-> The sub-categories below are all "a set of parallel labeled items." Pick by **count** and
-> **body length**: exactly 1 → `single-point`; lead + 3–5 short → `card-row`; lead + 3–5
-> prose → `icon-list`; any other 2+ set → `concept-breakdown`. All forbid plain bullets.
+> **One shape, one entry.** A set of parallel labeled items is a *single* classification decision;
+> how it is arranged is a `format` field, not a different template. This used to be three catalog
+> entries (`concept-breakdown`, `card-row`, `icon-list`) whose Match rules differed only by item
+> count and body length — three rules for one shape, and the family the fill misclassified most.
+> The only count that still changes the *template* is **exactly 1**, which is `single-point`
+> (emphasis, not enumeration). All forbid plain bullets.
 
-#### `card-row`
-- **Match:** lead paragraph + **3–5** labeled items (`- **Label** body`, `#### Label`+para,
-  or `- <emoji> **Label:** body`), **each body ≤ ~80 chars** (1–2 short sentences).
-  Parallel concept *summaries* ("three innovations", "four pillars", "five steps").
-  **Not:** items needing prose (→ `icon-list`); items each with an image (→ `figures`);
-  >5 items (split slides); ordered steps (→ `process`).
-- **Format:** section pill + title + full-width lead (12 pt) + a **single horizontal row
-  of N equal-width cards** (N∈{3,4,5}). Per-card width = `(8.9 − (N−1)×0.22)/N`
-  (N=3→2.82, N=4→2.06, N=5→1.60 in); gutter 0.22 in; row height ≈ 1.85 in. Each card =
-  `#DA1B2E` icon chip (content-matched glyph, **different per card**) + heading
-  (13.5 pt Bold) + 2–3-line body (11 pt). Optional italic source line at 5.30 in. At N=5
-  bodies must be ≤ 60 chars; if they don't fit, use `icon-list` — never shrink the font.
-- **Strict recipe:** §7.4 (+ §7.3 chooser). **Provenance:** ref (§7.4), final S13.
-
-#### `icon-list`
-- **Match:** lead + **3–5** labeled items, **at least one body > ~80 chars** (2–4
-  sentences each). Parallel prose explanations ("three strengths", "four limitations").
-  Pick by the **longest** item; never split one group across `card-row` and `icon-list`.
-  **Also** the home for a short **anaphora / unlabeled parallel enumeration** — 2–5 short
-  parallel lines under a title with no labels, images or code (e.g. "No hubo hackers. No
-  hubo malware. No hubo intrusión.") — each line becomes one icon row (a line that merely
-  repeats the title is dropped). This keeps such slides from falling to `fallback`.
-- **Format:** section pill + title (may wrap 2 lines) + full-width lead + a **vertical
-  stack of N rows**. Stride = `(canvas_h − 3.10 − 0.30)/N` (N=3→0.74, 4→0.56, 5→0.44 in).
-  Each row = line-art `#DA1B2E` icon (no chip, content-matched, **different per row**) at
-  left + heading (13.5 pt Bold) + 2–3-sentence body (11 pt) to the right. Lead carries
-  **no** icon slot. N=3/3-sentence comfortable; N=5 only with 1–2-sentence bodies; beyond
-  → split slides.
-- **Strict recipe:** §7.5 (+ §7.3 chooser). **Provenance:** ref (§7.5), final S11/12.
-
-#### `concept-breakdown`
+#### `concept-breakdown` — the labeled set
 - **Match:** **2–N** parallel **labeled** concepts (`- **Label** body`, or `### Subhead` /
-  `#### Label` + short-para groups), **short bodies, no per-item image, unordered.** The
-  general labeled-grid case — this is the **default home for any labeled set of 2+ items**
-  that isn't a clean 3–5 lead+row (`card-row`), prose-heavy (`icon-list`), ordered
-  (`process`), or per-item-imaged (`figures`). A **2-item** labeled set is a valid
-  concept-breakdown (two cards) — do **not** drop it to bullets or prose.
-  **Hard rule — no source image.** A concept-breakdown carries **zero `![]()` images**; its
-  per-card icons are renderer-added §17 glyphs, never source pictures. **If the slide has any
-  `![]()` image, it is NOT concept-breakdown** → `figures` (a per-item image), `content-image`
-  (1–3 supporting), or `content+cards+image` (cards + one image).
-  **Also not:** ordered/numbered (→ `process`); a lead paragraph + exactly 3–5 items
-  (→ `card-row`/`icon-list`).
-- **Format:** title + a grid of **equal cards** — 2 items → 2 cards side by side; 3 → a row;
-  4 → 2×2; 5–6 → 3×N. Each card = **a content-matched icon** (≈0.44 in, a branded line-art
-  glyph from the §17 icon library, **different per card**, chosen to fit that concept — the
-  source has no per-item image, the renderer picks the icon) **above** a label (13.5 pt Bold)
-  + one-line body (11 pt). The **per-concept icon is standard, not optional** — a concept is
-  *anchored by its icon* (see ref S8/S27: a 0.44 in icon over each concept). The plain,
-  iconless card grid is a **fallback** only for a dense 5–6-item set or when no sensible icon
-  fits. **Uniform card + icon size**, consistent gutters (~0.2 in), shared gridlines, aligned
-  rows. **Never bullets.** Beyond ~6 → split.
-- **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6; icon chosen
-  per §17.5. **Provenance:** ref S8/S27/S49 (icon'd), S5/S25/S53 (dense/plain fallback),
-  final S11/12/13, gov S22/24.
+  `#### Label` + short-para groups), **unordered**, **no per-item image**. The default home for any
+  labeled set of 2+ items that isn't ordered (→ `process`/`timeline`) or per-item-imaged
+  (→ `figures`). A **2-item** set is valid (two cards) — do **not** drop it to bullets or prose.
+  **Hard rule — no source image.** Its per-card icons are renderer-added §17 glyphs, never source
+  pictures. **If the slide has any `![]()` image, it is NOT this** → `figures` (a per-item image),
+  `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + one shared image).
+  **Not:** ordered/numbered (→ `process`); exactly one item (→ `single-point`).
+- **Accepted ids.** `card-row` and `icon-list` remain valid `template` values and simply select
+  their own `format` below, so decks and models written against them keep rendering unchanged.
+  New models should emit `concept-breakdown` and set `format` when the default isn't right.
+- **Format** — the arrangement is the `format` field; **pick it by count and body length**, the
+  same rule that used to pick between the three templates:
+
+  | `format` | When | Layout |
+  |---|---|---|
+  | `grid` *(default)* | short bodies, any count 2–6 | a grid of **equal cards**, each = a content-matched icon **above** a label (13.5 pt Bold) + a one-line body (11 pt). 2 → side by side; 3 → a row; 4 → 2×2; 5–6 → 3×N. Beyond ~6 → split the slide. |
+  | `row` | a lead + **3–5** items, **every body ≤ ~80 chars** | a **single horizontal row** of N equal-width cards, each headed by a filled accent **chip** icon. Parallel concept *summaries* ("three innovations", "four pillars"). At N=5 bodies must be ≤ 60 chars; if they don't fit, use `list` — never shrink the font. |
+  | `list` | a lead + **3–5** items, **at least one body > ~80 chars** | a **vertical stack** of N rows, each = a line-art icon at the left + heading + a 2–4-sentence body to the right. Judge by the **longest** item; never split one group across `row` and `list`. Also the home for a short **anaphora** (2–5 short parallel lines with no bodies — "No hubo hackers. No hubo malware.") so those don't fall to `fallback`. |
+
+  The **per-concept icon is standard, not optional** — a concept is *anchored by its icon*, and it
+  is **different per item**. A plain, iconless grid is a fallback only for a dense 5–6-item set or
+  when no sensible glyph fits. Uniform card + icon size, consistent gutters (~0.2 in), shared
+  gridlines, aligned rows. **Never bullets.**
+- **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6 — `row` is §7.4 and
+  `list` is §7.5 (+ §7.3 chooser); icon chosen per §17.5. **Provenance:** ref S8/S27/S49 (icon'd),
+  S5/S25/S53 (dense/plain fallback), final S11/12/13, gov S22/24.
 
 #### `single-point` — exactly one labeled item (lead + one point)
 - **Match:** a slide whose body is a lead/prose paragraph plus **exactly one** labeled item
@@ -542,7 +520,7 @@ precise rules.
   output samples, before/after across cases, a portfolio. The reader scans the grid as one
   composite.
 - **Format:** a **dense 2×N or 3×N image grid**, uniform cell size and gutters, minimal
-  per-image text. **Not** for a list of items that merely each have an icon (→ `icon-list`).
+  per-image text. **Not** for a list of items that merely each have an icon (→ `concept-breakdown`, `format: list`).
 - **Strict recipe:** §13 image-grid. **Provenance:** ref S10/31/33–38/44, gov S40/43.
 
 ### Verbatim / last-resort
@@ -561,7 +539,7 @@ precise rules.
   framing) with no visual, no enumeration, no code. Appears ~1× in 53 source slides.
 - **Format:** one lead statement (larger) + 2–4 short supporting statements as **light
   panels or a stat strip — not a paragraph, not bullets.** **Flag as a restructure
-  candidate** in FEEDBACK: most "wall of prose" slides are `card-row`/`icon-list`/
+  candidate** in FEEDBACK: most "wall of prose" slides are `concept-breakdown`/
   `content-image` in disguise.
 - **`panels` is a set — never one.** The panel strip is a `repeat(3,1fr)` grid, so a
   **single** panel renders as a lonely third-width card at the bottom, and an emphatic
@@ -594,7 +572,7 @@ fired, which near-miss was ruled out). These are the ground truth for consistent
 ```
 → `concept-breakdown`. `labeled_items=3`, `is_ordered=false`, `n_images=0`, bodies short →
 3 equal cards. **Ruled out:** plain bullets (labels make it a card set — the invariant);
-`card-row` would also fit but with no lead paragraph the general grid is chosen; `process`
+the `row` format would also fit but with no lead paragraph the default grid is chosen; `process`
 (no ordinal labels).
 
 **`process`** — same shape but ordered:
@@ -608,7 +586,7 @@ fired, which near-miss was ruled out). These are the ground truth for consistent
 cards. This single signal is the whole difference; never render an ordered set as an
 unordered grid.
 
-**`card-row` vs `icon-list`** — lead + 3–5 labeled items, split by body length:
+**`format: row` vs `format: list`** — lead + 3–5 labeled items, split by body length:
 ```
 ## Tres innovaciones de StyleGAN
 StyleGAN cambió la síntesis de imágenes en tres frentes.
@@ -616,8 +594,8 @@ StyleGAN cambió la síntesis de imágenes en tres frentes.
 - **AdaIN** Inyecta estilo por capa.
 - **Mixing regularization** Combina estilos de dos latentes.
 ```
-→ `card-row`. Lead paragraph + `labeled_items=3`, longest body ≤ 80 chars → one horizontal
-row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be `icon-list`
+→ `concept-breakdown`, `format: row`. Lead paragraph + `labeled_items=3`, longest body ≤ 80 chars → one horizontal
+row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be `format: list`
 (vertical, prose room). Pick by the **longest** item; never split the group across both.
 
 **`figures` vs `concept-breakdown`** — the per-item image decides:
@@ -689,7 +667,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 ```
 → `content-text` (a `fallback`-adjacent last resort). No labeled items, no images, no code,
 > 16 words. Emit as a lead statement + light panels; **flag as a restructure candidate**
-(most such slides are a hidden `card-row`/`content-image`).
+(most such slides are a hidden `concept-breakdown`/`content-image`).
 
 ## Disambiguation quick-reference
 
@@ -699,9 +677,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | a labeled set (**≥2**) | ordered (steps/1./Paso), labels not dates | `process` |
 | a labeled set (**≥2**) | **each item** has an image | `figures` |
 | a labeled set (**≥2**) | **one shared** supporting image | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts |
-| a labeled set (**≥2**) | lead + 3–5 items, bodies ≤ 80 chars, no image | `card-row` |
-| a labeled set (**≥2**) | lead + 3–5 items, prose bodies, no image | `icon-list` |
-| a labeled set (**≥2**) | otherwise, **no image** (incl. a **2-item** grid) | `concept-breakdown` (renderer adds per-card icons) |
+| a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 short, `list` = lead + 3–5 prose or an anaphora, `grid` otherwise |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |
 | numbers/metrics | **1** hero figure + caption | `big-number` |

@@ -383,8 +383,10 @@ _ENV.filters["nocolon"] = lambda text: _nocolon(text)
 # catalog template id → template file
 _TMPL = {
     "divider": "divider.j2", "statement": "statement.j2", "closing-hero": "closing-hero.j2",
-    "concept-breakdown": "concept-breakdown.j2", "process": "process.j2", "card-row": "card-row.j2",
-    "icon-list": "icon-list.j2", "code-example": "code-example.j2", "figures": "figures.j2",
+    # one labeled-set template, three accepted ids: `concept-breakdown` is the canonical one and
+    # the legacy `card-row`/`icon-list` select their own `format` (see labeled-set.j2).
+    "concept-breakdown": "labeled-set.j2", "card-row": "labeled-set.j2", "icon-list": "labeled-set.j2",
+    "process": "process.j2", "code-example": "code-example.j2", "figures": "figures.j2",
     "image-grid": "image-grid.j2", "image-full": "image-full.j2",
     "content-image": "content-image.j2", "comparison": "comparison.j2",
     "single-point": "single-point.j2", "callout": "single-point.j2",
@@ -485,9 +487,12 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
 
 
 # Templates whose markup places a matched icon next to each item, → the slide field holding them.
+# Which field holds a slide's icon-bearing items. The labeled-set ids accept **either** key: the
+# canonical model says `cards`, and `rows` is the legacy `icon-list` spelling the template still
+# reads, so both get their icons resolved regardless of which id/format the slide carries.
 _ICON_LISTS = {
-    "concept-breakdown": "cards", "card-row": "cards", "content+cards+image": "cards",
-    "icon-list": "rows", "closing-cta": "items",
+    "concept-breakdown": ("cards", "rows"), "card-row": ("cards", "rows"),
+    "icon-list": ("rows", "cards"), "content+cards+image": ("cards",), "closing-cta": ("items",),
 }
 
 
@@ -600,7 +605,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang=
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
     slide["highlights"] = _highlights(slide.get("highlights"))
-    items = list(slide.get(_ICON_LISTS[t], []) or []) if t in _ICON_LISTS else []
+    items = [it for k in _ICON_LISTS.get(t, ()) for it in (slide.get(k) or [])]
     if t in ("single-point", "callout"):
         point = slide.get("point") or slide.get("callout")
         if isinstance(point, dict):
@@ -818,14 +823,26 @@ _STYLE_ICON = (
     '<circle cx="7.5" cy="10.5" r=".8"/><circle cx="12" cy="7.5" r=".8"/><circle cx="16.5" cy="10" r=".8"/></svg>')
 
 
-def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck") -> str:
+def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck",
+         lang: str = "en") -> str:
     """Assemble the full self-contained Reveal.js deck: vendored CSS/JS inlined, our theme
     layered on top, slides as <section>s. Presentation, navigation, scaling, transitions,
-    speaker notes (press `s`), and PDF export (open with `?print-pdf`) are all Reveal's."""
+    speaker notes (press `s`), and PDF export (open with `?print-pdf`) are all Reveal's.
+
+    Emits a **well-formed document** — doctype, `<html lang>`, an explicit `<head>` holding the
+    metadata/CSS/early scripts and a `<body>` holding the deck. Browsers recover from a bare
+    fragment, but they recover into *quirks mode*, and anything that embeds or sanitizes the file
+    rather than opening it directly (a preview pane, an iframe, a sandbox) is entitled to drop
+    `<meta>`/`<style>` it finds outside a `<head>` — which is how a deck that looked fine in a
+    browser came out broken in a preview.
+    """
     reveal_css = _vendor("reset.css") + "\n" + _vendor("reveal.css")
     reveal_js = _vendor("reveal.js")
     notes_js = _vendor("notes.js")
     return (
+        '<!doctype html>\n'
+        f'<html lang="{_esc(lang or "en")}">\n'
+        '<head>\n'
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f'<title>{_esc(title)}</title>\n'
@@ -836,6 +853,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{_THEME_EARLY}</script>\n'
         f'<script>{_ANIM_EARLY}</script>\n'
         f'<script>{_STYLE_EARLY}</script>\n'
+        '</head>\n'
+        '<body>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
         f'<button class="deckanim" data-deck-anim-toggle type="button" '
         f'aria-label="Toggle animations" title="Animations">{_ANIM_ICONS}</button>\n'
@@ -858,4 +877,6 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{_FULL_SWITCH}</script>\n'
         f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
+        '</body>\n'
+        '</html>\n'
     )

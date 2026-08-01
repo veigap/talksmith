@@ -45,9 +45,11 @@ _CONSUMES = {
     "section-agenda": {"title"},
     "divider": {"title", "number"},
     "statement": {"title", "sub"},
-    "concept-breakdown": {"title", "cards"},
-    "card-row": {"title", "cards", "lead"},
-    "icon-list": {"title", "rows", "lead"},
+    # one labeled set, three accepted ids: `cards` is canonical, `rows` the legacy `icon-list`
+    # spelling, `format` the arrangement that used to be a separate template.
+    "concept-breakdown": {"title", "cards", "rows", "lead", "format"},
+    "card-row": {"title", "cards", "rows", "lead", "format"},
+    "icon-list": {"title", "cards", "rows", "lead", "format"},
     "process": {"title", "steps", "lead", "image", "layout"},
     "figures": {"title", "figures", "lead"},
     "image-grid": {"images", "title"},

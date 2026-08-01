@@ -13,6 +13,39 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.74.1] — 2026-07-31
+
+### Fixed
+
+- **The rendered deck was not a well-formed HTML document, and previews choked on it.** `page()`
+  emitted a bare fragment — `<meta>`, `<style>`, then the slides — with no `<!doctype html>` and no
+  `<html>`/`<head>`/`<body>`. A browser opening the file directly recovers, but it recovers into
+  **quirks mode** (`document.compatMode` was `BackCompat`), and anything that *embeds* the file
+  instead of opening it — a preview pane, an iframe, a sanitizer — is entitled to drop `<meta>` and
+  `<style>` found outside a `<head>`, which is how a deck that looked right in a browser came out
+  broken in a preview. The document now carries a doctype, `<html lang>` taken from `deck.lang`,
+  and explicit `<head>`/`<body>`. Rendering is **pixel-identical** across the reference deck (the
+  explicit `box-sizing` reset was already absorbing the quirks-mode box model), so this is a
+  correctness fix with no visual change.
+
+## [0.74.0] — 2026-07-31
+
+### Changed
+
+- **The labeled set is one template again, not three.** `concept-breakdown`, `card-row` and
+  `icon-list` were never three *shapes* — they are all "N parallel labeled concepts", and the
+  catalog already told the fill to choose between them by item count and body length. Three Match
+  rules for one shape is what made this the family the fill got wrong most often, and getting it
+  wrong is expensive: a set routed to the wrong one loses its per-concept icons or its prose room.
+  Now the **shape is the classification** and the arrangement is a **`format` field** — `grid`
+  (default), `row`, `list` — exactly the pattern `layout` follows for images. The catalog drops from
+  three entries to one, the renderer from three templates to one.
+  **Nothing renders differently and nothing needs migrating:** `card-row` and `icon-list` remain
+  valid `template` values that simply select their own format, `rows:` is still read as the item
+  list, and the three formats emit byte-for-byte the markup their templates emitted before — the
+  committed style reference is unchanged to the byte, which is the proof. New models should emit
+  `concept-breakdown` and set `format` when the default isn't right.
+
 ## [0.73.0] — 2026-07-31
 
 ### Added

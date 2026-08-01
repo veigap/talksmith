@@ -98,7 +98,8 @@ def render(model: dict, talk_root: Path, out_dir: Path):
 
     title = deck.get("title", talk_root.name if talk_root else "")
     subtitle = " · ".join(x for x in (deck.get("class", ""), deck.get("presenter", "")) if x)
-    return _hs.page("".join(slides_html), title=title, subtitle=subtitle), len(model.get("slides", []))
+    return _hs.page("".join(slides_html), title=title, subtitle=subtitle,
+                    lang=lang), len(model.get("slides", []))
 
 
 def main(argv=None) -> int:

@@ -108,7 +108,7 @@ in every mode.
   category: TEMPLATE
   enforcement: FEEDBACK
   modes: [pptx-strict, pptx-free-form, html-strict]
-  check: "The universal invariant: a set of parallel labeled concepts renders as cards/panels/figures, NEVER as a plain bullet list. Plain unlabeled bullets only as a ≤3-item caveat aside. A 'title + bullets' slide is a mis-rendered concept-breakdown / card-row / icon-list / process / figures."
+  check: "The universal invariant: a set of parallel labeled concepts renders as cards/panels/figures, NEVER as a plain bullet list. Plain unlabeled bullets only as a ≤3-item caveat aside. A 'title + bullets' slide is a mis-rendered concept-breakdown / process / figures."
 ```
 
 ## AESTHETIC

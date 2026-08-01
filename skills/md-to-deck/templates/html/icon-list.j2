@@ -1,9 +1,0 @@
-{% import "_macros.j2" as m %}
-{% call m.stage(s) %}
-{{ m.lead(s) -}}
-<div class="iconlist">
-{% for r in s.rows %}
-<div class="ilrow{{ ' solo' if not r.body else '' }}{{ m.frag(s) }}">{{ icon(r.icon) }}<div><h4>{{ r.label | nocolon }}</h4>{% if r.body %}<p>{{ r.body }}</p>{% endif %}</div></div>
-{% endfor %}
-</div>
-{% endcall %}

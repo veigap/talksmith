@@ -102,7 +102,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py final.m
 `field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — skip it for the `--draft` live view (which fills from `draft.md`).
 
 A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: an enumeration template
-(`content-text` panels, `concept-breakdown`/`card-row` cards, `stat` stats, `icon-list` rows, …)
+(`content-text` panels, `concept-breakdown` cards, `stat` stats, `process` steps, …)
 was filled with a **single** item, which renders as a stray grid cell — the tell of a
 misclassification (a lead + one point is `single-point`, per the catalog's `labeled_items == 1`
 rule). Surface the FAIL line, **re-classify that slide in the model**, and re-check before

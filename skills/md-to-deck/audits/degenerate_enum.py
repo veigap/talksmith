@@ -65,11 +65,13 @@ from dataclasses import asdict, dataclass
 # template -> (enumeration field, floor). Floor is 2 for every entry: a set of
 # parallel items needs at least two; one item is the degenerate case this audit
 # exists to catch. The single-item template to reach for instead is in ADVICE.
+# The labeled-set ids accept either item key — `cards` is canonical, `rows` the legacy
+# `icon-list` spelling — so the count is taken from whichever one the slide carries.
 ENUM_FIELD = {
-    "concept-breakdown": ("cards", 2),
-    "card-row": ("cards", 2),
+    "concept-breakdown": (("cards", "rows"), 2),
+    "card-row": (("cards", "rows"), 2),
     "content+cards+image": ("cards", 2),
-    "icon-list": ("rows", 2),
+    "icon-list": (("rows", "cards"), 2),
     "process": ("steps", 2),
     "figures": ("figures", 2),
     "stat": ("stats", 2),
@@ -131,6 +133,8 @@ def audit_model(path: str) -> list[Degenerate]:
         if not spec:
             continue
         field, floor = spec
+        keys = field if isinstance(field, tuple) else (field,)
+        field = next((k for k in keys if slide.get(k)), keys[0])
         n = _count(slide.get(field))
         if n < floor:
             found.append(Degenerate(
