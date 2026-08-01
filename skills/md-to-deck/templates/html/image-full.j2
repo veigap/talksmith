@@ -1,0 +1,11 @@
+{% import "_macros.j2" as m %}
+{# One image, edge to edge under the normal header. This is a full-bleed slide, so it emits its
+   own `.stage` instead of calling `stage(s)`: the shared stage pads every side, and that padding
+   is exactly what this template exists to remove below the header. Consequences on purpose —
+   no `.cfit`, so the content-fit pass leaves it alone (the image is sized by CSS to the box it is
+   given, and a long title shrinks that box rather than overflowing it), and no highlights band or
+   aside column, neither of which belongs on a slide whose whole body is the picture. #}
+<div class="stage imgfull">
+<div class="shead">{{ m.header(s) }}{{ m.lead(s) }}</div>
+<div class="iffill">{{ embed_img(s.image) }}</div>
+</div>

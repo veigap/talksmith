@@ -229,6 +229,23 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
       every reference slide overflow-free. */
 .imgph.svg svg,.imgph.has img{width:auto;height:auto;max-width:100%;max-height:56cqw;display:block}
 .imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;margin-top:auto}
+/* image-full — the normal header, then one image owning everything below it. The stage keeps its
+   side padding for the header only and drops it entirely for the picture, which is what "edge to
+   edge" means here; the header also loses its bottom margin so the image starts right under it. */
+.stage.imgfull{padding:5cqw 0 0}
+.stage.imgfull .shead{padding:0 5.5cqw;margin-bottom:1.8cqw}
+.stage.imgfull .lead{margin-top:1.2cqw}
+.iffill{flex:1 1 auto;min-height:0;display:grid;place-items:center;overflow:hidden}
+/* strip the inline-figure chrome (hairline, white fill, rounded corners) — a full-bleed image is
+   the slide, not a figure sitting on it */
+.iffill .imgph,.iffill .imgph.svg,.iffill .imgph.has{width:100%;height:100%;border:0;border-radius:0;background:none;aspect-ratio:auto;overflow:hidden;display:grid;place-items:center}
+/* Contained, never cropped — the invariant every image-owning template holds, and the reason this
+   is not an `aside`: a screenshot loses its meaning when its edges are cut. A vector fills the box
+   outright (no quality cost, and an inline <svg> contains itself via preserveAspectRatio, which
+   object-fit cannot do). A raster is capped at its natural size instead of being stretched, so a
+   small capture stays sharp rather than being blown up into mush. */
+.iffill .imgph.svg svg{width:100%;height:100%;max-width:none;max-height:none}
+.iffill .imgph.has img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
@@ -818,8 +835,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div>
 
 </div></div></div>
-</section><section class="slide" data-kind="content-image"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-only takes the full width</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</section><section class="slide" data-kind="image-full"><div class="stage imgfull">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-full: one image, edge to edge</h2></div>
+<div class="iffill"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -834,10 +852,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
 </svg></div></div>
-
-</div></div></div>
-<aside class="notes">Same model without a layout: with no text column the two-column grid collapses to one track, so the image uses the whole slide instead of sitting in its half with the other half blank.</aside></section><section class="slide" data-kind="content-image"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: the image-only slide (image-top)</h2></div><div class="cbody"><div class="cfit"><div class="ci ci-top"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</div><aside class="notes">The shape a screenshot slide takes: the header stays, the image owns everything below it, and the detail the presenter narrates lives here in the notes rather than on the slide face. The image is contained, never cropped — a capture whose edges are cut stops being evidence.</aside></section><section class="slide" data-kind="image-full"><div class="stage imgfull">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-full: with a line of framing above the image</h2><p class="lead">An optional lead sits under the title; the image still takes everything below it.</p></div>
+<div class="iffill"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -852,10 +869,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
 </svg></div></div>
-
-</div></div></div>
-<aside class="notes">This is the shape a screenshot slide takes: the image carries the slide and the detail lives here in the notes, where the presenter reads it. The renderer emits no text column at all — before the guard, image-top projected an empty accent-bordered note box under the picture.</aside></section><section class="slide" data-kind="content-image"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: image-only, with a closing remark</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</div></section><section class="slide" data-kind="content-image"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: the empty-text-column guard (legacy models)</h2></div><div class="cbody"><div class="cfit"><div class="ci"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -871,7 +886,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   </g>
 </svg></div></div>
 
-<div class="highlights fragment fade-up"><div class="highlight takeaway"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M200-120v-680h343l19 86h238v370H544l-18.93-85H260v309h-60Zm300-452Zm95 168h145v-250H511l-19-86H260v251h316l19 85Z"/></svg></span><p><b>Still a band</b>: an image-only slide can carry highlights; only the text column is gone.</p></div></div></div></div></div>
+<div class="highlights fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p><b>Guard, not a shape to author</b>: a bare image here still drops the text column instead of projecting an empty one — new models use image-full.</p></div></div></div></div></div>
 </section><section class="slide" data-kind="figures"><div class="stage">
 <div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: a set where each item has its own image</h2></div><div class="cbody"><div class="cfit"><div class="figs">
 <div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">

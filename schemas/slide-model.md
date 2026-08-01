@@ -155,7 +155,8 @@ when the content warrants. Field names are the contract — the renderers read e
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example), `layout` (with an image) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `content-image` | `title`, `image:{src,alt}` | `facts:[{body,label?}]`, `lead`, `layout` (the only template taking `image-top`) — **with neither `lead` nor `facts` this *is* the image-only slide**: the image renders full width, no empty text column |
+| `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
+| `content-image` | `title`, `image:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `layout` (the only template taking `image-top`). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead`, per-card `icon` (else content-matched), `layout` |
 | `comparison` | `title`, `columns:[{header,cells:[str]}]` (2–3) | — |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
@@ -249,11 +250,12 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   demote a labeled set to `content-image` `facts` (which lose their per-concept icons) — keep
   `content+cards+image` and set `layout`. An author `<!-- layout: <value> -->` hint **pins** the
   field: copy it through instead of judging.
-- **A slide that is only an image is `content-image` with no `lead` and no `facts`.** A screenshot
-  or diagram the presenter narrates, its detail in `notes`, is a normal slide shape: fill `title` +
-  `image` and stop. The render drops the text column and gives the image the full width. Do **not**
-  reach for `image-grid` (which wants ≥4 images) to get chrome-free art, and do not invent filler
-  prose to justify a text column.
+- **A slide that is only an image is `image-full`.** A screenshot or diagram the presenter narrates,
+  its detail in `notes`, is a normal slide shape: fill `title` + `image` (plus a `lead` if one line
+  of framing helps) and stop. The header stays; the image takes everything below it, edge to edge.
+  Do **not** reach for `image-grid` (which wants ≥4 images) to get chrome-free art, do not invent
+  filler prose to justify a `content-image` text column, and do not move the slide's substance out
+  of `notes` onto the face — the whole point of the shape is that the presenter talks over it.
 - **`lead` vs `highlights` — a line that *introduces* the body is the `lead`.** A single line before
   a slide's enumeration or image is its sub-line: it fills `lead`. Only a line that *comments on*
   the body belongs in `highlights` — and then its `position` follows the same test: a **remark**

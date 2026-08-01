@@ -51,6 +51,7 @@ _CONSUMES = {
     "process": {"title", "steps", "lead", "image", "layout"},
     "figures": {"title", "figures", "lead"},
     "image-grid": {"images", "title"},
+    "image-full": {"title", "image", "lead"},
     "content-image": {"title", "image", "facts", "lead", "layout"},
     "content+cards+image": {"title", "cards", "image", "lead", "layout"},
     "comparison": {"title", "columns"},

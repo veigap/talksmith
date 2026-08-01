@@ -107,9 +107,9 @@ Decide the template **from the content**, as a discriminator walk — not first-
      a **tone-carrying aside** (a tip, a warning, an analogy — the pink/blue panel *is* the
      message) rather than the slide's substance. If an image supports it → `content-image`.
      **Never a lone bullet under a title.**
-   - `image_only` → **`content-image` with no `lead` and no `facts`** — the image renders full
-     width, no text column. Not `image-grid` (which wants ≥4 images and treats variety as the
-     message) and not an invented paragraph to justify a column.
+   - `image_only` → **`image-full`** — the normal header, then the image edge to edge. Not
+     `image-grid` (which wants ≥4 images and treats variety as the message), and never an
+     invented paragraph to justify a text column.
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
      `content-image`.
    - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
@@ -157,7 +157,7 @@ sub-category follows, grouped by family.
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Two groups** — A vs B | `comparison` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; a neutral compare → `comparison` |
-| **Visual** — images carry the content | `content-image` · `content+cards+image` · `figures` · `image-grid` | 1–3 supporting → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
+| **Visual** — images carry the content | `image-full` · `content-image` · `content+cards+image` · `figures` · `image-grid` | **one image and no prose → `image-full`**; 1–3 supporting prose → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
 | **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
 
 The signal *definitions* are in *Classification procedure* above; the row-level tie-breaks
@@ -192,7 +192,7 @@ precise rules.
 >
 > **Optional aside.** Any slide type in this catalog *except* the full-bleed ones (`cover`,
 > `divider`, `statement`, `quote`, `closing-hero`) and the image-owning ones (`content-image`,
-> `figures`, `image-grid`, `content+cards+image`, `process` with an image) may carry
+> `figures`, `image-grid`, `image-full`, `content+cards+image`, `process` with an image) may carry
 > `aside: {image, side}` — set from an author `<!-- aside: [left|right] ![alt](path) -->` hint. It
 > renders the image as a **full-bleed column down that edge** (default `right`, ~37% of the width),
 > with the title and body in the remaining width. It is **visual reinforcement** — an evocative
@@ -470,11 +470,11 @@ precise rules.
 
 #### `content-image`
 - **Match:** one main claim supported by **1–3** `![]()` images; the prose leads, the
-  images are evidence. **Also the image-only slide** (`image_only`): with no `lead` and no
-  `facts` the text column is not emitted at all and the image renders full width — a screenshot
-  or diagram the presenter narrates, its detail in the notes. That is a first-class shape, not a
-  degenerate one: don't force it into `image-grid` (≥4 images, variety is the message) and don't
-  invent prose to fill a column. **Not:** a labeled set of ≥2 concepts that happens to have one
+  images are evidence — **the prose is required**. An image with *no* `lead` and no `facts` is
+  not this template: it is `image-full`, which drops the text column and bleeds the image to the
+  edges. (The renderer still guards the empty case — a legacy model that carries a bare image here
+  renders the image full width rather than an empty bordered column — but new models should
+  classify it as `image-full`.) **Not:** a labeled set of ≥2 concepts that happens to have one
   image — that is `content+cards+image`, and demoting its cards to `facts` costs them their icons.
 - **Name:** the `template` value is **`content-image`** (hyphen), even though the strict
   PPTX recipe for it is named "§13 content+image". Recipe names and `template` values are
@@ -509,6 +509,24 @@ precise rules.
   variant of this one; the value is rejected with a warning rather than half-honored.
 - **Strict recipe:** §13 content+cards+image (§7 cards + §12 image). **Provenance:** ref
   S7, S30, S42.
+
+#### `image-full` (one image, edge to edge under the header)
+- **Match:** the slide **is one image** — a screenshot, UI capture, or diagram the presenter
+  narrates while the audience looks at it, with the detail in `### Notes` rather than on the
+  slide face. Fires on `image_only` (`n_images == 1`, no prose and no enumeration in the body).
+  An author writing "just the image, no text" produces exactly this. **Not:** a caption or a
+  couple of supporting facts alongside it (→ `content-image`, whose prose leads); not ≥4 images
+  where variety is the message (→ `image-grid`); not atmosphere behind text (→ an `aside`, which
+  crops).
+- **Format:** the **normal header** — section pill + title, plus an optional one-line `lead` —
+  kept compact at the top; the image then takes **all remaining space, bleeding to the left,
+  right and bottom edges** with no padding, no frame, no rounded corners. It is **contained,
+  never cropped** (the invariant every image-owning template holds — a screenshot loses its
+  meaning when its edges are cut), so an image whose aspect is taller than the area it is given
+  centres with space at the sides. Nothing else is on the slide: no facts, no cards, no band.
+- **Strict recipe:** §13 image-full — a single full-width `<p:pic>` below the title block, sized
+  to its own aspect against the remaining canvas. **Provenance:** screenshot walkthrough slides
+  (`claude-cowork` 1.4).
 
 #### `figures`
 - **Match:** a **visual set** where **each item carries its own image/diagram** — ≥3
@@ -694,7 +712,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | two groups | a neutral A vs B / before-after | `comparison` |
 | images | ≥4, variety is the message | `image-grid` |
 | images | 1–3 supporting prose | `content-image` |
-| images | **image only** — no prose, no enumeration | `content-image` with no `lead`/`facts` (renders full width); **not** `image-grid` |
+| images | **image only** — no prose, no enumeration | `image-full` (header, then the image edge to edge); **not** `image-grid` |
 | one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
 | one big claim | it is **someone else's words** (quoted/attributed) | `quote` |
 | a question | the slide answers it (opt. A/B/C/D choices) | `quiz` |

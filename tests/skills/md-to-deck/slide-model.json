@@ -647,39 +647,38 @@
       }
     },
     {
-      "template": "content-image",
+      "template": "image-full",
       "section": "Visual & data",
-      "title": "content-image: image-only takes the full width",
+      "title": "image-full: one image, edge to edge",
       "image": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       },
-      "notes": "Same model without a layout: with no text column the two-column grid collapses to one track, so the image uses the whole slide instead of sitting in its half with the other half blank."
+      "notes": "The shape a screenshot slide takes: the header stays, the image owns everything below it, and the detail the presenter narrates lives here in the notes rather than on the slide face. The image is contained, never cropped — a capture whose edges are cut stops being evidence."
     },
     {
-      "template": "content-image",
+      "template": "image-full",
       "section": "Visual & data",
-      "title": "content-image: the image-only slide (image-top)",
-      "layout": "image-top",
+      "title": "image-full: with a line of framing above the image",
+      "lead": "An optional lead sits under the title; the image still takes everything below it.",
       "image": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
-      },
-      "notes": "This is the shape a screenshot slide takes: the image carries the slide and the detail lives here in the notes, where the presenter reads it. The renderer emits no text column at all — before the guard, image-top projected an empty accent-bordered note box under the picture."
+      }
     },
     {
       "template": "content-image",
       "section": "Visual & data",
-      "title": "content-image: image-only, with a closing remark",
+      "title": "content-image: the empty-text-column guard (legacy models)",
       "image": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       },
       "highlights": [
         {
-          "kind": "takeaway",
-          "label": "Still a band",
-          "body": "an image-only slide can carry highlights; only the text column is gone."
+          "kind": "note",
+          "label": "Guard, not a shape to author",
+          "body": "a bare image here still drops the text column instead of projecting an empty one — new models use image-full."
         }
       ]
     },

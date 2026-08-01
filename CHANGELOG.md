@@ -66,8 +66,9 @@ template at all.
   picture was clamped short, and `object-fit` centred it inside a column-wide box, leaving a small
   diagram marooned in a big empty bordered frame (worse the busier the slide). Images now size to
   hug the picture, so the frame wraps the image exactly at any scale, and the cap was raised to the
-  largest value that keeps every reference slide overflow-free. On a real 6-card slide the diagram
-  went from 51% to 96% of its column. The cap is deliberately still unscaled — a comment in
+  largest value that keeps every reference slide overflow-free. Measured on a real deck, diagrams on
+  crowded slides went from 51–89% of their column width to 67–96%. The cap is deliberately still
+  unscaled — a comment in
   `theme.css` and one in `fitContent` explain why scaling it makes the fit unsolvable, since that
   is the tempting "fix".
 - **The same guard applied across every other template** in one pass: `code-example` no longer
