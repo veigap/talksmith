@@ -208,9 +208,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    `scale-down` = contain, except it never enlarges past natural size, so a small capture stays
    sharp instead of being blown up into mush. An inline <svg> ignores object-fit (it is not a
    replaced element) and contains itself via its default preserveAspectRatio, and scaling a vector
-   up costs nothing. The letterbox this leaves is invisible: the box carries no frame or fill. */
-.iffill .imgph.svg svg{width:100%;height:100%;max-width:none;max-height:none}
-.iffill .imgph.has img{width:100%;height:100%;max-width:none;max-height:none;object-fit:scale-down}
+   up costs nothing. The letterbox this leaves is invisible: the box carries no frame or fill.
+   The media element is pinned too, for the same reason one level down: inside a `place-items:center`
+   grid the row is auto-sized, so a percentage height on the item is cyclic and silently falls back
+   to the image's intrinsic aspect — which is how the picture ended up taller than the slide. Pinned
+   to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
+.iffill .imgph.svg svg,.iffill .imgph.has img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
+.iffill .imgph.has img{object-fit:scale-down}
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}

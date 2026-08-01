@@ -13,6 +13,32 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.73.0] — 2026-07-31
+
+### Added
+
+- **`image-full` — a new slide type for the slide that *is* one image.** A screenshot or diagram
+  the presenter narrates, with the detail in the speaker notes, had no home in the catalog: it was
+  either a `content-image` with an empty text column, or `image-grid` abused down to a single
+  image. Now it is its own type — the **normal header** (section pill + title, plus an optional
+  one-line `lead`), and the image takes **everything below it, bleeding to the left, right and
+  bottom edges**: no padding, no frame, no caption. It is **contained, never cropped**, the
+  invariant every image-owning template holds — a screenshot cut at the edges stops being
+  evidence — so an image narrower than the space it is given centres rather than filling it. If
+  you want cropping-to-fill, that is what `aside` is for.
+  The `image_only` signal now classifies to this type across the catalog's walk, its
+  disambiguation table and the fill guide, so the choice is no longer left to each fill to invent.
+  `content-image` correspondingly requires its prose again; the renderer keeps dropping an empty
+  text column defensively for models written before this.
+
+### Fixed
+
+- A stray line of prose after a comment's closing `*/` in `theme.css` made the CSS parser swallow
+  the rule that followed it, so a full-bleed image escaped its box and was clipped at the slide
+  edge. Fixed, and the two nested sizing traps behind it are now commented where they bite: a
+  percentage height inside a `place-items:center` grid is cyclic and silently falls back to the
+  image's intrinsic aspect, so both the frame and the picture are pinned with `inset:0` instead.
+
 ## [0.72.0] — 2026-07-31
 
 Three composition fields that used to belong to one template each now mean the same thing on

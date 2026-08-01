@@ -235,17 +235,28 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.imgfull{padding:5cqw 0 0}
 .stage.imgfull .shead{padding:0 5.5cqw;margin-bottom:1.8cqw}
 .stage.imgfull .lead{margin-top:1.2cqw}
-.iffill{flex:1 1 auto;min-height:0;display:grid;place-items:center;overflow:hidden}
-/* strip the inline-figure chrome (hairline, white fill, rounded corners) — a full-bleed image is
-   the slide, not a figure sitting on it */
-.iffill .imgph,.iffill .imgph.svg,.iffill .imgph.has{width:100%;height:100%;border:0;border-radius:0;background:none;aspect-ratio:auto;overflow:hidden;display:grid;place-items:center}
+.iffill{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+/* Strip the inline-figure chrome (hairline, white fill, rounded corners) — a full-bleed image is
+   the slide, not a figure sitting on it — and pin the frame to the area with `inset:0`. The pin is
+   load-bearing: as a flex→grid child its `height:100%` had no definite height to resolve against,
+   so the frame took the image's intrinsic height and the picture ran off the bottom of the slide.
+   Absolute positioning gives it a definite box no matter what the ancestors do. */
+.iffill .imgph,.iffill .imgph.svg,.iffill .imgph.has{position:absolute;inset:0;width:auto;height:auto;border:0;border-radius:0;background:none;aspect-ratio:auto;overflow:hidden;display:grid;place-items:center}
 /* Contained, never cropped — the invariant every image-owning template holds, and the reason this
-   is not an `aside`: a screenshot loses its meaning when its edges are cut. A vector fills the box
-   outright (no quality cost, and an inline <svg> contains itself via preserveAspectRatio, which
-   object-fit cannot do). A raster is capped at its natural size instead of being stretched, so a
-   small capture stays sharp rather than being blown up into mush. */
-.iffill .imgph.svg svg{width:100%;height:100%;max-width:none;max-height:none}
-.iffill .imgph.has img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
+   is not an `aside`: a screenshot loses its meaning when its edges are cut.
+   Both rules size the box to the full area (`100%`/`100%`) and let the *picture* fit inside it,
+   rather than sizing the picture with a percentage `max-height` — that percentage does not resolve
+   through this flex→grid chain, so the image escaped its box and got clipped at the slide edge.
+   `scale-down` = contain, except it never enlarges past natural size, so a small capture stays
+   sharp instead of being blown up into mush. An inline <svg> ignores object-fit (it is not a
+   replaced element) and contains itself via its default preserveAspectRatio, and scaling a vector
+   up costs nothing. The letterbox this leaves is invisible: the box carries no frame or fill.
+   The media element is pinned too, for the same reason one level down: inside a `place-items:center`
+   grid the row is auto-sized, so a percentage height on the item is cyclic and silently falls back
+   to the image's intrinsic aspect — which is how the picture ended up taller than the slide. Pinned
+   to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
+.iffill .imgph.svg svg,.iffill .imgph.has img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
+.iffill .imgph.has img{object-fit:scale-down}
 .ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}

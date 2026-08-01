@@ -517,6 +517,7 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 | **code-example** | 17 | 11, 13–16, 19, 20, 22, 24, 26–28, 30, 32, 41–43 | §9 — code block + explanation column |
 | **image-grid** | 14 | 3, 4, 10, 31, 33–38, 44, 46, 49, 50 | 3+ images arranged in row or grid; each typically a PNG+SVG pair |
 | **closing-cta** | 1 | 53 | Title + 4-card grid of next-step resources |
+| **image-full** | 0 | — | Title block (§6 pill + §3 title, optional one-line lead), then **one `<p:pic>` filling the whole remaining canvas** — left/right/bottom margins 0, no frame, no caption. Sized to its own aspect and **centred, never cropped**: a screenshot cut at the edges stops being evidence. New type; no reference-deck exemplar, so follow this description rather than copying a slide. |
 
 > **`layout` is not honored on the `.pptx` path — by decision, not by oversight.** Any slide that
 > carries its own image (`content+image`, `content+cards+image`, `process`/`quiz` with one) may
