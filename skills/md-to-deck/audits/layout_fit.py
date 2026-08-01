@@ -41,6 +41,7 @@ What it does:
       icon-bullet-list      — H2 + lead + 3–5 labeled bullets, longest body > 80c (§7.5)
       callout               — H2 + single emoji-prefixed bold-lead bullet (§8 via §15 row)
       card-grid-from-table  — H2 + pipe-table (§11 conversion)
+      card-grid-from-table+image — the same, beside a supporting image (§11 + §13)
       closing-cta           — final slide H2 + list of links
       content-text          — H2 + paragraphs only (last resort)
 
@@ -171,7 +172,9 @@ def _is_emoji_bullet(line: str) -> tuple[bool, bool]:
 # emitted side. Templates it cannot check emit "skip" and are ignored (no false mismatches).
 _TEMPLATE_TO_LAYOUT = {
     "code-example": "code-example", "callout": "callout",
-    "comparison": "card-grid-from-table", "image-grid": "image-grid",
+    # `comparison` is the legacy id for `value-columns` — same emitted shape
+    "value-columns": "card-grid-from-table", "comparison": "card-grid-from-table",
+    "image-grid": "image-grid",
     "card-row": "card-row", "icon-list": "icon-bullet-list",
     "concept-breakdown": "card-grid", "content-image": "content+image",
     "closing-cta": "closing-cta",
@@ -188,10 +191,75 @@ def parse_model(path: str) -> list[SourceSignals]:
     for i, s in enumerate(model.get("slides", []), start=1):
         title = s.get("title") or s.get("section") or ""
         sig = SourceSignals(h2_title=title, h2_line=i)
-        sig.predicted_layout = _TEMPLATE_TO_LAYOUT.get(s.get("template", ""), "skip")
+        t = s.get("template", "")
+        sig.predicted_layout = _TEMPLATE_TO_LAYOUT.get(t, "skip")
+        # A `value-columns` slide carrying its own `image` emits a different shape — the grid
+        # beside a picture — so it predicts its own layout. Without this it would predict the
+        # bare card grid and every such slide would report a mismatch that isn't one.
+        if t in ("value-columns", "comparison") and s.get("image"):
+            sig.predicted_layout = "card-grid-from-table+image"
+            sig.image_count = 1
         out.append(sig)
     return out
 
+
+
+@dataclass
+class RenderEvidence:
+    """What the rendered slide's shapes say about the layout it actually emitted."""
+    slide_num: int
+    is_chrome: bool
+    title_text: str
+    pic_count: int = 0
+    pic_paths: list[str] = field(default_factory=list)
+    native_table_count: int = 0
+    buchar_paragraph_count: int = 0
+    literal_bullet_paragraph_count: int = 0
+    code_surface_count: int = 0
+    callout_pink_count: int = 0
+    callout_blue_count: int = 0
+    column1_icon_count: int = 0      # small (<0.5 in) pics in left column → §7.5 marker
+    emitted_layout: str = "unknown"
+
+    def infer(self) -> None:
+        if self.is_chrome:
+            self.emitted_layout = "chrome (cover/agenda/divider)"
+            return
+        # Native table = §11 violation; flag layout as such for visibility
+        if self.native_table_count >= 1:
+            self.emitted_layout = "native-table (§11 violation)"
+            return
+        # Code surface present → code-example
+        if self.code_surface_count >= 1:
+            self.emitted_layout = "code-example"
+            return
+        # Callout shape present (single-bullet emoji-bold pattern) → callout
+        if (self.callout_pink_count + self.callout_blue_count) >= 1 and self.pic_count <= 1:
+            self.emitted_layout = "callout"
+            return
+        # §7.5 icon-bullet list: ≥3 small icons in column-1, paired with headings
+        if self.column1_icon_count >= 3 and self.pic_count == self.column1_icon_count:
+            self.emitted_layout = "icon-bullet-list"
+            return
+        # §7.4 card-row: 3+ small icons (chip variant) AND adjacent card geometry —
+        #   simplified: detect as icon-bullet-list-or-card-row when icons present
+        if self.column1_icon_count >= 3:
+            self.emitted_layout = "card-row-or-icon-bullet-list"
+            return
+        # image-grid: 4+ content pics
+        if self.pic_count >= 4:
+            self.emitted_layout = "image-grid"
+            return
+        # content+image: 1-3 content pics
+        if 1 <= self.pic_count <= 3:
+            self.emitted_layout = "content+image"
+            return
+        # Bullets only → §10 plain bullets
+        if self.buchar_paragraph_count >= 1 or self.literal_bullet_paragraph_count >= 1:
+            self.emitted_layout = "plain-bullets (§10)"
+            return
+        # Default — content-text
+        self.emitted_layout = "content-text"
 
 
 def _slide_paths(zf: zipfile.ZipFile) -> list[str]:
@@ -368,6 +436,8 @@ LAYOUT_ALIASES = {
     "card-row": {"card-row", "card-row-or-icon-bullet-list"},
     "card-grid": {"card-grid", "content+cards+image", "card-grid-from-table"},
     "card-grid-from-table": {"card-grid", "card-grid-from-table"},
+    # the compare-strip beside a supporting image: the grid is what the pic count hides
+    "card-grid-from-table+image": {"card-grid", "card-grid-from-table", "content+image"},
     "content+image": {"content+image"},
     "image-grid": {"image-grid"},
     "code-example": {"code-example"},

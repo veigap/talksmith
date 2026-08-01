@@ -157,6 +157,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .procsteps{display:flex;flex-direction:column;gap:1.6cqw}
 .procsteps .steprow p{font-size:2.25cqw}.procsteps .steprow p b{font-weight:800;color:var(--ink)}
 .procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:auto;height:auto;max-width:100%;max-height:38cqw}
+/* the strip is the slide's whole body by default, so it hangs from the bottom edge — but see
+   `.cmpgrid > .compare` below: beside an image it is a *column*, where that `auto` fights the
+   grid's own centring. The rule is conditioned there, not dropped. */
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -236,25 +239,27 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
 /* ── body + image compositions ────────────────────────────────────────────────────────────────
-   Four templates pair a body with one supporting image — `content-image` (.ci), its cards
-   sibling (.cci), `process` with a diagram (.procgrid) and an illustrated `quiz` (.quiz-split).
+   Five templates pair a body with one supporting image — `content-image` (.ci), its cards
+   sibling (.cci), `process` with a diagram (.procgrid), an illustrated `quiz` (.quiz-split) and
+   a `comparison` beside a supporting diagram (.cmpgrid).
    Where the image sits is a *composition* choice (the model's `layout`), not a property of the
-   template, so all four share one idiom instead of each inventing its own.
+   template, so all five share one idiom instead of each inventing its own.
 
    `image-left` mirrors the two columns **visually only** — the markup keeps body-then-image, so
    the reading order (and PDF/screen-reader order) is unchanged, and the enumeration itself never
-   flips: facts keep their left-edge dots, cards their icons, steps their numbering, all still
-   left-aligned. Only the column positions swap.
+   flips: facts keep their left-edge dots, cards their icons, steps their numbering, comparison
+   cells their columns, all still left-aligned. Only the column positions swap.
 
    Track sizes flip with them. Grid auto-placement runs in *order-modified* document order, so
-   `order` alone would hand the leading track to the image — and three of these four grids are
+   `order` alone would hand the leading track to the image — and four of these five grids are
    deliberately asymmetric (the wider track belongs to a specific side's content, not to a
    position). Mirroring the template-columns keeps each side the width it had. */
-.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body{order:2}
+.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body,.imgleft>.compare{order:2}
 .imgleft>.imgph,.imgleft>.procmedia,.imgleft>.quiz-media{order:1}
 .cci.imgleft{grid-template-columns:1fr 1.1fr}
 .procgrid.imgleft{grid-template-columns:1.08fr 1fr}
 .quiz.quiz-split.imgleft{grid-template-columns:1fr 1.45fr}
+.cmpgrid.imgleft{grid-template-columns:1fr 1.3fr}
 /* The body column is optional: a slide that is *only* an image (a screenshot the presenter talks
    over, its detail in the speaker notes) drops the column entirely rather than projecting an empty
    one — so the grid must collapse to a single track and let the image use the full width. Same
@@ -275,6 +280,16 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
+/* a comparison beside a supporting diagram. The compare-strip keeps the wider track — it holds a
+   header row plus N aligned cells and is what the slide is *about*; the diagram supports it. The
+   strip stays a grid at half width (columns must still read as columns — collapsing it to one row
+   per cell would undo the whole point), so it only gives up type size and cell padding. */
+.cmpgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:3cqw;align-items:center}
+/* the bottom anchor is for the full-width form only; in a centred grid column it hangs the strip */
+.cmpgrid>.compare{margin-top:0}
+.cmpgrid .chead{font-size:2.2cqw}
+.cmpgrid .crow{font-size:2.05cqw}.cmpgrid .crow>span{padding:1.1cqw 1.3cqw}
+.cmpgrid .imgph img,.cmpgrid .imgph svg{max-height:44cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}

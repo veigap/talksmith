@@ -85,11 +85,16 @@ Decide the template **from the content**, as a discriminator walk — not first-
      multiple-choice options are *choices*, not a labeled set.
    - `is_voiced` (someone else's words carry the slide) → `quote`, **not** `statement`.
    - `one_metric` → `big-number`; `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
-   - `has_table`: **two comparable value-columns** (A-vs-B, before/after) → `comparison`;
-     a **label/value or N-level/N-column** table → `concept-breakdown` (card-per-row grid),
-     **not** `comparison`. (A pipe-table is never a native `<a:tbl>`.)
+   - `has_table`: **2–3 comparable value-columns** (A-vs-B, before/after, or three options over
+     shared factors) → `value-columns`; a **label/value or N-level/N-column** table →
+     `concept-breakdown` (card-per-row grid), **not** `value-columns`. (A pipe-table is never a
+     native `<a:tbl>`.) A table that also has **one shared supporting image** is still
+     `value-columns`, with `image` + `layout` — the mirror of the `content+cards+image` rule one
+     step down. The image is not a reason to reclassify, and the table is not a reason to drop the
+     image: sending the slide to `content+cards+image` to keep the picture collapses each row into
+     a single card body (`"A: … B: …"`) and loses the column alignment that is the whole point.
    - `two_groups` → `pros-cons` when `polarity` (the two groups are upside vs downside, and the
-     colour-coding is the point), else `comparison` (a neutral compare).
+     colour-coding is the point), else `value-columns` (a neutral compare).
    - `labeled_items ≥ 2` and `date_labels` → `timeline` (the rail; *when* is the axis), else
      `is_ordered` → `process`. Check `date_labels` **first**: dated milestones are also ordered,
      so testing `is_ordered` first is what silently swallows every timeline into `process`.
@@ -158,7 +163,7 @@ sub-category follows, grouped by family.
 | **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list) is then picked by count + body length |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
-| **Two groups** — A vs B | `comparison` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; a neutral compare → `comparison` |
+| **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; 2–3 parallel value columns → `value-columns` (which may carry one supporting image) |
 | **Visual** — images carry the content | `image-full` · `content-image` · `content+cards+image` · `figures` · `image-grid` | **one image and no prose → `image-full`**; 1–3 supporting prose → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
 | **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
 
@@ -422,23 +427,38 @@ precise rules.
   slides that would otherwise fall to `process` only to get a lead.)
 - **Provenance:** roadmap / history slides; common in Gamma-style decks.
 
-### Two groups — A vs B
+### Aligned columns — parallel values, read across
 
-#### `comparison`
-- **Match:** **two symmetric groups** set against each other — A-vs-B, before/after,
-  single-model vs cascade, myth vs reality-pair, or a pipe-table of factor→A→B rows.
+#### `value-columns` *(legacy id: `comparison` — still accepted, renders identically)*
+- **Match:** **2–3 aligned columns of parallel values**, read row by row against a shared
+  left-hand factor or against each other. Two symmetric groups set against each other is the
+  common case — A-vs-B, before/after, single-model vs cascade, myth vs reality — but it is not
+  the only one: three options judged on the same factors, or a pipe-table of factor→X→Y→Z rows,
+  belong here too. What selects this template is **the columns being parallel and comparable**,
+  not the slide being adversarial. **Not** a label/value table (that is `concept-breakdown`,
+  card-per-row); **not** a valenced upside/downside pair (that is `pros-cons`, colour-coded).
+  *The id was `comparison` until 0.75.0; the old name outlived the shape's actual range.*
 - **Format:** either **two equal columns** (left = A, right = B; parallel headings, equal
   weight/height) or a **compare-strip**: header row (Factor · A · B) + N aligned rows,
   rendered as a **card-per-row grid, never a native table**. Uniform column widths,
   shared gridlines. **Not** bullets.
-- **Strict recipe:** §11 (pipe-table → card-grid) / two §7.2 columns. **Provenance:** ref
+- **A supporting image is allowed** (optional `image` + `layout`, `text-left` default /
+  `image-left` mirrored): the grid takes the wider column, the diagram sits beside it.
+  This is the fifth body-plus-image composition, not a separate template — a table and a diagram
+  on the same slide never have to trade against each other. An optional `lead` frames the grid,
+  with or without an image. At half width the grid still reads as a grid (columns stay aligned;
+  it never degrades to one row per cell), so keep it to **≤3 columns × ≤5 rows** — past that the
+  build warns and the slide wants splitting. There is no `image-top`: a grid under a
+  full-width image is a different slide, not a layout of this one.
+- **Strict recipe:** §11 (pipe-table → card-grid) / two §7.2 columns; with an image, §11 composed
+  with §13 (body beside a picture) — no new geometry. **Provenance:** ref
   S44 (compare-strip), S6 (pair).
 
 #### `pros-cons` (two colour-coded columns)
 - **Match:** a **decision framed as upside vs downside** — two labelled groups (Ventajas /
   Riesgos, Pros / Cons, Consumo / Enterprise). **Fires on `two_groups` + `polarity` on its own**
   — when the two groups are valenced, the colour-coding *is* the information, so this beats the
-  neutral `comparison`; `<!-- template: pros-cons -->` only pins it. Content is two `### Group`
+  neutral `value-columns`; `<!-- template: pros-cons -->` only pins it. Content is two `### Group`
   items (first = the "pro", second = the "con").
 - **Format:** two panels — the pro in the **blue** callout tint with a `verified` check, the
   con in the **pink** tint with an `error`/`dangerous` mark; each = label + a short body.
@@ -619,7 +639,7 @@ Un millón de tokens es más contexto del que parece.
 sub-band, not its own slide.) With `n_images ≥ 4` where the *variety* is the point, it would
 be `image-grid`.
 
-**`comparison`** — two symmetric groups / a compare-table:
+**`value-columns`** — parallel value columns / a compare-table:
 ```
 ## Modelo único vs. Cascading
 | Factor | Modelo único | Cascading |
@@ -627,9 +647,10 @@ be `image-grid`.
 | Precisión | Estable | Depende del routing |
 | Costo | Mayor por llamada | Menor en promedio |
 ```
-→ `comparison`. `has_table` with `factor | A | B` → card-per-row compare-strip, **never a
+→ `value-columns`. `has_table` with `factor | A | B` → card-per-row compare-strip, **never a
 native `<a:tbl>`**. A two-column "Pros vs Cons" of labeled cards classifies here too
-(`two_groups`).
+(`two_groups`), and so does a third parallel column (`factor | A | B | C`) — the columns being
+comparable is the signal, not the slide being adversarial.
 
 **`code-example`** — code dominates:
 ```
@@ -682,10 +703,11 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |
 | numbers/metrics | **1** hero figure + caption | `big-number` |
 | numbers/metrics | 2–4 big figures + labels | `stat` |
-| a table | **2 comparable value-columns** (A vs B) | `comparison` |
+| a table | **2–3 comparable value-columns** (A vs B, or options over shared factors) | `value-columns` |
+| a table | 2–3 comparable value-columns **+ one shared image** | `value-columns` with `image` + `layout` — **never** flatten the rows into `content+cards+image` cards to keep the picture |
 | a table | label/value or **N-level/N-column** | `concept-breakdown` (card-per-row) |
 | two groups | upside vs downside (`polarity`) | `pros-cons` |
-| two groups | a neutral A vs B / before-after | `comparison` |
+| two groups | a neutral A vs B / before-after | `value-columns` |
 | images | ≥4, variety is the message | `image-grid` |
 | images | 1–3 supporting prose | `content-image` |
 | images | **image only** — no prose, no enumeration | `image-full` (header, then the image edge to edge); **not** `image-grid` |

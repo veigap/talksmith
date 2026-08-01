@@ -463,13 +463,15 @@ appear, the emit rule below governs their glyph.
 
 **The template contains ZERO `<a:tbl>` elements.** `ppt/tableStyles.xml` is empty (just `<a:tblStyleLst def="…"/>`).
 
-A pipe-table is the source signal for the catalog's `comparison` (and label/value `concept-breakdown`) templates — see [`../slide-templates.md`](../slide-templates.md); the rule *never emit a native `<a:tbl>`; convert to a card grid* is strict's substrate invariant. Strict's realization binds each shape to a §7 card recipe:
+A pipe-table is the source signal for the catalog's `value-columns` (and label/value `concept-breakdown`) templates — see [`../slide-templates.md`](../slide-templates.md); the rule *never emit a native `<a:tbl>`; convert to a card grid* is strict's substrate invariant. Strict's realization binds each shape to a §7 card recipe:
 
 | Markdown shape | Render as |
 |---|---|
 | ≤3 columns, ≤6 rows, where col 1 is a label and col 2 is a value | A vertical stack of left-strip cards (§7.1), with col 1 → card heading, col 2 → card body |
 | 2×N or 3×N comparison grid (e.g. "Pros vs Cons", "Approach A vs Approach B") | A horizontal flex of plain title-only cards (§7.2), one column per table column header, rows aligned by row index |
 | ≥4 columns | Split into multiple slides or rotate to a 1-column form — the template does not support wide tables |
+
+A `value-columns` slide may also carry **one supporting image** (`image` + optional `lead`). That is not a new shape: emit the column grid above at the width of the cards column in the §13 *content + cards + image* recipe, with the picture in that recipe's image slot (per §12 conventions) and the `lead` as the usual one-line sub-title. Composition of two existing recipes, no new geometry — and no reason to ever choose between the table and the diagram.
 
 The visual cue "this is tabular data" is carried by **alignment and identical card sizes**, not by gridlines. There are no borders, no header banding, no zebra striping.
 
@@ -520,7 +522,8 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 | **image-full** | 0 | — | Title block (§6 pill + §3 title, optional one-line lead), then **one `<p:pic>` filling the whole remaining canvas** — left/right/bottom margins 0, no frame, no caption. Sized to its own aspect and **centred, never cropped**: a screenshot cut at the edges stops being evidence. New type; no reference-deck exemplar, so follow this description rather than copying a slide. |
 
 > **`layout` is not honored on the `.pptx` path — by decision, not by oversight.** Any slide that
-> carries its own image (`content+image`, `content+cards+image`, `process`/`quiz` with one) may
+> carries its own image (`content+image`, `content+cards+image`, `process`/`quiz`/`value-columns`
+> with one) may
 > carry `layout: image-left` (and `content+image` also `image-top`), which mirrors or stacks the
 > two columns in the HTML render. The strict recipes above are base-template-precise EMU geometry:
 > every one of the 53 reference slides places its text/cards left and its image right, so honoring
@@ -635,7 +638,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
    | H2 + fenced ``` ``` code block as primary content | **code-example** (§9) | Audience reads the code line-by-line; explanation column left, code right. NOT code-as-citation (→ notes/screenshot) or pseudocode-whose-structure-matters (→ §7.5 / diagram). |
    | H2 + sequence of `### Subhead` + paragraph repeats (2+ groups), **no image** | **card-grid** = **§7.2.1 icon cards** (per-concept §17 glyph; plain §7.2 only for a dense 5–6 grid) | Named parallel concepts with short bodies; each anchored by its own §17 icon. Any `![]()` present → **content+cards+image**. 3 items → §7.4; multi-sentence bodies → §7.5; label/value pairs → §11. |
    | H2 + lead paragraph + 3–5 `- **Label** body…` bullets (or emoji-prefixed / `#### Label` groups) | **§7.4 card-row** when every body ≤ ~80 chars; **§7.5 icon-bullet list** otherwise — **NEVER §10 plain bullets** | Pick by the *longest* item body; never split a group (§7.3). The *labeled* structure is never a §10 list, however short the bodies — §10 is for rare plain unlabeled bullets only. >5 items → split the slide; label/value pairs → §11. |
-   | H2 + pipe-table | **card-grid** via §11 conversion | Structurally label/value pairs; never native `<a:tbl>`. 3–5 parallel concepts wearing a table → §7.4/§7.5. |
+   | H2 + pipe-table | **card-grid** via §11 conversion | Structurally label/value pairs; never native `<a:tbl>`. 3–5 parallel concepts wearing a table → §7.4/§7.5. With one `![]()` alongside → the same grid **beside** the image (§11 + the §13 content+cards+image slot); the image never costs the table. |
    | Final slide with H2 + list of links | **closing-cta** | Terminal slide only. |
    | H2 + paragraphs only, no images, no code | **content-text** | Last resort (1× in 53 source slides) — flag as a restructure candidate. |
    | H2 + single-bullet `- <emoji> **<bold lead>** …` (one item, emoji-prefixed, bold lead-in) | **callout** (§8) — pink for analogy/tip/warning, blue for declarative claim/takeaway | A 1-bullet "list" reads as emphasis, not enumeration — promote to §8, picking pink vs blue per the §8 decision table. Audited: emitting it as a plain `<a:buChar>` paragraph registers as a `[block-drop]` in [`audits/block_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py). NOT multi-bullet emoji lists (→ §10 + §17.7 swap) or inline bold (just emphasis). |

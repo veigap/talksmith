@@ -13,6 +13,44 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.75.0] — 2026-08-01
+
+### Added
+
+- **A comparison table and a supporting diagram no longer compete for the same slide.** A slide
+  that compares A vs B in a table *and* carries a diagram the prose walks through had no template:
+  `comparison` renders the aligned grid but had no image slot, and `content+cards+image` has the
+  image but only one enumerable slot, so a `factor | A | B` table filled into it collapsed each row
+  into a single card body (`"A: … B: …"`) — the parallelism between columns, which is what the
+  slide teaches, survived as punctuation inside a sentence. Authors were pinning one template to
+  save the diagram and paying with the table. `comparison` now takes three optional fields with the
+  meaning they already have everywhere else: **`image`** (a supporting diagram beside the grid),
+  **`layout`** (`text-left` default, `image-left` mirrored), and **`lead`** (a framing line above
+  the grid, with or without an image). It is the fifth body-plus-image composition, not a new
+  template — the mirror is CSS-only, so reading order for PDF export and screen readers is
+  unchanged, and the compare-strip keeps the wider track in both layouts.
+  **Nothing existing changes:** a `comparison` without `image` or `lead` emits byte-identical
+  markup and still anchors to the bottom edge. Beside an image the grid stays a grid (columns keep
+  their alignment; it never degrades to one row per cell), so it wants **≤3 columns × ≤5 rows** —
+  past that the build warns instead of letting the slide squeeze silently. `image-top` is
+  deliberately not accepted here: a grid under a full-width image is a different slide.
+  On the `.pptx` path this is the existing table-to-card-grid conversion placed in the existing
+  supporting-image slot — no new geometry — and, like every other image-bearing template there,
+  it emits grid-left regardless of `layout`.
+
+### Fixed
+
+- **A resolved feedback entry could leave its `Resolution:` text on the finished slide.** The
+  Step-6 strip swept a `**Presenter feedback:**` block by consuming bullets, and stopped at the
+  first line that was neither a bullet nor blank. A resolution long enough to wrap onto an indented
+  continuation line is neither — so the sweep cut there and the tail survived into `final.md` and
+  into the rendered deck. The sweep now follows **indentation** rather than requiring a bullet:
+  everything indented past the block's opener belongs to it, and a heading or `---` still ends it.
+  The same wrap in the legacy inline-bullet form is fixed with it.
+- **The strict layout audit crashed on every run.** Its `RenderEvidence` record — the half that
+  reads what the rendered deck actually emitted — was dropped by accident in 0.44.0, so the audit
+  raised `NameError` the moment it opened a `.pptx` instead of reporting layout mismatches. Restored.
+
 ## [0.74.1] — 2026-07-31
 
 ### Fixed

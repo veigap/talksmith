@@ -80,6 +80,26 @@ CASES.append((
     ["Presenter feedback", "\"x\"", "\"y\""],
 ))
 
+# 4b. A resolved entry whose `Resolution:` wraps onto an indented continuation line. The sweep used
+# to require a *bullet* to keep going, so it cut at the wrap and left the continuation on the slide.
+CASES.append((
+    "paragraph_form_with_wrapped_resolution",
+    "# 1. Section\n\n**Presenter feedback:**\n- [closed] 2026-01-01 — \"reorder the intro\"\n"
+    "  Resolution: moved the framing line above the diagram so the prose walks it\n"
+    "  instead of arriving after it.\n\n## 1. Slide\n",
+    ["## 1. Slide"],
+    ["Presenter feedback", "reorder the intro", "Resolution", "instead of arriving after it"],
+))
+
+# 4c. Same wrap, legacy inline-bullet form — and the real point after it survives.
+CASES.append((
+    "legacy_bullet_with_wrapped_resolution",
+    "### Content\n\n- a real point\n- **Presenter feedback:**\n  - [closed] d — \"x\"\n"
+    "    Resolution: rewrote the card\n    and split the label.\n- another real point\n",
+    ["a real point", "another real point"],
+    ["Presenter feedback", "Resolution", "split the label"],
+))
+
 # 5. Multiple slides, feedback on each — every boundary preserved.
 CASES.append((
     "multiple_slides_all_boundaries_preserved",

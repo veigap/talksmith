@@ -184,8 +184,8 @@ Predice, no razona; no recuerda, no verifica.
 
 ---
 
-## Comparison · 3 columnas
-<!-- template: comparison -->
+## Value-columns · 3 columnas
+<!-- template: value-columns -->
 
 | Factor | Modelo único | Cascading |
 | --- | --- | --- |
@@ -221,13 +221,43 @@ Datos fuera de control, sin contrato ni borrado, incumplimiento posible.
 
 ---
 
-## Comparison · 2 columnas (mito vs realidad)
+## Value-columns con el id legado `comparison` · 2 columnas (mito vs realidad)
 <!-- template: comparison -->
 
 | Mito | Realidad |
 | --- | --- |
 | “Todo lo que escribo entrena al modelo” | Depende del plan y la configuración |
 | “Grande = seguro y compliant” | El tamaño no implica gobernanza |
+
+---
+
+## Value-columns + imagen · la tabla conserva sus columnas
+<!-- template: value-columns -->
+
+Una tabla y un diagrama en la misma lámina — ninguno de los dos se cae.
+
+| Qué cambia | Chatear | Delegar |
+| --- | --- | --- |
+| La forma de trabajo | Una pregunta por vez | Un encargo completo |
+| Los pasos | Los das vos | Los planifica y ejecuta |
+| La salida | Texto en la ventana | Archivos en el disco |
+| El rol humano | Escribís y esperás | Encargás y revisás |
+
+![Diagrama del pipeline](images/pipeline.svg)
+
+---
+
+## Value-columns + imagen · espejado (image-left)
+<!-- template: value-columns -->
+<!-- layout: image-left -->
+
+| Factor | Espejado |
+| --- | --- |
+| Ancho de columnas | La grilla conserva la pista ancha |
+| Orden de lectura | Grilla y después imagen, sin cambios |
+| Alineación de celdas | Sigue a la izquierda |
+
+![Diagrama del pipeline](images/pipeline.svg)
 
 ---
 

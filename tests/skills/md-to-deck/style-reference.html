@@ -202,6 +202,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .procsteps{display:flex;flex-direction:column;gap:1.6cqw}
 .procsteps .steprow p{font-size:2.25cqw}.procsteps .steprow p b{font-weight:800;color:var(--ink)}
 .procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:auto;height:auto;max-width:100%;max-height:38cqw}
+/* the strip is the slide's whole body by default, so it hangs from the bottom edge — but see
+   `.cmpgrid > .compare` below: beside an image it is a *column*, where that `auto` fights the
+   grid's own centring. The rule is conditioned there, not dropped. */
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -281,25 +284,27 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
 /* ── body + image compositions ────────────────────────────────────────────────────────────────
-   Four templates pair a body with one supporting image — `content-image` (.ci), its cards
-   sibling (.cci), `process` with a diagram (.procgrid) and an illustrated `quiz` (.quiz-split).
+   Five templates pair a body with one supporting image — `content-image` (.ci), its cards
+   sibling (.cci), `process` with a diagram (.procgrid), an illustrated `quiz` (.quiz-split) and
+   a `comparison` beside a supporting diagram (.cmpgrid).
    Where the image sits is a *composition* choice (the model's `layout`), not a property of the
-   template, so all four share one idiom instead of each inventing its own.
+   template, so all five share one idiom instead of each inventing its own.
 
    `image-left` mirrors the two columns **visually only** — the markup keeps body-then-image, so
    the reading order (and PDF/screen-reader order) is unchanged, and the enumeration itself never
-   flips: facts keep their left-edge dots, cards their icons, steps their numbering, all still
-   left-aligned. Only the column positions swap.
+   flips: facts keep their left-edge dots, cards their icons, steps their numbering, comparison
+   cells their columns, all still left-aligned. Only the column positions swap.
 
    Track sizes flip with them. Grid auto-placement runs in *order-modified* document order, so
-   `order` alone would hand the leading track to the image — and three of these four grids are
+   `order` alone would hand the leading track to the image — and four of these five grids are
    deliberately asymmetric (the wider track belongs to a specific side's content, not to a
    position). Mirroring the template-columns keeps each side the width it had. */
-.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body{order:2}
+.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body,.imgleft>.compare{order:2}
 .imgleft>.imgph,.imgleft>.procmedia,.imgleft>.quiz-media{order:1}
 .cci.imgleft{grid-template-columns:1fr 1.1fr}
 .procgrid.imgleft{grid-template-columns:1.08fr 1fr}
 .quiz.quiz-split.imgleft{grid-template-columns:1fr 1.45fr}
+.cmpgrid.imgleft{grid-template-columns:1fr 1.3fr}
 /* The body column is optional: a slide that is *only* an image (a screenshot the presenter talks
    over, its detail in the speaker notes) drops the column entirely rather than projecting an empty
    one — so the grid must collapse to a single track and let the image use the full width. Same
@@ -320,6 +325,16 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ci.ci-top .lead{max-width:none;margin:0}
 .cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
+/* a comparison beside a supporting diagram. The compare-strip keeps the wider track — it holds a
+   header row plus N aligned cells and is what the slide is *about*; the diagram supports it. The
+   strip stays a grid at half width (columns must still read as columns — collapsing it to one row
+   per cell would undo the whole point), so it only gives up type size and cell padding. */
+.cmpgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:3cqw;align-items:center}
+/* the bottom anchor is for the full-width form only; in a centred grid column it hangs the strip */
+.cmpgrid>.compare{margin-top:0}
+.cmpgrid .chead{font-size:2.2cqw}
+.cmpgrid .crow{font-size:2.05cqw}.cmpgrid .crow>span{padding:1.1cqw 1.3cqw}
+.cmpgrid .imgph img,.cmpgrid .imgph svg{max-height:44cqw}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}
@@ -749,17 +764,57 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div>
 
 </div></div></div>
-</section><section class="slide" data-kind="comparison"><div class="stage">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">comparison: three columns</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:3">
+</section><section class="slide" data-kind="value-columns"><div class="stage">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns: three columns</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:3">
 <div class="chead"><span>Layout</span><span>Rows</span><span>Rule</span></div>
 <div class="crow"><span>Two to three equal columns</span><span>Cells align across columns</span><span>A card-per-row grid</span></div><div class="crow"><span>Parallel headers</span><span>One row per comparison point</span><span>Never a native table</span></div><div class="crow"><span>Uniform widths</span><span>Shared gridlines</span><span>No plain bullets</span></div></div>
 
 </div></div></div>
 </section><section class="slide" data-kind="comparison"><div class="stage">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">comparison: two columns (myth vs reality)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns via the legacy `comparison` id: two columns (myth vs reality)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2">
 <div class="chead"><span>Myth</span><span>Reality</span></div>
 <div class="crow"><span>A comparison needs a real HTML table</span><span>It renders as a card-per-row grid</span></div><div class="crow"><span>The two columns should look different</span><span>Both columns share the same weight and width</span></div></div>
 
+</div></div></div>
+</section><section class="slide" data-kind="value-columns"><div class="stage">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: the grid keeps its columns</h2></div><div class="cbody"><div class="cfit"><p class="lead">A table and a diagram on the same slide — neither one has to go.</p><div class="cmpgrid"><div class="compare" style="--cc:3">
+<div class="chead"><span>What changes</span><span>Chatting</span><span>Delegating</span></div>
+<div class="crow"><span>The way of working</span><span>One question at a time</span><span>One whole assignment</span></div><div class="crow"><span>The steps</span><span>You supply them</span><span>It plans and runs them</span></div><div class="crow"><span>The output</span><span>Text in the window</span><span>Files on disk</span></div><div class="crow"><span>The human role</span><span>You write and wait</span><span>You commission and review</span></div></div>
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e5-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e5-a)"/>
+  </g>
+  <defs><marker id="e5-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div>
+</div></div></div>
+</section><section class="slide" data-kind="value-columns"><div class="stage">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: mirrored (image-left)</h2></div><div class="cbody"><div class="cfit"><div class="cmpgrid imgleft"><div class="compare" style="--cc:2">
+<div class="chead"><span>Factor</span><span>Mirrored</span></div>
+<div class="crow"><span>Column widths</span><span>The grid keeps the wider track</span></div><div class="crow"><span>Reading order</span><span>Grid then image, unchanged</span></div><div class="crow"><span>Cell alignment</span><span>Still left-aligned</span></div></div>
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e6-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e6-a)"/>
+  </g>
+  <defs><marker id="e6-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div>
 </div></div></div>
 </section><section class="slide" data-kind="pros-cons"><div class="stage">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">pros-cons: upside versus downside</h2></div><div class="cbody"><div class="cfit"><div class="proscons">
@@ -820,10 +875,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e6-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e6-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e8-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e8-a)"/>
   </g>
-  <defs><marker id="e6-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e8-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -838,10 +893,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e7-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e7-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e9-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e9-a)"/>
   </g>
-  <defs><marker id="e7-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e9-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -859,10 +914,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e8-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e8-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e10-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e10-a)"/>
   </g>
-  <defs><marker id="e8-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e10-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -876,10 +931,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e9-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e9-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e11-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e11-a)"/>
   </g>
-  <defs><marker id="e9-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e11-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -892,10 +947,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e10-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e10-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e12-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e12-a)"/>
   </g>
-  <defs><marker id="e10-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e12-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -911,36 +966,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e11-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e11-a)"/>
-  </g>
-  <defs><marker id="e11-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
-  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
-    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
-  </g>
-</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
-  <rect width="640" height="360" fill="#FFFFFF"/>
-  <g stroke="#DA1B2E" stroke-width="3">
-    <rect x="40" y="150" width="140" height="60" rx="10"/>
-    <rect x="250" y="150" width="140" height="60" rx="10"/>
-    <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e12-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e12-a)"/>
-  </g>
-  <defs><marker id="e12-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
-  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
-    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
-  </g>
-</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
-  <rect width="640" height="360" fill="#FFFFFF"/>
-  <g stroke="#DA1B2E" stroke-width="3">
-    <rect x="40" y="150" width="140" height="60" rx="10"/>
-    <rect x="250" y="150" width="140" height="60" rx="10"/>
-    <rect x="460" y="150" width="140" height="60" rx="10"/>
     <path d="M180 180 H250" marker-end="url(#e13-a)"/>
     <path d="M390 180 H460" marker-end="url(#e13-a)"/>
   </g>
@@ -949,13 +974,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
-</div>
-
-</div></div></div>
-</section><section class="slide" data-kind="image-grid"><div class="stage">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
-<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -969,7 +989,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -983,7 +1004,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
+</div>
+
+</div></div></div>
+</section><section class="slide" data-kind="image-grid"><div class="stage">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1039,6 +1066,34 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e20-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e20-a)"/>
+  </g>
+  <defs><marker id="e20-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e21-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e21-a)"/>
+  </g>
+  <defs><marker id="e21-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
 </svg></div></div>
 
 </div></div></div>
@@ -1050,10 +1105,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e20-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e20-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e22-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e22-a)"/>
   </g>
-  <defs><marker id="e20-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e22-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1069,10 +1124,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e21-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e21-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e23-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e23-a)"/>
   </g>
-  <defs><marker id="e21-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e23-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1175,10 +1230,10 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e23-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e23-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e25-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e25-a)"/>
   </g>
-  <defs><marker id="e23-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e25-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1205,10 +1260,10 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e26-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e26-a)"/>
   </g>
-  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e26-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>

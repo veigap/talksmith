@@ -35,7 +35,7 @@ What it does:
       figures        -> figures
       stat           -> stats
       timeline       -> milestones
-      comparison     -> columns
+      value-columns (a.k.a. comparison) -> columns
       closing-cta    -> items
       content-text   -> panels
 
@@ -76,7 +76,8 @@ ENUM_FIELD = {
     "figures": ("figures", 2),
     "stat": ("stats", 2),
     "timeline": ("milestones", 2),
-    "comparison": ("columns", 2),
+    # unchanged by the optional `image`/`lead`: one column lists nothing in parallel either way
+    "value-columns": ("columns", 2),
     "closing-cta": ("items", 2),
     "content-text": ("panels", 2),
 }
@@ -92,7 +93,7 @@ ADVICE = {
     "figures": "a single-image template (content-image)",
     "process": "single-point — a one-step process is not a process",
     "timeline": "single-point — a one-milestone timeline is not a timeline",
-    "comparison": "single-point — a one-column comparison compares nothing",
+    "value-columns": "single-point — a single column sets nothing against anything",
     "closing-cta": "single-point (one call to action)",
 }
 

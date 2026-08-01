@@ -41,7 +41,13 @@ _LAYOUTS = {
     "content+cards+image":  ("text-left", "image-left"),
     "process":              ("text-left", "image-left"),
     "quiz":                 ("text-left", "image-left"),
+    "value-columns":        ("text-left", "image-left"),
 }
+
+# A value-columns grid beside an image gets half the slide. Past this it still renders — the grid
+# never degrades to a list — but the cells crowd and the fit pass pays for it in type size, so say
+# so rather than let the slide silently squeeze. Split the rows, or drop the image.
+_VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
 
 
 def _norm(t: str) -> str:
@@ -61,7 +67,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     if deck.get("title"):                                          # contractually-fixed cover first
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
-    unknown, bad_layouts = [], []
+    unknown, bad_layouts, dense = [], [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
         # `layout` places the slide's own image against its body, so it means nothing without one
@@ -72,6 +78,11 @@ def render(model: dict, talk_root: Path, out_dir: Path):
             bad_layouts.append((name, t, lay, f"expected {'|'.join(_LAYOUTS.get(t, ())) or 'no layout'}"))
         elif lay and not s.get("image"):
             bad_layouts.append((name, t, lay, "the slide carries no image"))
+        if t == "value-columns" and s.get("image"):
+            cols = s.get("columns") or []
+            rows = max((len(c.get("cells") or []) for c in cols), default=0)
+            if len(cols) > _VC_MAX_COLS or rows > _VC_MAX_ROWS:
+                dense.append((name, len(cols), rows))
         # An unrecognized `template` silently renders as fallback, which looks like a bad
         # classification rather than a typo — surface it so a misspelled catalog name
         # (`content+image` for `content-image`, `agenda` for `section-agenda`) is visible.
@@ -95,6 +106,10 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     for slide_title, tmpl, bad, why in bad_layouts:
         print(f"[html] warning: layout {bad!r} ignored on {tmpl!r} ({why}) "
               f"→ default  ({slide_title})", file=sys.stderr)
+    for slide_title, ncols, nrows in dense:
+        print(f"[html] warning: value-columns grid {ncols}×{nrows} beside an image "
+              f"(max {_VC_MAX_COLS}×{_VC_MAX_ROWS} at half width) — cells will crowd; "
+              f"split the rows or drop the image  ({slide_title})", file=sys.stderr)
 
     title = deck.get("title", talk_root.name if talk_root else "")
     subtitle = " · ".join(x for x in (deck.get("class", ""), deck.get("presenter", "")) if x)

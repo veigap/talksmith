@@ -56,7 +56,7 @@ _CONSUMES = {
     "image-full": {"title", "image", "lead"},
     "content-image": {"title", "image", "facts", "lead", "layout"},
     "content+cards+image": {"title", "cards", "image", "lead", "layout"},
-    "comparison": {"title", "columns"},
+    "value-columns": {"title", "columns", "image", "lead", "layout"},
     "stat": {"title", "stats", "lead"},
     "big-number": {"number", "caption", "title"},
     "quote": {"quote", "attribution"},

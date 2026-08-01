@@ -42,6 +42,20 @@ def _indent(line: str) -> int:
     return len(line) - len(line.lstrip())
 
 
+def _in_block(line: str, base: int = -1) -> bool:
+    """Is this line still inside a feedback block opened at indent `base`?
+
+    A block is its bullets **plus their wrapped continuation lines**. Testing for a bullet alone
+    was the bug: a `Resolution:` that wraps onto an indented continuation line is neither blank nor
+    a bullet, so the sweep stopped there and the tail survived the strip. Indentation is what marks
+    continuation — anything still indented past the opener belongs to the block; a heading or a
+    `---` boundary ends it no matter how it is indented."""
+    if _HEADING.match(line) or _HR.match(line):
+        return False
+    ind = _indent(line)
+    return ind > base if _BULLET.match(line) else ind > max(base, 0)
+
+
 def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
     """Drop every feedback block from a body (frontmatter already removed). Returns (kept, stats)."""
     drop = [False] * len(lines)
@@ -72,11 +86,11 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
                     k = j
                     while k < len(lines) and _BLANK.match(lines[k]):
                         k += 1
-                    if k < len(lines) and _BULLET.match(lines[k]) and _indent(lines[k]) > base:
+                    if k < len(lines) and _in_block(lines[k], base):
                         j = k
                         continue
                     break
-                if _BULLET.match(lines[j]) and _indent(lines[j]) > base:
+                if _in_block(lines[j], base):
                     j += 1
                     continue
                 break
@@ -87,19 +101,20 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
             continue
 
         if _PARA_FEEDBACK.match(ln):
-            # Section/agenda paragraph label: runs over its following bullet list (any indent),
-            # stopping at the first non-bullet, non-blank line (a heading, `---`, or prose).
+            # Section/agenda paragraph label: runs over its following bullet list (any indent) and
+            # over each bullet's indented continuation lines, stopping at the first line back at
+            # column 0 that is not a bullet — a heading, `---`, or prose.
             j = i + 1
             while j < len(lines):
                 if _BLANK.match(lines[j]):
                     k = j
                     while k < len(lines) and _BLANK.match(lines[k]):
                         k += 1
-                    if k < len(lines) and _BULLET.match(lines[k]):
+                    if k < len(lines) and _in_block(lines[k]):
                         j = k
                         continue
                     break
-                if _BULLET.match(lines[j]):
+                if _in_block(lines[j]):
                     j += 1
                     continue
                 break

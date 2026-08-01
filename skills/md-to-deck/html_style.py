@@ -388,7 +388,7 @@ _TMPL = {
     "concept-breakdown": "labeled-set.j2", "card-row": "labeled-set.j2", "icon-list": "labeled-set.j2",
     "process": "process.j2", "code-example": "code-example.j2", "figures": "figures.j2",
     "image-grid": "image-grid.j2", "image-full": "image-full.j2",
-    "content-image": "content-image.j2", "comparison": "comparison.j2",
+    "content-image": "content-image.j2", "value-columns": "value-columns.j2",
     "single-point": "single-point.j2", "callout": "single-point.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
     "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",
@@ -497,7 +497,7 @@ _ICON_LISTS = {
 
 
 def _pivot(columns) -> list:
-    """Transpose a comparison's `columns` (each `{header, cells}`) into rows of cells, padding
+    """Transpose a `value-columns` slide's `columns` (each `{header, cells}`) into rows, padding
     short columns so every row has one cell per column."""
     cols = columns or []
     n = max((len(c.get("cells", [])) for c in cols), default=0)

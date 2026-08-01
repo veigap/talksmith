@@ -53,7 +53,7 @@ the ordered section list) and one object per slide. For **each** slide you:
 - **classify** it against the catalog [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)
   (its *Match* rules) — set `template`;
 - **decompose** the body into exactly that template's **required fields** (e.g. `stat` →
-  `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`; `comparison` →
+  `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`; `value-columns` →
   `columns:[{header,cells}]`) — splitting a metric from its caption, grouping symmetric blocks into
   columns, honouring the universal invariant (labeled sets → cards, never bullets), and **consuming
   the separator** when splitting `- **Label**: body` (it belongs to neither side — see the schema's

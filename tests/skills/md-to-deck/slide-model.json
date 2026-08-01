@@ -428,9 +428,9 @@
       "lead": "The optional per-milestone marker rides inside the dot:"
     },
     {
-      "template": "comparison",
+      "template": "value-columns",
       "section": "Ordered & comparison",
-      "title": "comparison: three columns",
+      "title": "value-columns: three columns",
       "columns": [
         {
           "header": "Layout",
@@ -461,7 +461,7 @@
     {
       "template": "comparison",
       "section": "Ordered & comparison",
-      "title": "comparison: two columns (myth vs reality)",
+      "title": "value-columns via the legacy `comparison` id: two columns (myth vs reality)",
       "columns": [
         {
           "header": "Myth",
@@ -475,6 +475,73 @@
           "cells": [
             "It renders as a card-per-row grid",
             "Both columns share the same weight and width"
+          ]
+        }
+      ]
+    },
+    {
+      "template": "value-columns",
+      "section": "Ordered & comparison",
+      "title": "value-columns + image: the grid keeps its columns",
+      "lead": "A table and a diagram on the same slide — neither one has to go.",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "columns": [
+        {
+          "header": "What changes",
+          "cells": [
+            "The way of working",
+            "The steps",
+            "The output",
+            "The human role"
+          ]
+        },
+        {
+          "header": "Chatting",
+          "cells": [
+            "One question at a time",
+            "You supply them",
+            "Text in the window",
+            "You write and wait"
+          ]
+        },
+        {
+          "header": "Delegating",
+          "cells": [
+            "One whole assignment",
+            "It plans and runs them",
+            "Files on disk",
+            "You commission and review"
+          ]
+        }
+      ]
+    },
+    {
+      "template": "value-columns",
+      "section": "Ordered & comparison",
+      "title": "value-columns + image: mirrored (image-left)",
+      "layout": "image-left",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "columns": [
+        {
+          "header": "Factor",
+          "cells": [
+            "Column widths",
+            "Reading order",
+            "Cell alignment"
+          ]
+        },
+        {
+          "header": "Mirrored",
+          "cells": [
+            "The grid keeps the wider track",
+            "Grid then image, unchanged",
+            "Still left-aligned"
           ]
         }
       ]

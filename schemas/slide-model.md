@@ -171,7 +171,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
 | `content-image` | `title`, `image:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `layout` (the only template taking `image-top`). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead`, per-card `icon` (else content-matched), `layout` |
-| `comparison` | `title`, `columns:[{header,cells:[str]}]` (2–3) | — |
+| `value-columns` *(legacy id: `comparison`)* | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `image:{src,alt}` (supporting diagram/example), `layout` (with an image). Beside an image the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
@@ -244,7 +244,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   so keeping the source ordinal would duplicate it.
 - **Standalone metrics** — the number is `value`, its trailing text the `caption` (`stat.stats`;
   a lone hero metric fills `big-number.number` + `caption`).
-- **A pipe table** → `comparison.columns:[{header,cells}]` (header row → `header`, body cells in
+- **A pipe table** → `value-columns.columns:[{header,cells}]` (header row → `header`, body cells in
   column order); a label/value table decomposes as `cards`. *(Which template a given shape gets is
   the catalog's Match rules — not restated here.)*
 - **Images** — carry `src` paths exactly as written into `image:{src,alt}` / `images` / `figures`.
@@ -255,13 +255,16 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   (+ `explanation`).
 - **`layout` — the image's place is chosen after the template, never instead of it.** Add
   `"layout":"image-left"` whenever the image should lead the eye (a diagram the prose then walks
-  through, or to break up a run of text-left slides); it means the same thing on **all four**
+  through, or to break up a run of text-left slides); it means the same thing on **all five**
   templates that carry their own image — `content-image`, `content+cards+image`, and
-  `process`/`quiz` when they have one. `"layout":"image-top"` (stacked) exists on `content-image`
-  only, for text too short to hold a column. Default (omitted) is `text-left`.
+  `process`/`quiz`/`value-columns` when they have one. `"layout":"image-top"` (stacked) exists on
+  `content-image` only, for text too short to hold a column. Default (omitted) is `text-left`.
   **Never pick the template to get the placement.** Wanting the image first is not a reason to
   demote a labeled set to `content-image` `facts` (which lose their per-concept icons) — keep
-  `content+cards+image` and set `layout`. An author `<!-- layout: <value> -->` hint **pins** the
+  `content+cards+image` and set `layout`. The same holds one step up: a **table** with
+  a supporting diagram keeps `value-columns` (its aligned columns) and takes `image` + `layout` —
+  flattening the rows into `content+cards+image` cards concatenates the two values into one body
+  and throws away the column alignment that *is* the slide. An author `<!-- layout: <value> -->` hint **pins** the
   field: copy it through instead of judging.
 - **A slide that is only an image is `image-full`.** A screenshot or diagram the presenter narrates,
   its detail in `notes`, is a normal slide shape: fill `title` + `image` (plus a `lead` if one line
