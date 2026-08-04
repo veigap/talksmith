@@ -86,6 +86,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   body. Use it for provenance only (paper, standard, dataset, report, URL); a line that *says
   something* about the source is still a `note`. Honored on both render paths: the HTML band drops
   its box, and the strict `.pptx` emits it as a plain card-body-size line instead of a §8 panel.
+  It is also the one kind that **leaves the content flow** — a citation is slide chrome, not a
+  remark on the body, so it is pinned to the slide's bottom edge instead of trailing wherever the
+  content happens to end. On a short slide it stays on the baseline rather than floating up under
+  a half-empty body, and the per-slide content-fit pass can neither move nor shrink it. `position`
+  does not apply to a `source`.
 
 ## [0.76.0] — 2026-08-03
 

@@ -184,7 +184,8 @@ precise rules.
 >
 > **Optional highlights — two bands, one piece.** Any content slide may carry `highlights`: one or
 > more emphasized lines in an accented band, each with its own `kind` (colour + icon at the left —
-> except `source`, a bare citation that renders plain, with no card and no icon).
+> except `source`, a bare citation that renders plain, with no card and no icon, **pinned to the
+> slide's bottom edge** instead of trailing the body, and to which `position` does not apply).
 > Each entry also chooses its `position`. A **remark** — it comments on, concludes or qualifies the
 > body — sits in the band **below** it (`bottom`, the default) and reveals last. A **frame** — a
 > voiced line that sets the theme, a definition the items depend on, a warning that has to land

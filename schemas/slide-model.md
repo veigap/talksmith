@@ -84,9 +84,16 @@ deliverable; `draft.md` → live in-progress view).
   | `source` | **a bare reference to where the material came from** — a citation, not a callout | "Fuente: OWASP Top 10 for LLM Applications (2025)." |
 
   `source` is the one kind rendered **plain**: no card background, no accent bar and **no icon** —
-  just a small muted line under the body, so the attribution never competes with the content it
-  credits. Use it only for provenance (a paper, standard, dataset, report, URL); a line that
-  *says something* about the source is a `note`.
+  just a small muted line, so the attribution never competes with the content it credits. Use it
+  only for provenance (a paper, standard, dataset, report, URL); a line that *says something*
+  about the source is a `note`.
+
+  It is also the one kind that **leaves the content flow**: a citation is slide chrome, not a
+  remark on the body, so it is pinned to the **bottom edge of the slide** rather than trailing
+  wherever the content happens to end. Two things follow, and both are the reason for it — on a
+  short slide it stays on the baseline instead of floating up under a half-empty body, and the
+  per-slide content-fit pass can neither move nor shrink it. **`position` does not apply to a
+  `source`**; every other kind is a remark and stays with what it remarks on.
 
   **`position`** — where the entry's band sits, `"bottom"` *(default)* or `"top"`. It is **per
   entry, not per slide**: the render groups all `top` entries into one band above the body and all
@@ -95,7 +102,7 @@ deliverable; `draft.md` → live in-progress view).
 
   | `position` | The line's relation to the body | Typical kinds |
   |---|---|---|
-  | `bottom` *(default)* | a **remark** — it comments on, concludes, or qualifies what the audience has just read | `takeaway`, `note`, `example`, `source` (a citation always trails the material it credits) |
+  | `bottom` *(default)* | a **remark** — it comments on, concludes, or qualifies what the audience has just read | `takeaway`, `note`, `example` |
   | `top` | a **frame** — it has to be in the audience's head *before* the body makes sense | `quote` that sets the theme, `definition` a term the items use, `important` that is a warning up front |
 
   Both bands are the same piece in a different place: identical classes, accent colour and icon.

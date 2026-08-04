@@ -1233,7 +1233,13 @@
           "body": "The template only says what shape the content takes."
         }
       ],
-      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before.",
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024)."
+        }
+      ]
     },
     {
       "template": "concept-breakdown",
@@ -1277,7 +1283,13 @@
           "body": "The template only says what shape the content takes."
         }
       ],
-      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before.",
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024)."
+        }
+      ]
     },
     {
       "template": "concept-breakdown",
@@ -1299,7 +1311,13 @@
           "body": "The template only says what shape the content takes."
         }
       ],
-      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before.",
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024)."
+        }
+      ]
     },
     {
       "template": "concept-breakdown",
@@ -1322,6 +1340,27 @@
         }
       ],
       "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+    },
+    {
+      "template": "single-point",
+      "section": "Visual & data",
+      "title": "A source pins to the bottom edge",
+      "lead": "This slide is deliberately short.",
+      "point": {
+        "label": "Chrome, not a remark",
+        "body": "The citation credits the material; it does not comment on it, so it leaves the content flow entirely."
+      },
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "body": "A takeaway *is* a remark on the body, so it stays with the body."
+        },
+        {
+          "kind": "source",
+          "body": "Fuente: [OMS — Ethics and governance of AI for health](https://www.who.int) (2024)."
+        }
+      ],
+      "notes": "A source highlight is emitted as a child of the stage rather than of .cfit, so it is pinned to the slide's bottom edge instead of trailing the content wherever the content happens to end. Two consequences follow from that placement, and both are the reason for it: on a short slide the citation stays on the baseline instead of floating up under a half-empty body, and the per-slide content-fit pass — which only ever scales .cfit — can neither shrink it nor move it. Every other highlight kind is a remark on the body and stays inside .cfit, where it moves and scales with what it remarks on."
     },
     {
       "template": "concept-breakdown",
