@@ -7,10 +7,23 @@
 {# One accented band of highlights. Called twice by `stage()` — once above the body for the
    entries marked `position: top`, once below for the rest — so both bands are literally the same
    piece in a different place: same classes, same per-`kind` colour and icon. #}
-{% macro hlband(items, extra, f) %}<div class="highlights{{ extra }}{{ f }}">{% for h in items %}<div class="highlight {{ h.kind }}">{{ icon(h.icon) }}<p>{% if h.label %}<b>{{ h.label | nocolon }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endmacro %}
-{# `aside: {image, side}` → a full-bleed image column on that edge (default right), reinforcing
-   the content visually. Available to every stage-based slide; the stage's side padding keeps the
-   head and body clear of it.
+{% macro hlband(items, extra, f) %}<div class="highlights{{ extra }}{{ f }}">{% for h in items %}<div class="highlight {{ h.kind }}">{% if h.icon %}{{ icon(h.icon) }}{% endif %}<p>{% if h.label %}<b>{{ h.label | nocolon }}</b>: {% endif %}{{ h.body }}</p></div>{% endfor %}</div>{% endmacro %}
+{# The stage owns the slide's **design** — how the canvas is divided — and the template owns only
+   its **style**, the shape the content takes. `s.design` (resolved in html_style.py `_design`,
+   which maps the old `layout`/`image`/`aside` spellings forward) places `s.media`:
+
+     full          content uses the whole stage — no media placed
+     banded        media across the top, content in a band below it
+     split-left    media and content share the canvas, media on the left
+     split-right   …on the right
+     column-left   a narrow full-bleed column of media down the left edge, cropped to fill
+     column-right  …down the right edge
+     bleed         media fills the stage; the content sits over it
+
+   Markup order is always head → content → media, in every design: the reading order (and the PDF
+   export and screen-reader order) must not depend on which side the picture landed on, so the
+   mirroring is done entirely in CSS.
+
    Highlights split by `position`: the **top** band frames what follows, so it is on screen from
    the moment the slide opens (no `frag`) — a frame that arrives after the body frames nothing.
    The **bottom** band comments on what precedes it, so it keeps its place as the final fragment. #}
@@ -18,18 +31,21 @@
 {% set hl = s.highlights or [] %}
 {% set hltop = hl | selectattr('position', 'eq', 'top') | list %}
 {% set hlbot = hl | rejectattr('position', 'eq', 'top') | list %}
-<div class="stage{{ (' aside-' + (s.aside.side or 'right')) if s.aside else '' }}">
-{% if s.aside %}<div class="sasi">{{ embed_img(s.aside.image) }}</div>{% endif %}
+{# `split-left` is two independent facts — the shape (a split) and the side the media takes — so
+   they become two classes. Written as one, every split and column rule had to be spelled twice,
+   once per side; written as two, `.d-split` carries what both sides share and only the placement
+   mentions `.side-left`. #}
+{% set p = s.design.split('-') %}
+<div class="stage d-{{ p[0] }}{{ ' side-' ~ p[1] if p|length > 1 else '' }}">
 <div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}
 {% if hlbot %}{{ hlband(hlbot, '', frag(s)) }}{% endif %}
-</div></div></div>
+</div></div>
+{# guarded on the *design*, not on `s.media`: a slide can carry media the resolved design does
+   not place (a legacy `image` on a template that never composed one), and emitting it anyway
+   would drop an unplaced picture into a stage with no rule to position it. #}
+{% if s.design != 'full' %}<div class="smedia">{{ embed_img(s.media) }}</div>{% endif %}
+</div>
 {% endmacro %}
-{# `layout` composes a slide's own supporting image against its body. It is a **composition**
-   concern, not a per-template one, so every template that pairs a body with one image reads it
-   through this macro: `text-left` (default) leads with the body, `image-left` mirrors the two
-   columns. The mirror is CSS-only (theme.css) — the markup stays body-then-image in every
-   layout, so the reading order for PDF export and screen readers never changes. #}
-{% macro imgpos(s) %}{{ ' imgleft' if s.layout == 'image-left' else '' }}{% endmacro %}
 {# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
    opts out and shows them all at once. Negated on purpose: an unrecognized value animates,
    which is the default anyone wants — the opt-in form failed silently on every typo.

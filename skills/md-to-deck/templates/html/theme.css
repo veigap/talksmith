@@ -9,6 +9,18 @@
 /* selectable deck styles (?deck-style= / cycle button) live in styles/<name>.css — one file
    per style, discovered and inlined at build (html_style.py). Add a style by adding a file. */
 *{box-sizing:border-box}html,body{margin:0;background:var(--page)}
+/* ---- inline font styling ----
+   The four marks an author can write *inside* any text field (`**bold**`, `*italic*`, `` `code` ``,
+   `[text](url)` — resolved in html_style.py `_inline_md`). They are stated once, here, because
+   emphasis inside a sentence is not a property of one template: every component inherits them.
+   Deliberately colour-free except for the link: bold and italic take the ink of whatever component
+   they sit in, so they work on the light card surfaces and the dark full-bleed ones alike, and a
+   component that wants its own emphasis colour (`.highlight.source b`) still overrides. */
+.slide b,.slide strong{font-weight:800}
+.slide i,.slide em{font-style:italic}
+.slide code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
+  border-radius:.4cqw;padding:0 .3em;color:inherit}
+.slide a{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
 .reveal .backgrounds{background:var(--page)}
@@ -46,28 +58,96 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cfit>*{margin-top:0!important;margin-bottom:0!important}
 .pill{align-self:flex-start;background:var(--pill);color:var(--chip-ink);font-weight:700;font-size:1.26cqw;letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.4cqw;border-radius:.7cqw}
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:1.1cqw 0 0;line-height:1.08;text-wrap:balance}
-.lead{color:var(--body);font-size:2.6cqw;margin:1.8cqw 0 0;max-width:56ch}
+/* the lead is the title's own sub-line, not body prose: it carries the slide's framing sentence,
+   so it sits a step above the body in weight and size instead of reading as the first paragraph. */
+.lead{color:var(--body);font-size:3cqw;font-weight:700;margin:1.8cqw 0 0;max-width:56ch}
 .ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
-/* optional full-bleed side image (`aside`): visual reinforcement for a stage-based slide. It is
-   absolutely positioned, so .shead/.cbody keep their normal flow — the stage just pads that side
-   to clear it, which also narrows the .cbody the fit pass measures. */
-.sasi{position:absolute;top:0;bottom:0;width:37%;overflow:hidden}
-.stage.aside-right .sasi{right:0}.stage.aside-left .sasi{left:0}
-.stage.aside-right{padding-right:calc(37% + 3.5cqw)}
-.stage.aside-left{padding-left:calc(37% + 3.5cqw)}
-/* the panel crops to fill its column, overriding the contained/rounded default image frame */
-/* `.imgph.svg`/`.imgph.has` below carry a hairline + white fill + overflow:visible for inline
-   figures. Those tie this rule on specificity and, coming later, used to win — putting a border
-   back around the aside and letting it spill instead of crop. Name the variants here so the
-   full-bleed column wins outright. */
-.sasi .imgph,.sasi .imgph.svg,.sasi .imgph.has{width:100%;height:100%;border:0;border-radius:0;background:none;aspect-ratio:auto;overflow:hidden}
-/* Photos (the real aside case) crop to fill via object-fit. An inline <svg> is not a replaced
-   element, so object-fit never applies to it — its own `preserveAspectRatio` attribute decides,
-   and it must say `slice` to fill (the default `meet` letterboxes). That attribute cannot be set
-   from CSS; an aside SVG has to carry it itself. */
-.sasi .imgph.has img{width:100%;height:100%;max-height:none;object-fit:cover}
-.sasi .imgph.svg svg{width:100%;height:100%;max-height:none}
+/* ══ DESIGN — how the canvas is divided ═══════════════════════════════════════════════════════
+   The slide's design is chosen *before* its template, and it is the only thing that decides where
+   the media sits. Every content template emits the same three children in the same order —
+   `.shead`, `.cbody`, `.smedia` — so the design is expressed entirely here, and any template can
+   take any design. (It replaces three overlapping mechanisms: a per-template `layout` allowlist,
+   a parallel `aside` column, and composition hard-coded inside five templates. The old model
+   fields still work; html_style.py `_design` maps them onto these classes.)
+
+   Mirroring is CSS-only in every design: the markup order never changes, so the reading order for
+   PDF export and screen readers does not depend on which side the picture landed on. That is also
+   why the split designs place by `grid-column` rather than `order` — auto-placement runs in
+   order-modified document order, so `order` alone would hand the leading track to the media. */
+.stage>.smedia{min-width:0;min-height:0}
+/* The design name fuses two independent facts — the *shape* (how the canvas divides) and the
+   *side* the media takes — so the stage emits them as two classes (`d-split side-left`). Written
+   as one, every split and column rule had to be spelled twice, once per side. */
+/* ── split: media and content share the canvas, the media contained (a diagram or screenshot the
+   audience actually reads). The head spans both tracks — the title belongs to the whole slide.
+   The track ratio is a variable a *content shape* can claim, keyed off the class the template
+   actually emits: the stylesheet must not have to know the template catalog by name, and a future
+   template that emits `.compare` then gets the right track for free. */
+.stage.d-split{display:grid;grid-template-columns:var(--cfr,1fr) var(--mfr,1fr);
+  grid-template-rows:auto minmax(0,1fr);column-gap:3.5cqw;align-items:center}
+.stage.d-split.side-left{grid-template-columns:var(--mfr,1fr) var(--cfr,1fr)}
+.stage.d-split:has(.quiz-body){--cfr:1.45fr}
+.stage.d-split:has(.compare){--cfr:1.3fr}
+.stage.d-split:has(.ccicards){--cfr:1.1fr}
+.stage.d-split>.shead{grid-column:1/-1;grid-row:1;align-self:start}
+.stage.d-split>.cbody{grid-column:1;grid-row:2}
+.stage.d-split>.smedia{grid-column:2;grid-row:2}
+.stage.d-split.side-left>.cbody{grid-column:2}
+.stage.d-split.side-left>.smedia{grid-column:1}
+/* the media centres in its track, but the content column must **stretch**: the fit pass measures
+   .cbody's own height to decide whether to scale, and a shrink-to-fit box always "fits". */
+.stage.d-split>.cbody{align-self:stretch}
+/* a design with no content to put beside the media (an image the presenter talks over, its detail
+   in the notes) collapses rather than projecting an empty column */
+.stage.d-split:has(.cfit:not(:has(*))){grid-template-columns:1fr}
+.stage.d-split:has(.cfit:not(:has(*)))>.cbody{display:none}
+.stage.d-split:has(.cfit:not(:has(*)))>.smedia{grid-column:1/-1}
+/* ── banded: media across the top, the content as a band under it */
+.stage.d-banded{display:flex;flex-direction:column}
+.stage.d-banded>.smedia{order:2;margin-bottom:2.4cqw}
+.stage.d-banded>.cbody{order:3}   /* keeps the base flex:1 1 auto, so the fit pass has a height */
+.stage.d-banded>.smedia .imgph{width:100%}
+.stage.d-banded>.smedia .imgph img,.stage.d-banded>.smedia .imgph svg{max-height:32cqw}
+/* the band under a banded image is a caption, so it reads as one: the soft accent box a highlight
+   uses. It sits on the shared stage child, not on one template's private class, so *any* template
+   can take this design — but only when its content is prose. A structured body (cards, a grid, a
+   numbered list) brings its own surfaces and would be a box inside a box, so it opts out by
+   shape rather than by template name. */
+.stage.d-banded>.cbody:not(:has(.cards,.ccicards,.editgrid,.cardrow,.numrow,.steps,.compare,.stats)){
+  background:var(--card);border-left:.6cqw solid var(--red);border-radius:.8cqw;
+  padding:1.5cqw 2cqw;color:var(--ink);font-size:2.4cqw}
+.stage.d-banded .lead{max-width:none;margin:0}
+.stage.d-banded .cifacts li{padding-left:0}.stage.d-banded .cifacts li::before{display:none}
+/* ── column: a narrow full-bleed strip of media down one edge, **cropped to fill**. Atmosphere,
+   not information — nothing in it is meant to be read closely. Absolutely positioned so the head
+   and body keep their normal flow; the stage just pads that side to clear it, which also narrows
+   the .cbody the fit pass measures. */
+.stage.d-column>.smedia{position:absolute;top:0;bottom:0;right:0;width:37%;overflow:hidden}
+.stage.d-column{padding-right:calc(37% + 3.5cqw)}
+.stage.d-column.side-left>.smedia{right:auto;left:0}
+.stage.d-column.side-left{padding-right:5.5cqw;padding-left:calc(37% + 3.5cqw)}
+/* ── bleed: the media fills the stage and the content sits over it */
+.stage.d-bleed>.smedia{position:absolute;inset:0;overflow:hidden;z-index:0}
+.stage.d-bleed>.shead,.stage.d-bleed>.cbody{position:relative;z-index:1}
+/* Both cropping designs override the contained/rounded default image frame, and so does the
+   `image-full` fill — one shared selector list rather than three copies of the same reset.
+   `.imgph.svg` / `.imgph.has` below carry a hairline + white fill + overflow:visible for inline
+   figures; those tie this rule on specificity and, coming later, used to win — putting a border
+   back around the column and letting it spill instead of crop. `:is()` takes the specificity of
+   its most specific argument, so naming the variants here still wins outright. */
+.d-column>.smedia :is(.imgph,.imgph.svg,.imgph.has),
+.d-bleed>.smedia :is(.imgph,.imgph.svg,.imgph.has),
+.iffill :is(.imgph,.imgph.svg,.imgph.has){
+  width:100%;height:100%;border:0;border-radius:0;background:none;aspect-ratio:auto;overflow:hidden}
+/* Photos crop to fill via object-fit. An inline <svg> is not a replaced element, so object-fit
+   never applies to it — its own `preserveAspectRatio` attribute decides, and it must say `slice`
+   to fill (the default `meet` letterboxes). That attribute cannot be set from CSS; an SVG used in
+   a cropping design has to carry it itself. */
+.d-column>.smedia .imgph.has img,.d-bleed>.smedia .imgph.has img{
+  width:100%;height:100%;max-height:none;object-fit:cover}
+.d-column>.smedia .imgph.svg svg,.d-bleed>.smedia .imgph.svg svg{
+  width:100%;height:100%;max-height:none}
 .big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 /* section divider — big red section number + title, with an accent rule */
 .secdiv{display:flex;flex-direction:column;gap:1.4cqw}
@@ -101,12 +181,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    answer panel fades up. Optional image sits at the right (contained, never cropped). The answer
    panel and the highlighted choice sit on the always-light --pill / --red, so their text uses the
    constant --chip-ink / #fff (never the theme --ink) to stay legible in both themes. */
-.quiz{display:flex;flex-direction:column}
 .quiz-body{display:flex;flex-direction:column;gap:3cqw;min-width:0}
-.quiz.quiz-split{display:grid;grid-template-columns:1.45fr 1fr;gap:4.5cqw;align-items:center}
-.quiz-media{display:flex;align-items:center;justify-content:center}
-.quiz-media .imgph{width:100%}
-.quiz-media .imgph.has img,.quiz-media .imgph.svg svg{width:auto;height:auto;max-width:100%;max-height:46cqw}
 .quiz-q{margin:0;font-size:3.9cqw;font-weight:800;color:var(--ink);line-height:1.16;text-wrap:balance}
 .quiz-opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.5cqw;counter-reset:opt}
 .quiz-opts li{counter-increment:opt;display:flex;align-items:center;gap:1.8cqw;font-size:2.4cqw;font-weight:600;color:var(--body);line-height:1.25;
@@ -133,6 +208,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ccard>.ic{width:5.8cqw;height:5.8cqw;grid-column:1;grid-row:1/3;align-self:start}
 .ccard h3{margin:0;grid-column:2;grid-row:1;align-self:center;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
 .ccard p{margin:0;grid-column:2;grid-row:2;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw;column-gap:1.4cqw}.ccard.sm>.ic{width:5cqw;height:5cqw}
+/* a label-only card (a bare anaphora — parallel lines with no bodies) has no second row, so the
+   icon sits on the label's line instead of spanning a row that isn't there */
+.ccard:not(:has(p))>.ic{grid-row:1;align-self:center}
+.ccard:not(:has(p)){align-content:center}
 /* `format: editorial` — the labeled set without the card. No panel, no radius, no wide padding:
    a small icon leads the label and the body is indented under it, separated by a hairline and
    white space instead of a box. It is the same content as the `grid` format, composed flat, and
@@ -173,29 +252,27 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
 .chip svg{width:62%;height:62%}.rcard h3{margin:0;font-size:2.8cqw;font-weight:800;color:var(--ink)}.rcard p{margin:0;font-size:2.2cqw;color:var(--body);line-height:1.3}
-.iconlist{margin-top:2.4cqw;display:flex;flex-direction:column;gap:2.2cqw}
-.ilrow{display:flex;gap:2.4cqw;align-items:flex-start}.ilrow .ic{width:4.6cqw;height:4.6cqw;flex:0 0 auto;margin-top:.4cqw}
-/* a label-only row (no body) centers the icon with its single line of text */
-.ilrow.solo{align-items:center}.ilrow.solo .ic{margin-top:0}.ilrow.solo h4{margin:0}
-.ilrow h4{margin:0 0 .6cqw;font-size:2.9cqw;font-weight:800;color:var(--ink)}.ilrow p{margin:0;font-size:2.4cqw;color:var(--body);line-height:1.3}
 .numrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .ncard{background:var(--slide);border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}
 .ncard .strip{background:var(--card);width:6cqw;display:grid;place-items:center;font-weight:800;color:var(--body);font-size:3.2cqw;flex:0 0 auto}
 .ncard .nbody{padding:2.2cqw}.ncard h4{margin:0 0 .8cqw;font-size:2.7cqw;color:var(--ink);font-weight:800}.ncard p{margin:0;font-size:2.15cqw;color:var(--body);line-height:1.3}
 /* plain numbered steps (no per-step label) — a vertical numbered list */
+/* the plain numbered list — the one deliberately single-column shape (a numbered list is read in
+   order, so columns would break the count). It is also where a plain enumeration lands, which is
+   the long case: rows tighten from 6 items on so 8 still fit without the fit pass shrinking the
+   whole slide. Count-driven in CSS, like every other density step. */
 .steps{display:flex;flex-direction:column;gap:1.8cqw}
+.steps:has(>.steprow:nth-child(6)){gap:1.3cqw}
+.steps:has(>.steprow:nth-child(6))>.steprow p{font-size:2.3cqw}
+.steps:has(>.steprow:nth-child(8)){gap:1cqw}
+.steps:has(>.steprow:nth-child(8))>.steprow p{font-size:2.1cqw}
+.steps:has(>.steprow:nth-child(8))>.steprow>.stepn{width:3.2cqw;height:3.2cqw;font-size:1.7cqw}
 .steprow{display:flex;gap:2.4cqw;align-items:flex-start}
 .stepn{flex:0 0 auto;width:3.6cqw;height:3.6cqw;border-radius:50%;background:transparent;border:.3cqw solid var(--red);color:var(--red);font-weight:800;font-size:1.9cqw;display:grid;place-items:center;margin-top:.4cqw}
 .steprow p{margin:0;font-size:2.6cqw;color:var(--body);line-height:1.35}
-.procgrid{display:grid;grid-template-columns:1fr 1.08fr;gap:3cqw;align-items:center}
-.procmain{display:flex;flex-direction:column;gap:2.2cqw;min-width:0}
-.procmain .lead{margin:0;max-width:none}
-.procsteps{display:flex;flex-direction:column;gap:1.6cqw}
-.procsteps .steprow p{font-size:2.25cqw}.procsteps .steprow p b{font-weight:800;color:var(--ink)}
-.procmedia .imgph{width:100%}.procmedia .imgph img,.procmedia .imgph svg{width:auto;height:auto;max-width:100%;max-height:38cqw}
-/* the strip is the slide's whole body by default, so it hangs from the bottom edge — but see
-   `.cmpgrid > .compare` below: beside an image it is a *column*, where that `auto` fights the
-   grid's own centring. The rule is conditioned there, not dropped. */
+/* the strip is the slide's whole body by default, so it hangs from the bottom edge — but under a
+   split design it is a *column*, where that `auto` fights the grid's own centring. The rule is
+   conditioned in the DESIGN block, not dropped. */
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -254,7 +331,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
 .iffill .imgph.svg svg,.iffill .imgph.has img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
 .iffill .imgph.has img{object-fit:scale-down}
-.ci{display:grid;grid-template-columns:1fr 1fr;gap:3cqw;align-items:center}.citext{display:flex;flex-direction:column;gap:1.6cqw}
+.citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
 .cifacts b{font-weight:800;color:var(--ink)}   /* the colon lead-in label */
@@ -274,58 +351,31 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.takeaway{color:var(--red)}.highlight.important{color:#C77700}.highlight.definition{color:#5B4BC4}
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
-/* ── body + image compositions ────────────────────────────────────────────────────────────────
-   Five templates pair a body with one supporting image — `content-image` (.ci), its cards
-   sibling (.cci), `process` with a diagram (.procgrid), an illustrated `quiz` (.quiz-split) and
-   a `value-columns` grid beside a supporting diagram (.cmpgrid).
-   Where the image sits is a *composition* choice (the model's `layout`), not a property of the
-   template, so all five share one idiom instead of each inventing its own.
-
-   `image-left` mirrors the two columns **visually only** — the markup keeps body-then-image, so
-   the reading order (and PDF/screen-reader order) is unchanged, and the enumeration itself never
-   flips: facts keep their left-edge dots, cards their icons, steps their numbering, comparison
-   cells their columns, all still left-aligned. Only the column positions swap.
-
-   Track sizes flip with them. Grid auto-placement runs in *order-modified* document order, so
-   `order` alone would hand the leading track to the image — and four of these five grids are
-   deliberately asymmetric (the wider track belongs to a specific side's content, not to a
-   position). Mirroring the template-columns keeps each side the width it had. */
-.imgleft>.citext,.imgleft>.ccicards,.imgleft>.procmain,.imgleft>.quiz-body,.imgleft>.compare{order:2}
-.imgleft>.imgph,.imgleft>.procmedia,.imgleft>.quiz-media{order:1}
-.cci.imgleft{grid-template-columns:1fr 1.1fr}
-.procgrid.imgleft{grid-template-columns:1.08fr 1fr}
-.quiz.quiz-split.imgleft{grid-template-columns:1fr 1.45fr}
-.cmpgrid.imgleft{grid-template-columns:1fr 1.3fr}
-/* The body column is optional: a slide that is *only* an image (a screenshot the presenter talks
-   over, its detail in the speaker notes) drops the column entirely rather than projecting an empty
-   one — so the grid must collapse to a single track and let the image use the full width. Same
-   rule for a `code-example` missing one of its two panels. */
-.ci:not(:has(.citext)),.cci:not(:has(.ccicards)),.procgrid:not(:has(.procmain)),
-.quiz.quiz-split:not(:has(.quiz-body)),.split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
+/* `source` is a citation, not a callout: it points at where the material came from, so it must
+   not compete with the body. No card, no accent bar, no icon (the fill emits none) — just a
+   small muted line hanging under the content. */
+.highlight.source{background:none;border-left:0;border-radius:0;padding:0;color:var(--fm)}
+.highlight.source p{font-size:1.9cqw;color:var(--fm);line-height:1.3}
+.highlight.source b{font-weight:700;color:var(--fm)}
+/* ── content under a split design ─────────────────────────────────────────────────────────────
+   Placing the media is the DESIGN block's job, and so is the split's track ratio; what is left
+   here is how each content shape behaves once its column is only half the slide. Both sides share
+   one rule — `.d-split` carries the shape, `.side-left` only the placement. */
 /* a lone image is the slide's whole body, so it may claim the height the text column would have */
-.ci:not(:has(.citext)) .imgph.svg svg,.ci:not(:has(.citext)) .imgph.has img{max-height:52cqw}
-.ci.ci-top{display:flex;flex-direction:column;gap:2.4cqw;align-items:stretch}
-/* width-relative height (cqw, like every other component) — cqh is unreliable under an
-   inline-size container and left the caption clipping; this keeps image + caption in view */
-.ci.ci-top .imgph{width:100%}
-.ci.ci-top .imgph img,.ci.ci-top .imgph svg{max-height:32cqw}
-/* the caption under an image-top slide sits in a soft (non-shouty) highlight box */
-/* the image-top caption uses the same soft red-accent box as a highlight */
-.ci.ci-top .citext{align-items:stretch;text-align:left;background:var(--card);border-left:.6cqw solid var(--red);border-radius:.8cqw;padding:1.5cqw 2cqw;color:var(--ink);font-size:2.4cqw}
-.ci.ci-top .cifacts li{padding-left:0}.ci.ci-top .cifacts li::before{display:none}
-.ci.ci-top .lead{max-width:none;margin:0}
-.cci{display:grid;grid-template-columns:1.1fr 1fr;gap:3cqw;align-items:center}
+.stage.d-split:has(.cfit:not(:has(*))) :is(.imgph.svg svg,.imgph.has img){max-height:52cqw}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
-/* a value-columns grid beside a supporting diagram. The strip keeps the wider track — it holds a
-   header row plus N aligned cells and is what the slide is *about*; the diagram supports it. The
-   strip stays a grid at half width (columns must still read as columns — collapsing it to one row
-   per cell would undo the whole point), so it only gives up type size and cell padding. */
-.cmpgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:3cqw;align-items:center}
-/* the bottom anchor is for the full-width form only; in a centred grid column it hangs the strip */
-.cmpgrid>.compare{margin-top:0}
-.cmpgrid .chead{font-size:2.2cqw}
-.cmpgrid .crow{font-size:2.05cqw}.cmpgrid .crow>span{padding:1.1cqw 1.3cqw}
-.cmpgrid .imgph img,.cmpgrid .imgph svg{max-height:44cqw}
+/* the comparison strip stays a grid at half width — columns must still read as columns, so
+   collapsing to one row per cell would undo the point. It gives up type size and cell padding. */
+.stage.d-split .compare{margin-top:0}
+.stage.d-split .chead{font-size:2.2cqw}
+.stage.d-split .crow{font-size:2.05cqw}.stage.d-split .crow>span{padding:1.1cqw 1.3cqw}
+/* the numbered list and the step rows tighten beside a diagram, like they do past 6 items */
+.stage.d-split .steprow p{font-size:2.25cqw}
+.stage.d-split .steprow p b{font-weight:800;color:var(--ink)}
+.stage.d-split>.smedia .imgph :is(img,svg){max-height:44cqw}
+/* `code-example` keeps its own two-panel grid: both panels are *content* (prose and code), not a
+   body-plus-media pair, so it is a template shape rather than a design. */
+.split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 .codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}
@@ -355,7 +405,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .tlbody p{margin:.4cqw 0 0;font-size:2.5cqw;color:var(--body);line-height:1.3}
 /* big-number — one hero metric (vs the `stat` 2–4-metric grid) */
 .bignumwrap{margin:auto 0}.bignum{font-size:17cqw;font-weight:800;color:var(--red);line-height:.85;letter-spacing:-.03em;margin:0}
-.bigcap{font-size:3.6cqw;font-weight:700;color:var(--ink);margin:1.6cqw 0 0;text-wrap:balance}.biglead{font-size:2.5cqw;color:var(--body);margin:1cqw 0 0}
+.bigcap{font-size:3.6cqw;font-weight:700;color:var(--ink);margin:1.6cqw 0 0;text-wrap:balance}
 /* pros-cons — two colour-coded columns (blue = pro, pink = con), check / error icons */
 .proscons{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
 .pccol{border-radius:2cqw;padding:3cqw 2.8cqw;display:flex;flex-direction:column;gap:1.4cqw}

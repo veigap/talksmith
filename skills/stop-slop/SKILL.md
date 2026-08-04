@@ -1,8 +1,8 @@
 ---
-name: stop-slop
-description: Remove AI writing patterns from prose. Use when drafting, editing, or reviewing text to eliminate predictable AI tells.
+name: talksmith:stop-slop
+description: Removes AI writing patterns from English prose. Use only when the user explicitly invokes stop-slop or asks for this skill by name, or when the Editor role applies it to a Talk's English prose. Do not activate for drafting, editing, or reviewing English text without that explicit request.
 metadata:
-  trigger: Writing prose, editing drafts, reviewing content for AI patterns
+  trigger: Explicit invocation, or the Editor's English-prose pass on a Talk
   author: Hardik Pandya (https://hvpandya.com)
 ---
 

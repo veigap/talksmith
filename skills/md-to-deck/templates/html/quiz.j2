@@ -1,7 +1,6 @@
 {% import "_macros.j2" as m %}
 {% set ci = correct_index(s.options, s.correct) %}
 {% call m.stage(s) %}
-<div class="quiz{{ (' quiz-split' + m.imgpos(s)) if s.image else '' }}">
 <div class="quiz-body">
 <p class="quiz-q">{{ s.question or s.title }}</p>
 {% if s.options %}
@@ -24,7 +23,5 @@
 {% if s.explanation %}<p class="quiz-exp">{{ s.explanation }}</p>{% endif %}
 </div>
 {% endif %}
-</div>
-{% if s.image %}<div class="quiz-media">{{ embed_img(s.image) }}</div>{% endif %}
 </div>
 {% endcall %}

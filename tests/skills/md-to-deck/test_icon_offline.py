@@ -200,7 +200,9 @@ def test_every_reachable_name_is_bundled():
     from icon_fetch import bundled_icon
     need = {n for _, n in h._SEED} | set(h._FALLBACK_ICONS) | set(h._HL_ICON.values())
     need |= set(h._ICON_ALIAS.values()) | {h._DEFAULT_ICON, h._GENERIC_ICON}
-    missing = sorted(n for n in need if not bundled_icon(n))
+    # the empty name is not a hole in the offline floor — it is the `source` highlight declaring it
+    # has no icon at all, which the template reads as "skip the icon slot"
+    missing = sorted(n for n in need if n and not bundled_icon(n))
     return [f"  not bundled: {missing}"] if missing else []
 
 

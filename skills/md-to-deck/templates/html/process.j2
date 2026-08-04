@@ -1,30 +1,22 @@
 {% import "_macros.j2" as m %}
+{# An ordered sequence, or a plain enumeration. Two shapes, picked by whether the steps carry a
+   label — a labelled sequence earns numbered cards, a plain one is a numbered list. A supporting
+   diagram is the slide's **design** (the stage places it), not a third shape here. #}
 {% call m.stage(s) %}
-{% if s.image %}
-<div class="procgrid{{ m.imgpos(s) }}"><div class="procmain">
-{% endif %}
 {{ m.lead(s) -}}
-{% if s.image %}
-<div class="procsteps">
-{% for st in s.steps %}
-<div class="steprow"><span class="stepn">{{ loop.index }}</span><p>{% if st.label %}<b>{{ st.label | nocolon }}</b>: {% endif %}{{ st.body }}</p></div>
-{% endfor %}
-</div>
-{% elif s.steps | selectattr('label') | first %}
-{# any step carrying a label → the labelled numbered-card row #}
+{% if s.steps | selectattr('label') | first %}
 <div class="numrow">
 {% for st in s.steps %}
-<div class="ncard"><div class="strip">{{ loop.index }}</div><div class="nbody"><h4>{{ st.label | nocolon }}</h4><p>{{ st.body }}</p></div></div>
+<div class="ncard"><div class="strip">{{ loop.index }}</div><div class="nbody"><h4>{{ st.label | nocolon }}</h4>{% if st.body %}<p>{{ st.body }}</p>{% endif %}</div></div>
 {% endfor %}
 </div>
 {% else %}
+{# the plain numbered list — deliberately one column, because a numbered list is read in order
+   and columns break the count #}
 <div class="steps">
 {% for st in s.steps %}
 <div class="steprow"><span class="stepn">{{ loop.index }}</span><p>{{ st.body }}</p></div>
 {% endfor %}
 </div>
-{% endif %}
-{% if s.image %}
-</div><div class="procmedia">{{ embed_img(s.image) }}</div></div>
 {% endif %}
 {% endcall %}

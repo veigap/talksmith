@@ -378,7 +378,10 @@ _ENV.globals.update(
     correct_index=lambda options, correct: _correct_index(options, correct),
     lines=lambda code: code.splitlines() if isinstance(code, str) else (code or []),
 )
-_ENV.filters["nocolon"] = lambda text: _nocolon(text)
+# `nocolon` runs on labels, which are rich text by the time a template sees them — so it has to
+# hand the Markup back as Markup, or autoescape would re-escape the tags it just passed through.
+_ENV.filters["nocolon"] = lambda text: (Markup(_nocolon(text)) if isinstance(text, Markup)
+                                        else _nocolon(text))
 
 # catalog template id → template file
 _TMPL = {
@@ -540,9 +543,12 @@ def _labeled(items) -> list:
 
 
 # highlight kinds → a fixed Material Symbols icon (the accent colour is set in CSS per kind).
+# `source` is the one kind with no icon: it is a bare citation line, not a callout — the empty
+# name makes the template skip the icon slot, and CSS drops its card background too.
 _HL_ICON = {
     "note": "sticky_note_2", "example": "lightbulb", "definition": "menu_book",
     "quote": "format_quote", "important": "priority_high", "takeaway": "flag",
+    "source": "",
 }
 
 
@@ -562,6 +568,104 @@ def _highlights(items) -> list:
         out.append({"label": h.get("label", ""), "body": h.get("body", ""),
                     "kind": kind, "icon": _HL_ICON[kind], "position": pos})
     return out
+
+
+# ── design: where the media sits, chosen before the template ─────────────────────────────────
+# A slide is a **design** (how the canvas is divided) filled with a **style** (what shape the
+# content takes). Those are separate decisions, so they are separate fields: `design` + `media`
+# are read by the `stage` macro for every content template, and the template itself no longer
+# knows whether it has an image or where it goes. Before this, the same decision was spelled three
+# different ways — a per-template `layout` allowlist, a parallel `aside` column, and hard-coded
+# composition inside five templates — so a template that wasn't in the allowlist simply couldn't
+# be composed. The old spellings still work: they map forward here, silently, so every model and
+# deck written against them renders exactly as it did.
+_DESIGNS = ("full", "banded", "split-left", "split-right", "column-left", "column-right", "bleed")
+# `layout` was relative to the *text* ("text-left" = image on the right); `design` names where the
+# **media** goes, which is the thing being placed.
+_LAYOUT_DESIGN = {"text-left": "split-right", "image-left": "split-left", "image-top": "banded"}
+# The templates that used to own a `layout`: their image defaulted to the right-hand column, so
+# that is the design an old model without an explicit `layout` resolves to.
+_COMPOSED = ("content-image", "content+cards+image", "process", "quiz", "value-columns")
+
+
+def _design(slide: dict, t: str) -> tuple:
+    """`(design, media)` for a slide, mapping `layout`/`image`/`aside` forward. An explicit
+    `design` always wins; an unrecognized one falls back to `full`, like every other enum here."""
+    aside = slide.get("aside") or {}
+    media = slide.get("media") or slide.get("image") or aside.get("image")
+    design = slide.get("design")
+    if not design:
+        if aside:
+            design = "column-left" if str(aside.get("side", "")).lower() == "left" else "column-right"
+        elif media and t in _COMPOSED:
+            design = _LAYOUT_DESIGN.get(slide.get("layout"), "split-right")
+    # an unrecognized design, or one with nothing to place, is just `full`
+    if design not in _DESIGNS or (design != "full" and not media):
+        design = "full"
+    return design, media
+
+
+# ── inline font styling, for every field of every template ───────────────────────────────────
+# An author emphasizes a phrase *inside* a sentence — a figure in a body, a term in a lead, a
+# cited title in a source line. That is not a property of one template, so it isn't implemented in
+# one: the slide's text fields are converted here, once, and every `.j2` gets it for free.
+# The grammar is deliberately the four inline marks markdown already gives the author, and nothing
+# block-level: no headings, no lists, no tables — the *structure* of a slide is the model's job
+# (fields and templates), and re-introducing block markdown inside a field would let content route
+# around the schema. Escaping runs first, so authored HTML is still inert text.
+# one or two backticks — the doubled form is how an author shows a literal backtick inside code
+_MD_CODE = re.compile(r"(`{1,2})(?!`)([^\n]+?)(?<!`)\1(?!`)")
+_MD_LINK = re.compile(r"\[([^\]\n]+)\]\(\s*((?:https?:|mailto:)[^)\s]+)\s*\)")
+_MD_BOLD = re.compile(r"\*\*(?=\S)(.+?)(?<=\S)\*\*", re.S)
+# `*` only pairs at a word boundary, so `a*b` and `2 * 3` stay literal (and `snake_case` is safe
+# because `_` is not an italic mark here — it appears in identifiers far more often than in prose)
+_MD_ITAL = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
+
+
+def _marks(s: str) -> str:
+    s = _MD_LINK.sub(lambda m: f'<a href="{m.group(2).replace(chr(34), "&quot;")}" '
+                               f'target="_blank" rel="noopener">{m.group(1)}</a>', s)
+    s = _MD_BOLD.sub(r"<b>\1</b>", s)
+    return _MD_ITAL.sub(r"<i>\1</i>", s)
+
+
+def _inline_md(text: str) -> str:
+    """`**bold**`, `*italic*`, `` `code` `` and `[text](url)` in already-escaped text. Code spans
+    are cut out first so the marks inside them stay literal — a body that shows `**kwargs` as code
+    means it."""
+    if not (set("`*[") & set(text)):        # most leaves carry no mark at all — skip four passes
+        return text
+    out, last = [], 0
+    for m in _MD_CODE.finditer(text):
+        out.append(_marks(text[last:m.start()]))
+        span = m.group(2)
+        if span.startswith(" ") and span.endswith(" "):   # ``  `x`  `` — one pad space each side
+            span = span[1:-1]
+        out.append(f"<code>{span}</code>")
+        last = m.end()
+    out.append(_marks(text[last:]))
+    return "".join(out)
+
+
+# Fields that are **not** prose and must survive byte-for-byte: a code block (its asterisks and
+# backticks are the content), speaker notes (escaped separately on their way to Reveal's aside),
+# an image path, an `alt` that lands in an attribute, and the enum-ish fields the renderer
+# branches on. Everything else on a slide is text an author wrote to be read.
+_RAW_KEYS = frozenset({"code", "notes", "src", "alt", "icon", "media", "image", "template",
+                       "design", "format", "layout", "kind", "position", "id", "lang",
+                       "_source", "correct", "reveal", "side"})
+
+
+def _richtext(node, key=None):
+    """A copy of the slide with every prose leaf turned into `Markup`. Not in place: the caller's
+    dict stays raw, so anything read after the render (notes, audits) still sees the source text."""
+    if isinstance(node, dict):
+        return {k: _richtext(v, k) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_richtext(v, key) for v in node]
+    if isinstance(node, Markup) or not isinstance(node, str) or key in _RAW_KEYS:
+        return node
+    return Markup(_inline_md(_esc(node)))
 
 
 def _catalog_names() -> set[str] | None:
@@ -605,13 +709,17 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang=
     # highlights: optional emphasized takeaways / comments, rendered in a highlight band by the
     # `stage` macro — available to every content template (nothing in the source is ever dropped).
     slide["highlights"] = _highlights(slide.get("highlights"))
+    # design before style: the stage places the media, whatever content shape the template emits
+    slide["design"], slide["media"] = _design(slide, t)
     items = [it for k in _ICON_LISTS.get(t, ()) for it in (slide.get(k) or [])]
     if t in ("single-point", "callout"):
         point = slide.get("point") or slide.get("callout")
         if isinstance(point, dict):
             items.append(point)
     _resolve_item_icons(items)
-    return _render(_TMPL.get(t, "fallback.j2"), cache, s=slide, L=_labels(lang))
+    # Inline styling last: icon content-matching reads the raw label/body, and matching against
+    # markup (`<b>700.000 litros</b>`) would pick glyphs off the tags instead of the words.
+    return _render(_TMPL.get(t, "fallback.j2"), cache, s=_richtext(slide), L=_labels(lang))
 
 
 # The theme stylesheet lives in its own file (static CSS, no interpolation) — read at import,

@@ -183,7 +183,8 @@ precise rules.
 > button, so `together` is for slides whose parts must be read as one, not for viewer preference.
 >
 > **Optional highlights — two bands, one piece.** Any content slide may carry `highlights`: one or
-> more emphasized lines in an accented band, each with its own `kind` (colour + icon at the left).
+> more emphasized lines in an accented band, each with its own `kind` (colour + icon at the left —
+> except `source`, a bare citation that renders plain, with no card and no icon).
 > Each entry also chooses its `position`. A **remark** — it comments on, concludes or qualifies the
 > body — sits in the band **below** it (`bottom`, the default) and reveals last. A **frame** — a
 > voiced line that sets the theme, a definition the items depend on, a warning that has to land
@@ -191,21 +192,31 @@ precise rules.
 > opens**, because a frame that arrives last frames nothing. Both bands are the same component in a
 > different place: same classes, same per-`kind` colour and icon. A slide may carry both.
 >
-> **Optional layout.** A slide that pairs a body with **its own** supporting image
-> (`content-image`, `content+cards+image`, `process`/`quiz` with an image) may carry `layout` to
-> place that image: `text-left` (default), `image-left` (mirrored, so the image is read first), and
-> on `content-image` also `image-top` (stacked). It is a *composition* choice made **after** the
-> template — never a reason to pick a different template (full contract:
+> **Design, then style.** Every slide in this catalog is a **design** — how the canvas is divided —
+> filled with a **style**, which is the template below. Pick the design first, then the template;
+> they are independent, and **every** content template accepts **every** design, because the
+> renderer places the media and the template only supplies content.
+>
+> | `design` | The canvas | Use it for |
+> |---|---|---|
+> | `full` *(default)* | content uses the whole slide | anything that doesn't pair with a picture |
+> | `split-right` | content left, media right, **contained** | a diagram/chart/screenshot the audience reads |
+> | `split-left` | mirrored, so the media is read first | the same, when the picture leads |
+> | `banded` | media across the top, a caption band under it | one wide image + a short caption |
+> | `column-right` / `column-left` | a narrow full-bleed strip, **cropped to fill** | atmosphere only — never anything that must be read |
+> | `bleed` | media fills the slide, content over it | a picture that *is* the slide |
+>
+> `media: {src, alt}` is the picture the design places — set from an author
+> `<!-- design: <value> -->` hint when there is one. **Contained vs cropped is the split/column
+> distinction**: a chart in a `column` gets cut. The design is never a reason to pick a different
+> template — wanting the picture on the left is what `split-left` is for, not a reason to demote a
+> card set to prose (full contract:
 > [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)).
 >
-> **Optional aside.** Any slide type in this catalog *except* the full-bleed ones (`cover`,
-> `divider`, `statement`, `quote`, `closing-hero`) and the image-owning ones (`content-image`,
-> `figures`, `image-grid`, `image-full`, `content+cards+image`, `process` with an image) may carry
-> `aside: {image, side}` — set from an author `<!-- aside: [left|right] ![alt](path) -->` hint. It
-> renders the image as a **full-bleed column down that edge** (default `right`, ~37% of the width),
-> with the title and body in the remaining width. It is **visual reinforcement** — an evocative
-> image that sets the tone — and it crops to fill, so it must never carry information the audience
-> has to read. Content that must be read goes to an image-owning template instead.
+> The older spellings — a per-template `layout` field, and a separate `aside: {image, side}` —
+> still render, mapped onto the designs above. They are not the vocabulary to write in: `layout`
+> existed on five templates only, `aside` was a second name for the same decision, and between
+> them a template on neither list could not be composed at all.
 
 ### Frame — structure, not a content choice
 
@@ -333,17 +344,21 @@ precise rules.
   pictures. **If the slide has any `![]()` image, it is NOT this** → `figures` (a per-item image),
   `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + one shared image).
   **Not:** ordered/numbered (→ `process`); exactly one item (→ `single-point`).
-- **Accepted ids.** `card-row` and `icon-list` remain valid `template` values and simply select
-  their own `format` below, so decks and models written against them keep rendering unchanged.
-  New models should emit `concept-breakdown` and set `format` when the default isn't right.
-- **Format** — the arrangement is the `format` field; **pick it by count and body length**, the
-  same rule that used to pick between the three templates:
+- **Accepted ids.** `card-row` and `icon-list` remain valid `template` values: `card-row` selects
+  the `row` format below, and `icon-list` — whose `list` format is retired — now renders as the
+  default `grid`. New models should emit `concept-breakdown` and set `format` when the default
+  isn't right.
+- **Every format is a grid.** A labeled set is N *parallel* concepts, and parallel concepts read
+  **side by side**. The retired `list` format stacked them one under the other in a single column,
+  which spent the whole slide width on one item at a time and made a set of peers read as a
+  sequence. There is no vertical-stack arrangement any more: if the per-item prose genuinely needs
+  a full-width column, the slide is not a labeled set (→ `content-text`, or split it).
+- **Format** — the arrangement is the `format` field; **pick it by count and body length**:
 
   | `format` | When | Layout |
   |---|---|---|
-  | `grid` *(default)* | short bodies, any count 2–6 | a grid of **equal cards**, each = a content-matched icon **above** a label (13.5 pt Bold) + a one-line body (11 pt). 2 → side by side; 3 → a row; 4 → 2×2; 5–6 → 3×N. Beyond ~6 → split the slide. |
-  | `row` | a lead + **3–5** items, **every body ≤ ~80 chars** | a **single horizontal row** of N equal-width cards, each headed by a filled accent **chip** icon. Parallel concept *summaries* ("three innovations", "four pillars"). At N=5 bodies must be ≤ 60 chars; if they don't fit, use `list` — never shrink the font. |
-  | `list` | a lead + **3–5** items, **at least one body > ~80 chars** | a **vertical stack** of N rows, each = a line-art icon at the left + heading + a 2–4-sentence body to the right. Judge by the **longest** item; never split one group across `row` and `list`. Also the home for a short **anaphora** (2–5 short parallel lines with no bodies — "No hubo hackers. No hubo malware.") so those don't fall to `fallback`. |
+  | `grid` *(default)* | any count 2–8, bodies up to ~2 sentences | a grid of **equal cards**, each = a content-matched icon **above** a label (13.5 pt Bold) + a body (11 pt). 2 → side by side; 3 → a row; 4 → 2×2; 5+ → 3×N. Also holds a short **anaphora** (2–5 parallel lines with no bodies — "No hubo hackers. No hubo malware.") as label-only cards, so those don't fall to `fallback`. Beyond ~8, or bodies past ~2 sentences → split the slide. |
+  | `row` | a lead + **3–5** items, **every body ≤ ~80 chars** | a **single horizontal row** of N equal-width cards, each headed by a filled accent **chip** icon. Parallel concept *summaries* ("three innovations", "four pillars"). At N=5 bodies must be ≤ 60 chars; if they don't fit, use `grid` (which wraps to more rows) — never shrink the font. |
   | `editorial` | **2–8** concepts, **short** bodies, a **flat** composition wanted — the panels carry no meaning | the same set with the **card removed**: no fill, no radius, minimal padding. A **small** icon (≈⅓ the card glyph) sits on the label's line; the body indents under the label. A hairline + white space separate; **no box around anything**. Counts map to a regular grid — 2·4 → 2 columns, 3·5·6 → 3, 7·8 → 4 — and a short last row keeps the row above's item width and **centers** (5 → 3+2, 7 → 4+3), so no item is ever stranded across a full row. |
 
   **Choosing `editorial` over `grid`.** They hold the same content; the question is whether the
@@ -354,17 +369,19 @@ precise rules.
   register, or cards the deck already uses as a motif. It is **opt-in**: omitting `format` renders
   exactly the card grid it always did.
   **When it doesn't fit, don't shrink the content.** The body budget falls with the column count —
-  ~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8. Past that, or past 8 concepts, switch to
-  `list` (a vertical stack with room for prose) or split the slide; the build warns rather than let
-  the fit pass compress the type into illegibility. A conclusion or takeaway stays a **full-width
+  ~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8. Past that, or past 8 concepts, fall back to
+  `grid` (the card gives the body more room), shorten the bodies, or split the slide; the build
+  warns rather than let the fit pass compress the type into illegibility. A conclusion or takeaway stays a **full-width
   band below the grid** (`highlights`), never a cell inside it.
 
   The **per-concept icon is standard, not optional** — a concept is *anchored by its icon*, and it
   is **different per item**. A plain, iconless grid is a fallback only for a dense 5–6-item set or
   when no sensible glyph fits. Uniform card + icon size, consistent gutters (~0.2 in), shared
   gridlines, aligned rows. **Never bullets.**
-- **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6 — `row` is §7.4 and
-  `list` is §7.5 (+ §7.3 chooser); icon chosen per §17.5. **`editorial` is an HTML-render format
+- **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6 — `row` is §7.4;
+  icon chosen per §17.5. §7.5 (the icon-bullet stack) is the strict realization of the retired
+  `list` format: its EMU geometry stays documented because reference slide 15 demonstrates it, but
+  **no model selects it any more** — a labeled set emits §7.2/§7.4. **`editorial` is an HTML-render format
   only**: the `.pptx` renderers have no flat recipe and fall back to the §7.2.1 icon card grid, so
   a model carrying it renders as the default card set there. Same content either way — only the
   HTML deck drops the panels. **Provenance:** ref S8/S27/S49 (icon'd),
@@ -412,13 +429,24 @@ precise rules.
 - **Match:** a **named/ordered sequence** — `1./2./3.`, `Paso N`, `Step N`, `Fase N`,
   `Etapa`, `Case A/B/C`, a decision flow, or a branching tree. Order carries meaning. A
   **plain numbered list of ≥2 `1. …` lines** also matches (the numbered lines are the steps),
-  with or without bold labels; a *single* numbered line stays prose. **Not:** an unordered
-  concept set (→ `concept-breakdown`).
+  with or without bold labels; a *single* numbered line stays prose.
+  **Also the home for a plain enumeration.** A list of **3–8 short unlabeled lines** — the
+  logistics slide, the rules of an assignment, a set of conditions: `- Uno cada dos clases.` /
+  `- En grupos de 2 personas.` / `- Valen 40% de la nota final.` — matches too, and renders as
+  the **numbered list**. Such a slide has no labels to card up (→ not `concept-breakdown`, which
+  needs a label per concept) and used to fall to `fallback`, where it drew as bare bullets. The
+  numbering is the point: it turns a loose list into a countable, scannable set, and gives the
+  presenter something to point at ("el tercero"). Number them even when nothing is sequential.
+  **Not:** an unordered set that *does* carry a label per item (→ `concept-breakdown`);
+  2 lines or fewer (→ `single-point` / `statement`); more than 8 (split the slide).
 - **Format:** **numbered/step cards or a numbered list**, by whether the steps are labeled:
   - **Labeled steps** (`1. **Label** — body`, `Paso N …`) → §7.1 numbered card strip: outer
     card + left strip (`#F2EEEE`) + number (Bold) + heading + body.
-  - **Plain steps** (`1. Sentence` with no label) → a **vertical numbered list**: a small
-    outlined number chip + the sentence per row.
+  - **Plain steps** (`1. Sentence` with no label, or a plain enumeration) → a **vertical numbered
+    list**: a small outlined number chip + the sentence per row. This is the one shape in the
+    catalog that is deliberately a **single column** — a numbered list is read *in order*, top to
+    bottom, and columns would break the count. (Contrast `concept-breakdown`, where the items are
+    peers and always read side by side.) Rows tighten from 6 items on, so 8 still fit.
   - An optional **intro lead** (a plain line before the numbered list) renders above the steps.
   - An optional supporting image/diagram/example may sit beside the numbered steps in a split
     layout; the ordered steps remain the primary structure.
@@ -499,15 +527,14 @@ precise rules.
   different namespaces; `"content+image"` in the model renders as `fallback`.
 - **Format:** text column (lead + a few short facts / a callout) on one half; **1–3
   images aligned to the text columns** on the other, **aspect preserved**, no full-bleed.
-  Not a grid. **Three layouts** (`layout` field): `text-left` (default — text left, image
-  right), `image-left` (mirrored — image left, text right: the image leads the eye and the
-  text follows, for a diagram the prose walks through or to break a run of `text-left`
-  slides), and
-  `image-top` (stacked, image over a short caption — for text too short to hold a column).
-  The image is **never cropped** in any of them, so all three are safe for a diagram the
-  audience must read — unlike the `aside` column (see above), which crops to fill. Pick the
-  layout from the content (short text → `image-top`; image to be read first → `image-left`);
-  an author `<!-- layout: <value> -->` hint pins it and overrides that judgement.
+  Not a grid. Where the image sits is the slide's **design**, not a field of this template:
+  `split-right` (default — text left, image right), `split-left` (mirrored: the image leads the
+  eye and the text follows, for a diagram the prose walks through or to break a run of
+  `split-right` slides), or `banded` (stacked, image over a short caption — for text too short to
+  hold a column). The image is **contained** in all three, so all three are safe for a diagram the
+  audience must read — unlike a `column-*` design, which crops to fill. Pick the design from the
+  content (short text → `banded`; image to be read first → `split-left`); an author
+  `<!-- design: <value> -->` hint pins it and overrides that judgement.
 - **Strict recipe:** §13 content+image. **Provenance:** ref S6/19/20, final
   S3/9/15/16/17/20, gov case-study slides.
 
@@ -534,8 +561,8 @@ precise rules.
   slide face. Fires on `image_only` (`n_images == 1`, no prose and no enumeration in the body).
   An author writing "just the image, no text" produces exactly this. **Not:** a caption or a
   couple of supporting facts alongside it (→ `content-image`, whose prose leads); not ≥4 images
-  where variety is the message (→ `image-grid`); not atmosphere behind text (→ an `aside`, which
-  crops).
+  where variety is the message (→ `image-grid`); not atmosphere behind text (→ a `column-*`
+  design, which crops).
 - **Format:** the **normal header** — section pill + title, plus an optional one-line `lead` —
   kept compact at the top; the image then takes **all remaining space, bleeding to the left,
   right and bottom edges** with no padding, no frame, no rounded corners. It is **contained,

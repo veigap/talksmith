@@ -455,6 +455,16 @@ a labeled/parallel set is a card template, never a bullet list. Plain `<a:buChar
 appear only for a rare shallow, single-level caveat aside (≤3 items, no nesting). When they do
 appear, the emit rule below governs their glyph.
 
+> **An *unlabeled* list is not this either — it is a §7.6 numbered list.** The case §10 used to
+> absorb (3–8 short lines with no label each: course logistics, the rules of an assignment, a set
+> of conditions) now matches the catalog's `process` template and emits the **plain-steps vertical
+> numbered list** — an outlined number chip + the line per row. The numbering is what earns the
+> slide: it makes a loose list countable and gives the presenter something to point at. A **2–5
+> line anaphora** (short parallel fragments whose force is the rhythm) is the one unlabeled list
+> that stays out of §7.6 — it goes to §7.2 label-only cards, because numbering trades the rhetoric
+> for a checklist. Between the two, §10 is left with almost nothing; treat reaching for it as a
+> signal that one of those two is the right call.
+
 **Bullet glyph — render via paragraph-property markup, never as a literal Unicode character.** Bullets are emitted as the OOXML paragraph property `<a:buChar char="•"/>` (or equivalent `<a:buAutoNum>` for numbered lists) inside the paragraph's `<a:pPr>`, so PowerPoint draws the bullet glyph automatically per the paragraph's bullet style. **Never** start a text run with a literal `• ` character — that path looks correct in isolation but produces a deck-wide inconsistency: paragraphs styled via `<a:buChar>` render the bullet at the paragraph indent with the bullet color taking the run's color; paragraphs whose text run begins with `• ` render the dot at the run's exact baseline x-position, with the dot's color tied to whatever character font is active. The two land at different x offsets, often with different glyph metrics, and adjacent slides emit visibly different bullet shapes. The contract is uniform per-deck: pick one renderer path (`<a:buChar>` is the OOXML-native choice) and use it for **every** bullet paragraph in the deck — the renderer's bullet path must not have a `style="dot" | "char"` parameter that different code paths can set differently.
 
 ---
@@ -537,7 +547,10 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 > panel; `position: top` only changes which vertical block it occupies. Emit the `top` entries as
 > one band **between the title block and the body block** (reserving its height before laying out
 > the body, per §8.3, exactly as for a closing band), and the `bottom` entries as one band below
-> the body as today. A slide may carry both, and each band keeps its per-`kind` accent. There is no
+> the body as today. A slide may carry both, and each band keeps its per-`kind` accent — with the
+> exception of `kind: source`, a citation rather than a callout: emit it as a **plain text line at
+> card-body size** (§3.2, ~9pt `#3B3535`) with **no panel fill, no accent bar and no marker icon** —
+> it credits the material, it does not compete with it. There is no
 > reveal on the `.pptx` path, so the difference is purely where the audience's eye lands first —
 > which is the whole point of the field.
 >
@@ -638,6 +651,7 @@ When rendering `final.md` to `.pptx`, follow these rules in order:
    | H2 + fenced ``` ``` code block as primary content | **code-example** (§9) | Audience reads the code line-by-line; explanation column left, code right. NOT code-as-citation (→ notes/screenshot) or pseudocode-whose-structure-matters (→ §7.5 / diagram). |
    | H2 + sequence of `### Subhead` + paragraph repeats (2+ groups), **no image** | **card-grid** = **§7.2.1 icon cards** (per-concept §17 glyph; plain §7.2 only for a dense 5–6 grid) | Named parallel concepts with short bodies; each anchored by its own §17 icon. Any `![]()` present → **content+cards+image**. 3 items → §7.4; multi-sentence bodies → §7.5; label/value pairs → §11. |
    | H2 + lead paragraph + 3–5 `- **Label** body…` bullets (or emoji-prefixed / `#### Label` groups) | **§7.4 card-row** when every body ≤ ~80 chars; **§7.5 icon-bullet list** otherwise — **NEVER §10 plain bullets** | Pick by the *longest* item body; never split a group (§7.3). The *labeled* structure is never a §10 list, however short the bodies — §10 is for rare plain unlabeled bullets only. >5 items → split the slide; label/value pairs → §11. |
+   | H2 + 3–8 **unlabeled** `- Sentence.` bullets (no bold lead, no `####` groups) | **§7.6 plain-steps numbered list** — **NEVER §10 plain bullets** | Nothing to card up (no label per item), but a list all the same: emit the outlined number chip + line per row, numbering even when nothing is sequential. NOT a 2–5 line **anaphora** (short parallel fragments carried by their rhythm → §7.2 label-only cards, since numbering would make it a checklist); NOT labeled bullets (→ the row above); >8 items → split the slide. |
    | H2 + pipe-table | **card-grid** via §11 conversion | Structurally label/value pairs; never native `<a:tbl>`. 3–5 parallel concepts wearing a table → §7.4/§7.5. With one `![]()` alongside → the same grid **beside** the image (§11 + the §13 content+cards+image slot); the image never costs the table. |
    | Final slide with H2 + list of links | **closing-cta** | Terminal slide only. |
    | H2 + paragraphs only, no images, no code | **content-text** | Last resort (1× in 53 source slides) — flag as a restructure candidate. |

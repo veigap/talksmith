@@ -1,22 +1,14 @@
 {% import "_macros.j2" as m %}
-{# The text column is optional: a slide carrying only an image (the screenshot a presenter talks
-   over, with the detail in the speaker notes) is a legitimate `content-image` — emitting an empty
-   `.citext` would project a blank half-slide, or under `image-top` a bordered, empty note box.
-   With the column gone, CSS collapses the grid so the image takes the full width. #}
-{% macro citext(s) %}
+{# Prose (a lead and/or a fact list) beside, under or over one supporting image. Which of those
+   it is, is the slide's **design**, not this template's business — the stage places `s.media`.
+   All this emits is the text column, and it emits nothing at all when there is none: a slide
+   carrying only an image (the screenshot a presenter talks over, its detail in the notes) is a
+   legitimate `content-image`, and an empty text column would project a blank half-slide. #}
+{% call m.stage(s) %}
 {% if s.lead or s.facts %}
 <div class="citext">
 {{ m.lead(s) -}}
 {% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label | nocolon }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
 </div>
-{% endif %}
-{% endmacro %}
-{% call m.stage(s) %}
-{% if s.layout == 'image-top' %}
-<div class="ci ci-top">{{ embed_img(s.image) }}{{ citext(s) }}</div>
-{% else %}
-{# side-by-side: markup order is always text-then-image (reading order); `image-left`
-   swaps the visual columns in CSS. #}
-<div class="ci{{ m.imgpos(s) }}">{{ citext(s) }}{{ embed_img(s.image) }}</div>
 {% endif %}
 {% endcall %}

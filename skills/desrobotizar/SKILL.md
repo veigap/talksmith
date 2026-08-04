@@ -1,6 +1,6 @@
 ---
-name: desrobotizar
-description: Elimina patrones de escritura de IA en prosa en español. Usar solo cuando el usuario invoque explicitamente desrobotizar o pida aplicar esta skill por nombre. No activar por redactar, editar o revisar texto en español sin esa solicitud explicita.
+name: talksmith:desrobotizar
+description: Elimina patrones de escritura de IA en prosa en español. Usar solo cuando el usuario invoque explícitamente desrobotizar o pida aplicar esta skill por nombre, o cuando el rol Editor la aplique a la prosa en español de un Talk. No activar por redactar, editar o revisar texto en español sin esa solicitud explícita.
 metadata:
   inspired-by: stop-slop de Hardik Pandya (https://hvpandya.com)
 ---

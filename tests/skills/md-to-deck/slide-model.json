@@ -411,11 +411,18 @@
       ]
     },
     {
-      "template": "icon-list",
+      "template": "concept-breakdown",
       "section": "Enumerations",
       "title": "aside: a full-bleed image column on the right",
       "lead": "The image reinforces the point; the text carries it.",
-      "rows": [
+      "aside": {
+        "image": {
+          "src": "images/aside-texture.svg",
+          "alt": "An abstract texture standing in for an atmospheric photo"
+        }
+      },
+      "notes": "The aside is the slide-model expression of an author's `<!-- aside: ... -->` hint in draft.md. It reserves roughly 37% of the slide width as a full-bleed image column and pads the stage on that side so the head and body lay out in what remains. Because the column crops to fill rather than fitting the whole image, it is only ever atmosphere: a diagram, chart, or screenshot the audience must actually read belongs in a template that owns its image, where it is contained and legible.",
+      "cards": [
         {
           "label": "Atmosphere, not information",
           "body": "The column crops to fill, so nothing in it needs to be read closely."
@@ -428,14 +435,7 @@
           "label": "Any stage-based type",
           "body": "The stage macro adds it, so every content template supports it."
         }
-      ],
-      "aside": {
-        "image": {
-          "src": "images/aside-texture.svg",
-          "alt": "An abstract texture standing in for an atmospheric photo"
-        }
-      },
-      "notes": "The aside is the slide-model expression of an author's `<!-- aside: ... -->` hint in draft.md. It reserves roughly 37% of the slide width as a full-bleed image column and pads the stage on that side so the head and body lay out in what remains. Because the column crops to fill rather than fitting the whole image, it is only ever atmosphere: a diagram, chart, or screenshot the audience must actually read belongs in a template that owns its image, where it is contained and legible."
+      ]
     },
     {
       "template": "concept-breakdown",
@@ -483,38 +483,69 @@
     {
       "template": "icon-list",
       "section": "Enumerations",
-      "title": "icon-list: rows with room for prose",
-      "lead": "Pick icon-list over card-row when at least one item needs two to four sentences:",
+      "title": "Legacy `icon-list` → the card grid",
+      "lead": "The retired `list` format stacked these in one column; the legacy id now renders them as **cards**:",
       "rows": [
         {
-          "label": "Vertical stack",
-          "body": "The rows stack top to bottom instead of sitting in one horizontal band, which gives every item room for a longer explanation without shrinking the type."
+          "label": "Parallel reads side by side",
+          "body": "A labeled set is N *peers*. Stacking them spent the whole slide width on one item and made the set read as a sequence."
         },
         {
-          "label": "One icon per row",
-          "body": "A line-art icon sits at the left of each row, content-matched and never repeated within the slide."
+          "label": "The lead survives",
+          "body": "`grid` carries the lead the retired format carried, so nothing an old model wrote is dropped on the way over."
         },
         {
-          "label": "Three to five rows",
-          "body": "Three rows are comfortable with full sentences; five rows only when the bodies are short."
+          "label": "Prose still fits",
+          "body": "A card holds up to about two sentences. Past that the slide is not a labeled set — it is `content-text`, or two slides."
         }
       ]
     },
     {
-      "template": "icon-list",
+      "template": "concept-breakdown",
       "section": "Enumerations",
-      "title": "icon-list also holds a bare anaphora",
+      "title": "A bare anaphora → label-only cards",
       "rows": [
         {
           "label": "No labels are required here."
         },
         {
-          "label": "Each parallel line becomes one row."
+          "label": "Each parallel line becomes one card."
         },
         {
           "label": "This keeps such slides off the fallback path."
         }
       ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "Inline styling works in *every* field",
+      "lead": "`**bold**`, `*italic*`, `` `code` `` and `[text](url)` are resolved in **every** text field of **every** template:",
+      "cards": [
+        {
+          "label": "**Bold** a figure",
+          "body": "Entrenar un LMM puede consumir **700.000 litros** de agua — the number carries the line, so it reads as the number."
+        },
+        {
+          "label": "*Italic* a term",
+          "body": "The *lead* is the title's sub-line; the *body* is what follows it."
+        },
+        {
+          "label": "`code` inline",
+          "body": "A field name like `slide-model.json` or a flag like `--print-pdf` keeps the mono face."
+        },
+        {
+          "label": "A [link](https://www.who.int)",
+          "body": "Only `http:`, `https:` and `mailto:` become links; anything else stays literal text."
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024)."
+        }
+      ],
+      "notes": "Inline styling is resolved once, in html_style.py `_richtext`/`_inline_md`, on the slide's prose fields — not per template — so any field of any template accepts the four marks. Escaping runs first, so authored HTML in a field stays inert text; code blocks, speaker notes, image paths and the enum-ish fields the renderer branches on are excluded, because their bytes are the content. The grammar stops at inline marks on purpose: block markdown inside a field (headings, lists, tables) would let content route around the schema, which is where the template and its fields do their work."
     },
     {
       "template": "section-agenda",
@@ -539,6 +570,36 @@
           "body": "build_html.py maps those fields onto Jinja templates, mechanically."
         }
       ]
+    },
+    {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "A plain enumeration → the numbered list",
+      "lead": "Seven unlabeled lines: no labels to card up, so they number instead of falling to bullets.",
+      "steps": [
+        {
+          "body": "Uno cada dos clases, relacionado con temas vistos."
+        },
+        {
+          "body": "En grupos de 2 personas."
+        },
+        {
+          "body": "Valen **40%** de la nota final."
+        },
+        {
+          "body": "Gran parte del trabajo se completa en clase."
+        },
+        {
+          "body": "Entrega: antes del viernes siguiente vía repositorio GitHub."
+        },
+        {
+          "body": "Todos los entregables son obligatorios."
+        },
+        {
+          "body": "Entregas tardías impactan la nota."
+        }
+      ],
+      "notes": "A list whose items carry no label has nothing to build a card around, so it used to land on fallback and draw as bare bullets. It belongs on process instead: the unlabeled branch of that template is already a numbered list — an outlined number chip and the line — and the numbering is what earns the slide. It turns a loose list into a countable set the audience can hold in mind and the presenter can point at, without implying the items are steps in a sequence. The single column is deliberate here, unlike the labeled set: a numbered list is read top to bottom, and splitting it across columns breaks the count."
     },
     {
       "template": "process",
@@ -1113,7 +1174,7 @@
     {
       "template": "content-text",
       "section": "Visual & data",
-      "title": "Highlights: the six kinds",
+      "title": "Highlights: the seven kinds",
       "big": "Any content slide can carry a highlights band; the fill picks each line's kind:",
       "panels": [],
       "highlights": [
@@ -1145,8 +1206,122 @@
           "kind": "note",
           "label": "Note",
           "body": "an aside or minor context."
+        },
+        {
+          "kind": "source",
+          "body": "Fuente: Talksmith slide-model schema, §highlights (2026)."
         }
       ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "design": "split-right",
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline, as a diagram"
+      },
+      "title": "design: split-right — media contained on the right",
+      "lead": "A diagram the audience actually reads gets half the canvas, uncropped.",
+      "cards": [
+        {
+          "label": "Design first",
+          "body": "How the canvas is divided is chosen before the template."
+        },
+        {
+          "label": "Style second",
+          "body": "The template only says what shape the content takes."
+        }
+      ],
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "design": "split-left",
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline, as a diagram"
+      },
+      "title": "design: split-left — the picture leads",
+      "lead": "Same design mirrored in CSS; the markup order (and the reading order) never changes.",
+      "cards": [
+        {
+          "label": "Design first",
+          "body": "How the canvas is divided is chosen before the template."
+        },
+        {
+          "label": "Style second",
+          "body": "The template only says what shape the content takes."
+        }
+      ],
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "design": "banded",
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline, as a diagram"
+      },
+      "title": "design: banded — media over a caption band",
+      "lead": "For text too short to hold a column.",
+      "cards": [
+        {
+          "label": "Design first",
+          "body": "How the canvas is divided is chosen before the template."
+        },
+        {
+          "label": "Style second",
+          "body": "The template only says what shape the content takes."
+        }
+      ],
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "design": "column-right",
+      "media": {
+        "src": "images/aside-texture.svg",
+        "alt": "An abstract texture standing in for an atmospheric photo"
+      },
+      "title": "design: column-right — a cropped atmosphere strip",
+      "lead": "A narrow full-bleed column that crops to fill: tone, never information.",
+      "cards": [
+        {
+          "label": "Design first",
+          "body": "How the canvas is divided is chosen before the template."
+        },
+        {
+          "label": "Style second",
+          "body": "The template only says what shape the content takes."
+        }
+      ],
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Visual & data",
+      "design": "bleed",
+      "media": {
+        "src": "images/aside-texture.svg",
+        "alt": "An abstract texture standing in for an atmospheric photo"
+      },
+      "title": "design: bleed — the media fills the stage",
+      "lead": "The content sits over the picture.",
+      "cards": [
+        {
+          "label": "Design first",
+          "body": "How the canvas is divided is chosen before the template."
+        },
+        {
+          "label": "Style second",
+          "body": "The template only says what shape the content takes."
+        }
+      ],
+      "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
     },
     {
       "template": "concept-breakdown",

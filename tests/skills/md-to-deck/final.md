@@ -106,7 +106,7 @@ Tres innovaciones que cambiaron la síntesis de imágenes.
 
 ---
 
-## Icon-list · prose rows
+## Icon-list · el id legacy cae al card grid
 <!-- template: icon-list -->
 
 Tres razones para dejar que el modelo piense en voz alta.

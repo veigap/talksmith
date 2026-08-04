@@ -31,18 +31,17 @@ import html_style as _hs              # noqa: E402
 import model_freshness as _fresh       # noqa: E402
 
 
-# Which `layout` values each template understands (schemas/slide-model.md). `image-left` is
-# universal to every body+image composition; `image-top` stacks the image over the body and is
-# defined only where that body is prose — a card set, a step list or a quiz under a full-width
-# image is a different slide, not a layout of this one. Templates absent from this map (including
-# `process`/`quiz` without an image) take no `layout` at all.
-_LAYOUTS = {
-    "content-image":        ("text-left", "image-left", "image-top"),
-    "content+cards+image":  ("text-left", "image-left"),
-    "process":              ("text-left", "image-left"),
-    "quiz":                 ("text-left", "image-left"),
-    "value-columns":        ("text-left", "image-left"),
-}
+# A slide is a **design** (how the canvas is divided) filled with a **style** (the template's
+# content shape). `design` is universal — every content template takes every design, because the
+# stage places the media and the template only emits content. That is the whole point of the
+# field: the old per-template `layout` allowlist meant a template not on the list could not be
+# composed at all. Resolution (including mapping the old `layout`/`image`/`aside` spellings
+# forward) lives in html_style.py `_design`; this only validates what the author wrote.
+_DESIGNS = _hs._DESIGNS
+# Every design but `full` places a picture, so one without media is a slide that says it is
+# composed and then has nothing to compose. It renders as `full` — the content is intact and
+# nothing is silently cropped — but it is an authoring slip worth naming.
+_LEGACY_LAYOUTS = tuple(_hs._LAYOUT_DESIGN)   # the old spellings, from the map that translates them
 
 # A value-columns grid beside an image gets half the slide. Past this it still renders — the grid
 # never degrades to a list — but the cells crowd and the fit pass pays for it in type size, so say
@@ -51,13 +50,18 @@ _VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
 
 # The labeled set's `format` (schemas/slide-model.md). An unrecognized value renders as `grid`,
 # which looks like a deliberate card set rather than a typo — the same reason `layout` warns.
-_FORMATS = ("grid", "row", "list", "editorial")
+_FORMATS = ("grid", "row", "editorial")
 _LABELED_SET = ("concept-breakdown", "card-row", "icon-list")
+# `list` (the single-column stack) was retired: a labeled set is N *parallel* concepts, and
+# parallel concepts read side by side. A model that still carries it renders as `grid` like any
+# other unusable value, but says why — it isn't a typo, it's a stale model.
+_RETIRED_FORMATS = {"list": "a labeled set now always reads as a grid; if the per-item prose "
+                            "needs a full-width column it is content-text, or split the slide"}
 
 # `format: editorial` buys its density by dropping the card, so the body budget is what the
 # *column count* leaves: (max items, max body chars). Past it the slide still renders — the fit
-# pass shrinks it — but shrinking content until it is unreadable is not a fix, so name the two
-# real ways out: the vertical `list` format, or splitting the slide.
+# pass shrinks it — but shrinking content until it is unreadable is not a fix, so name the real
+# ways out: fewer/shorter concepts, or splitting the slide.
 _ED_BODY_MAX = ((4, 140), (6, 100), (8, 70))
 _ED_MAX_ITEMS = 8
 
@@ -83,18 +87,27 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     bad_formats, crowded = [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
-        # `layout` places the slide's own image against its body, so it means nothing without one
-        # and not every template defines every value. Either way it renders as the default — say
-        # so rather than let an author's pinned intent disappear silently.
-        lay, name = s.get("layout"), s.get("title", "") or "(untitled)"
-        if lay and lay not in _LAYOUTS.get(t, ()):
-            bad_layouts.append((name, t, lay, f"expected {'|'.join(_LAYOUTS.get(t, ())) or 'no layout'}"))
-        elif lay and not s.get("image"):
-            bad_layouts.append((name, t, lay, "the slide carries no image"))
+        # `design` divides the canvas, so every design but `full` needs media to put in the part
+        # it reserves. Either way the slide renders as `full` — say so rather than let an author's
+        # pinned intent disappear silently.
+        name = s.get("title", "") or "(untitled)"
+        des, lay = s.get("design"), s.get("layout")
+        # `_design` is the one place that knows how media resolves (`media` → `image` →
+        # `aside.image`); asking it, rather than re-spelling the chain here, keeps the warning and
+        # the render agreeing about what counts as media.
+        _, media = _hs._design(s, t)
+        if des and des not in _DESIGNS:
+            bad_layouts.append((name, t, des, f"expected {'|'.join(_DESIGNS)}"))
+        elif des and des != "full" and not media:
+            bad_layouts.append((name, t, des, "the slide carries no media to place"))
+        elif lay and lay not in _LEGACY_LAYOUTS:
+            bad_layouts.append((name, t, lay, f"expected {'|'.join(_LEGACY_LAYOUTS)} "
+                                              f"(`layout` is the old spelling of `design`)"))
         fmt = s.get("format")
         if t in _LABELED_SET and fmt:
             if fmt not in _FORMATS:
-                bad_formats.append((name, fmt))
+                bad_formats.append((name, fmt, _RETIRED_FORMATS.get(
+                    fmt, f"expected {'|'.join(_FORMATS)}")))
             elif fmt == "editorial":
                 items = s.get("cards") or s.get("rows") or []
                 cap = next((c for lim, c in _ED_BODY_MAX if len(items) <= lim), _ED_BODY_MAX[-1][1])
@@ -105,7 +118,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
                 elif longest > cap:
                     crowded.append((name, len(items), longest,
                                     f"longest body {longest} chars, ~{cap} fits at that width"))
-        if t == "value-columns" and s.get("image"):
+        if t == "value-columns" and media:
             cols = s.get("columns") or []
             rows = max((len(c.get("cells") or []) for c in cols), default=0)
             if len(cols) > _VC_MAX_COLS or rows > _VC_MAX_ROWS:
@@ -131,15 +144,14 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     for slide_title, bad in unknown:
         print(f"[html] warning: unknown template {bad!r} → fallback  ({slide_title})", file=sys.stderr)
     for slide_title, tmpl, bad, why in bad_layouts:
-        print(f"[html] warning: layout {bad!r} ignored on {tmpl!r} ({why}) "
-              f"→ default  ({slide_title})", file=sys.stderr)
-    for slide_title, bad in bad_formats:
-        print(f"[html] warning: unknown format {bad!r} → grid "
-              f"(expected {'|'.join(_FORMATS)})  ({slide_title})", file=sys.stderr)
+        print(f"[html] warning: design {bad!r} ignored on {tmpl!r} ({why}) "
+              f"→ full  ({slide_title})", file=sys.stderr)
+    for slide_title, bad, why in bad_formats:
+        print(f"[html] warning: format {bad!r} → grid — {why}  ({slide_title})", file=sys.stderr)
     for slide_title, n, longest, why in crowded:
         print(f"[html] warning: editorial grid of {n} concepts — {why}; the fit pass would "
-              f"shrink the slide rather than fix it. Use format \"list\" (a vertical stack with "
-              f"room for prose) or split the slide  ({slide_title})", file=sys.stderr)
+              f"shrink the slide rather than fix it. Shorten the bodies, drop to fewer concepts, "
+              f"or split the slide  ({slide_title})", file=sys.stderr)
     for slide_title, ncols, nrows in dense:
         print(f"[html] warning: value-columns grid {ncols}×{nrows} beside an image "
               f"(max {_VC_MAX_COLS}×{_VC_MAX_ROWS} at half width) — cells will crowd; "

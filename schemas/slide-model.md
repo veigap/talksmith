@@ -71,7 +71,7 @@ deliverable; `draft.md` → live in-progress view).
   `{body, label?, kind?, position?}` (the `label` renders bold before a colon). Use it for a line that
   deserves emphasis — e.g. the takeaway a diagram builds to — instead of dropping or burying it. The
   **fill picks the `kind`** (it's a semantic choice, like a callout's tone); each kind has its own
-  accent colour + icon. Defaults to `takeaway`.
+  accent colour + icon — except `source`, which renders plain. Defaults to `takeaway`.
 
   | `kind` | The job the line does | e.g. |
   |---|---|---|
@@ -81,6 +81,12 @@ deliverable; `draft.md` → live in-progress view).
   | `example` | an illustration / concrete scenario | "Ej.: pegar la lista de clientes en un chatbot gratuito." |
   | `quote` | a pull-quote / cited line (rendered italic) | "Una falla de seguridad no siempre tiene un atacante." |
   | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
+  | `source` | **a bare reference to where the material came from** — a citation, not a callout | "Fuente: OWASP Top 10 for LLM Applications (2025)." |
+
+  `source` is the one kind rendered **plain**: no card background, no accent bar and **no icon** —
+  just a small muted line under the body, so the attribution never competes with the content it
+  credits. Use it only for provenance (a paper, standard, dataset, report, URL); a line that
+  *says something* about the source is a `note`.
 
   **`position`** — where the entry's band sits, `"bottom"` *(default)* or `"top"`. It is **per
   entry, not per slide**: the render groups all `top` entries into one band above the body and all
@@ -89,63 +95,79 @@ deliverable; `draft.md` → live in-progress view).
 
   | `position` | The line's relation to the body | Typical kinds |
   |---|---|---|
-  | `bottom` *(default)* | a **remark** — it comments on, concludes, or qualifies what the audience has just read | `takeaway`, `note`, `example` |
+  | `bottom` *(default)* | a **remark** — it comments on, concludes, or qualifies what the audience has just read | `takeaway`, `note`, `example`, `source` (a citation always trails the material it credits) |
   | `top` | a **frame** — it has to be in the audience's head *before* the body makes sense | `quote` that sets the theme, `definition` a term the items use, `important` that is a warning up front |
 
   Both bands are the same piece in a different place: identical classes, accent colour and icon.
   An unrecognized value falls back to `bottom`, like an unrecognized `kind` falls back to `takeaway`.
-- **`aside`** — an **optional** common field on any content slide: `{image: {src, alt}, side?}`,
-  where `side` is `"right"` *(default)* or `"left"`. Renders the image as a **full-bleed column down
-  that edge** of the slide, with the title and body laid out in the remaining width. Its job is
-  **visual reinforcement** — an evocative image that sets the tone of the point being made — not
-  information the slide needs. Anything load-bearing (a diagram, a chart, a screenshot the audience
-  must actually read) belongs in a template that *owns* its image (`content-image`, `figures`,
-  `content+cards+image`, `process`), because the aside column crops to fill and is not read closely.
-  Set it from an author `<!-- aside: ... -->` hint (see [`draft.md`](draft.md)). Don't put an `aside`
-  on a template that already carries an image.
-- **`layout`** — an **optional** common field on any slide that pairs a body with **its own
-  supporting image** (`content-image`, `content+cards+image`, and `process`/`quiz` when they carry
-  an `image`). Where that image sits is a **composition** choice, not a property of the template,
-  so the field means the same thing everywhere it applies:
+- **`design` + `media`** — a slide is a **design** filled with a **style**, and the two are chosen
+  in that order. The **design** is how the canvas is divided; the **style** is the `template`, the
+  shape the content takes inside it. They are independent: **every content template accepts every
+  design**, because the renderer's stage places the media and the template only emits content.
 
-  | `layout` | Effect |
-  |---|---|
-  | `text-left` *(default, omitted)* | the body leads: body column left, image right |
-  | `image-left` | mirrored: image left, body right — the image is read first and the body follows |
-  | `image-top` | stacked: full-width image over a short caption — **`content-image` only** |
+  `media` is `{src, alt}` — the one picture the design places. `design` is one of:
 
-  Only the two columns swap. The enumeration never mirrors: facts keep their left-edge dots, cards
-  their icons, steps their numbering, all still left-aligned and in source order; each side also
-  keeps its own column width. Reading order is unchanged too (the markup stays body-then-image in
-  every layout), so PDF export and screen readers are unaffected. `image-top` is deliberately
-  **not** generalized: a card set, a step list or a quiz stacked under a full-width image is a
-  different slide, not a layout of this one. A value a template doesn't define — or a `layout` on a
-  slide with no image — renders as the default and warns at render rather than failing silently.
+  | `design` | The canvas | Use it for |
+  |---|---|---|
+  | `full` *(default, omitted)* | content uses the whole stage; no media placed | anything that doesn't pair with a picture |
+  | `split-right` | content left, media right — media **contained**, never cropped | a diagram, chart or screenshot the audience actually reads |
+  | `split-left` | mirrored: media left, content right | the same, when the picture should be read *first* |
+  | `banded` | media across the top, content as a band under it | one wide image with a short caption under it |
+  | `column-right` | a narrow full-bleed strip of media down the right edge, **cropped to fill** | atmosphere — an evocative image that sets a tone, never read closely |
+  | `column-left` | the same strip down the left edge | the same |
+  | `bleed` | media fills the stage; the content sits over it | a picture that *is* the slide |
+
+  **Contained vs cropped is the whole `split` / `column` distinction.** A split gives the media half
+  the canvas and shows all of it; a column gives it a strip and crops to fill. Anything
+  load-bearing must be a `split` (or a template that owns its image, like `figures`) — put a chart
+  in a `column` and it gets cut. Set it from an author `<!-- design: … -->` hint, else pick it from
+  the content.
+
+  Only the two columns swap between `split-left` and `split-right`. The enumeration never mirrors:
+  facts keep their left-edge dots, cards their icons, steps their numbering, all still left-aligned
+  and in source order. Reading order is unchanged too — the markup is always head → content →
+  media, whatever the design — so PDF export and screen readers are unaffected. A design with no
+  `media` to place renders as `full` and warns rather than failing silently.
+
+  > **The old spellings still work.** `image` is read as `media`; `layout: text-left / image-left /
+  > image-top` as `split-right` / `split-left` / `banded`; `aside: {image, side}` as
+  > `column-right` / `column-left`. Existing models render exactly as they did, with no warning.
+  > New models should write `design` + `media`: `layout` only existed on five templates and only
+  > when the slide carried an `image`, and `aside` was a second vocabulary for the same decision —
+  > which is precisely what made a template that wasn't on the list impossible to compose.
 - **`format`** — an **optional** field on `concept-breakdown`, choosing how the labeled set is
-  arranged. Like `layout`, it is a *formatting* decision made **after** the template, not a second
+  arranged. Like `design`, it is a *formatting* decision made **after** the template, not a second
   classification: the shape ("N parallel labeled concepts") is what picks the template, and this
   picks its presentation. Pick it by count and body length:
 
   | `format` | When | Layout |
   |---|---|---|
-  | `grid` *(default, omitted)* | short bodies, any count 2–6 | equal cards, icon **above** the label; 2 → side by side, 3 → a row, 4 → 2×2, 5–6 → 3×N |
+  | `grid` *(default, omitted)* | any count 2–8, bodies up to ~2 sentences, or a bare anaphora | equal cards, icon **above** the label; 2 → side by side, 3 → a row, 4 → 2×2, 5+ → 3×N. A bodyless item is a label-only card |
   | `row` | a lead + 3–5 items, **every** body ≤ ~80 chars | one horizontal row of N cards, each headed by a filled accent chip |
-  | `list` | a lead + 3–5 items, **any** body > ~80 chars, or a bare anaphora | a vertical stack, line-art icon at the left, heading + prose to the right |
   | `editorial` | 2–8 short-bodied concepts on a **flat** composition — no cards | a regular grid *without* panels: small icon beside the label, body indented under it. 2·4 → 2 cols, 3·5·6 → 3, 7·8 → 4; a short last row centers (5 → 3+2, 7 → 4+3) |
+
+  **All three formats are grids.** A labeled set is N *parallel* concepts, and parallel concepts
+  read side by side. The retired `list` format stacked them in one column, spending the full slide
+  width on one item and making peers read as a sequence; there is no vertical-stack arrangement any
+  more. A model that still carries `format: "list"` renders as `grid` and the build warns. If the
+  per-item prose really needs a full-width column, the slide is not a labeled set → `content-text`,
+  or split it.
 
   **`editorial` is the flat variant of `grid`** — same content, same fields, no card chrome. Choose
   it when the panels carry no meaning and the composition should read as a collection of concepts
   rather than an application screen: 2–8 parallel concepts, **short** bodies, icons as small
   reference marks, and no per-concept image. Keep `grid` when the panels are intentional design.
   Body budget shrinks with the column count — ~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8;
-  past that (or past 8 concepts) the build warns and the fix is `format: "list"` or splitting the
-  slide, **never** cutting the text down until it's unreadable. A `highlights` band stays
+  past that (or past 8 concepts) the build warns and the fix is falling back to `grid` (the card
+  gives the body more room) or splitting the slide, **never** cutting the text down until it's
+  unreadable. A `highlights` band stays
   full-width **below** the grid — a conclusion comments on the set, it is not another cell in it.
   *(Unrelated to the selectable deck **style** also named `editorial`, which only swaps colour and
   type tokens. This is composition; that is palette.)*
 
-  The legacy template ids **`card-row`** and **`icon-list`** are still accepted and simply mean
-  `concept-breakdown` with `format: row` / `format: list` — existing models render unchanged. New
+  The legacy template ids **`card-row`** and **`icon-list`** are still accepted: `card-row` means
+  `concept-breakdown` with `format: row`, and `icon-list` — whose `list` format is retired —
+  renders as the default `grid`, keeping its `lead` and its items. New
   models should emit `concept-breakdown`. Items go in `cards:[{label,body}]`; `rows:` is accepted
   as the legacy spelling of the same list. Set it from an author `<!-- format: … -->` hint in
   `draft.md`/`final.md` when there is one; otherwise pick it from the content by the table above.
@@ -179,26 +201,26 @@ when the content warrants. Field names are the contract — the renderers read e
 | `divider` | `title` | — (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
 | `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`list`\|`editorial`) — see below |
-| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example), `layout` (with an image) |
+| `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
 | `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
-| `content-image` | `title`, `image:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `layout` (the only template taking `image-top`). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
-| `content+cards+image` | `title`, `cards:[{label,body}]`, `image:{src,alt}` | `lead`, per-card `icon` (else content-matched), `layout` |
-| `value-columns` | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `image:{src,alt}` (supporting diagram/example), `layout` (with an image). Beside an image the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
+| `content-image` | `title`, `media:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
+| `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` | `lead`, per-card `icon` (else content-matched), `design` |
+| `value-columns` | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). Beside media the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
 | `timeline` | `title`, `milestones:[{label,body}]` | `lead`, per-milestone `marker` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
-| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `image:{src,alt}` (shown beside the quiz, never cropped), `layout` (with an image), `answer_label` (label on the answer panel; default "Respuesta") |
+| `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `design` + `media` (shown beside the quiz — use a `split`, never a `column`, so it is not cropped), `answer_label` (label on the answer panel; default "Respuesta") |
 | `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched) |
 | `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched) |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |
 | `content-text` | `title`, `big`, `panels:[str]` | — *(last-resort prose; flag to restructure)* |
 | `closing-hero` | `title` | `body` |
 | `closing-cta` | `title`, `items:[{label,body}]` | — |
-| `fallback` | `title` | `big` (the dominant line; defaults to `title`), `points:[str]` (rendered as accent panels, never plain bullets) — *last resort; the renderer warns, and a recurring fallback means the catalog needs a new entry* |
+| `fallback` | `title` | `big` (the dominant line; defaults to `title`), `points:[str]` (rendered as accent panels, never plain bullets) — *last resort; the renderer warns, and a recurring fallback means the catalog needs a new entry. An unlabeled list is **not** a fallback: it is a `process` numbered list (or, for an anaphora, a label-only `concept-breakdown`)* |
 
 > `cover` takes no row: it is **synthesized from the `deck` object**, never authored as a slide
 > (see `deck` above). Every other `template` value the renderers accept is listed here — a value
@@ -230,8 +252,9 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   the standalone `# Agenda` slide (it only feeds `deck.sections`), every `### Sources` and
   `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers. **Exception — honour author
   directives:** a `<!-- template: <type> -->` comment pins that slide's `template` (skip
-  classification), `<!-- layout: <value> -->` pins its `layout` field (the arrangement *within*
-  that template — skip the layout judgement below), and `<!-- reveal: together -->` sets its
+  classification), `<!-- design: <value> -->` pins its `design` field (how the
+  canvas is divided — skip the design judgement below; the older `<!-- layout: … -->` spelling is
+  read the same way), and `<!-- reveal: together -->` sets its
   `reveal` field. These are the only HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
   Polish only strips `Presenter feedback` and rewrites ASCII fences — so the hint the author wrote
   while drafting is exactly what reaches this FILL step.)
@@ -247,8 +270,17 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 
 **Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
 - **Labeled set** (`- **Label** body`, `### Subhead` + paragraph) → `cards` / `rows` / `steps` /
-  `figures` `[{label,body}]`, **never plain bullets**. A short unlabeled parallel enumeration (an
-  anaphora) → `concept-breakdown` with `format:"list"`, `cards:[{label}]` and `body:""`; drop an item that just repeats the title.
+  `figures` `[{label,body}]`, **never plain bullets**; drop an item that just repeats the title.
+- **A list with no labels** is one of two things, and neither is `fallback`:
+  - a **plain enumeration** — 3–8 lines that each state something on their own (the logistics of a
+    course, the rules of an assignment, a set of conditions) → **`process`** with
+    `steps:[{body}]` and no `label`, which renders as a **numbered list**. Number them even when
+    nothing is sequential: the count is what turns a loose list into a set the audience can hold
+    and the presenter can point at.
+  - an **anaphora** — 2–5 short parallel *fragments* sharing an opening, whose force is the
+    rhythm ("No hubo hackers. No hubo malware.") → `concept-breakdown` (default `grid`) with
+    `cards:[{label}]` and `body:""`, rendering as label-only cards. Numbering these would trade
+    the rhetoric for a checklist, which is why they don't go to `process`.
 - **Process ordinals** are renderer chrome, not content. When filling `process.steps`, strip any
   ordinal/step marker from the extracted `label` or `body`. Then apply the colon lead-in rule:
   anything before `:` becomes the highlighted `label`, anything after becomes `body`. Examples:
@@ -267,18 +299,17 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
   not a rule about filling the model.) A fenced code block fills `code-example.code`
   (+ `explanation`).
-- **`layout` — the image's place is chosen after the template, never instead of it.** Add
-  `"layout":"image-left"` whenever the image should lead the eye (a diagram the prose then walks
-  through, or to break up a run of text-left slides); it means the same thing on **all five**
-  templates that carry their own image — `content-image`, `content+cards+image`, and
-  `process`/`quiz`/`value-columns` when they have one. `"layout":"image-top"` (stacked) exists on
-  `content-image` only, for text too short to hold a column. Default (omitted) is `text-left`.
+- **`design` — the picture's place is chosen after the template, never instead of it.** Set
+  `"design":"split-left"` whenever the media should lead the eye (a diagram the prose then walks
+  through, or to break up a run of split-right slides), `"banded"` when the text is too short to
+  hold a column, and a `column-*` only for atmosphere that may be cropped. It means the same thing
+  on **every** template — that is what the field is for.
   **Never pick the template to get the placement.** Wanting the image first is not a reason to
   demote a labeled set to `content-image` `facts` (which lose their per-concept icons) — keep
-  `content+cards+image` and set `layout`. The same holds one step up: a **table** with
-  a supporting diagram keeps `value-columns` (its aligned columns) and takes `image` + `layout` —
-  flattening the rows into `content+cards+image` cards concatenates the two values into one body
-  and throws away the column alignment that *is* the slide. An author `<!-- layout: <value> -->` hint **pins** the
+  `content+cards+image` and set `design`. The same holds one step up: a **table** with a supporting
+  diagram keeps `value-columns` (its aligned columns) and takes `media` + `design` — flattening the
+  rows into `content+cards+image` cards concatenates the two values into one body and throws away
+  the column alignment that *is* the slide. An author `<!-- design: <value> -->` hint **pins** the
   field: copy it through instead of judging.
 - **A slide that is only an image is `image-full`.** A screenshot or diagram the presenter narrates,
   its detail in `notes`, is a normal slide shape: fill `title` + `image` (plus a `lead` if one line

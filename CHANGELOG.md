@@ -13,6 +13,80 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.77.0] — 2026-08-04
+
+### Added
+
+- **`design` — a slide is a design filled with a style, chosen in that order.** Where the picture
+  goes used to be answered in three different places: a `layout` field that existed on five
+  templates and only when the slide carried an `image`, a parallel `aside` column with its own
+  vocabulary for the same decision, and composition hard-coded inside those five templates. A
+  template on neither list simply could not be composed — a card set could not have a diagram
+  beside it. Now one `design` field divides the canvas and one `media` field says what goes in it,
+  and **every content template accepts every design**, because the renderer's stage places the
+  media and the template only emits content. Seven designs: `full` (default), `split-right` /
+  `split-left` (half the canvas, media **contained** — a diagram or screenshot the audience
+  reads), `banded` (media over a caption band), `column-right` / `column-left` (a narrow
+  full-bleed strip, **cropped to fill** — atmosphere only), and `bleed` (media fills the slide,
+  content over it). Contained vs cropped is the whole split/column distinction: a chart in a
+  column gets cut. Mirroring stays CSS-only, so the reading order for PDF export and screen
+  readers never depends on which side the picture landed on. **Existing models are unaffected**:
+  `image` reads as `media`, `layout: text-left/image-left/image-top` as
+  `split-right`/`split-left`/`banded`, and `aside: {image, side}` as `column-right`/`column-left`,
+  all silently.
+
+- **Inline font styling, in every field of every template.** An author emphasizing a phrase
+  *inside* a sentence — a figure in a body, a term in a lead, a cited title in a source line — got
+  literal asterisks on the slide. `**bold**`, `*italic*`, `` `code` `` and `[text](url)` are now
+  resolved in the slide's text fields, once, before the template sees them, so this is not a
+  per-template feature: any field of any type accepts them. Escaping still runs first (authored
+  HTML stays inert text), links are limited to `http:`/`https:`/`mailto:`, and the fields whose
+  bytes *are* the content — code blocks, speaker notes, image paths, the enum-ish fields the
+  renderer branches on — are excluded. The grammar deliberately stops at inline marks: block
+  markdown inside a field would let content route around the schema.
+- **A plain unlabeled list is now a numbered list, not bullets.** A slide whose items carry no
+  label (course logistics, the rules of an assignment, a set of conditions) had nothing to build a
+  card around, so it fell to `fallback` and drew as bare bullets. It now matches `process`, whose
+  unlabeled branch already renders a numbered list — an outlined number chip and the line — and
+  rows tighten from 6 items on so 8 still fit. The numbering is the point: it makes a loose list
+  countable and gives the presenter something to point at, without implying a sequence. The one
+  unlabeled list that stays out is a 2–5 line **anaphora**, whose force is the rhythm; those go to
+  `concept-breakdown` as label-only cards, since numbering would turn rhetoric into a checklist.
+
+### Changed
+
+- **Metadata descriptions corrected.** The plugin and marketplace manifests carried two copies of
+  the same paragraph that had already drifted (the marketplace one was missing `pptx-learn`), and
+  both described the deliverable as "optionally a `.pptx`" — never mentioning the HTML/Reveal.js
+  deck, which is a first-class output. They are now one identical, shorter description that says
+  what you get. The two anti-slop skills are namespaced `talksmith:` like the other eleven, so the
+  bundled copy coexists with a user's own same-named skill instead of colliding with it (which is
+  what the Editor's load order always assumed), and `stop-slop`'s trigger — "use when drafting,
+  editing, or reviewing text" — is narrowed to explicit invocation, matching its Spanish sibling:
+  as written it would have fired on ordinary authoring, which is exactly what an anti-slop pass
+  must not do.
+- **A labeled set is always a grid — the `list` format is retired.** `concept-breakdown`'s fourth
+  format stacked N concepts in a single column, spending the whole slide width on one item at a
+  time and making a set of peers read as a sequence. It is gone: the template keeps `grid`
+  (cards), `editorial` (flat) and `row`, all of which read side by side. The `grid` format now
+  also carries the `lead` and renders a bodyless item as a label-only card, so nothing the retired
+  format held is dropped. A model still carrying `format: "list"` — or the legacy `icon-list`
+  template id — renders as `grid` and the build warns, naming the slide. A set whose per-item
+  prose genuinely needs a full-width column is not a labeled set: it is `content-text`, or two
+  slides. On the strict `.pptx` path the §7.5 icon-bullet geometry stays documented (reference
+  slide 15 demonstrates it) but no model selects it.
+- **The `lead` reads as the title's sub-line.** It was set at body size and weight, so a framing
+  sentence under the title read as the first paragraph of the body. It is now a step larger and
+  bold.
+
+- **New highlight kind `source` — a citation, rendered plain.** Attribution lines ("Fuente: OWASP
+  Top 10 for LLM Applications, 2025") had no home: as a `note` they got a card, an accent bar and
+  an icon, so a credit line drew as much attention as the content it credits. `kind: "source"` is
+  the one highlight with no card, no accent bar and no icon — just a small muted line under the
+  body. Use it for provenance only (paper, standard, dataset, report, URL); a line that *says
+  something* about the source is still a `note`. Honored on both render paths: the HTML band drops
+  its box, and the strict `.pptx` emits it as a plain card-body-size line instead of a §8 panel.
+
 ## [0.76.0] — 2026-08-03
 
 ### Added
