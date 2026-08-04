@@ -60,12 +60,15 @@ footer, header, hgroup, main, menu, nav, section {
    emphasis inside a sentence is not a property of one template: every component inherits them.
    Deliberately colour-free except for the link: bold and italic take the ink of whatever component
    they sit in, so they work on the light card surfaces and the dark full-bleed ones alike, and a
-   component that wants its own emphasis colour (`.highlight.source b`) still overrides. */
+   component that wants its own emphasis colour (`.highlight.source b`) still overrides.
+   The link is keyed on `.mdlink`, never on a bare `a`: the deck's other anchors are navigation
+   chrome (the section-agenda roadmap rows), and a type selector would beat their single-class
+   rules and paint them like citations. */
 .slide b,.slide strong{font-weight:800}
 .slide i,.slide em{font-style:italic}
 .slide code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
   border-radius:.4cqw;padding:0 .3em;color:inherit}
-.slide a{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
+.slide a.mdlink{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
 .reveal .backgrounds{background:var(--page)}
@@ -853,11 +856,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m813-61-99-99H160v-94q0-38 19-65t49-41q60-27 115.5-42T455-419L61-813l43-43 752 752-43 43ZM220-220h434L515-359q-8-1-17-1h-18q-57 0-111 11.5T252-306q-14 7-23 21.5t-9 30.5v34Zm511-140q31 14 50 41t19 65v8L657-389q18 6 36.5 13.5T731-360ZM550-496l-48-48q30-7 49-31t19-56q0-38-26-64t-64-26q-32 0-56 19t-31 49l-48-48q19-38 55.5-59t79.5-21q63 0 106.5 43.5T630-631q0 43-21 79.5T550-496Zm104 276H220h434ZM448-599Z"/></svg></span><h3><b>Bold</b> a figure</h3><p>Entrenar un LMM puede consumir <b>700.000 litros</b> de agua — the number carries the line, so it reads as the number.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M224-199v-80h134l139-409H338v-80h380v80H584L445-279h159v80H224Z"/></svg></span><h3><i>Italic</i> a term</h3><p>The <i>lead</i> is the title's sub-line; the <i>body</i> is what follows it.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M320-242 80-482l242-242 43 43-199 199 197 197-43 43Zm318 2-43-43 199-199-197-197 43-43 240 240-242 242Z"/></svg></span><h3><code>code</code> inline</h3><p>A field name like <code>slide-model.json</code> or a flag like <code>--print-pdf</code> keeps the mono face.</p></div>
-<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M450-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h170v60H280q-58.33 0-99.17 40.76-40.83 40.77-40.83 99Q140-422 180.83-381q40.84 41 99.17 41h170v60ZM325-450v-60h310v60H325Zm185 170v-60h170q58.33 0 99.17-40.76 40.83-40.77 40.83-99Q820-538 779.17-579q-40.84-41-99.17-41H510v-60h170q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H510Z"/></svg></span><h3>A <a href="https://www.who.int" target="_blank" rel="noopener">link</a></h3><p>Only <code>http:</code>, <code>https:</code> and <code>mailto:</code> become links; anything else stays literal text.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M450-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h170v60H280q-58.33 0-99.17 40.76-40.83 40.77-40.83 99Q140-422 180.83-381q40.84 41 99.17 41h170v60ZM325-450v-60h310v60H325Zm185 170v-60h170q58.33 0 99.17-40.76 40.83-40.77 40.83-99Q820-538 779.17-579q-40.84-41-99.17-41H510v-60h170q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H510Z"/></svg></span><h3>A <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">link</a></h3><p>Only <code>http:</code>, <code>https:</code> and <code>mailto:</code> become links; anything else stays literal text.</p></div>
 </div>
 
 </div></div>
-<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div></div>
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div></div>
 <aside class="notes">Inline styling is resolved once, in html_style.py `_richtext`/`_inline_md`, on the slide's prose fields — not per template — so any field of any template accepts the four marks. Escaping runs first, so authored HTML in a field stays inert text; code blocks, speaker notes, image paths and the enum-ish fields the renderer branches on are excluded, because their bytes are the content. The grammar stops at inline marks on purpose: block markdown inside a field (headings, lists, tables) would let content route around the schema, which is where the template and its fields do their work.</aside></section><section class="slide" id="sec-3" data-kind="section-agenda"><div class="stage"><div class="secag">
 <div class="secaglist">
 <a class="secagrow " href="#sec-0"><span class="secagn">01</span><span>Frames &amp; openers</span></a>
@@ -1377,7 +1380,7 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
 </div>
 
 </div></div>
-<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1421,7 +1424,7 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
 </div>
 
 </div></div>
-<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1443,7 +1446,7 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
 </div>
 
 </div></div>
-<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><!-- Fixture stand-in for an aside's atmospheric photo: an abstract texture, deliberately carrying
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">WHO — Ethics and governance of AI for health</a> (2024).</p></div></div><div class="smedia"><div class="imgph svg"><!-- Fixture stand-in for an aside's atmospheric photo: an abstract texture, deliberately carrying
      no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
@@ -1508,7 +1511,7 @@ client.messages.create(<br>  model=&#34;claude-opus-4-8&#34;,<br>  system=[{<br>
 <div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">A source pins to the bottom edge</h2><p class="lead">This slide is deliberately short.</p></div><div class="cbody"><div class="cfit"><div class="callout pink"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M40-120v-60h880v60H40Zm100-120q-24 0-42-18t-18-42v-480q0-24 18-42t42-18h680q24 0 42 18t18 42v480q0 24-18 42t-42 18H140Zm0-60h680v-480H140v480Zm0 0v-480 480Zm218-76 122-122 122 122 42-42-122-122 122-122-42-42-122 122-122-122-42 42 122 122-122 122 42 42Z"/></svg></span><p><b>Chrome, not a remark</b> The citation credits the material; it does not comment on it, so it leaves the content flow entirely.</p></div>
 
 <div class="highlights fragment fade-up"><div class="highlight takeaway"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M200-120v-680h343l19 86h238v370H544l-18.93-85H260v309h-60Zm300-452Zm95 168h145v-250H511l-19-86H260v251h316l19 85Z"/></svg></span><p>A takeaway <i>is</i> a remark on the body, so it stays with the body.</p></div></div></div></div>
-<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a href="https://www.who.int" target="_blank" rel="noopener">OMS — Ethics and governance of AI for health</a> (2024).</p></div></div></div>
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://www.who.int" target="_blank" rel="noopener">OMS — Ethics and governance of AI for health</a> (2024).</p></div></div></div>
 <aside class="notes">A source highlight is emitted as a child of the stage rather than of .cfit, so it is pinned to the slide's bottom edge instead of trailing the content wherever the content happens to end. Two consequences follow from that placement, and both are the reason for it: on a short slide the citation stays on the baseline instead of floating up under a half-empty body, and the per-slide content-fit pass — which only ever scales .cfit — can neither shrink it nor move it. Every other highlight kind is a remark on the body and stays inside .cfit, where it moves and scales with what it remarks on.</aside></section><section class="slide" data-kind="concept-breakdown"><div class="stage d-full">
 <div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">Highlights: a framing band opens the slide</h2></div><div class="cbody"><div class="cfit"><div class="highlights hl-top"><div class="highlight quote"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m248-240 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T458-480L320-240h-72Zm360 0 94-162q-5 1-11 1.5t-11 .5q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 21-5.5 41T818-480L680-240h-72ZM376.5-503.5Q400-527 400-560t-23.5-56.5Q353-640 320-640t-56.5 23.5Q240-593 240-560t23.5 56.5Q287-480 320-480t56.5-23.5Zm360 0Q760-527 760-560t-23.5-56.5Q713-640 680-640t-56.5 23.5Q600-593 600-560t23.5 56.5Q647-480 680-480t56.5-23.5ZM680-560Zm-360 0Z"/></svg></span><p><b>Anthropic</b>: Menos una sesión de chat, más asignarle tareas a un colega.</p></div></div><div class="cards">
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M809-56 635-230 594-80H366l-47-171q-57-35-88-96t-31-133q0-36 9.5-75t29.5-71L57-808l41-41L850-97l-41 41ZM480-260q28 0 53-6t48-18L284-581q-12 24-18 49t-6 52q0 92 64 156t156 64Zm232-60-44-44q14-23 23-52t9-64q0-92-64-156t-156-64q-35 0-64 9t-52 23l-44-44 46-168h228l47 171q57 35 88 96t31 133q0 42-12.5 85T712-320ZM411-820h138-138Zm0 680h138-138Zm-18-604q23-7 44.5-10.5T480-758q21 0 42.5 3.5T567-744l-18-76H411l-18 76Zm18 604h138l18-76q-23 6-44.5 9.5T480-203q-21 0-42.5-3.5T393-216l18 76Z"/></svg></span><h3>Frames, not remarks</h3><p>The band sets up the cards instead of summarizing them.</p></div>

@@ -623,7 +623,10 @@ _MD_ITAL = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
 
 
 def _marks(s: str) -> str:
-    s = _MD_LINK.sub(lambda m: f'<a href="{m.group(2).replace(chr(34), "&quot;")}" '
+    # `.mdlink`, not a bare <a>: the renderer emits anchors for two unrelated jobs — a prose link
+    # like this one, and the section-agenda's roadmap rows, which are navigation chrome. Styling
+    # by element type conflated them and painted the whole roadmap like a citation.
+    s = _MD_LINK.sub(lambda m: f'<a class="mdlink" href="{m.group(2).replace(chr(34), "&quot;")}" '
                                f'target="_blank" rel="noopener">{m.group(1)}</a>', s)
     s = _MD_BOLD.sub(r"<b>\1</b>", s)
     return _MD_ITAL.sub(r"<i>\1</i>", s)

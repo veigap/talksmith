@@ -43,7 +43,10 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   HTML stays inert text), links are limited to `http:`/`https:`/`mailto:`, and the fields whose
   bytes *are* the content — code blocks, speaker notes, image paths, the enum-ish fields the
   renderer branches on — are excluded. The grammar deliberately stops at inline marks: block
-  markdown inside a field would let content route around the schema.
+  markdown inside a field would let content route around the schema. Prose links carry their own
+  class: the deck's other anchors are navigation chrome (the section-agenda roadmap rows), and a
+  bare `a` selector would outrank their single-class rules and paint the whole roadmap red and
+  underlined.
 - **A plain unlabeled list is now a numbered list, not bullets.** A slide whose items carry no
   label (course logistics, the rules of an assignment, a set of conditions) had nothing to build a
   card around, so it fell to `fallback` and drew as bare bullets. It now matches `process`, whose

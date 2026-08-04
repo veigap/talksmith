@@ -60,12 +60,15 @@ footer, header, hgroup, main, menu, nav, section {
    emphasis inside a sentence is not a property of one template: every component inherits them.
    Deliberately colour-free except for the link: bold and italic take the ink of whatever component
    they sit in, so they work on the light card surfaces and the dark full-bleed ones alike, and a
-   component that wants its own emphasis colour (`.highlight.source b`) still overrides. */
+   component that wants its own emphasis colour (`.highlight.source b`) still overrides.
+   The link is keyed on `.mdlink`, never on a bare `a`: the deck's other anchors are navigation
+   chrome (the section-agenda roadmap rows), and a type selector would beat their single-class
+   rules and paint them like citations. */
 .slide b,.slide strong{font-weight:800}
 .slide i,.slide em{font-style:italic}
 .slide code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
   border-radius:.4cqw;padding:0 .3em;color:inherit}
-.slide a{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
+.slide a.mdlink{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
 .reveal .backgrounds{background:var(--page)}
