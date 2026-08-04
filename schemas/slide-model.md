@@ -325,7 +325,10 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   filler prose to justify a `content-image` text column, and do not move the slide's substance out
   of `notes` onto the face — the whole point of the shape is that the presenter talks over it.
 - **`lead` vs `highlights` — a line that *introduces* the body is the `lead`.** A single line before
-  a slide's enumeration or image is its sub-line: it fills `lead`. Only a line that *comments on*
+  a slide's enumeration or image is its sub-line: it fills `lead`. It renders in the slide's **head
+  block, directly under the title**, on every template — it belongs to the title, not to the body,
+  so it never drifts down with the content or shrinks with it. (The mirror of a `source`, which is
+  pinned to the bottom edge; both are slide chrome, and everything in between moves with the body.) Only a line that *comments on*
   the body belongs in `highlights` — and then its `position` follows the same test: a **remark**
   closes (`bottom`, the default), a **frame** the audience needs before the body makes sense opens
   (`top`). The `**Label:** text` shape is not evidence either way — an `**Idea clave:** …` line

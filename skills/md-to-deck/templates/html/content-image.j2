@@ -1,13 +1,13 @@
 {% import "_macros.j2" as m %}
-{# Prose (a lead and/or a fact list) beside, under or over one supporting image. Which of those
-   it is, is the slide's **design**, not this template's business — the stage places `s.media`.
-   All this emits is the text column, and it emits nothing at all when there is none: a slide
-   carrying only an image (the screenshot a presenter talks over, its detail in the notes) is a
-   legitimate `content-image`, and an empty text column would project a blank half-slide. #}
+{# A fact list beside, under or over one supporting image. Which of those it is, is the slide's
+   **design**, not this template's business — the stage places `s.media`; the `lead` is the
+   title's sub-line and the stage's header emits it. All this emits is the fact column, and it
+   emits nothing at all when there are no facts: a slide carrying only an image (the screenshot a
+   presenter talks over, its detail in the notes) is a legitimate `content-image`, and an empty
+   text column would project a blank half-slide. #}
 {% call m.stage(s) %}
-{% if s.lead or s.facts %}
+{% if s.facts %}
 <div class="citext">
-{{ m.lead(s) -}}
 {% if s.facts %}<ul class="cifacts">{% for f in labeled(s.facts) %}<li>{% if f.label %}<b>{{ f.label | nocolon }}</b>: {% endif %}{{ f.body }}</li>{% endfor %}</ul>{% endif %}
 </div>
 {% endif %}

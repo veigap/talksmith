@@ -3,7 +3,6 @@
    label — a labelled sequence earns numbered cards, a plain one is a numbered list. A supporting
    diagram is the slide's **design** (the stage places it), not a third shape here. #}
 {% call m.stage(s) %}
-{{ m.lead(s) -}}
 {% if s.steps | selectattr('label') | first %}
 <div class="numrow">
 {% for st in s.steps %}

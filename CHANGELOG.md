@@ -75,9 +75,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   prose genuinely needs a full-width column is not a labeled set: it is `content-text`, or two
   slides. On the strict `.pptx` path the §7.5 icon-bullet geometry stays documented (reference
   slide 15 demonstrates it) but no model selects it.
-- **The `lead` reads as the title's sub-line.** It was set at body size and weight, so a framing
-  sentence under the title read as the first paragraph of the body. It is now a step larger and
-  bold.
+- **The `lead` reads as the title's sub-line — and now sits with it.** It was set at body size and
+  weight, so a framing sentence under the title read as the first paragraph of the body; it is now
+  a step larger and bold. It also **moved into the slide's head block**, out of the scaled content
+  region: eight templates each emitted it as the first thing in the body, where the per-slide fit
+  pass moved and shrank it along with everything else, so on a short slide the lead drifted down
+  away from the title it introduces. The head block emits it once, for every template, so none of
+  them has to remember to. Together with the pinned `source`, the two lines that frame a slide are
+  now chrome — title block at the top, citation at the bottom — and only the body moves.
 
 - **New highlight kind `source` — a citation, rendered plain.** Attribution lines ("Fuente: OWASP
   Top 10 for LLM Applications, 2025") had no home: as a `note` they got a card, an accent bar and

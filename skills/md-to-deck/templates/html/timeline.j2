@@ -1,6 +1,5 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
-{{ m.lead(s) -}}
 <div class="timeline">
 {% for ms in s.milestones %}
 <div class="tlrow"><span class="tldot{{ ' marked' if ms.marker else '' }}">{{ ms.marker or '' }}</span><div class="tlbody"><h4 class="tldate">{{ ms.label | nocolon }}</h4><p>{{ ms.body }}</p></div></div>

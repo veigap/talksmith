@@ -60,6 +60,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stitle{font-weight:800;color:var(--ink);letter-spacing:-.01em;font-size:4.2cqw;margin:1.1cqw 0 0;line-height:1.08;text-wrap:balance}
 /* the lead is the title's own sub-line, not body prose: it carries the slide's framing sentence,
    so it sits a step above the body in weight and size instead of reading as the first paragraph. */
+/* the lead sits in `.shead`, under the title it belongs to — never in `.cfit`, which the fit pass
+   moves and scales. Its measure is capped so a long framing sentence wraps into a block under the
+   title instead of running the full slide width. */
 .lead{color:var(--body);font-size:3cqw;font-weight:700;margin:1.8cqw 0 0;max-width:56ch}
 .ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
@@ -117,7 +120,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.d-banded>.cbody:not(:has(.cards,.ccicards,.editgrid,.cardrow,.numrow,.steps,.compare,.stats)){
   background:var(--card);border-left:.6cqw solid var(--red);border-radius:.8cqw;
   padding:1.5cqw 2cqw;color:var(--ink);font-size:2.4cqw}
-.stage.d-banded .lead{max-width:none;margin:0}
 .stage.d-banded .cifacts li{padding-left:0}.stage.d-banded .cifacts li::before{display:none}
 /* ── column: a narrow full-bleed strip of media down one edge, **cropped to fill**. Atmosphere,
    not information — nothing in it is meant to be read closely. Absolutely positioned so the head
@@ -341,9 +343,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    the body above it. Identical classes, colours and icons — only the position differs, and the
    spacing between band and body comes from `.cfit`'s own gap in both directions. */
 .highlights{margin-top:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
-/* a lead is the title's own sub-line, so it stays glued to the title even when a framing band
-   follows: the band is emitted before the body, the lead is pulled ahead of it. */
-.cfit>.lead{order:-1}
 /* a highlight's `kind` sets the accent (border + icon) via currentColor; the body stays ink */
 .highlight{display:flex;gap:1.4cqw;align-items:flex-start;background:var(--card);border-left:.6cqw solid currentColor;border-radius:.8cqw;padding:1.4cqw 1.8cqw;color:var(--red)}
 .highlight .ic{width:3.2cqw;height:3.2cqw;flex:0 0 auto;margin-top:.2cqw}.highlight .ic svg{fill:currentColor}
@@ -404,7 +403,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
 /* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
 .timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}
-.lead + .timeline{margin-top:2.6cqw}
 .tlrow{position:relative}
 .tldot{position:absolute;left:-4.35cqw;top:1cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--red);border:.5cqw solid var(--slide);box-shadow:0 0 0 .3cqw var(--card)}
 /* an optional per-milestone `marker` (a number, a phase letter) rides inside the dot, which

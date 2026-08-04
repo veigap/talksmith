@@ -16,7 +16,6 @@
 {% set fmt = s.format or ('row' if s.template == 'card-row' else 'grid') %}
 {% set items = s.cards or s.rows or [] %}
 {% call m.stage(s) %}
-{{ m.lead(s) -}}
 {% if fmt == 'editorial' %}
 {# The same labeled set with the card chrome removed — a flat composition on the canvas, for the
    sets where the panel carried no meaning and only cost room. Markup is deliberately the plain
@@ -36,7 +35,7 @@
 {% else %}
 {# `grid` is also where a legacy `list` model lands, so it renders what that format rendered: an
    item whose `body` is empty (a bare anaphora) becomes a label-only card rather than a card with
-   an empty paragraph in it. The lead is emitted above, for every format. #}
+   an empty paragraph in it. #}
 <div class="cards">
 {% for c in items %}
 <div class="ccard{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>

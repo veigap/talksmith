@@ -1,8 +1,7 @@
 {% import "_macros.j2" as m %}
 {# A card set with one shared supporting image. Where the image goes is the slide's design; this
-   emits the lead and the cards. #}
+   emits the cards. #}
 {% call m.stage(s) %}
-{{ m.lead(s) -}}
 {% if s.cards %}<div class="ccicards">
 {% for c in s.cards %}<div class="ccard sm{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>{% endfor %}
 </div>{% endif %}

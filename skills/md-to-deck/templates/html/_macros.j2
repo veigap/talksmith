@@ -1,8 +1,14 @@
 {# Shared chrome. Every content template wraps its body in `stage(s)`, where `s` is the
    slide-model slide — so the macros read section/title/highlights/reveal/lead off it directly. #}
+{# The head block: section pill, title, and the `lead` — which is the title's own sub-line, not
+   the body's first paragraph. It lives here rather than inside `.cfit` for the same reason a
+   `source` lives outside it: the fit pass scales and repositions `.cfit`, so a lead emitted there
+   drifted down and shrank with the body instead of staying with the title it introduces. Emitting
+   it once here also means no template has to remember to call it. #}
 {% macro header(s) %}
 {% if s.section %}<span class="pill">{{ s.section }}</span>{% endif %}
 {% if s.title %}<h2 class="stitle">{{ s.title }}</h2>{% endif %}
+{% if s.lead %}<p class="lead">{{ s.lead }}</p>{% endif %}
 {% endmacro %}
 {# One accented band of highlights. Called up to three times by `stage()` — above the body for
    the entries marked `position: top`, below it for the rest, and once more for the `source`
@@ -62,4 +68,3 @@
    the presenter clicks in each item. Group containers (e.g. highlights) call `frag(s)` too and
    stay a single fragment. #}
 {% macro frag(s) %}{{ '' if s.reveal == 'together' else ' fragment fade-up' }}{% endmacro %}
-{% macro lead(s) %}{% if s.lead %}<p class="lead">{{ s.lead }}</p>{% endif %}{% endmacro %}
