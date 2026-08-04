@@ -289,6 +289,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    stretched to a common height — forcing a shared baseline would invent an alignment the content
    does not have (which is exactly what `.compare` below *does* have, and why it is a grid).
    The column count drives the density, in CSS via `:has()` — nothing upstream computes a class. */
+/* the block title — a second-level heading that names what the columns are (`IA Tradicional vs.
+   Foundation Models`), distinct from the slide's own H2 above it and from the `lead`, which is a
+   framing sentence rather than a name. Sized between the two so the order reads: slide title →
+   block title → column term. */
+.ccsub{margin:0 0 1.8cqw;font-size:3cqw;font-weight:800;color:var(--ink);line-height:1.15}
 .conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.4cqw;align-items:start;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
@@ -299,6 +304,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ccfeat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.7cqw}
 .ccfeat li{position:relative;padding-left:2cqw;font-size:2cqw;color:var(--body);line-height:1.3}
 .ccfeat li::before{content:"";position:absolute;left:0;top:.75cqw;width:.8cqw;height:.8cqw;border-radius:50%;background:var(--red)}
+.ccfree{margin:0;font-size:2cqw;color:var(--body);line-height:1.35}
 .ccex{margin:auto 0 0;padding-top:.6cqw;font-size:2cqw;font-weight:800;color:var(--ink);line-height:1.3}
 /* the emphasised column is the one the slide is *about* — the subject the others define by
    contrast, not a verdict. It takes the accent panel and inverts wholesale, so nothing inside it
@@ -306,6 +312,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccol.em{background:var(--red);border-radius:1.6cqw;padding:2.2cqw 2cqw;color:#fff}
 .conccol.em h3,.conccol.em .ccflab,.conccol.em .ccex,.conccol.em .ccdef,.conccol.em .ccfeat li{color:#fff}
 .conccol.em .ccfeat li::before{background:#fff}
+.conccol.em .ccfree{color:#fff}
 .conccol.em b{color:#fff}
 /* four across is the tight case — one step down keeps the measure readable rather than leaving it
    to the fit pass, which shrinks the whole slide */
@@ -313,7 +320,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccols:has(>.conccol:nth-child(4)) .ccdef{font-size:1.85cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.85cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccfeat li{font-size:1.8cqw}
-.conccols:has(>.conccol:nth-child(4)) .ccex{font-size:1.8cqw}
+.conccols:has(>.conccol:nth-child(4)) .ccex,
+.conccols:has(>.conccol:nth-child(4)) .ccfree{font-size:1.8cqw}
 .compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
@@ -383,9 +391,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    spacing between band and body comes from `.cfit`'s own gap in both directions. */
 .highlights{margin-top:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
 /* a highlight's `kind` sets the accent (border + icon) via currentColor; the body stays ink */
-.highlight{display:flex;gap:1.4cqw;align-items:flex-start;background:var(--card);border-left:.6cqw solid currentColor;border-radius:.8cqw;padding:1.4cqw 1.8cqw;color:var(--red)}
-.highlight .ic{width:3.2cqw;height:3.2cqw;flex:0 0 auto;margin-top:.2cqw}.highlight .ic svg{fill:currentColor}
-.highlight p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.32}.highlight b{font-weight:800}
+.highlight{display:flex;gap:1cqw;align-items:flex-start;background:var(--card);border-left:.5cqw solid currentColor;border-radius:.8cqw;padding:1cqw 1.3cqw;color:var(--red)}
+/* A highlight is a remark *about* the slide, so it sits **below** the slide's own voice: the type
+   is 20% under the `lead`, which is itself under the title. It was set larger than both, which
+   made a one-line aside the biggest text on the slide. The icon is sized off the same step so it
+   stays a mark beside the line rather than a second focal point. */
+.highlight .ic{width:2cqw;height:2cqw;flex:0 0 auto;margin-top:.2cqw}.highlight .ic svg{fill:currentColor}
+.highlight p{margin:0;font-size:1.46cqw;color:var(--ink);line-height:1.35}.highlight b{font-weight:800}
 .highlight.takeaway{color:var(--red)}.highlight.important{color:#C77700}.highlight.definition{color:#5B4BC4}
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}

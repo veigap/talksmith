@@ -1,21 +1,26 @@
 {% import "_macros.j2" as m %}
-{# 2–4 terms explained side by side, each column self-contained: the term, its definition, and
-   optionally its own feature list and a closing `Ejemplos: …` line. The columns deliberately
-   share no row structure — one can carry four bullets where its neighbour carries a paragraph —
-   which is exactly what separates this from `value-columns`, where the cells align row by row
-   over a shared factor and reading across a row is the point.
+{# 2–4 terms explained side by side. Each column is **a title, a description, and then free
+   text** — and the free text really is free: a list renders as bullets, a string as paragraphs,
+   because the source shapes differ per column (one term is explained in three bullets, its
+   neighbour in two paragraphs). Forcing a list on both would invent a structure the content does
+   not have — which is the same mistake as reading these columns as a table.
+   The columns deliberately share no row structure; that is what separates this from
+   `value-columns`, where the cells align row by row over a shared factor.
    `emphasis` marks the column the slide is *about* (not the winner); CSS gives it the accent
-   panel and inverts it. Everything about how many columns there are, and how they tighten as
-   that count grows, is count-driven CSS — nothing here branches on it. #}
+   panel and inverts it. How many columns there are, and how they tighten as that count grows, is
+   count-driven CSS — nothing here branches on it. #}
 {% call m.stage(s) %}
+{% if s.subtitle %}<p class="ccsub">{{ s.subtitle }}</p>{% endif %}
 <div class="conccols">
 {% for c in s.columns %}
 <div class="conccol{{ ' em' if c.emphasis else '' }}{{ m.frag(s) }}">
 <h3>{{ c.label | nocolon }}</h3>
 {% if c.body %}<p class="ccdef">{{ c.body }}</p>{% endif %}
-{% if c.features %}
-{% if c.features_label %}<p class="ccflab">{{ c.features_label }}</p>{% endif %}
-<ul class="ccfeat">{% for f in c.features %}<li>{{ f }}</li>{% endfor %}</ul>
+{% if c.text_label %}<p class="ccflab">{{ c.text_label }}</p>{% endif %}
+{% if c.text is string %}
+{% for para in c.text.split("\n") if para.strip() %}<p class="ccfree">{{ para }}</p>{% endfor %}
+{% elif c.text %}
+<ul class="ccfeat">{% for f in c.text %}<li>{{ f }}</li>{% endfor %}</ul>
 {% endif %}
 {% if c.example %}<p class="ccex">{{ c.example }}</p>{% endif %}
 </div>
