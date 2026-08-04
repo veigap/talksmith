@@ -1795,9 +1795,27 @@ window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configur
   Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
   if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
 // Reveal's `hash` writes each slide into the URL via history.replaceState — which throws
-// SecurityError inside an `about:srcdoc` iframe (the Artifact preview), where no http URL is a
-// legal history entry. Probe it once and drop deep-linking rather than let Reveal throw.
-var canHash=(function(){try{history.replaceState(null,'',location.href);return true;}catch(e){return false;}})();
+// SecurityError inside an `about:srcdoc` iframe (the Artifact preview), where the document URL is
+// `about:srcdoc` but a relative `#/2` resolves against the *parent's* http URL, and a history
+// entry may not cross that boundary. Probe it once and drop deep-linking rather than let Reveal
+// throw on every slide change.
+// The probe must write a HASH, not the current href: replacing a URL with itself is legal even in
+// the sandbox, so probing with `location.href` returns true there and the guard never fires.
+var canHash=(function(){var h=location.href;
+  try{history.replaceState(null,'','#_p');history.replaceState(null,'',h);return true;}
+  catch(e){return false;}})();
+// Backstop: any history write that still slips through (a Reveal plugin, a future embedding with
+// its own rules) fails silently instead of spamming the console with uncaught SecurityErrors.
+// Installed AFTER the probe, or it would swallow the probe's own answer.
+['pushState','replaceState'].forEach(function(m){var f=history[m].bind(history);
+  history[m]=function(){try{return f.apply(history,arguments);}catch(e){}};});
+// With the hash off, Reveal no longer answers `#sec-N` links — and those are the section-agenda's
+// roadmap rows, the deck's one piece of real navigation. Resolve them directly instead.
+if(!canHash){document.addEventListener('click',function(ev){
+  var a=ev.target&&ev.target.closest&&ev.target.closest('a[href^="#"]'); if(!a)return;
+  var el=document.getElementById(a.getAttribute('href').slice(1)); if(!el)return;
+  var i=[].indexOf.call(document.querySelectorAll('.reveal .slides > section'), el);
+  if(i<0)return; ev.preventDefault(); if(window.Reveal&&Reveal.slide)Reveal.slide(i);});}
 Reveal.initialize({
   width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t',

@@ -33,6 +33,14 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ### Fixed
 
+- **No more `SecurityError` spam when the deck is viewed inside a sandboxed iframe** (the Artifact
+  preview, `about:srcdoc`). The guard that turns off Reveal's URL deep-linking there was probing
+  the wrong thing: it replaced the URL *with itself*, which the sandbox permits, so it reported
+  "history works" and every slide change then threw. It now probes with a **hash** URL — exactly
+  what Reveal writes — so the guard fires where it should. Two consequences handled with it: any
+  history write that still slips through fails silently instead of surfacing as an uncaught error,
+  and with the hash off the section-agenda's roadmap rows are resolved directly (they navigate by
+  `#sec-N`, which Reveal stops answering once hash handling is disabled).
 - **`**[Title](url)**` renders bold.** Emphasis wrapping a link — exactly how a citation is
   written — is now resolved as one span. Links are held aside behind a marker while emphasis runs,
   so emphasis reads *across* a link but never *into* one (a `*` in a URL can no longer emit a tag
