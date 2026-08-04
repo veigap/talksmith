@@ -720,6 +720,100 @@
       "lead": "The optional per-milestone marker rides inside the dot:"
     },
     {
+      "template": "concept-columns",
+      "section": "Ordered & comparison",
+      "title": "concept-columns: four terms, the third emphasised",
+      "lead": "Each column explains its own term; reading across a row says nothing.",
+      "columns": [
+        {
+          "label": "Language Model",
+          "body": "Asigna probabilidades a secuencias de palabras: dado un contexto, predice qué sigue.",
+          "features_label": "Características:",
+          "features": [
+            "Existen desde los años 1950",
+            "Basados en P(palabra | contexto)",
+            "Primero estadísticos, luego neuronales"
+          ],
+          "example": "Ejemplos: N-gramas · Shannon (1948) · RNNs"
+        },
+        {
+          "label": "Foundation Model",
+          "body": "Entrenado a escala masiva sobre datos generales, adaptable a múltiples tareas.",
+          "features_label": "Características:",
+          "features": [
+            "Entrenado con billones de tokens",
+            "Generalista por naturaleza",
+            "Base para aplicaciones específicas"
+          ],
+          "example": "Ejemplos: GPT-4, Gemini, Claude, LLaMA"
+        },
+        {
+          "label": "LLM",
+          "body": "Un Foundation Model especializado en texto: aprende la distribución del lenguaje natural.",
+          "features_label": "Características:",
+          "features": [
+            "Sólo procesa y genera tokens",
+            "Arquitectura Transformer",
+            "Desde 7B hasta +1T parámetros"
+          ],
+          "example": "Ejemplos: GPT-4, Claude 3, Mistral",
+          "emphasis": true
+        },
+        {
+          "label": "Modelo Multimodal",
+          "body": "Un Foundation Model que procesa y genera varios tipos de dato a la vez.",
+          "features_label": "Características:",
+          "features": [
+            "Combina encoders de varias modalidades",
+            "Un solo modelo para ver, oír y hablar",
+            "Razonamiento cruzado entre modalidades"
+          ],
+          "example": "Ejemplos: GPT-4o, Gemini 1.5 Pro, LLaVA"
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "label": "Relación",
+          "body": "Todo LLM es un Foundation Model, pero no todo Foundation Model es un LLM."
+        }
+      ],
+      "notes": "Four terms explained side by side. The columns deliberately share no row structure — that is the whole discriminator against value-columns, which is a table wearing columns and whose cells align row by row against a shared factor. Here reading across a row says nothing: each column is read top to bottom on its own, and one column may carry four bullets where its neighbour carries a paragraph. The emphasised column marks the term the slide is about, the one the others define by contrast; it is not a verdict, so the older or worse option may carry it just as well."
+    },
+    {
+      "template": "concept-columns",
+      "section": "Ordered & comparison",
+      "title": "concept-columns: two terms, no shared factors",
+      "lead": "It looks adversarial, but there is no row to read across — so it is not a comparison grid.",
+      "columns": [
+        {
+          "label": "IA Tradicional",
+          "body": "Un modelo por tarea específica, entrenado en casa.",
+          "features": [
+            "Requiere datos etiquetados abundantes para cada caso de uso",
+            "Difícil de reutilizar entre dominios distintos"
+          ],
+          "example": "Ejemplo: un detector de fallos en autopartes sólo detecta eso.",
+          "emphasis": true
+        },
+        {
+          "label": "Foundation Models",
+          "body": "Modelos entrenados con datos a gran escala que adquieren una comprensión general y se adaptan después.",
+          "features": [
+            "Se exponen como SaaS o corren localmente",
+            "No hace falta un equipo de data science para empezar"
+          ]
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Lectura recomendada: [On the Opportunities and Risks of Foundation Models](https://arxiv.org/abs/2108.07258) (Stanford HAI, 2021)."
+        }
+      ],
+      "notes": "The two-column case, and the one most likely to be misclassified. It reads adversarial — old way versus new way — but there is no shared factor and no row to read across, so it is not a value-columns grid: each side is explained in its own terms, with its own internal structure. Note also that the emphasised column here is the traditional approach, not the one the talk advocates: emphasis marks the subject under discussion, never the winner."
+    },
+    {
       "template": "value-columns",
       "section": "Ordered & comparison",
       "title": "value-columns: three columns",

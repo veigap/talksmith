@@ -85,6 +85,9 @@ Decide the template **from the content**, as a discriminator walk — not first-
      multiple-choice options are *choices*, not a labeled set.
    - `is_voiced` (someone else's words carry the slide) → `quote`, **not** `statement`.
    - `one_metric` → `big-number`; `big_metrics` (2–4 standalone numbers are the payload) → `stat`.
+   - **Columns**: cells that align **row by row** over a shared factor → `value-columns`; columns
+     that share **no row structure**, each explaining its own term → `concept-columns`. Reading
+     across a row is the test: if it says nothing, it is not a table.
    - `has_table`: **2–3 comparable value-columns** (A-vs-B, before/after, or three options over
      shared factors) → `value-columns`; a **label/value or N-level/N-column** table →
      `concept-breakdown` (card-per-row grid), **not** `value-columns`. (A pipe-table is never a
@@ -187,11 +190,14 @@ precise rules.
 > except `source`, a bare citation that renders plain, with no card and no icon, **pinned to the
 > slide's bottom edge** instead of trailing the body, and to which `position` does not apply).
 > Each entry also chooses its `position`. A **remark** — it comments on, concludes or qualifies the
-> body — sits in the band **below** it (`bottom`, the default) and reveals last. A **frame** — a
+> body — sits in a band pinned to the slide's **bottom edge** (`bottom`, the default) and reveals
+> last, landing in the same place on every slide rather than trailing wherever the body stops. A
+> **frame** — a
 > voiced line that sets the theme, a definition the items depend on, a warning that has to land
 > first — sits in the band **above** the body (`top`) and is **visible from the moment the slide
-> opens**, because a frame that arrives last frames nothing. Both bands are the same component in a
-> different place: same classes, same per-`kind` colour and icon. A slide may carry both.
+> opens**, because a frame that arrives last frames nothing — and, unlike a remark, it travels with
+> the body it frames instead of being pinned. Both bands are the same component in a different
+> place: same classes, same per-`kind` colour and icon. A slide may carry both.
 >
 > **Design, then style.** Every slide in this catalog is a **design** — how the canvas is divided —
 > filled with a **style**, which is the template below. Pick the design first, then the template;
@@ -510,6 +516,39 @@ precise rules.
 - **Strict recipe:** §11 (pipe-table → card-grid) / two §7.2 columns; with an image, §11 composed
   with §13 (body beside a picture) — no new geometry. **Provenance:** ref
   S44 (compare-strip), S6 (pair).
+
+#### `concept-columns` (parallel explanations, side by side)
+- **Match:** **2–4 terms explained side by side**, each column a **self-contained explanation** —
+  the term, a definition paragraph, and optionally its own feature list and a closing
+  `Ejemplos: …` line. What selects this template is that the columns **share no row structure**:
+  column 2 can carry four bullets where column 3 carries one paragraph, because each explains its
+  own term rather than answering the same question about a different subject.
+  **The discriminator against `value-columns` is exactly that.** `value-columns` is a *table
+  wearing columns* — its cells align row by row against a shared factor, and reading across a row
+  is the point. Here reading across says nothing; each column is read top to bottom on its own.
+  A two-column `concept-columns` (old-way vs new-way, each explained in its own terms) is
+  therefore **not** a comparison grid, even though it looks adversarial.
+  **Not:** aligned cells over shared factors (→ `value-columns`); a valenced upside/downside pair
+  (→ `pros-cons`); label + a single line per item, with no sub-structure (→ `concept-breakdown`,
+  whose cards have room for a label and one body and nothing more); more than 4 terms (split the
+  slide — at five the columns are too narrow to hold a definition).
+- **Format:** N equal full-height columns, no cards by default: term (13.5 pt Bold) · definition
+  paragraph (11 pt) · optional bold sub-heading + its bullet list · optional bold closing
+  `Ejemplos:` line. Columns are **top-aligned**, never stretched to equal height — they are
+  independent, and forcing a shared baseline invents an alignment the content does not have.
+- **One column may be emphasised.** Set `emphasis` on the column the slide is *about* — the one
+  the others define by contrast, or the one the talk then goes on to use. It renders as a filled
+  `#DA1B2E` rounded panel with the whole column inverted to `#FFFFFF`. At most one per slide: two
+  emphasised columns emphasise nothing. It is **not** a verdict — the panel marks the subject, not
+  the winner, so the "old way" column may carry it just as well as the new one.
+- A **closing band** under the columns (the `🔑 Relación: …` line that ties the terms together, or
+  a `Lectura recomendada:` reference) is not part of this template: it is a `highlights` entry —
+  `takeaway` for the former, `source` for the latter — which already renders pinned to the
+  slide's bottom edge.
+- **Strict recipe:** N §7.2 columns without the card fill, the emphasised one as a §2.2 `#DA1B2E`
+  `roundRect` with inverted runs; §17 icons are **not** used — a definition column is anchored by
+  its term, not by a glyph. **Provenance:** `layout.pptx` S31 (four terms, third emphasised) and
+  S32 (two terms, first emphasised).
 
 #### `pros-cons` (two colour-coded columns)
 - **Match:** a **decision framed as upside vs downside** — two labelled groups (Ventajas /

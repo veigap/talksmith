@@ -36,6 +36,7 @@ What it does:
       stat           -> stats
       timeline       -> milestones
       value-columns  -> columns
+      concept-columns -> columns
       closing-cta    -> items
       content-text   -> panels
 
@@ -78,6 +79,7 @@ ENUM_FIELD = {
     "timeline": ("milestones", 2),
     # unchanged by the optional `image`/`lead`: one column lists nothing in parallel either way
     "value-columns": ("columns", 2),
+    "concept-columns": ("columns", 2),
     "closing-cta": ("items", 2),
     "content-text": ("panels", 2),
 }
@@ -94,6 +96,7 @@ ADVICE = {
     "process": "single-point — a one-step process is not a process",
     "timeline": "single-point — a one-milestone timeline is not a timeline",
     "value-columns": "single-point — a single column sets nothing against anything",
+    "concept-columns": "single-point — one term explained on its own is not a set of columns",
     "closing-cta": "single-point (one call to action)",
 }
 

@@ -99,8 +99,11 @@ deliverable; `draft.md` → live in-progress view).
 
   **`position`** — where the entry's band sits, `"bottom"` *(default)* or `"top"`. It is **per
   entry, not per slide**: the render groups all `top` entries into one band above the body and all
-  `bottom` entries into one below, each in array order, so a slide can open with a framing line and
-  still close with a takeaway. Choose by the job the line does, not by its `kind`:
+  `bottom` entries into one band **on the slide's bottom edge**, each in array order, so a slide
+  can open with a framing line and still close with a takeaway. The two are not symmetric — a
+  frame has to sit against the body it frames, so it travels with the body; a closing remark is
+  read last and lands on the baseline, in the same place on every slide, whether the body above it
+  fills the slide or barely covers half of it. Choose by the job the line does, not by its `kind`:
 
   | `position` | The line's relation to the body | Typical kinds |
   |---|---|---|
@@ -109,6 +112,7 @@ deliverable; `draft.md` → live in-progress view).
 
   Both bands are the same piece in a different place: identical classes, accent colour and icon.
   An unrecognized value falls back to `bottom`, like an unrecognized `kind` falls back to `takeaway`.
+  A slide carrying both a `bottom` band and a `source` stacks them in that order at the foot.
 - **`design` + `media`** — a slide is a **design** filled with a **style**, and the two are chosen
   in that order. The **design** is how the canvas is divided; the **style** is the `template`, the
   shape the content takes inside it. They are independent: **every content template accepts every
@@ -216,6 +220,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
 | `content-image` | `title`, `media:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` | `lead`, per-card `icon` (else content-matched), `design` |
+| `concept-columns` | `title`, `columns:[{label,body}]` (2–4) | per column `features:[str]` (its own bullet list), `features_label` (the bold lead over that list), `example` (a bold closing line, e.g. `Ejemplos: …`), `emphasis` (`true` on **at most one** column — renders as a filled accent panel with the column inverted); slide-level `lead`. Columns share **no** row structure — that is what separates this from `value-columns` |
 | `value-columns` | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). Beside media the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |

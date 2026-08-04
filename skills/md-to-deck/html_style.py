@@ -392,6 +392,7 @@ _TMPL = {
     "process": "process.j2", "code-example": "code-example.j2", "figures": "figures.j2",
     "image-grid": "image-grid.j2", "image-full": "image-full.j2",
     "content-image": "content-image.j2", "value-columns": "value-columns.j2",
+    "concept-columns": "concept-columns.j2",
     "single-point": "single-point.j2", "callout": "single-point.j2",
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
     "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",

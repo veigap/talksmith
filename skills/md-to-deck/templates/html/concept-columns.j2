@@ -1,0 +1,24 @@
+{% import "_macros.j2" as m %}
+{# 2–4 terms explained side by side, each column self-contained: the term, its definition, and
+   optionally its own feature list and a closing `Ejemplos: …` line. The columns deliberately
+   share no row structure — one can carry four bullets where its neighbour carries a paragraph —
+   which is exactly what separates this from `value-columns`, where the cells align row by row
+   over a shared factor and reading across a row is the point.
+   `emphasis` marks the column the slide is *about* (not the winner); CSS gives it the accent
+   panel and inverts it. Everything about how many columns there are, and how they tighten as
+   that count grows, is count-driven CSS — nothing here branches on it. #}
+{% call m.stage(s) %}
+<div class="conccols">
+{% for c in s.columns %}
+<div class="conccol{{ ' em' if c.emphasis else '' }}{{ m.frag(s) }}">
+<h3>{{ c.label | nocolon }}</h3>
+{% if c.body %}<p class="ccdef">{{ c.body }}</p>{% endif %}
+{% if c.features %}
+{% if c.features_label %}<p class="ccflab">{{ c.features_label }}</p>{% endif %}
+<ul class="ccfeat">{% for f in c.features %}<li>{{ f }}</li>{% endfor %}</ul>
+{% endif %}
+{% if c.example %}<p class="ccex">{{ c.example }}</p>{% endif %}
+</div>
+{% endfor %}
+</div>
+{% endcall %}

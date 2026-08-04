@@ -13,10 +13,23 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
-## [0.77.0] — 2026-08-04
+## [0.78.0] — 2026-08-04
 
 ### Added
 
+- **New slide type `concept-columns` — parallel explanations, side by side.** Two to four terms,
+  each column a self-contained explanation: the term, its definition, optionally its own feature
+  list and a closing `Ejemplos: …` line. It had no home before, and the nearest fit was wrong:
+  `value-columns` is a *table wearing columns*, whose cells align row by row against a shared
+  factor, while these columns **share no row structure** — column two can carry four bullets where
+  column three carries a paragraph, because each explains its own term rather than answering the
+  same question about a different subject. Reading across a row is the test; if it says nothing,
+  it is not a table. A two-column slide of this kind (old way vs new way, each explained in its own
+  terms) therefore is **not** a comparison grid, however adversarial it looks. One column may carry
+  `emphasis`, rendering as a filled accent panel with the column inverted — it marks the term the
+  slide is *about*, not the winner, so the older option may carry it just as well. The tying line
+  or reference under the columns is not part of the type: it is a `highlights` entry, already
+  pinned to the slide's bottom edge.
 - **`design` — a slide is a design filled with a style, chosen in that order.** Where the picture
   goes used to be answered in three different places: a `layout` field that existed on five
   templates and only when the slide carried an `image`, a parallel `aside` column with its own
@@ -93,6 +106,12 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   prose genuinely needs a full-width column is not a labeled set: it is `content-text`, or two
   slides. On the strict `.pptx` path the §7.5 icon-bullet geometry stays documented (reference
   slide 15 demonstrates it) but no model selects it.
+- **A slide's closing bands are pinned to its bottom edge.** The `bottom` highlights band and the
+  `source` used to be the last things inside the scaled content region, so they trailed wherever
+  the body happened to stop — floating mid-slide on a short one, and shrinking with the body on a
+  crowded one. Both now sit outside it, on the slide's baseline, in the same place on every slide.
+  The `top` band deliberately does **not** move: a frame has to sit against the body it frames.
+  `position` does not apply to a `source`, which is always last.
 - **The `lead` reads as the title's sub-line — and now sits with it.** It was set at body size and
   weight, so a framing sentence under the title read as the first paragraph of the body; it is now
   **bold**, which is what makes it read as the title's sub-line, while staying clearly smaller than
@@ -111,11 +130,7 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   band still reads as one family. Use it for provenance only (paper, standard, dataset, report, URL); a line that *says
   something* about the source is still a `note`. Honored on both render paths: the HTML band drops
   its box, and the strict `.pptx` emits it as a plain card-body-size line instead of a §8 panel.
-  It is also the one kind that **leaves the content flow** — a citation is slide chrome, not a
-  remark on the body, so it is pinned to the slide's bottom edge instead of trailing wherever the
-  content happens to end. On a short slide it stays on the baseline rather than floating up under
-  a half-empty body, and the per-slide content-fit pass can neither move nor shrink it. `position`
-  does not apply to a `source`.
+  It is also always last, under the `bottom` band.
 
 ## [0.76.0] — 2026-08-03
 

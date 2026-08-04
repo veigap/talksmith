@@ -109,9 +109,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* the lead is the title's own sub-line, not body prose: it carries the slide's framing sentence,
    so it sits a step above the body in weight and size instead of reading as the first paragraph. */
 /* the lead sits in `.shead`, under the title it belongs to — never in `.cfit`, which the fit pass
-   moves and scales. Its measure is capped so a long framing sentence wraps into a block under the
-   title instead of running the full slide width. */
-.lead{color:var(--body);font-size:3cqw;font-weight:700;margin:1.8cqw 0 0;max-width:56ch}
+   moves and scales. It runs the **full head width** — no measure cap, because a `ch` cap is pegged
+   to this font-size and so tightens every time the lead gets smaller: at 3cqw the old 56ch cap was
+   inert (wider than the slide), at 1.82cqw it cut every lead off at ~69% of the width.
+   It is **bold and small** — ~0.43 of the title, and below body size (`.highlight p` is 2.4cqw):
+   the weight, not the size, is what makes it read as the title's sub-line rather than the body's
+   first paragraph, so it can sit under the title as a quiet framing line without competing with
+   either. Since it is never scaled here, whatever is set is what shows — so it also has to be a
+   size a two-line lead can afford at the top of every slide. */
+.lead{color:var(--body);font-size:1.82cqw;font-weight:700;margin:1.6cqw 0 0}
 .ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 /* ══ DESIGN — how the canvas is divided ═══════════════════════════════════════════════════════
@@ -136,7 +142,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    actually emits: the stylesheet must not have to know the template catalog by name, and a future
    template that emits `.compare` then gets the right track for free. */
 .stage.d-split{display:grid;grid-template-columns:var(--cfr,1fr) var(--mfr,1fr);
-  grid-template-rows:auto minmax(0,1fr) auto;column-gap:3.5cqw;align-items:center}
+  grid-template-rows:auto minmax(0,1fr) auto auto;column-gap:3.5cqw;align-items:center}
 .stage.d-split.side-left{grid-template-columns:var(--mfr,1fr) var(--cfr,1fr)}
 .stage.d-split:has(.quiz-body){--cfr:1.45fr}
 .stage.d-split:has(.compare){--cfr:1.3fr}
@@ -399,20 +405,28 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
 /* `source` is a citation, not a callout: it points at where the material came from, so it must
-   not compete with the body. No card, no accent bar, no icon (the fill emits none) — just a
-   small muted line hanging under the content. */
+   not compete with the body. What sets it apart is **chrome and colour, not type** — no card, no
+   accent bar, no icon (the fill emits none), and a muted ink; the type itself is the same size,
+   leading and bold weight as every other kind, so a deck's highlights read as one family. */
 .highlight.source{background:none;border-left:0;border-radius:0;padding:0;color:var(--fm)}
-.highlight.source p{font-size:1.9cqw;color:var(--fm);line-height:1.3}
-.highlight.source b{font-weight:700;color:var(--fm)}
-/* …and it sits on the slide's bottom edge, not under the content. The band is emitted as a child
-   of the stage rather than of `.cfit` (see `_macros.j2`), so pinning it is just letting `.cbody`
-   take the slack: the source lands on the baseline whether the slide is full or nearly empty, and
-   the fit pass — which only ever touches `.cfit` — can neither move nor shrink it. Each design
-   pins it in its own coordinate system; `d-column` needs nothing, since the stage's own padding
-   already keeps the band clear of the media strip. */
-.highlights.hl-source{margin-top:auto;padding-top:1.6cqw;flex:0 0 auto}
-.stage.d-banded>.highlights.hl-source{order:4}
-.stage.d-split>.highlights.hl-source{grid-column:1/-1;grid-row:3;margin-top:0;align-self:end}
+.highlight.source p{color:var(--fm)}
+.highlight.source b{color:var(--fm)}
+/* ── the two closing bands sit on the slide's bottom edge, not under the content ──────────────
+   The `bottom` band and the `source` are emitted as children of the stage rather than of `.cfit`
+   (see `_macros.j2`), so pinning them is just letting `.cbody` take the slack: they land on the
+   same baseline whether the slide is full or nearly empty, and the fit pass — which only ever
+   touches `.cfit` — can neither move nor shrink them. Whichever comes first takes the slack; the
+   other follows it. Each design pins them in its own coordinate system; `d-column` needs nothing,
+   since the stage's own padding already keeps them clear of the media strip. */
+.highlights.hl-bottom,.highlights.hl-source{margin-top:auto;flex:0 0 auto}
+.highlights.hl-bottom{padding-top:2.4cqw}
+.highlights.hl-source{padding-top:1.6cqw}
+.stage:has(>.hl-bottom)>.hl-source{margin-top:0}      /* the band above already took the slack */
+.stage.d-banded>.highlights.hl-bottom{order:4}
+.stage.d-banded>.highlights.hl-source{order:5}
+.stage.d-split>.highlights.hl-bottom{grid-column:1/-1;grid-row:3;margin-top:0;align-self:end}
+.stage.d-split>.highlights.hl-source{grid-column:1/-1;grid-row:4;margin-top:0;align-self:end}
+.stage.d-bleed>.highlights.hl-bottom,
 .stage.d-bleed>.highlights.hl-source{position:relative;z-index:1}
 /* ── content under a split design ─────────────────────────────────────────────────────────────
    Placing the media is the DESIGN block's job, and so is the split's track ratio; what is left
@@ -721,8 +735,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <div class="ncard"><div class="strip">3</div><div class="nbody"><h4>Review and repeat</h4><p>look again, add more feedback, go around once more — as many rounds as it takes until you say "final"</p></div></div>
 </div>
 
-<div class="highlights fragment fade-up"><div class="highlight important"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.91-120q-28.91 0-49.41-20.59-20.5-20.59-20.5-49.5t20.59-49.41q20.59-20.5 49.5-20.5t49.41 20.59q20.5 20.59 20.5 49.5t-20.59 49.41q-20.59 20.5-49.5 20.5ZM410-360v-480h140v480H410Z"/></svg></span><p>Every round is about the content, not how it looks — visuals and styling come later at Polish.</p></div></div></div></div>
-<div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+</div></div>
+<div class="highlights hl-bottom fragment fade-up"><div class="highlight important"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.91-120q-28.91 0-49.41-20.59-20.5-20.59-20.5-49.5t20.59-49.41q20.59-20.5 49.5-20.5t49.41 20.59q20.5 20.59 20.5 49.5t-20.59 49.41q-20.59 20.5-49.5 20.5ZM410-360v-480h140v480H410Z"/></svg></span><p>Every round is about the content, not how it looks — visuals and styling come later at Polish.</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="e2-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>
@@ -784,8 +798,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <div class="rcard fragment fade-up"><span class="chip"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M331-431h37v-83h48q15.73 0 26.36-10.64Q453-535.28 453-551v-48q0-15.72-10.64-26.36Q431.73-636 416-636h-85v205Zm37-120v-48h48v48h-48Zm129 120h84q15 0 26-10.64 11-10.63 11-26.36v-131q0-15.72-11-26.36Q596-636 581-636h-84v205Zm37-37v-131h47v131h-47Zm133 37h37v-83h50v-37h-50v-48h50v-37h-87v205ZM260-200q-24 0-42-18t-18-42v-560q0-24 18-42t42-18h560q24 0 42 18t18 42v560q0 24-18 42t-42 18H260Zm0-60h560v-560H260v560ZM140-80q-24 0-42-18t-18-42v-620h60v620h620v60H140Zm120-740v560-560Z"/></svg></span><h3>PDF</h3><p>export the HTML deck to PDF for handouts.</p></div>
 </div>
 
-<div class="highlights fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p>You're looking at one right now — this deck was rendered from its draft.md with Talksmith.</p></div></div></div></div>
-</div>
+</div></div>
+<div class="highlights hl-bottom fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p>You're looking at one right now — this deck was rendered from its draft.md with Talksmith.</p></div></div></div>
 <aside class="notes">The render paths from one final.md: the HTML deck is a single self-contained file (Reveal.js, fonts and scripts inlined) that works offline and shares as a link; the native .pptx comes in two styles — strict (conforms to an institutional template) and free-form — for venues that require PowerPoint; PDF comes from the HTML deck's print view, for handouts. Because all three are projections, presentation-day format changes are a re-render, not a rebuild.</aside></section><section class="slide" data-kind="icon-list"><div class="stage d-full">
 <div class="shead"><span class="pill">The workflow in practice</span><h2 class="stitle">Presenting the HTML deck: shortcuts</h2><p class="lead">The deck is a Reveal.js app — these come with the framework (try them now):</p></div><div class="cbody"><div class="cfit"><div class="cards">
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h279v60H180v600h600v-279h60v279q0 24-18 42t-42 18H180Zm202-219-42-43 398-398H519v-60h321v321h-60v-218L382-339Z"/></svg></span><h3>Navigate</h3><p>→ / ← / Space. The URL hash (#/12) makes every slide a shareable deep link.</p></div>
@@ -830,8 +844,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <aside class="notes">The design principle is separation of powers over one file. The Editor is the only role allowed to write draft.md, final.md, and memory.md — one writer means no conflicting edits and one accountable trail. The Composer is deliberately its opposite: read-only, and its only output is criticism — a punch-list graded blocker/major/minor against thesis, audience, sources, and learned rules. The Librarian compiles raw sources into corpus records; the Diagram-Illustrator renders ASCII diagrams to SVG at Polish; the Global-Librarian curates finished talks into the shared cross-talk library. You never dispatch any of them — the orchestrator does, and reports outcomes in plain language.</aside></section><section class="slide" data-kind="content+cards+image"><div class="stage d-split side-right">
 <div class="shead"><span class="pill">Behind the scenes</span><h2 class="stitle">It's Markdown all the way down</h2><p class="lead">Every artifact is a plain .md file — and edits round-trip.</p></div><div class="cbody"><div class="cfit"><div class="ccicards">
 <div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M392-80v-170l302-302q9-9 20.5-13t22.5-4q11 0 21.96 4.5Q769.93-560 779-551l84 84q9 9 13 20.5t4 22.69q0 11.18-4 22Q872-391 863-382L562-80H392Zm428-345-84-84 84 84ZM452-140h85l173-173-43-42-43-42-172 171v86Zm215-215-43-42 43 42 43 42-43-42ZM430-605l-42-42 83-83H316q-8 32-31 55t-55 31v328q39 10 64.5 42t25.5 74q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-41.76 25.5-73.88T170-316v-328q-39-10-64.5-42T80-760q0-50 35-85t85-35q42 0 74 25.5t42 64.5h155l-83-83 42-42 156 155-156 155Zm415-240q35 35 35 85t-35 85q-35 35-85 35t-85-35q-35-35-35-85t35-85q35-35 85-35t85 35ZM200-140q25.5 0 42.75-17.25T260-200q0-25.5-17.25-42.75T200-260q-25.5 0-42.75 17.25T140-200q0 25.5 17.25 42.75T200-140Zm0-560q25.5 0 42.75-17.25T260-760q0-25.5-17.25-42.75T200-820q-25.5 0-42.75 17.25T140-760q0 25.5 17.25 42.75T200-700Zm560 0q25.5 0 42.75-17.25T820-760q0-25.5-17.25-42.75T760-820q-25.5 0-42.75 17.25T700-760q0 25.5 17.25 42.75T760-700ZM200-200Zm0-560Zm560 0Z"/></svg></span><h3>Diffable</h3><p>Every change shows up in git diff.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M260-40q-24.75 0-42.37-17.63Q200-75.25 200-100v-760q0-24 18-42t42-18h438q24.75 0 42.38 17.62Q758-884.75 758-860v150q18 3 30 16.95 12 13.96 12 31.63V-587q0 19-12 33t-30 17v437q0 24.75-17.62 42.37Q722.75-40 698-40H260Zm0-60h438v-760H260v760Zm0 0v-760 760Zm219-620q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Z"/></svg></span><h3>Portable</h3><p>The same outline renders to HTML or .pptx.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M271-120 80-311l192-192 42 42-120 120h646v60H194l119 119-42 42Zm418-337-42-42 119-119H120v-60h646L646-798l42-42 192 192-191 191Z"/></svg></span><h3>Round-trippable</h3><p>Edited the deck in Keynote? Reconcile it back into draft.md.</p></div></div>
-<div class="highlights fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p>The reverse path is optional — you only need it when you've edited the deck outside the cycle (e.g. tweaked the .pptx in PowerPoint).</p></div></div></div></div>
-<div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="880" height="340" viewBox="0 0 880 340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+</div></div>
+<div class="highlights hl-bottom fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p>The reverse path is optional — you only need it when you've edited the deck outside the cycle (e.g. tweaked the .pptx in PowerPoint).</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" width="880" height="340" viewBox="0 0 880 340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="e3-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/>

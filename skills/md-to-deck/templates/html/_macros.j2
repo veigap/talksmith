@@ -35,11 +35,12 @@
    the moment the slide opens (no `frag`) — a frame that arrives after the body frames nothing.
    The **bottom** band comments on what precedes it, so it keeps its place as the final fragment. #}
 {% macro stage(s) %}
-{# `source` leaves the flow entirely. The other kinds are remarks *on* the body, so they belong
-   inside `.cfit` where they move and scale with it; a citation is slide chrome — it credits the
-   material rather than saying anything about it — so it is pinned to the bottom edge of the stage
-   as a sibling of `.cbody`. Being outside `.cfit` is the whole point: it neither drifts up with
-   short content nor gets shrunk by the fit pass. `position` does not apply to it. #}
+{# Only the **top** band stays inside `.cfit`: it frames the body, so it has to sit against the
+   body it frames. Everything that follows the body — the `bottom` band and the `source` — is
+   pinned to the stage's bottom edge instead, as siblings of `.cbody`. Being outside `.cfit` is
+   the point: they land on the same baseline whether the slide is full or nearly empty, instead of
+   trailing wherever the content happens to stop, and the fit pass (which only touches `.cfit`)
+   can neither move nor shrink them. `position` does not apply to a `source`; it is always last. #}
 {% set hl = s.highlights or [] %}
 {% set hlsrc = hl | selectattr('kind', 'eq', 'source') | list %}
 {% set hlrest = hl | rejectattr('kind', 'eq', 'source') | list %}
@@ -52,8 +53,8 @@
 {% set p = s.design.split('-') %}
 <div class="stage d-{{ p[0] }}{{ ' side-' ~ p[1] if p|length > 1 else '' }}">
 <div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}
-{% if hlbot %}{{ hlband(hlbot, '', frag(s)) }}{% endif %}
 </div></div>
+{% if hlbot %}{{ hlband(hlbot, ' hl-bottom', frag(s)) }}{% endif %}
 {% if hlsrc %}{{ hlband(hlsrc, ' hl-source', '') }}{% endif %}
 {# guarded on the *design*, not on `s.media`: a slide can carry media the resolved design does
    not place (a legacy `image` on a template that never composed one), and emitting it anyway

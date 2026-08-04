@@ -369,6 +369,36 @@ Section pill + title + lead paragraph (full width) + a vertical stack of N rows 
 
 **Lead paragraph carries no icon slot.** The §7.5 layout reserves icons for per-row slots only. When the source markdown places an emoji in the lead paragraph (e.g. `🤔 The question we're answering is…`), drop the emoji from the lead and emit the lead as plain prose — do **not** try to promote the lead-paragraph emoji to a fourth icon. The §17.7 *Strip is not swap* rule flags this as `[late-catch]` (the source put an emoji where the layout has no slot) so the editor knows to clean up the source for next time, but the render itself proceeds with the emoji dropped from the lead.
 
+### 7.7 `concept-columns` — parallel explanations, side by side
+
+The catalog's `concept-columns` ([`../slide-templates.md`](../slide-templates.md)) is **not** §11:
+§11 converts a pipe-table into a card-per-row grid because its cells align row by row against a
+shared factor. These columns share no row structure — each explains its own term — so there is no
+row to build a card from, and forcing one would invent an alignment the content does not have.
+
+**Geometry.** N equal columns (N = 2–4) across the §13 content width, gutter ~0.28 in, **top
+aligned** — do not stretch them to a common height. Per column, stacked with ~0.10 in between
+blocks: the term as `Card heading` (§3.2, 13.5 pt Bold `#1F1E1E`), the definition as body
+(11 pt `#3B3535`), then optionally a bold sub-heading (`Características:`) with its own
+`<a:buChar>`-free list of short lines, and a bold closing `Ejemplos: …` line anchored to the
+column's own bottom. No card fill on a plain column, and **no §17 icon**: a definition column is
+anchored by its term, not by a glyph.
+
+**The emphasised column** (`emphasis: true`, at most one) is the only filled shape: a §2.3
+`roundRect` (5760 EMU radius) filled `#DA1B2E` per §2.2, inset ~0.15 in around the column's
+content, with **every run in it inverted to `#FFFFFF`**. It marks the term the slide is *about* —
+the subject the other columns define by contrast — and is **not a verdict**, so the older or
+worse option may carry it. Two emphasised columns emphasise nothing; if a model sends two, keep
+the first and report the rest per §15.6.4.
+
+A closing band under the columns is not part of this recipe — it is a `highlights` entry and
+follows §8's band rules (`takeaway` for a tying line, `source` for a reference).
+
+**Provenance:** `layout.pptx` S31 (four terms, third emphasised) and S32 (two terms, first
+emphasised).
+
+---
+
 ### 7.6 Labeled enumerations render as cards (strict realization)
 
 The cards-never-bullets rule is the catalog's **universal invariant**
@@ -546,8 +576,9 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 > **`highlights[].position` *is* honored — it costs no new geometry.** A highlights band is a §8
 > panel; `position: top` only changes which vertical block it occupies. Emit the `top` entries as
 > one band **between the title block and the body block** (reserving its height before laying out
-> the body, per §8.3, exactly as for a closing band), and the `bottom` entries as one band below
-> the body as today. A slide may carry both, and each band keeps its per-`kind` accent — with the
+> the body, per §8.3, exactly as for a closing band), and the `bottom` entries as one band anchored
+> to the **bottom content margin** — not stacked under the body, so it lands on the same baseline
+> whatever the body's height. A slide may carry both, and each band keeps its per-`kind` accent — with the
 > exception of `kind: source`, a citation rather than a callout: emit it as a **plain text line at
 > the same type size as any other highlights band**, in a muted `#3B3535`, with **no panel fill, no
 > accent bar and no marker icon** — what distinguishes it is chrome and colour, not type,
