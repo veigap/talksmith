@@ -64,7 +64,7 @@ _CONSUMES = {
     "value-columns": {"title", "columns", "image", "layout"},
     # a column here is a whole explanation, not a cell: label + body + its own feature list,
     # its label, a closing example line, and the emphasis flag on at most one of them
-    "concept-columns": {"title", "columns"},
+    "concept-columns": {"title", "columns", "subtitle"},
     "stat": {"title", "stats", "lead"},
     "big-number": {"number", "caption", "title"},
     "quote": {"quote", "attribution"},

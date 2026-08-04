@@ -27,7 +27,12 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   it is not a table. A two-column slide of this kind (old way vs new way, each explained in its own
   terms) therefore is **not** a comparison grid, however adversarial it looks. One column may carry
   `emphasis`, rendering as a filled accent panel with the column inverted — it marks the term the
-  slide is *about*, not the winner, so the older option may carry it just as well. The tying line
+  slide is *about*, not the winner, so the older option may carry it just as well. A column's third
+  block is **free text**: a list renders as bullets, a string as paragraphs, because the columns
+  genuinely differ in shape — one term explained in three bullets, its neighbour in two paragraphs
+  — and normalizing them would invent a structure the content does not have. An optional
+  `subtitle` names the block itself (`IA Tradicional vs. Foundation Models`), which is a *name*
+  rather than the framing sentence the `lead` carries. The tying line
   or reference under the columns is not part of the type: it is a `highlights` entry, already
   pinned to the slide's bottom edge.
 - **`design` — a slide is a design filled with a style, chosen in that order.** Where the picture
@@ -70,6 +75,11 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   `concept-breakdown` as label-only cards, since numbering would turn rhetoric into a checklist.
 
 ### Fixed
+
+- **A highlights band was the biggest text on the slide.** It rendered above both the `lead` and
+  the slide body, so a one-line aside outweighed the content it was commenting on. A highlight is
+  a remark *about* the slide, so it now sits below the slide's own voice — 20% under the `lead`,
+  which is itself under the title — with its marker icon stepped down to match.
 
 - **A `quote` no longer needs someone to attribute it to.** The renderer and the schema already
   treated `attribution` as optional, but the catalog didn't: its Match rule read "a quote is

@@ -376,13 +376,16 @@ The catalog's `concept-columns` ([`../slide-templates.md`](../slide-templates.md
 shared factor. These columns share no row structure — each explains its own term — so there is no
 row to build a card from, and forcing one would invent an alignment the content does not have.
 
-**Geometry.** N equal columns (N = 2–4) across the §13 content width, gutter ~0.28 in, **top
+**Geometry.** An optional **block heading** (`subtitle`) between the §3 title and the columns,
+at ~17 pt Bold `#1F1E1E` — above the column terms, below the slide title, so the three read in
+that order. Then N equal columns (N = 2–4) across the §13 content width, gutter ~0.28 in, **top
 aligned** — do not stretch them to a common height. Per column, stacked with ~0.10 in between
-blocks: the term as `Card heading` (§3.2, 13.5 pt Bold `#1F1E1E`), the definition as body
-(11 pt `#3B3535`), then optionally a bold sub-heading (`Características:`) with its own
-`<a:buChar>`-free list of short lines, and a bold closing `Ejemplos: …` line anchored to the
-column's own bottom. No card fill on a plain column, and **no §17 icon**: a definition column is
-anchored by its term, not by a glyph.
+blocks: the term as `Card heading` (§3.2, 13.5 pt Bold `#1F1E1E`), the description as body
+(11 pt `#3B3535`), then optionally a bold sub-heading (`Características:`) over **free text** —
+either `<a:buChar>` bullet lines or plain paragraphs, whichever the column carries; do not
+normalize one into the other — and a bold closing `Ejemplos: …` line anchored to the column's own
+bottom. No card fill on a plain column, and **no §17 icon**: a definition column is anchored by
+its term, not by a glyph.
 
 **The emphasised column** (`emphasis: true`, at most one) is the only filled shape: a §2.3
 `roundRect` (5760 EMU radius) filled `#DA1B2E` per §2.2, inset ~0.15 in around the column's

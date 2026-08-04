@@ -532,10 +532,15 @@ precise rules.
   (→ `pros-cons`); label + a single line per item, with no sub-structure (→ `concept-breakdown`,
   whose cards have room for a label and one body and nothing more); more than 4 terms (split the
   slide — at five the columns are too narrow to hold a definition).
-- **Format:** N equal full-height columns, no cards by default: term (13.5 pt Bold) · definition
-  paragraph (11 pt) · optional bold sub-heading + its bullet list · optional bold closing
-  `Ejemplos:` line. Columns are **top-aligned**, never stretched to equal height — they are
-  independent, and forcing a shared baseline invents an alignment the content does not have.
+- **Format:** an optional **block heading** naming what the columns are (`subtitle` — a *name*,
+  not the framing sentence the `lead` carries; it sits between the slide title and the columns and
+  reads above the column terms), then N equal columns. Each column: term (13.5 pt Bold) ·
+  a description paragraph (11 pt) · optional **free text** — a bullet list *or* plain paragraphs,
+  with an optional bold sub-heading (`Características:`) · optional bold closing `Ejemplos:` line.
+  **The free text really is free.** One column may explain itself in three bullets and its
+  neighbour in two paragraphs; the source shapes differ per column, and forcing a list on both
+  invents a structure the content does not have — the same mistake, one level down, as reading
+  these columns as a table. Columns are **top-aligned**, never stretched to equal height.
 - **One column may be emphasised.** Set `emphasis` on the column the slide is *about* — the one
   the others define by contrast, or the one the talk then goes on to use. It renders as a filled
   `#DA1B2E` rounded panel with the whole column inverted to `#FFFFFF`. At most one per slide: two
