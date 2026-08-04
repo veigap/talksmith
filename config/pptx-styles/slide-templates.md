@@ -296,14 +296,22 @@ precise rules.
   across all three decks.
 
 #### `quote` (pull-quote, full-bleed)
-- **Match:** the slide **is a quotation** in someone's voice — a dominant quoted line
-  (optionally with an attribution line starting `—`/`–`). A claim in the *presenter's* voice
-  is a `statement`; a quote is attributed / voiced. **Fires on `is_voiced` on its own** — a
-  blockquote, quotation marks or a named source is enough, no hint required; `<!-- template:
-  quote -->` only pins it. *(A voiced line that **frames** another slide's body is not this
-  template at all: it is a `highlights` entry with `kind: quote`, `position: top`.)*
+- **Match:** the slide **is a quotation** in someone's voice — a dominant quoted line. The
+  discriminator against `statement` is **whose words they are**, not whether a name is attached:
+  a claim in the *presenter's* voice is a `statement`, anything the presenter is quoting is this.
+  **Fires on `is_voiced` on its own** — a blockquote or quotation marks are enough on their own,
+  no named source and no hint required; `<!-- template: quote -->` only pins it.
+  **`attribution` is optional.** Plenty of quotes have no person to name — a slogan, an
+  anonymized line from a user interview, a line from a standard or a report, something said in
+  the room. Do **not** invent an attribution to satisfy the template, and do not demote the slide
+  to `statement` because none exists: an unattributed quote is still someone else's words, and the
+  quotation mark and centering carry that on their own. *(A voiced line that **frames** another
+  slide's body is not this template at all: it is a `highlights` entry with `kind: quote`,
+  `position: top`.)*
 - **Format:** full-bleed, vertically centred: a large accent quotation mark, the quote in
-  large bold (≤~35 words), then a muted `— attribution` line. No cards, no header pill body.
+  large bold (≤~35 words), then a muted `— attribution` line **when there is one** — with no
+  attribution the mark and the quote are the whole slide, and nothing takes its place. No cards,
+  no header pill body.
 - **Provenance:** gov deck testimonial slides; common in Gamma-style decks.
 
 #### `quiz` (question → revealed answer)

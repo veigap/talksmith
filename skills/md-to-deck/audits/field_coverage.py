@@ -28,7 +28,11 @@ from pathlib import Path
 # Fields any content slide may legitimately carry (chrome / cross-cutting), consumed regardless of
 # template by the shared `stage` macro or the renderer itself. Never flagged.
 _UNIVERSAL = {
-    "template", "section", "notes", "reveal", "highlights", "aside", "lang", "id", "_source",
+    "template", "section", "notes", "reveal", "highlights", "lang", "id", "_source",
+    # consumed by the shared `stage` macro, so they are template-independent by construction:
+    # `design` divides the canvas and `media` is what it places; `lead` is the title's sub-line,
+    # emitted by the shared head block. (`aside` is the legacy spelling of a `column-*` design.)
+    "design", "media", "aside", "lead",
 }
 
 # Per-template consumed fields = the schema contract (required ∪ optional) PLUS a few extras a
@@ -36,11 +40,12 @@ _UNIVERSAL = {
 # the schema half: schemas/slide-model.md → *Per-template field contract*. Keep in sync when a
 # template gains/loses a field.
 #
-# `layout` is deliberately listed per-template rather than in _UNIVERSAL: it is a composition field,
-# but only for the templates that pair a body with their own image, and on any other template it
-# really is an ignored field worth flagging. `build_html._LAYOUTS` is the finer-grained authority —
-# it also knows which *values* each template takes, and warns when `layout` rides a slide that
-# carries no image at all (a case this set-based audit can't express).
+# `layout` and `image` are the **legacy** spellings of `design` and `media`, and stay listed
+# per-template rather than in _UNIVERSAL: html_style.py `_design` only maps them forward on the
+# five templates that used to compose their own image, so on any other template they really are
+# ignored fields worth flagging. `build_html` is the finer-grained authority — it also validates
+# the *values* and warns when a design rides a slide with no media at all, which this set-based
+# audit can't express.
 _CONSUMES = {
     "section-agenda": {"title"},
     "divider": {"title", "number"},
@@ -50,13 +55,13 @@ _CONSUMES = {
     "concept-breakdown": {"title", "cards", "rows", "lead", "format"},
     "card-row": {"title", "cards", "rows", "lead", "format"},
     "icon-list": {"title", "cards", "rows", "lead", "format"},
-    "process": {"title", "steps", "lead", "image", "layout"},
+    "process": {"title", "steps", "image", "layout"},
     "figures": {"title", "figures", "lead"},
     "image-grid": {"images", "title"},
     "image-full": {"title", "image", "lead"},
-    "content-image": {"title", "image", "facts", "lead", "layout"},
-    "content+cards+image": {"title", "cards", "image", "lead", "layout"},
-    "value-columns": {"title", "columns", "image", "lead", "layout"},
+    "content-image": {"title", "image", "facts", "layout"},
+    "content+cards+image": {"title", "cards", "image", "layout"},
+    "value-columns": {"title", "columns", "image", "layout"},
     "stat": {"title", "stats", "lead"},
     "big-number": {"number", "caption", "title"},
     "quote": {"quote", "attribution"},

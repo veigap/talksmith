@@ -62,6 +62,12 @@
       "attribution": "the Talksmith style guide"
     },
     {
+      "template": "quote",
+      "section": "Statement & emphasis",
+      "quote": "No hubo hackers. No hubo malware. Alguien pegó código en un chatbot.",
+      "notes": "A quote with no attribution. Plenty of quoted lines have no person to name — a slogan, an anonymized line from a user interview, a sentence from a standard or a report, something said in the room. The template treats attribution as optional and renders nothing in its place: the quotation mark and the centering already say these are someone else's words, which is the only thing that distinguishes a quote from a statement. The rule this fixture guards is that the fill must not invent an attribution to satisfy the template, and must not demote the slide to statement because none exists."
+    },
+    {
       "template": "callout",
       "section": "Statement & emphasis",
       "title": "callout: an emphasized aside",

@@ -56,6 +56,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   unlabeled list that stays out is a 2–5 line **anaphora**, whose force is the rhythm; those go to
   `concept-breakdown` as label-only cards, since numbering would turn rhetoric into a checklist.
 
+### Fixed
+
+- **A `quote` no longer needs someone to attribute it to.** The renderer and the schema already
+  treated `attribution` as optional, but the catalog didn't: its Match rule read "a quote is
+  attributed / voiced", which pushed an unattributed quoted line to `statement`, and its Format
+  promised a `— attribution` line unconditionally. Plenty of quotes have no person to name — a
+  slogan, an anonymized line from a user interview, a sentence from a standard, something said in
+  the room. The discriminator against `statement` is **whose words they are**, not whether a name
+  is attached, so the catalog now says so and tells the fill not to invent an attribution to
+  satisfy the template. With none, the quotation mark and the centering carry the slide.
+- **The field-coverage audit knows about `design`, `media` and `lead`.** All three became
+  stage-level fields in this release — consumed by the shared macro regardless of template — but
+  the audit still checked them per template, so it reported every composed slide as carrying
+  fields its template would ignore.
+
 ### Changed
 
 - **Metadata descriptions corrected.** The plugin and marketplace manifests carried two copies of

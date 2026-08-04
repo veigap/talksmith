@@ -111,11 +111,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* the lead sits in `.shead`, under the title it belongs to — never in `.cfit`, which the fit pass
    moves and scales. Its measure is capped so a long framing sentence wraps into a block under the
    title instead of running the full slide width.
-   It is **bold but clearly smaller than the title** (~0.62 of it): the weight is what makes it
-   read as the title's sub-line rather than the body's first paragraph, and the size is what keeps
-   it from competing with the title. Since it is never scaled here, whatever is set is what shows
-   — so it also has to be a size a two-line lead can afford at the top of every slide. */
-.lead{color:var(--body);font-size:2.6cqw;font-weight:700;margin:1.6cqw 0 0;max-width:56ch}
+   It is **bold and small** — ~0.43 of the title, and below body size (`.highlight p` is 2.4cqw):
+   the weight, not the size, is what makes it read as the title's sub-line rather than the body's
+   first paragraph, so it can sit under the title as a quiet framing line without competing with
+   either. Since it is never scaled here, whatever is set is what shows — so it also has to be a
+   size a two-line lead can afford at the top of every slide. */
+.lead{color:var(--body);font-size:1.82cqw;font-weight:700;margin:1.6cqw 0 0;max-width:56ch}
 .ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 /* ══ DESIGN — how the canvas is divided ═══════════════════════════════════════════════════════
@@ -626,7 +627,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 
 </div></div>
 </div>
-</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.</p><p class="quoteattr">&mdash; the Talksmith style guide</p></div></div></section><section class="slide" data-kind="callout"><div class="stage d-full">
+</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.</p><p class="quoteattr">&mdash; the Talksmith style guide</p></div></div></section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">No hubo hackers. No hubo malware. Alguien pegó código en un chatbot.</p></div></div><aside class="notes">A quote with no attribution. Plenty of quoted lines have no person to name — a slogan, an anonymized line from a user interview, a sentence from a standard or a report, something said in the room. The template treats attribution as optional and renders nothing in its place: the quotation mark and the centering already say these are someone else's words, which is the only thing that distinguishes a quote from a statement. The rule this fixture guards is that the fill must not invent an attribution to satisfy the template, and must not demote the slide to statement because none exists.</aside></section><section class="slide" data-kind="callout"><div class="stage d-full">
 <div class="shead"><span class="pill">Statement &amp; emphasis</span><h2 class="stitle">callout: an emphasized aside</h2></div><div class="cbody"><div class="cfit"><div class="callout pink"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m274-450 248 248-42 42-320-320 320-320 42 42-248 248h526v60H274Z"/></svg></span><p><b>Think of it this way</b> A callout is a single rounded panel for a tip, analogy, or warning — pink for a lateral note, blue for a declarative takeaway.</p></div>
 
 </div></div>
