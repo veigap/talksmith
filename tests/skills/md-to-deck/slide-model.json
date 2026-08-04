@@ -550,7 +550,7 @@
         },
         {
           "label": "URLs link themselves",
-          "body": "A source pasted raw as https://www.who.int/data, the angle form <https://who.int>, and www.who.int/es all become clickable — the trailing period stays outside the link."
+          "body": "Raw as https://www.who.int/data, the angle form <https://who.int>, www.who.int/es, and even schemeless — app.sli.do/event/x — all become clickable. The trailing period stays outside."
         }
       ],
       "highlights": [

@@ -631,10 +631,19 @@ _MD_STRIKE = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 # report footer, or an `### Sources` block actually carries — an author who writes a naked URL
 # means a link, and dropping it to grey text is the one case where the deck loses information the
 # markdown had.
+_URLCH = r"[^\s()\[\]{}'\"*`~]"          # what may sit inside a URL once one has started
 _LINKISH = re.compile(
     r"(?P<md>\[(?P<mdtext>[^\]\n]+)\]\(\s*(?P<mdurl>(?:https?:|mailto:)[^)\s]+)\s*\))"
     r"|(?P<angle>&lt;(?P<angleurl>(?:https?:|mailto:)[^\s]+?)&gt;)"
-    r"|(?P<bare>(?<![\w@./-])(?:https?://|www\.)[^\s()\[\]{}'\"*`~]+)"
+    r"|(?P<bare>(?<![\w@./-])(?:https?://|www\.)" + _URLCH + r"+)"
+    # A **schemeless** address — `app.sli.do/event/xyz`, `bit.ly/abc`, `forms.gle/abc`. This is how
+    # a link most often reaches a slide (nobody types the scheme when reading one out loud), so
+    # requiring `https://` would leave the commonest case dead. The guard against eating prose and
+    # file paths is the **path**: a dotted host is only a link when a `/` and at least one more
+    # character follow it. That is what keeps `skills/md-to-deck/SKILL.md` (no dot before a slash),
+    # `html_style.py` (no path) and `versión 1.2/3` (numeric TLD) literal.
+    r"|(?P<host>(?<![\w@./-])(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,24}/" + _URLCH + r"+)",
+    re.I,
 )
 # A URL at the end of a sentence takes the sentence's punctuation with it, and one escaped inside
 # quotes or angles picks up the entity. Neither is part of the address: trim them off the href and
@@ -675,7 +684,7 @@ def _marks(s: str) -> str:
             held.append(_anchor(url, url))
             tail = ""
         else:
-            raw = m.group("bare")
+            raw = m.group("bare") or m.group("host")
             url = _URL_TAIL.sub("", raw)
             if not url:                     # punctuation only — nothing to link
                 return raw
@@ -691,8 +700,9 @@ def _inline_md(text: str) -> str:
     """`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[text](url)` and bare/angle URLs in
     already-escaped text. Code spans are cut out first so the marks inside them stay literal — a
     body that shows `**kwargs` as code means it."""
-    # most leaves carry no mark at all — skip the passes (`//` and `www.` are the URL tells)
-    if not (set("`*[~") & set(text)) and "//" not in text and "www." not in text:
+    # most leaves carry no mark at all — skip the passes. A `/` is the cheapest URL tell that
+    # covers all three link shapes (`https://`, `www.x/…`, `host.tld/…`); prose rarely has one.
+    if not (set("`*[~/") & set(text)):
         return text
     text = text.replace("\x00", "")         # NUL is the link slot marker — never authored content
     out, last = [], 0

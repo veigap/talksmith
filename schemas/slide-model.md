@@ -285,7 +285,8 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 **Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
 - **Inline markup survives — copy it, don't strip it.** Every text field of every template accepts
   the author's inline marks and the renderers resolve them: `**bold**`, `*italic*`, `~~strike~~`,
-  `` `code` ``, `[text](url)` and a **naked `https://…`** (which links itself). So a figure the
+  `` `code` ``, `[text](url)`, a **naked `https://…`** and a **schemeless `app.sli.do/event/x`**
+  (a host with a path links itself — how a link most often reaches a slide). So a figure the
   source emphasized stays emphasized, and a **URL stays a working link** — carrying a citation
   through as grey text loses information the markdown had. This holds in `notes` too. Two
   consequences for the fill:

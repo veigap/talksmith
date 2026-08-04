@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.80.0] — 2026-08-04
+
+### Added
+
+- **A schemeless address links itself** — `app.sli.do/event/xyz`, `bit.ly/abc`, `forms.gle/x`.
+  0.79.0 linkified `https://…`, `www.…` and `<https://…>`, but not the form a link most often
+  takes on a slide: nobody types the scheme when reading one out loud, so a live-poll or form
+  address written the way it is spoken stayed dead grey text. A dotted host is treated as a link
+  only when a **path** follows it, which is what keeps `skills/md-to-deck/SKILL.md`,
+  `html_style.py` and `versión 1.2/3` literal. The `.pptx` recipe (§3.6) covers the same shape,
+  prefixing `https://` in the relationship `Target`.
+
 ## [0.79.0] — 2026-08-04
 
 ### Added

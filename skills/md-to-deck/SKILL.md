@@ -65,7 +65,8 @@ The judgment is the LLM's, against a fixed field contract. Write to
 
 > **Copy the author's inline markup verbatim too — it is resolved, not shipped as characters.**
 > Every text field of every template accepts `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``,
-> `[title](url)` and a **naked `https://…`**; the render turns each into markup (links open in a
+> `[title](url)`, a **naked `https://…`** and a **schemeless `app.sli.do/event/x`** (a dotted host
+> followed by a path); the render turns each into markup (links open in a
 > new tab, styled as `.mdlink`). Speaker notes take the same grammar and additionally keep their
 > paragraph breaks. So do not strip marks while decomposing, and do not flatten a URL to plain
 > text — a citation that arrives as an address must leave as a working link. The contract, and the

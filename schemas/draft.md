@@ -102,10 +102,15 @@ put in the outline are what the audience sees:
 | `` `code` `` | inline monospace — a field name, a flag |
 | `[title](https://…)` | a clickable link showing `title` |
 | a naked `https://…` | a clickable link showing the URL |
+| a schemeless `app.sli.do/event/x` | the same — a host with a path links itself |
 
 **Prefer `[title](url)`** when you know what the source is called — a titled citation reads on a
 slide, a 90-character address does not. A bare URL still links, so a source pasted from a chat
 never silently becomes dead grey text.
+
+A schemeless address needs a **path** to be recognized (`bit.ly/abc` links, a bare `bit.ly` does
+not) — that is what keeps file paths and prose (`skills/md-to-deck/SKILL.md`, `versión 1.2/3`)
+from turning into links.
 
 **Block markdown does not survive inside a field** — headings, nested lists and tables written
 *inside* one bullet render as literal characters. Structure is what the outline's own shape is

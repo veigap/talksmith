@@ -145,6 +145,7 @@ The **only** exception is a §9 code block, where the marks are the content.
 | `` `code` `` | a run in **Courier New** at the surrounding `sz`, ink `#000000` | An inline span, not a §9 code surface — no background rect |
 | `[title](url)` | a run carrying `<a:hlinkClick>`, showing **`title` only** | The address lives in the relationship, never in the visible text |
 | a naked `https://…` | the same, with the URL as its own visible text | Sources rarely arrive bracketed; a dead URL loses what the source gave |
+| a schemeless `app.sli.do/event/x` | the same; prefix `https://` in the `Target` | A dotted host **with a path**. Nobody types the scheme when reading a link out loud, so this is the commonest shape on a slide |
 
 Splitting one paragraph into several runs is exactly what OOXML runs are for: emit a run per
 styled span, all sharing the paragraph's `<a:pPr>`, so the line reads as one sentence with parts
