@@ -110,8 +110,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    so it sits a step above the body in weight and size instead of reading as the first paragraph. */
 /* the lead sits in `.shead`, under the title it belongs to — never in `.cfit`, which the fit pass
    moves and scales. Its measure is capped so a long framing sentence wraps into a block under the
-   title instead of running the full slide width. */
-.lead{color:var(--body);font-size:3cqw;font-weight:700;margin:1.8cqw 0 0;max-width:56ch}
+   title instead of running the full slide width.
+   It is **bold but clearly smaller than the title** (~0.62 of it): the weight is what makes it
+   read as the title's sub-line rather than the body's first paragraph, and the size is what keeps
+   it from competing with the title. Since it is never scaled here, whatever is set is what shows
+   — so it also has to be a size a two-line lead can afford at the top of every slide. */
+.lead{color:var(--body);font-size:2.6cqw;font-weight:700;margin:1.6cqw 0 0;max-width:56ch}
 .ic{display:block;color:var(--red)}.ic svg{width:100%;height:100%;display:block}
 .stage.cover{justify-content:center}.stmt{margin:auto 0}
 /* ══ DESIGN — how the canvas is divided ═══════════════════════════════════════════════════════

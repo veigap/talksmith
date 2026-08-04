@@ -80,7 +80,8 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
   slide 15 demonstrates it) but no model selects it.
 - **The `lead` reads as the title's sub-line — and now sits with it.** It was set at body size and
   weight, so a framing sentence under the title read as the first paragraph of the body; it is now
-  a step larger and bold. It also **moved into the slide's head block**, out of the scaled content
+  **bold**, which is what makes it read as the title's sub-line, while staying clearly smaller than
+  the title so it doesn't compete with it. It also **moved into the slide's head block**, out of the scaled content
   region: eight templates each emitted it as the first thing in the body, where the per-slide fit
   pass moved and shrank it along with everything else, so on a short slide the lead drifted down
   away from the title it introduces. The head block emits it once, for every template, so none of
