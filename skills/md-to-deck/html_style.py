@@ -410,7 +410,8 @@ def _render(tmpl: str, cache, **ctx) -> str:
 def section_agenda(sections, active: int, heading: str = "") -> str:
     """A section separator that doubles as the roadmap: the ordered section list on the left,
     the current section (big number + title) on the right, others dimmed."""
-    return _render("section-agenda.j2", None, sections=sections, active=active)
+    return _render("section-agenda.j2", None, sections=[rich(s) for s in (sections or [])],
+                   active=active)
 
 
 # The bundled fallback is a neutral, unbranded placeholder — the plugin ships no institution
@@ -484,8 +485,9 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
           "presentation": deck.get("title", "")}
     return _render(
         "cover.j2", None,
-        title=deck.get("title", ""), inst=deck.get("institution", ""),
-        cls=deck.get("class", ""), author=deck.get("presenter", ""), date=deck.get("date", ""),
+        title=rich(deck.get("title", "")), inst=rich(deck.get("institution", "")),
+        cls=rich(deck.get("class", "")), author=rich(deck.get("presenter", "")),
+        date=rich(deck.get("date", "")),
         logo=Markup(_cover_logo(fm, talk_root)),
         author_label=author_label or L["author"], modified_label=modified_label or L["modified"])
 
@@ -610,35 +612,89 @@ def _design(slide: dict, t: str) -> tuple:
 # An author emphasizes a phrase *inside* a sentence — a figure in a body, a term in a lead, a
 # cited title in a source line. That is not a property of one template, so it isn't implemented in
 # one: the slide's text fields are converted here, once, and every `.j2` gets it for free.
-# The grammar is deliberately the four inline marks markdown already gives the author, and nothing
+# The grammar is deliberately the inline marks markdown already gives the author, and nothing
 # block-level: no headings, no lists, no tables — the *structure* of a slide is the model's job
 # (fields and templates), and re-introducing block markdown inside a field would let content route
 # around the schema. Escaping runs first, so authored HTML is still inert text.
 # one or two backticks — the doubled form is how an author shows a literal backtick inside code
 _MD_CODE = re.compile(r"(`{1,2})(?!`)([^\n]+?)(?<!`)\1(?!`)")
-_MD_LINK = re.compile(r"\[([^\]\n]+)\]\(\s*((?:https?:|mailto:)[^)\s]+)\s*\)")
 _MD_BOLD = re.compile(r"\*\*(?=\S)(.+?)(?<=\S)\*\*", re.S)
 # `*` only pairs at a word boundary, so `a*b` and `2 * 3` stay literal (and `snake_case` is safe
 # because `_` is not an italic mark here — it appears in identifiers far more often than in prose)
 _MD_ITAL = re.compile(r"(?<![\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])")
+_MD_STRIKE = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
+
+# The three link shapes, matched in ONE left-to-right scan rather than three passes. A second pass
+# over the first one's output would re-read the `href` it had just written and link the URL inside
+# the attribute; a single alternation consumes each span once. `&lt;…&gt;` is how markdown's
+# angle-autolink looks after escaping, and the bare form is what a source pasted from a chat, a
+# report footer, or an `### Sources` block actually carries — an author who writes a naked URL
+# means a link, and dropping it to grey text is the one case where the deck loses information the
+# markdown had.
+_LINKISH = re.compile(
+    r"(?P<md>\[(?P<mdtext>[^\]\n]+)\]\(\s*(?P<mdurl>(?:https?:|mailto:)[^)\s]+)\s*\))"
+    r"|(?P<angle>&lt;(?P<angleurl>(?:https?:|mailto:)[^\s]+?)&gt;)"
+    r"|(?P<bare>(?<![\w@./-])(?:https?://|www\.)[^\s()\[\]{}'\"*`~]+)"
+)
+# A URL at the end of a sentence takes the sentence's punctuation with it, and one escaped inside
+# quotes or angles picks up the entity. Neither is part of the address: trim them off the href and
+# leave them outside the anchor as the text they are.
+_URL_TAIL = re.compile(r"(?:[.,;:!?]|&(?:quot|gt|lt|amp|nbsp|#39);)+$")
 
 
-def _marks(s: str) -> str:
+def _anchor(href: str, text: str) -> str:
     # `.mdlink`, not a bare <a>: the renderer emits anchors for two unrelated jobs — a prose link
     # like this one, and the section-agenda's roadmap rows, which are navigation chrome. Styling
     # by element type conflated them and painted the whole roadmap like a citation.
-    s = _MD_LINK.sub(lambda m: f'<a class="mdlink" href="{m.group(2).replace(chr(34), "&quot;")}" '
-                               f'target="_blank" rel="noopener">{m.group(1)}</a>', s)
+    return (f'<a class="mdlink" href="{href.replace(chr(34), "&quot;")}" '
+            f'target="_blank" rel="noopener">{text}</a>')
+
+
+def _emph(s: str) -> str:
+    s = _MD_STRIKE.sub(r"<del>\1</del>", s)
     s = _MD_BOLD.sub(r"<b>\1</b>", s)
     return _MD_ITAL.sub(r"<i>\1</i>", s)
 
 
+_SLOT = re.compile(r"\x00(\d+)\x00")
+
+
+def _marks(s: str) -> str:
+    """Links resolve first and are held aside behind a slot marker; emphasis then runs over the
+    whole line. Emphasis must see across a link (`**[Report 2024](url)** — WHO` is one bold span,
+    and a citation is written exactly like that), but must never see *into* one, or a `*` in a URL
+    would emit a tag inside the `href`. The slot gives both."""
+    held = []
+
+    def stash(m):
+        if m.group("md"):
+            held.append(_anchor(m.group("mdurl"), _emph(m.group("mdtext"))))
+            tail = ""
+        elif m.group("angle"):
+            url = m.group("angleurl")
+            held.append(_anchor(url, url))
+            tail = ""
+        else:
+            raw = m.group("bare")
+            url = _URL_TAIL.sub("", raw)
+            if not url:                     # punctuation only — nothing to link
+                return raw
+            href = url if url.startswith(("http://", "https://")) else "https://" + url
+            held.append(_anchor(href, url))
+            tail = raw[len(url):]           # the sentence's punctuation, left outside the anchor
+        return f"\x00{len(held) - 1}\x00{tail}"
+
+    return _SLOT.sub(lambda m: held[int(m.group(1))], _emph(_LINKISH.sub(stash, s)))
+
+
 def _inline_md(text: str) -> str:
-    """`**bold**`, `*italic*`, `` `code` `` and `[text](url)` in already-escaped text. Code spans
-    are cut out first so the marks inside them stay literal — a body that shows `**kwargs` as code
-    means it."""
-    if not (set("`*[") & set(text)):        # most leaves carry no mark at all — skip four passes
+    """`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[text](url)` and bare/angle URLs in
+    already-escaped text. Code spans are cut out first so the marks inside them stay literal — a
+    body that shows `**kwargs` as code means it."""
+    # most leaves carry no mark at all — skip the passes (`//` and `www.` are the URL tells)
+    if not (set("`*[~") & set(text)) and "//" not in text and "www." not in text:
         return text
+    text = text.replace("\x00", "")         # NUL is the link slot marker — never authored content
     out, last = [], 0
     for m in _MD_CODE.finditer(text):
         out.append(_marks(text[last:m.start()]))
@@ -658,6 +714,23 @@ def _inline_md(text: str) -> str:
 _RAW_KEYS = frozenset({"code", "notes", "src", "alt", "icon", "media", "image", "template",
                        "design", "format", "layout", "kind", "position", "id", "lang",
                        "_source", "correct", "reveal", "side"})
+
+
+def rich(text) -> Markup:
+    """One authored string → inline-styled markup. For the text the *renderer* passes to a template
+    by hand (the cover fields, the roadmap's section names) rather than through a slide dict."""
+    return Markup(_inline_md(_esc(str(text if text is not None else ""))))
+
+
+def notes_html(text: str) -> Markup:
+    """Speaker notes → the Reveal `aside`. Same inline grammar as the slide face — notes are read
+    off a screen too, and an author who bolds a term or cites a link in them means it. Newlines are
+    honoured here and nowhere else: `notes` is free prose the presenter reads, not a schema field,
+    so a blank line is a paragraph and a single newline a break — collapsing them (the old escape-
+    only path) turned a structured note into one wall of text in the speaker view."""
+    paras = [p for p in re.split(r"\n\s*\n", (text or "").strip()) if p.strip()]
+    return Markup("".join("<p>{}</p>".format(_inline_md(_esc(p)).replace("\n", "<br>"))
+                          for p in paras))
 
 
 def _richtext(node, key=None):

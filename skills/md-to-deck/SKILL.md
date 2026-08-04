@@ -63,6 +63,18 @@ the ordered section list) and one object per slide. For **each** slide you:
 The judgment is the LLM's, against a fixed field contract. Write to
 `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
 
+> **Copy the author's inline markup verbatim too — it is resolved, not shipped as characters.**
+> Every text field of every template accepts `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``,
+> `[title](url)` and a **naked `https://…`**; the render turns each into markup (links open in a
+> new tab, styled as `.mdlink`). Speaker notes take the same grammar and additionally keep their
+> paragraph breaks. So do not strip marks while decomposing, and do not flatten a URL to plain
+> text — a citation that arrives as an address must leave as a working link. The contract, and the
+> `[title](url)`-over-bare-URL preference, live in the schema's *Inline markup survives* rule; the
+> grammar itself is implemented once in [`html_style.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/html_style.py)
+> (`_inline_md`) and styled once in `templates/html/theme.css`. **Block** markdown inside a field
+> (headings, lists, tables) is *not* resolved — structure belongs to the model's fields. The one
+> field excluded from all of it is `code`, whose bytes are the content.
+
 > **Copy every image `src` verbatim — extension included.** A `final.md` ref to
 > `images/<name>.svg` fills the model as `images/<name>.svg`. This render **inlines SVG as vector
 > markup**; silently substituting the `.png` companion downgrades the diagram to a raster and is a

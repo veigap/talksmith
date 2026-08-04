@@ -283,6 +283,20 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   face). Keep image `src` paths exactly as written (`images/…`).
 
 **Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
+- **Inline markup survives — copy it, don't strip it.** Every text field of every template accepts
+  the author's inline marks and the renderers resolve them: `**bold**`, `*italic*`, `~~strike~~`,
+  `` `code` ``, `[text](url)` and a **naked `https://…`** (which links itself). So a figure the
+  source emphasized stays emphasized, and a **URL stays a working link** — carrying a citation
+  through as grey text loses information the markdown had. This holds in `notes` too. Two
+  consequences for the fill:
+  - **Prefer `[title](url)`** over a naked URL when the source names what it points at
+    (`[WHO — Ethics and governance of AI for health](https://who.int/…)`) — a titled link reads on
+    a slide, a 90-character address does not. Normalize a source line to that shape when the title
+    is right there next to the URL; leave the URL bare rather than inventing a title when it isn't.
+  - **Block markdown does not survive** — headings, lists, tables, blockquotes inside a field
+    render as literal text. Structure is the model's job: it becomes `cards` / `steps` / `columns`,
+    never `- ` lines inside one `body`. (`notes` is the one exception: it is free prose, so its
+    blank lines and line breaks are kept.)
 - **Labeled set** (`- **Label** body`, `### Subhead` + paragraph) → `cards` / `rows` / `steps` /
   `figures` `[{label,body}]`, **never plain bullets**; drop an item that just repeats the title.
 - **A list with no labels** is one of two things, and neither is `fallback`:

@@ -13,6 +13,51 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.79.0] — 2026-08-04
+
+### Added
+
+- **A naked URL is now a link.** Sources rarely arrive as `[title](url)` — a line pasted from a
+  chat, a report footer or an `### Sources` block carries the bare address. The HTML render now
+  linkifies `https://…`, `www.…` and the markdown angle form `<https://…>` anywhere in a text
+  field, alongside the `[text](url)` form it already handled. A trailing period or quote stays
+  outside the link, so a citation at the end of a sentence still points at the right address.
+- **`~~strike~~`** joins the inline grammar, for a superseded figure a slide corrects
+  (`~~1.2M~~ **4.4M**`) — struck and dimmed, but still legible.
+- **Speaker notes take the same inline grammar, and keep their line breaks.** Notes were escaped
+  and nothing else: a bolded term showed its asterisks, a cited link was dead text, and every
+  paragraph break collapsed into one wall of text in the speaker view. They now render as
+  paragraphs with bold/italic/code/links resolved — notes are read off a screen too.
+- **The cover and the section roadmap** now resolve inline marks as well; they were the last text
+  the renderer passed to a template by hand, bypassing the conversion every slide field got.
+
+### Fixed
+
+- **`**[Title](url)**` renders bold.** Emphasis wrapping a link — exactly how a citation is
+  written — is now resolved as one span. Links are held aside behind a marker while emphasis runs,
+  so emphasis reads *across* a link but never *into* one (a `*` in a URL can no longer emit a tag
+  inside the `href`).
+
+### Changed
+
+- **Links now work on the `.pptx` path too.** The strict spec gained **§3.6 — inline markup inside
+  a text run**: the full mark → run-property table (`b="1"`, `i="1"`, `strike="sngStrike"`, an
+  inline Courier New span) plus the hyperlink recipe (`<a:hlinkClick r:id>` + an
+  `External` relationship) and the four things that silently kill a link. Free-form points at the
+  same recipe. Previously only bold was mentioned, on one layout, so a `[title](url)` rendered as
+  literal brackets in a native deck.
+- **The support is documented where each audience looks.** It was implemented but stated nowhere:
+  `schemas/draft.md` now has a *write this / get that* table for the **author** (marks and links
+  written in the outline survive to the deck); `schemas/slide-model.md` tells the **fill step** to
+  carry marks through rather than strip them, and to prefer `[title](url)` over a bare address when
+  the source names what it points at; `skills/md-to-deck/SKILL.md` says the same to the render; and
+  the `CLAUDE.md` ownership map now names `_inline_md` as the grammar's single owner. The standing
+  limit is stated with it: *block* markdown inside a field (lists, tables, headings) does not
+  survive, because structure belongs to the model's fields.
+- **The style reference exercises every supported mark.** Its inline-styling slide now covers all
+  six link forms and both new marks — titled link, naked URL, `<angle>`, `www.`, `mailto:`,
+  strike, plus a note that demonstrates the same grammar in the speaker pane.
+
 ## [0.78.0] — 2026-08-04
 
 ### Added

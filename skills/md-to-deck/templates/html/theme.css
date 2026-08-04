@@ -10,8 +10,9 @@
    per style, discovered and inlined at build (html_style.py). Add a style by adding a file. */
 *{box-sizing:border-box}html,body{margin:0;background:var(--page)}
 /* ---- inline font styling ----
-   The four marks an author can write *inside* any text field (`**bold**`, `*italic*`, `` `code` ``,
-   `[text](url)` — resolved in html_style.py `_inline_md`). They are stated once, here, because
+   The marks an author can write *inside* any text field (`**bold**`, `*italic*`, `~~strike~~`,
+   `` `code` ``, `[text](url)` and a bare `https://…` — resolved in html_style.py `_inline_md`).
+   They are stated once, here, because
    emphasis inside a sentence is not a property of one template: every component inherits them.
    Deliberately colour-free except for the link: bold and italic take the ink of whatever component
    they sit in, so they work on the light card surfaces and the dark full-bleed ones alike, and a
@@ -21,6 +22,8 @@
    rules and paint them like citations. */
 .slide b,.slide strong{font-weight:800}
 .slide i,.slide em{font-style:italic}
+/* struck text is a *superseded* value, not a deleted one — it stays legible, just demoted */
+.slide del,.slide s{text-decoration:line-through;opacity:.55}
 .slide code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
   border-radius:.4cqw;padding:0 .3em;color:inherit}
 .slide a.mdlink{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}

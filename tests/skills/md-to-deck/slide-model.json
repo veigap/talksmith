@@ -526,7 +526,7 @@
       "template": "concept-breakdown",
       "section": "Enumerations",
       "title": "Inline styling works in *every* field",
-      "lead": "`**bold**`, `*italic*`, `` `code` `` and `[text](url)` are resolved in **every** text field of **every** template:",
+      "lead": "`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[text](url)` and a naked URL are resolved in **every** text field of **every** template:",
       "cards": [
         {
           "label": "**Bold** a figure",
@@ -541,17 +541,25 @@
           "body": "A field name like `slide-model.json` or a flag like `--print-pdf` keeps the mono face."
         },
         {
-          "label": "A [link](https://www.who.int)",
-          "body": "Only `http:`, `https:` and `mailto:` become links; anything else stays literal text."
+          "label": "~~Strike~~ a superseded value",
+          "body": "A figure the slide corrects reads ~~1.2M~~ **4.4M** — struck, not deleted, so the correction is visible."
+        },
+        {
+          "label": "A titled [link](https://www.who.int)",
+          "body": "`[text](url)` shows the title and hides the address. Only `http:`, `https:` and `mailto:` link — `[x](javascript:…)` stays literal text."
+        },
+        {
+          "label": "URLs link themselves",
+          "body": "A source pasted raw as https://www.who.int/data, the angle form <https://who.int>, and www.who.int/es all become clickable — the trailing period stays outside the link."
         }
       ],
       "highlights": [
         {
           "kind": "source",
-          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024)."
+          "body": "Fuente: [WHO — Ethics and governance of AI for health](https://www.who.int) (2024) — dudas a [este correo](mailto:deck@example.org)."
         }
       ],
-      "notes": "Inline styling is resolved once, in html_style.py `_richtext`/`_inline_md`, on the slide's prose fields — not per template — so any field of any template accepts the four marks. Escaping runs first, so authored HTML in a field stays inert text; code blocks, speaker notes, image paths and the enum-ish fields the renderer branches on are excluded, because their bytes are the content. The grammar stops at inline marks on purpose: block markdown inside a field (headings, lists, tables) would let content route around the schema, which is where the template and its fields do their work."
+      "notes": "Inline styling is resolved once, in html_style.py `_richtext`/`_inline_md`, on the slide's prose fields — not per template — so any field of any template accepts the marks. Escaping runs first, so authored HTML in a field stays inert text; code blocks, image paths and the enum-ish fields the renderer branches on are excluded, because their bytes are the content.\n\nSpeaker notes take the same grammar (this note is proof: **bold** resolves here too) plus their own line breaks, because notes are prose the presenter reads rather than a schema field.\n\nThe grammar stops at inline marks on purpose: block markdown inside a field (headings, lists, tables) would let content route around the schema, which is where the template and its fields do their work."
     },
     {
       "template": "section-agenda",

@@ -127,6 +127,63 @@ A renderer should measure the title text width in Helvetica Bold and pick the la
 
 **`body_y_start` depends on the title's actual wrap state, not on a defensive margin.** Renderers commonly compute `body_y_start = title_y + max_title_height` using the *maximum* height the title could occupy under any wrap (a defensive constant baked into the chars-per-line picker). That's wrong: a 14-char title that fits one line at 31pt has a *measured* `title_height` of roughly one line-height (~0.50 in), and `body_y_start` should land just below that — not below the 2- or 3-line maximum the worst-case title would have produced. When the defensive margin wins, every short-title slide ships with a visible title-to-body gap. The contract: after sizing the title via the §3.3 ladder, **measure the resulting wrapped text height** (number of wrap lines × `line_height_for(sz)`) and set `body_y_start = title_y + actual_title_height + body_gap` where `body_gap ≈ 0.20 in`. The picker's job is to choose `sz`; the layout's job is to read the resulting height — not to reserve room the title turned out not to need.
 
+### 3.6 Inline markup inside a text run — every text field, every slide
+
+**Authored text carries inline markup, and it is not decoration to be dropped.** Any field on any
+slide may contain the marks the author wrote; the model preserves them (see
+[`${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)) and this render
+resolves them into **run properties** — the mark itself never appears as a literal character.
+The rule is universal because a link, a bolded figure or a struck-out value can appear in a title,
+a lead, a card body, a caption, a table cell or a source line; there is no field that is exempt.
+The **only** exception is a §9 code block, where the marks are the content.
+
+| Mark | Render as | Notes |
+|---|---|---|
+| `**bold**` | a run with `b="1"` | Already the rule for the §7.5 lead paragraph; it holds everywhere |
+| `*italic*` | a run with `i="1"` | |
+| `~~strike~~` | a run with `strike="sngStrike"` | A superseded value the slide corrects — struck, not deleted |
+| `` `code` `` | a run in **Courier New** at the surrounding `sz`, ink `#000000` | An inline span, not a §9 code surface — no background rect |
+| `[title](url)` | a run carrying `<a:hlinkClick>`, showing **`title` only** | The address lives in the relationship, never in the visible text |
+| a naked `https://…` | the same, with the URL as its own visible text | Sources rarely arrive bracketed; a dead URL loses what the source gave |
+
+Splitting one paragraph into several runs is exactly what OOXML runs are for: emit a run per
+styled span, all sharing the paragraph's `<a:pPr>`, so the line reads as one sentence with parts
+of it styled.
+
+**Hyperlink recipe.** A link needs two edits — the run, and a relationship in the slide's rels part:
+
+```xml
+<!-- ppt/slides/slideN.xml — inside the paragraph -->
+<a:r>
+  <a:rPr lang="es-ES" sz="1000" b="1" u="sng" dirty="0">
+    <a:solidFill><a:srgbClr val="DA1B2E"/></a:solidFill>
+    <a:latin typeface="Helvetica"/>
+    <a:hlinkClick r:id="rId7"/>
+  </a:rPr>
+  <a:t>WHO — Ethics and governance of AI for health</a:t>
+</a:r>
+
+<!-- ppt/slides/_rels/slideN.xml.rels -->
+<Relationship Id="rId7"
+  Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+  Target="https://www.who.int/…" TargetMode="External"/>
+```
+
+Four things fail a link silently, so check each one:
+
+- **`TargetMode="External"`** is required. Without it PowerPoint reads the target as a part path
+  inside the package, and the file opens repaired or the link does nothing.
+- **`r:id` must be unique within *that slide's* rels part** and must actually exist there. A rels
+  id reused across slides is fine; one that resolves to nothing is a repair prompt on open.
+- **The `r:` namespace** is declared on the slide root (`xmlns:r="…/officeDocument/2006/relationships"`)
+  in every slide this template emits — use it, don't re-declare it on `<a:hlinkClick>`.
+- **Style the run explicitly** — `u="sng"` + `#DA1B2E` (brand accent, §2.1) + `b="1"`. A run with
+  no `solidFill` inherits the theme's hyperlink colour, which is not this deck's red, and the
+  citation ends up a different colour on every import target.
+
+This mirrors the HTML render's `.mdlink` (accent red, bold, underlined), so the same source line
+reads the same in both deliverables.
+
 ---
 
 ## 4. Slide 1 (Cover) — contractually fixed recipe

@@ -138,7 +138,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         else:
             inner = _hs.render_model_slide(s, cache, talk_root, out_dir, lang)
         notes = s.get("notes", "")
-        aside = f'<aside class="notes">{_hs._esc(notes)}</aside>' if notes else ""
+        aside = f'<aside class="notes">{_hs.notes_html(notes)}</aside>' if notes else ""
         slides_html.append(f'<section class="slide"{sid} data-kind="{t}">{inner}{aside}</section>')
 
     for slide_title, bad in unknown:

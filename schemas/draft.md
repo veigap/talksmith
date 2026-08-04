@@ -88,6 +88,31 @@ Identical in `draft.md` and `final.md` (modulo the Step-6 differences listed in 
 | `Open questions` | end of file | Things still undecided. Revisit before finalizing. In `final.md` also holds rescued `[open]` bullets. |
 | `Cut material` | end of file | Ideas considered and dropped, kept in case they come back. |
 
+### Inline markup survives to the deck — write it
+
+Text you write in `Content`, `Speaker notes`, or any other prose field is **not** flattened on its
+way to a slide. Every renderer resolves the author's inline marks, so emphasis and citations you
+put in the outline are what the audience sees:
+
+| Write | Get |
+|---|---|
+| `**bold**` | bold — for the figure that carries the line |
+| `*italic*` | italic — for a term being introduced |
+| `~~strike~~` | struck-through — a superseded value the slide corrects |
+| `` `code` `` | inline monospace — a field name, a flag |
+| `[title](https://…)` | a clickable link showing `title` |
+| a naked `https://…` | a clickable link showing the URL |
+
+**Prefer `[title](url)`** when you know what the source is called — a titled citation reads on a
+slide, a 90-character address does not. A bare URL still links, so a source pasted from a chat
+never silently becomes dead grey text.
+
+**Block markdown does not survive inside a field** — headings, nested lists and tables written
+*inside* one bullet render as literal characters. Structure is what the outline's own shape is
+for: separate bullets, `### Subhead` groups, and a pipe table at the top level of `### Content`
+all become real slide structure. (Speaker notes are the exception: they are free prose, so their
+paragraphs and line breaks are kept.)
+
 ## Canonical slide locator
 
 The `editor` parses composer punch-lists and presenter feedback on this locator syntax:
