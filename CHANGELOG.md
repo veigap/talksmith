@@ -90,8 +90,9 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 - **New highlight kind `source` — a citation, rendered plain.** Attribution lines ("Fuente: OWASP
   Top 10 for LLM Applications, 2025") had no home: as a `note` they got a card, an accent bar and
   an icon, so a credit line drew as much attention as the content it credits. `kind: "source"` is
-  the one highlight with no card, no accent bar and no icon — just a small muted line under the
-  body. Use it for provenance only (paper, standard, dataset, report, URL); a line that *says
+  the one highlight with no card, no accent bar and no icon, in a muted ink — what sets it apart is
+  chrome and colour, not type, so its size, leading and bold weight match every other kind and the
+  band still reads as one family. Use it for provenance only (paper, standard, dataset, report, URL); a line that *says
   something* about the source is still a `note`. Honored on both render paths: the HTML band drops
   its box, and the strict `.pptx` emits it as a plain card-body-size line instead of a §8 panel.
   It is also the one kind that **leaves the content flow** — a citation is slide chrome, not a

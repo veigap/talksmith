@@ -549,7 +549,8 @@ If a future deck genuinely needs a table, introduce it as a new shape pattern �
 > the body, per §8.3, exactly as for a closing band), and the `bottom` entries as one band below
 > the body as today. A slide may carry both, and each band keeps its per-`kind` accent — with the
 > exception of `kind: source`, a citation rather than a callout: emit it as a **plain text line at
-> card-body size** (§3.2, ~9pt `#3B3535`) with **no panel fill, no accent bar and no marker icon**,
+> the same type size as any other highlights band**, in a muted `#3B3535`, with **no panel fill, no
+> accent bar and no marker icon** — what distinguishes it is chrome and colour, not type,
 > anchored to the **bottom content margin** of the slide rather than stacked under the body — it
 > credits the material, it does not compete with it, and it belongs on the same baseline whatever
 > the body's height. `position` does not apply to it. There is no

@@ -399,11 +399,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .highlight.example{color:#0E8A6E}.highlight.note{color:#6E6663}.highlight.quote{color:#8A7E76}
 .highlight.quote p{font-style:italic}
 /* `source` is a citation, not a callout: it points at where the material came from, so it must
-   not compete with the body. No card, no accent bar, no icon (the fill emits none) — just a
-   small muted line hanging under the content. */
+   not compete with the body. What sets it apart is **chrome and colour, not type** — no card, no
+   accent bar, no icon (the fill emits none), and a muted ink; the type itself is the same size,
+   leading and bold weight as every other kind, so a deck's highlights read as one family. */
 .highlight.source{background:none;border-left:0;border-radius:0;padding:0;color:var(--fm)}
-.highlight.source p{font-size:1.9cqw;color:var(--fm);line-height:1.3}
-.highlight.source b{font-weight:700;color:var(--fm)}
+.highlight.source p{color:var(--fm)}
+.highlight.source b{color:var(--fm)}
 /* …and it sits on the slide's bottom edge, not under the content. The band is emitted as a child
    of the stage rather than of `.cfit` (see `_macros.j2`), so pinning it is just letting `.cbody`
    take the slack: the source lands on the baseline whether the slide is full or nearly empty, and

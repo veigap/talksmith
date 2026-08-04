@@ -83,10 +83,12 @@ deliverable; `draft.md` → live in-progress view).
   | `note` | an aside / minor context | "Convención con respaldo en ISO 27001 / NIST." |
   | `source` | **a bare reference to where the material came from** — a citation, not a callout | "Fuente: OWASP Top 10 for LLM Applications (2025)." |
 
-  `source` is the one kind rendered **plain**: no card background, no accent bar and **no icon** —
-  just a small muted line, so the attribution never competes with the content it credits. Use it
-  only for provenance (a paper, standard, dataset, report, URL); a line that *says something*
-  about the source is a `note`.
+  `source` is the one kind rendered **plain**: no card background, no accent bar and **no icon**,
+  in a muted ink, so the attribution never competes with the content it credits. What sets it
+  apart is **chrome and colour, not type** — the size, leading and bold weight are the same as
+  every other kind, so a deck's highlights read as one family. Use it only for provenance (a
+  paper, standard, dataset, report, URL); a line that *says something* about the source is a
+  `note`.
 
   It is also the one kind that **leaves the content flow**: a citation is slide chrome, not a
   remark on the body, so it is pinned to the **bottom edge of the slide** rather than trailing
