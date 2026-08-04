@@ -186,6 +186,231 @@
       ]
     },
     {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 3 concepts, one row of three",
+      "format": "editorial",
+      "lead": "The editorial format keeps the icon, the label and the body, and drops the panel around them:",
+      "cards": [
+        {
+          "icon": "layers",
+          "label": "No card",
+          "body": "No fill, no radius, no wide padding — the concept sits on the canvas."
+        },
+        {
+          "icon": "adjust",
+          "label": "Small icon",
+          "body": "The glyph is a reference mark beside the label, not the anchor."
+        },
+        {
+          "icon": "checklist",
+          "label": "One row",
+          "body": "Three concepts share a single row instead of two plus one wide."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 4 concepts, a 2×2 grid",
+      "format": "editorial",
+      "lead": "Four concepts fill two columns over two rows — the same rhythm the card grid uses, without the boxes:",
+      "cards": [
+        {
+          "icon": "grid_view",
+          "label": "Two columns",
+          "body": "Each concept takes half the useful width, so the measure stays comfortable."
+        },
+        {
+          "icon": "align_horizontal_left",
+          "label": "Aligned labels",
+          "body": "Labels in a row share a baseline; bodies indent to the label's left edge."
+        },
+        {
+          "icon": "horizontal_rule",
+          "label": "A hairline, not a box",
+          "body": "One thin rule marks the row; white space does the rest of the separating."
+        },
+        {
+          "icon": "tune",
+          "label": "Opt-in",
+          "body": "Set format editorial; leaving it off keeps the card grid exactly as it was."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 5 concepts, three then two centered",
+      "format": "editorial",
+      "lead": "A short last row keeps the width of the row above and centers, instead of stretching to fill:",
+      "cards": [
+        {
+          "icon": "looks_3",
+          "label": "Three up top",
+          "body": "The first row sets the column rhythm."
+        },
+        {
+          "icon": "straighten",
+          "label": "Same width",
+          "body": "Row two keeps that item width, so every measure matches."
+        },
+        {
+          "icon": "balance",
+          "label": "Centered",
+          "body": "The leftover width splits evenly on both sides."
+        },
+        {
+          "icon": "block",
+          "label": "Never one wide",
+          "body": "No item ever spans a whole row on its own."
+        },
+        {
+          "icon": "air",
+          "label": "Room to breathe",
+          "body": "The unused half-columns read as white space, not as a gap."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 6 concepts, a 3×2 grid",
+      "format": "editorial",
+      "lead": "Six concepts are the format's comfortable middle — three columns over two rows:",
+      "cards": [
+        {
+          "icon": "view_column",
+          "label": "Three columns",
+          "body": "The same span as the three-concept row, twice over."
+        },
+        {
+          "icon": "density_medium",
+          "label": "Even density",
+          "body": "Six flat blocks weigh less than six cards."
+        },
+        {
+          "icon": "vertical_align_top",
+          "label": "Rows read across",
+          "body": "Reading order stays left to right, top to bottom."
+        },
+        {
+          "icon": "text_fields",
+          "label": "Short bodies",
+          "body": "Around a hundred characters each at this width."
+        },
+        {
+          "icon": "warning",
+          "label": "Longer prose warns",
+          "body": "The build says so instead of shrinking the type."
+        },
+        {
+          "icon": "swap_horiz",
+          "label": "Or use list",
+          "body": "The vertical format has the room prose needs."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 7 concepts, four then three centered",
+      "format": "editorial",
+      "lead": "Seven is the count the card grid handled worst — 3+3+1 left a single item stranded on its own row:",
+      "cards": [
+        {
+          "icon": "looks_4",
+          "label": "Four up top",
+          "body": "Seven and eight concepts move to four columns."
+        },
+        {
+          "icon": "compress",
+          "label": "Type steps down",
+          "body": "Icon and text shrink one notch at four across."
+        },
+        {
+          "icon": "balance",
+          "label": "Three centered",
+          "body": "The second row centers on the same grid."
+        },
+        {
+          "icon": "block",
+          "label": "No orphan row",
+          "body": "Nothing is left alone across the width."
+        },
+        {
+          "icon": "short_text",
+          "label": "Keep bodies short",
+          "body": "Roughly seventy characters at this width."
+        },
+        {
+          "icon": "visibility",
+          "label": "Still legible",
+          "body": "The step-down is bounded, not open-ended."
+        },
+        {
+          "icon": "call_split",
+          "label": "Past that, split",
+          "body": "Two slides beat one unreadable one."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial: 8 concepts, a 4×2 grid",
+      "format": "editorial",
+      "lead": "Eight is the ceiling — a regular four-by-two grid, with the takeaway kept out of it:",
+      "cards": [
+        {
+          "icon": "grid_on",
+          "label": "Four by two",
+          "body": "A regular grid, no partial row."
+        },
+        {
+          "icon": "straighten",
+          "label": "Equal widths",
+          "body": "Every concept gets the same measure."
+        },
+        {
+          "icon": "horizontal_rule",
+          "label": "Row rules",
+          "body": "Hairlines mark the two rows."
+        },
+        {
+          "icon": "adjust",
+          "label": "Small glyphs",
+          "body": "Icons support, they do not lead."
+        },
+        {
+          "icon": "format_align_left",
+          "label": "Aligned",
+          "body": "Labels in a row share a baseline."
+        },
+        {
+          "icon": "air",
+          "label": "White space",
+          "body": "The row gap carries the separation."
+        },
+        {
+          "icon": "speed",
+          "label": "Scans fast",
+          "body": "Eight flat blocks stay readable."
+        },
+        {
+          "icon": "block",
+          "label": "The ceiling",
+          "body": "A ninth concept means a second slide."
+        }
+      ],
+      "highlights": [
+        {
+          "kind": "takeaway",
+          "body": "A conclusion stays a full-width band under the grid — it is a comment on the set, never a ninth cell in it."
+        }
+      ]
+    },
+    {
       "template": "icon-list",
       "section": "Enumerations",
       "title": "aside: a full-bleed image column on the right",

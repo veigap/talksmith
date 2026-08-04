@@ -66,6 +66,35 @@ Un divisor sin número — el separador liviano dentro de una sección.
 
 ---
 
+## Concept-breakdown · editorial · 3 concepts (one row)
+<!-- template: concept-breakdown -->
+<!-- format: editorial -->
+
+Los mismos conceptos, sin la tarjeta alrededor:
+
+- **Sin caja** Ni fondo, ni borde redondeado, ni padding ancho.
+- **Ícono chico** Una marca de referencia junto al título, no el ancla.
+- **Una fila** Tres conceptos comparten una fila, no dos más uno ancho.
+
+---
+
+## Concept-breakdown · editorial · 8 concepts (4×2)
+<!-- template: concept-breakdown -->
+<!-- format: editorial -->
+
+Ocho es el techo del formato: una grilla regular de cuatro por dos.
+
+- **Cuatro por dos** Grilla regular, sin fila parcial.
+- **Anchos iguales** Cada concepto recibe la misma medida.
+- **Líneas de fila** Un filete marca cada fila.
+- **Glifos chicos** Los íconos acompañan, no encabezan.
+- **Alineado** Los títulos de una fila comparten línea de base.
+- **Espacio en blanco** El aire entre filas separa.
+- **Se lee rápido** Ocho bloques planos siguen siendo legibles.
+- **El techo** Un noveno concepto pide otra slide.
+
+---
+
 ## Card-row · 3 short cards
 <!-- template: card-row -->
 

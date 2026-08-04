@@ -108,7 +108,8 @@ Decide the template **from the content**, as a discriminator walk — not first-
      2-item set** → two cards). It requires `images == 0` — any source image disqualifies it (its
      per-card icons are renderer-added, not source pictures). Then pick its `format` by count and
      body length: `row` for a lead + 3–5 short items, `list` for a lead + 3–5 prose items or an
-     anaphora, `grid` otherwise. That is a **formatting** choice made after the template, not a
+     anaphora, `editorial` for 2–8 short items when the composition wanted is **flat** (no cards),
+     `grid` otherwise. That is a **formatting** choice made after the template, not a
      second classification.
    - `labeled_items == 1` (a lead + one point) → `single-point`, or `callout` when that point is
      a **tone-carrying aside** (a tip, a warning, an analogy — the pink/blue panel *is* the
@@ -160,7 +161,7 @@ sub-category follows, grouped by family.
 |---|---|---|
 | **Frame** — structure, not content | `cover` · `section-agenda` · `divider` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
 | **One claim / emphasis** — a single message | `statement` · `quote` · `quiz` · `callout` | attributed/voiced → `quote`; question→answer → `quiz`; an aside *inside* another slide → `callout`; else `statement` |
-| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list) is then picked by count + body length |
+| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list / editorial) is then picked by count + body length — `editorial` being the same set composed **flat**, without cards |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; 2–3 parallel value columns → `value-columns` (which may carry one supporting image) |
@@ -343,13 +344,30 @@ precise rules.
   | `grid` *(default)* | short bodies, any count 2–6 | a grid of **equal cards**, each = a content-matched icon **above** a label (13.5 pt Bold) + a one-line body (11 pt). 2 → side by side; 3 → a row; 4 → 2×2; 5–6 → 3×N. Beyond ~6 → split the slide. |
   | `row` | a lead + **3–5** items, **every body ≤ ~80 chars** | a **single horizontal row** of N equal-width cards, each headed by a filled accent **chip** icon. Parallel concept *summaries* ("three innovations", "four pillars"). At N=5 bodies must be ≤ 60 chars; if they don't fit, use `list` — never shrink the font. |
   | `list` | a lead + **3–5** items, **at least one body > ~80 chars** | a **vertical stack** of N rows, each = a line-art icon at the left + heading + a 2–4-sentence body to the right. Judge by the **longest** item; never split one group across `row` and `list`. Also the home for a short **anaphora** (2–5 short parallel lines with no bodies — "No hubo hackers. No hubo malware.") so those don't fall to `fallback`. |
+  | `editorial` | **2–8** concepts, **short** bodies, a **flat** composition wanted — the panels carry no meaning | the same set with the **card removed**: no fill, no radius, minimal padding. A **small** icon (≈⅓ the card glyph) sits on the label's line; the body indents under the label. A hairline + white space separate; **no box around anything**. Counts map to a regular grid — 2·4 → 2 columns, 3·5·6 → 3, 7·8 → 4 — and a short last row keeps the row above's item width and **centers** (5 → 3+2, 7 → 4+3), so no item is ever stranded across a full row. |
+
+  **Choosing `editorial` over `grid`.** They hold the same content; the question is whether the
+  *panel* is part of the design. Take `editorial` when **all** of: 2–8 parallel concepts · every
+  body short · the items are icon + label + a line, with **no per-concept image** · the composition
+  wanted is flat (an organized collection of concepts, not an application screen) · the cards would
+  add nothing but weight. Keep `grid` when the panels are intentional — a product/dashboard
+  register, or cards the deck already uses as a motif. It is **opt-in**: omitting `format` renders
+  exactly the card grid it always did.
+  **When it doesn't fit, don't shrink the content.** The body budget falls with the column count —
+  ~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8. Past that, or past 8 concepts, switch to
+  `list` (a vertical stack with room for prose) or split the slide; the build warns rather than let
+  the fit pass compress the type into illegibility. A conclusion or takeaway stays a **full-width
+  band below the grid** (`highlights`), never a cell inside it.
 
   The **per-concept icon is standard, not optional** — a concept is *anchored by its icon*, and it
   is **different per item**. A plain, iconless grid is a fallback only for a dense 5–6-item set or
   when no sensible glyph fits. Uniform card + icon size, consistent gutters (~0.2 in), shared
   gridlines, aligned rows. **Never bullets.**
 - **Strict recipe:** §7.2 card + §7.2.1 per-card icon (ref S8 geometry) / §7.6 — `row` is §7.4 and
-  `list` is §7.5 (+ §7.3 chooser); icon chosen per §17.5. **Provenance:** ref S8/S27/S49 (icon'd),
+  `list` is §7.5 (+ §7.3 chooser); icon chosen per §17.5. **`editorial` is an HTML-render format
+  only**: the `.pptx` renderers have no flat recipe and fall back to the §7.2.1 icon card grid, so
+  a model carrying it renders as the default card set there. Same content either way — only the
+  HTML deck drops the panels. **Provenance:** ref S8/S27/S49 (icon'd),
   S5/S25/S53 (dense/plain fallback), final S11/12/13, gov S22/24.
 
 #### `single-point` — exactly one labeled item (lead + one point)
@@ -700,7 +718,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | a labeled set (**≥2**) | ordered (steps/1./Paso), labels not dates | `process` |
 | a labeled set (**≥2**) | **each item** has an image | `figures` |
 | a labeled set (**≥2**) | **one shared** supporting image | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts |
-| a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 short, `list` = lead + 3–5 prose or an anaphora, `grid` otherwise |
+| a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 short, `list` = lead + 3–5 prose or an anaphora, `editorial` = 2–8 short items composed flat (no cards), `grid` otherwise |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |
 | numbers/metrics | **1** hero figure + caption | `big-number` |

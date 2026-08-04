@@ -13,6 +13,31 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.76.0] — 2026-08-03
+
+### Added
+
+- **`concept-breakdown` gains a flat `editorial` format — the same concepts without the cards.**
+  The card grid reads as a product/dashboard surface: every concept in its own panel with a fill,
+  a radius, wide padding and a large icon. That is right when the panels are part of the design and
+  wrong when the deck wants an editorial page, where the weight of eight boxes crowds the slide and
+  the panels mean nothing. `format: "editorial"` keeps the icon, label and body and drops the box:
+  a small icon on the label's line, the body indented under it, a hairline and white space instead
+  of a panel.
+  It also fixes the count arithmetic. The card grid rounds 3 concepts to "two on top, one spanning
+  the width", 7 to 3+3+1 and 8 to 3+3+2 — layouts that leave holes and change the visual hierarchy.
+  The editorial grid maps counts to a regular grid (2·4 → 2 columns, 3·5·6 → 3, 7·8 → 4) and a
+  short last row keeps the item width of the row above and **centers** (5 → 3+2, 7 → 4+3), so no
+  concept is ever stranded alone across a row, and up to 8 fit without crowding.
+  A conclusion stays a full-width band below the grid, never another cell in it.
+  **Opt-in and non-breaking:** `grid` remains the default, so every deck that renders today renders
+  byte-identically. The `.pptx` renderers have no flat recipe and fall back to the card grid.
+- **The build now says when a slide won't fit instead of shrinking it.** An `editorial` grid whose
+  bodies outgrow the column width (~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8) or that
+  carries more than 8 concepts warns and names the two real fixes — `format: "list"`, or split the
+  slide — rather than letting the fit pass compress the type until it's unreadable. An
+  unrecognized `format` also warns instead of silently rendering as cards, like `layout` already did.
+
 ## [0.75.0] — 2026-08-01
 
 ### Changed

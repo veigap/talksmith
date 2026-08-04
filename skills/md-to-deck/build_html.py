@@ -49,6 +49,18 @@ _LAYOUTS = {
 # so rather than let the slide silently squeeze. Split the rows, or drop the image.
 _VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
 
+# The labeled set's `format` (schemas/slide-model.md). An unrecognized value renders as `grid`,
+# which looks like a deliberate card set rather than a typo — the same reason `layout` warns.
+_FORMATS = ("grid", "row", "list", "editorial")
+_LABELED_SET = ("concept-breakdown", "card-row", "icon-list")
+
+# `format: editorial` buys its density by dropping the card, so the body budget is what the
+# *column count* leaves: (max items, max body chars). Past it the slide still renders — the fit
+# pass shrinks it — but shrinking content until it is unreadable is not a fix, so name the two
+# real ways out: the vertical `list` format, or splitting the slide.
+_ED_BODY_MAX = ((4, 140), (6, 100), (8, 70))
+_ED_MAX_ITEMS = 8
+
 
 def _norm(t: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (t or "").lower())).strip()
@@ -68,6 +80,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
     unknown, bad_layouts, dense = [], [], []
+    bad_formats, crowded = [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
         # `layout` places the slide's own image against its body, so it means nothing without one
@@ -78,6 +91,20 @@ def render(model: dict, talk_root: Path, out_dir: Path):
             bad_layouts.append((name, t, lay, f"expected {'|'.join(_LAYOUTS.get(t, ())) or 'no layout'}"))
         elif lay and not s.get("image"):
             bad_layouts.append((name, t, lay, "the slide carries no image"))
+        fmt = s.get("format")
+        if t in _LABELED_SET and fmt:
+            if fmt not in _FORMATS:
+                bad_formats.append((name, fmt))
+            elif fmt == "editorial":
+                items = s.get("cards") or s.get("rows") or []
+                cap = next((c for lim, c in _ED_BODY_MAX if len(items) <= lim), _ED_BODY_MAX[-1][1])
+                longest = max((len(i.get("body") or "") for i in items), default=0)
+                if len(items) > _ED_MAX_ITEMS:
+                    crowded.append((name, len(items), longest,
+                                    f"more than {_ED_MAX_ITEMS} concepts"))
+                elif longest > cap:
+                    crowded.append((name, len(items), longest,
+                                    f"longest body {longest} chars, ~{cap} fits at that width"))
         if t == "value-columns" and s.get("image"):
             cols = s.get("columns") or []
             rows = max((len(c.get("cells") or []) for c in cols), default=0)
@@ -106,6 +133,13 @@ def render(model: dict, talk_root: Path, out_dir: Path):
     for slide_title, tmpl, bad, why in bad_layouts:
         print(f"[html] warning: layout {bad!r} ignored on {tmpl!r} ({why}) "
               f"→ default  ({slide_title})", file=sys.stderr)
+    for slide_title, bad in bad_formats:
+        print(f"[html] warning: unknown format {bad!r} → grid "
+              f"(expected {'|'.join(_FORMATS)})  ({slide_title})", file=sys.stderr)
+    for slide_title, n, longest, why in crowded:
+        print(f"[html] warning: editorial grid of {n} concepts — {why}; the fit pass would "
+              f"shrink the slide rather than fix it. Use format \"list\" (a vertical stack with "
+              f"room for prose) or split the slide  ({slide_title})", file=sys.stderr)
     for slide_title, ncols, nrows in dense:
         print(f"[html] warning: value-columns grid {ncols}×{nrows} beside an image "
               f"(max {_VC_MAX_COLS}×{_VC_MAX_ROWS} at half width) — cells will crowd; "

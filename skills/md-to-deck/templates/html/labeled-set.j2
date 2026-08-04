@@ -18,6 +18,17 @@
 <div class="ilrow{{ ' solo' if not r.body else '' }}{{ m.frag(s) }}">{{ icon(r.icon) }}<div><h4>{{ r.label | nocolon }}</h4>{% if r.body %}<p>{{ r.body }}</p>{% endif %}</div></div>
 {% endfor %}
 </div>
+{% elif fmt == 'editorial' %}
+{# The same labeled set with the card chrome removed — a flat composition on the canvas, for the
+   sets where the panel carried no meaning and only cost room. Markup is deliberately the plain
+   icon + label + body triple: everything that makes it a *composition* (how many columns, where a
+   partial last row sits, how the type steps down when it gets tight) is count-driven CSS. #}
+{{ m.lead(s) -}}
+<div class="editgrid">
+{% for c in items %}
+<div class="eitem{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>
+{% endfor %}
+</div>
 {% elif fmt == 'row' %}
 {{ m.lead(s) -}}
 <div class="cardrow">

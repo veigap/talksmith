@@ -131,11 +131,25 @@ deliverable; `draft.md` → live in-progress view).
   | `grid` *(default, omitted)* | short bodies, any count 2–6 | equal cards, icon **above** the label; 2 → side by side, 3 → a row, 4 → 2×2, 5–6 → 3×N |
   | `row` | a lead + 3–5 items, **every** body ≤ ~80 chars | one horizontal row of N cards, each headed by a filled accent chip |
   | `list` | a lead + 3–5 items, **any** body > ~80 chars, or a bare anaphora | a vertical stack, line-art icon at the left, heading + prose to the right |
+  | `editorial` | 2–8 short-bodied concepts on a **flat** composition — no cards | a regular grid *without* panels: small icon beside the label, body indented under it. 2·4 → 2 cols, 3·5·6 → 3, 7·8 → 4; a short last row centers (5 → 3+2, 7 → 4+3) |
+
+  **`editorial` is the flat variant of `grid`** — same content, same fields, no card chrome. Choose
+  it when the panels carry no meaning and the composition should read as a collection of concepts
+  rather than an application screen: 2–8 parallel concepts, **short** bodies, icons as small
+  reference marks, and no per-concept image. Keep `grid` when the panels are intentional design.
+  Body budget shrinks with the column count — ~140 chars at 2–4 concepts, ~100 at 5–6, ~70 at 7–8;
+  past that (or past 8 concepts) the build warns and the fix is `format: "list"` or splitting the
+  slide, **never** cutting the text down until it's unreadable. A `highlights` band stays
+  full-width **below** the grid — a conclusion comments on the set, it is not another cell in it.
+  *(Unrelated to the selectable deck **style** also named `editorial`, which only swaps colour and
+  type tokens. This is composition; that is palette.)*
 
   The legacy template ids **`card-row`** and **`icon-list`** are still accepted and simply mean
   `concept-breakdown` with `format: row` / `format: list` — existing models render unchanged. New
   models should emit `concept-breakdown`. Items go in `cards:[{label,body}]`; `rows:` is accepted
-  as the legacy spelling of the same list.
+  as the legacy spelling of the same list. Set it from an author `<!-- format: … -->` hint in
+  `draft.md`/`final.md` when there is one; otherwise pick it from the content by the table above.
+  An unrecognized value renders as `grid` and warns, so a typo is visible rather than silent.
 - **`reveal`** — an **optional opt-out** on any slide that reveals progressively. By **default** —
   field absent — the HTML deck steps through the slide on click (Reveal fragments):
   first the enumerated items one at a time (`stat`, `concept-breakdown`,
@@ -164,7 +178,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `section-agenda` | `title` (section name) | — (roadmap + active index derived from `deck.sections`) |
 | `divider` | `title` | — (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
-| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`list`) — see below |
+| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`list`\|`editorial`) — see below |
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, `image:{src,alt}` (supporting diagram/example), `layout` (with an image) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |

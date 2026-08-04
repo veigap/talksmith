@@ -1,7 +1,20 @@
 .DS_Store
 .venv
-talks/*/output/
-tests/skills/*/output/
+
+# Build artifacts under output/ are ignored — except the rendered
+# index.html, the slide-model.json it was rendered from, and any
+# images/ they reference, which stay in CI.
+talks/*/output/**
+!talks/*/output/**/
+!talks/*/output/**/index.html
+!talks/*/output/**/slide-model.json
+!talks/*/output/**/images/**
+tests/skills/*/output/**
+!tests/skills/*/output/**/
+!tests/skills/*/output/**/index.html
+!tests/skills/*/output/**/slide-model.json
+!tests/skills/*/output/**/images/**
+
 .icons/
 talks/*/images/.critique/
 tests/skills/*/images/.critique/

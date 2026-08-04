@@ -133,6 +133,42 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ccard>.ic{width:5.8cqw;height:5.8cqw;grid-column:1;grid-row:1/3;align-self:start}
 .ccard h3{margin:0;grid-column:2;grid-row:1;align-self:center;font-size:2.9cqw;font-weight:800;color:var(--ink);line-height:1.1}
 .ccard p{margin:0;grid-column:2;grid-row:2;font-size:2.25cqw;color:var(--body);line-height:1.3}.ccard.sm{padding:2.2cqw;column-gap:1.4cqw}.ccard.sm>.ic{width:5cqw;height:5cqw}
+/* `format: editorial` — the labeled set without the card. No panel, no radius, no wide padding:
+   a small icon leads the label and the body is indented under it, separated by a hairline and
+   white space instead of a box. It is the same content as the `grid` format, composed flat, and
+   it is opt-in — `grid` stays the default, so nothing that renders today changes.
+   (Unrelated to the deck *style* named "editorial" in styles/editorial.css, which swaps colour and
+   type tokens and never touches layout. This is composition; that is palette.)
+   The 24-track micro-grid is the whole mechanism: every supported count divides it (12/8/6), so
+   2·4 → two columns, 3·5·6 → three, 7·8 → four — and a partial last row can be *centered* on the
+   same rhythm (5 → 3+2, 7 → 4+3) instead of stranding one item across the full width, which is
+   what makes the card grid's 3 → "2 + 1 wide" and 7 → "3+3+1" read as unbalanced. Count drives it
+   through :has(), never a class computed upstream. */
+.editgrid{display:grid;grid-template-columns:repeat(24,1fr);column-gap:3cqw;row-gap:3.4cqw;margin-top:auto}
+.eitem{grid-column:span 6;display:grid;grid-template-columns:auto 1fr;column-gap:1.4cqw;row-gap:.5cqw;
+  align-content:start;min-width:0;border-top:.15cqw solid var(--hair);padding-top:1.5cqw}
+.editgrid:has(>.eitem:nth-child(2):last-child)>.eitem,
+.editgrid:has(>.eitem:nth-child(4):last-child)>.eitem{grid-column:span 12}
+.editgrid:has(>.eitem:nth-child(3):last-child)>.eitem,
+.editgrid:has(>.eitem:nth-child(5):last-child)>.eitem,
+.editgrid:has(>.eitem:nth-child(6):last-child)>.eitem{grid-column:span 8}
+/* the short last row keeps the item width of the row above and centers, so the block stays even */
+.editgrid:has(>.eitem:nth-child(5):last-child)>.eitem:nth-child(4){grid-column:5/span 8}
+.editgrid:has(>.eitem:nth-child(5):last-child)>.eitem:nth-child(5){grid-column:13/span 8}
+.editgrid:has(>.eitem:nth-child(7):last-child)>.eitem:nth-child(5){grid-column:4/span 6}
+.editgrid:has(>.eitem:nth-child(7):last-child)>.eitem:nth-child(6){grid-column:10/span 6}
+.editgrid:has(>.eitem:nth-child(7):last-child)>.eitem:nth-child(7){grid-column:16/span 6}
+/* the icon is a reference mark beside the label, not the element's anchor — a third of the card
+   grid's glyph, on the label's line, with the body indented to the label's left edge below it */
+.eitem>.ic{width:3.1cqw;height:3.1cqw;grid-column:1;grid-row:1;align-self:center}
+.eitem h3{margin:0;grid-column:2;grid-row:1;font-size:2.5cqw;font-weight:800;color:var(--ink);line-height:1.15;min-width:0;overflow-wrap:break-word}
+.eitem p{margin:0;grid-column:2;grid-row:2;font-size:2cqw;color:var(--body);line-height:1.35;min-width:0;overflow-wrap:break-word}
+/* four across is the tight case — one step down keeps the measure readable instead of leaving it
+   to the fit pass, which shrinks the whole slide (7+ items ⇒ four columns) */
+.editgrid:has(>.eitem:nth-child(7))>.eitem{column-gap:1.1cqw;padding-top:1.2cqw}
+.editgrid:has(>.eitem:nth-child(7))>.eitem>.ic{width:2.6cqw;height:2.6cqw}
+.editgrid:has(>.eitem:nth-child(7))>.eitem h3{font-size:2.2cqw}
+.editgrid:has(>.eitem:nth-child(7))>.eitem p{font-size:1.8cqw}
 .cardrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
