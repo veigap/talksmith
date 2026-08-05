@@ -1448,6 +1448,48 @@
       "notes": "Design and style are separate decisions, so they are separate fields. The stage places `media` per `design`; the template emits content and nothing else. That is why every content template accepts every design — the old `layout` field existed on five templates only, and `aside` was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a `concept-breakdown`, a template that could never carry a composed image before."
     },
     {
+      "template": "concept-breakdown",
+      "title": "video: a clip is media — split-right, contained",
+      "design": "split-right",
+      "media": {
+        "src": "images/clip.webm",
+        "alt": "Demo recording"
+      },
+      "items": [
+        {
+          "label": "Autoplays",
+          "body": "Reveal starts it when the slide comes up and pauses it on the way out."
+        },
+        {
+          "label": "Same frame",
+          "body": "A video takes the box an image would, in every design."
+        }
+      ],
+      "notes": "A clip on a slide is a demo recording: it runs while the presenter narrates over it. Because the video carries the point and the PDF export only prints its first frame, whatever it shows has to be said here too — a reader of the deck never sees it move."
+    },
+    {
+      "template": "concept-breakdown",
+      "title": "video: cropped to fill — column-right",
+      "design": "column-right",
+      "media": {
+        "src": "images/clip.webm",
+        "alt": "Ambient clip",
+        "muted": true,
+        "loop": true
+      },
+      "items": [
+        {
+          "label": "Atmosphere",
+          "body": "A column crops to fill, so nothing in the clip is meant to be read."
+        },
+        {
+          "label": "Looping",
+          "body": "muted + loop is the shape ambient motion takes: it cycles, quietly."
+        }
+      ],
+      "notes": "The column design crops media to fill its strip, which for video means the same rule as for a photo: nothing load-bearing goes in it. Ambient motion behind a text slide is what this is for — muted and looping, so it never ends mid-talk and never competes with the presenter's voice."
+    },
+    {
       "template": "single-point",
       "section": "Visual & data",
       "title": "A source pins to the bottom edge",

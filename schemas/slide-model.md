@@ -142,6 +142,31 @@ deliverable; `draft.md` → live in-progress view).
   media, whatever the design — so PDF export and screen readers are unaffected. A design with no
   `media` to place renders as `full` and warns rather than failing silently.
 
+  **`media` may be a video.** Nothing else changes: the same `{src, alt}`, the same designs, the
+  same frame — a clip is placed exactly where a picture would be. `src` is recognized as video
+  three ways, and every template that takes `media` (and `image-full`, `figures`, `image-grid`)
+  accepts all three:
+
+  | `src` | Renders as |
+  |---|---|
+  | a local `.webm` / `.mp4` / `.m4v` / `.mov` / `.ogv` | a `<video>`, the file inlined as a data-URI so the deck stays one self-contained file |
+  | an `http(s)` URL ending in one of those extensions | a `<video>` streamed from that URL — **needs the network in the room** |
+  | a YouTube link — `watch?v=`, `youtu.be/`, `/embed/`, `/shorts/`, `/live/` | the YouTube player, loaded only when its slide comes up — **needs the network in the room** |
+
+  **A video autoplays when its slide comes up** and pauses when the presenter moves on — that is
+  the default, and the reason it is: a demo recording exists to run, and a click on a play button
+  at the podium is a click the presenter shouldn't have to find. Controls stay on the player, so
+  scrubbing back to the interesting second is still possible. Three optional flags override it,
+  on the `media` entry itself: `autoplay: false` (wait for a click), `loop: true` (a short clip
+  that should keep cycling), `muted: true` (a screen recording whose audio is noise). A `t=` (or
+  `start=`) in a YouTube link is honoured as the start second. Sound plays if the browser allows
+  it — an
+  autoplay policy that refuses a sound-on start gets a muted play instead, never a frozen frame.
+
+  A video slide's `notes` matter more than an image's: the clip carries the point while the
+  presenter talks over it, and neither the PDF export (which prints the poster frame) nor a
+  reader of the deck ever sees it move.
+
   > **The old spellings still work.** `image` is read as `media`; `layout: text-left / image-left /
   > image-top` as `split-right` / `split-left` / `banded`; `aside: {image, side}` as
   > `column-right` / `column-left`. Existing models render exactly as they did, with no warning.

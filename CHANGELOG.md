@@ -13,6 +13,25 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.81.0] — 2026-08-05
+
+### Added
+
+- **Video on a slide — and it plays by itself.** A `media` entry whose `src` is a clip
+  (`.webm`, `.mp4`, `.m4v`, `.mov`, `.ogv`) or a **YouTube link** now renders as a real player
+  instead of a grey placeholder, and **starts the moment the presenter reaches the slide** —
+  pausing again on the way out. No hunting for a play button at the podium. Local clips are
+  inlined into the deck like every other asset, so it stays one self-contained file (a clip past
+  32 MB says so on stderr); a YouTube embed loads only when its slide comes up, and needs the
+  network in the room. Sound plays when the browser allows it and falls back to a muted start
+  rather than a frozen first frame.
+  A video is media like any other: same `{src, alt}`, same designs (`split`, `banded`, `column`,
+  `bleed`, `image-full`, `figures`, `image-grid`), same frame — nothing new to learn. Three
+  optional overrides on the entry: `autoplay: false`, `loop: true`, `muted: true`. Authors write
+  it as an ordinary `![alt](clip.webm)` ref in `draft.md`.
+  **HTML only:** the `.pptx` path reports the affected slides and asks for a still, rather than
+  failing on an extension it can't embed.
+
 ## [0.80.0] — 2026-08-04
 
 ### Added

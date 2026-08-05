@@ -123,7 +123,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.d-banded>.smedia{order:2;margin-bottom:2.4cqw}
 .stage.d-banded>.cbody{order:3}   /* keeps the base flex:1 1 auto, so the fit pass has a height */
 .stage.d-banded>.smedia .imgph{width:100%}
-.stage.d-banded>.smedia .imgph img,.stage.d-banded>.smedia .imgph svg{max-height:32cqw}
+.stage.d-banded>.smedia .imgph :is(img,video,iframe),.stage.d-banded>.smedia .imgph svg{max-height:32cqw}
 /* the band under a banded image is a caption, so it reads as one: the soft accent box a highlight
    uses. It sits on the shared stage child, not on one template's private class, so *any* template
    can take this design — but only when its content is prose. A structured body (cards, a grid, a
@@ -158,7 +158,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    never applies to it — its own `preserveAspectRatio` attribute decides, and it must say `slice`
    to fill (the default `meet` letterboxes). That attribute cannot be set from CSS; an SVG used in
    a cropping design has to carry it itself. */
-.d-column>.smedia .imgph.has img,.d-bleed>.smedia .imgph.has img{
+.d-column>.smedia .imgph.has :is(img,video,iframe),.d-bleed>.smedia .imgph.has :is(img,video,iframe){
   width:100%;height:100%;max-height:none;object-fit:cover}
 .d-column>.smedia .imgph.svg svg,.d-bleed>.smedia .imgph.svg svg{
   width:100%;height:100%;max-height:none}
@@ -353,7 +353,17 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
       To make images bigger, raise the cap — that is safe and self-balancing (a taller image lowers
       the fit scale, which shrinks it back), and it was measured to the largest value that leaves
       every reference slide overflow-free. */
-.imgph.svg svg,.imgph.has img{width:auto;height:auto;max-width:100%;max-height:56cqw;display:block}
+.imgph.svg svg,.imgph.has :is(img,video,iframe){width:auto;height:auto;max-width:100%;max-height:56cqw;display:block}
+/* Video rides the image rules above — same frame, same caps, same designs — with two corrections
+   an `<img>` doesn't need: a clip letterboxes itself against black rather than the white figure
+   fill, and an embedded player has NO intrinsic size (an image and a video both do), so it takes
+   the column's width and the 16:9 box every player is anyway. */
+.imgph.has video{background:#000;border-radius:1cqw}
+.imgph.has iframe{width:100%;aspect-ratio:16/9;border:0}
+/* A height cap on a full-width player would flatten its *box* — the player then letterboxes the
+   video inside it — so the one design wide enough for that to bite caps the width instead, and
+   the 16:9 shrinks whole (32cqw × 16/9). */
+.stage.d-banded>.smedia .imgph iframe{width:min(100%,56.9cqw);margin:0 auto}
 .imggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqw;margin-top:auto}
 /* image-full — the normal header, then one image owning everything below it. The stage keeps its
    side padding for the header only and drops it entirely for the picture, which is what "edge to
@@ -381,8 +391,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    grid the row is auto-sized, so a percentage height on the item is cyclic and silently falls back
    to the image's intrinsic aspect — which is how the picture ended up taller than the slide. Pinned
    to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
-.iffill .imgph.svg svg,.iffill .imgph.has img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
-.iffill .imgph.has img{object-fit:scale-down}
+.iffill .imgph.svg svg,.iffill .imgph.has :is(img,video,iframe){position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
+.iffill .imgph.has :is(img,video){object-fit:scale-down}
 .citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
@@ -433,7 +443,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    here is how each content shape behaves once its column is only half the slide. Both sides share
    one rule — `.d-split` carries the shape, `.side-left` only the placement. */
 /* a lone image is the slide's whole body, so it may claim the height the text column would have */
-.stage.d-split:has(.cfit:not(:has(*))) :is(.imgph.svg svg,.imgph.has img){max-height:52cqw}
+.stage.d-split:has(.cfit:not(:has(*))) :is(.imgph.svg svg,.imgph.has img,.imgph.has video,.imgph.has iframe){max-height:52cqw}
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 /* the comparison strip stays a grid at half width — columns must still read as columns, so
    collapsing to one row per cell would undo the point. It gives up type size and cell padding. */
@@ -443,7 +453,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* the numbered list and the step rows tighten beside a diagram, like they do past 6 items */
 .stage.d-split .steprow p{font-size:2.25cqw}
 .stage.d-split .steprow p b{font-weight:800;color:var(--ink)}
-.stage.d-split>.smedia .imgph :is(img,svg){max-height:44cqw}
+.stage.d-split>.smedia .imgph :is(img,svg,video,iframe){max-height:44cqw}
 /* `code-example` keeps its own two-panel grid: both panels are *content* (prose and code), not a
    body-plus-media pair, so it is a template shape rather than a design. */
 .split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}

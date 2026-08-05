@@ -318,6 +318,81 @@ def _vector_twin(p: Path) -> Path | None:
         return None
 
 
+# ── video media ──────────────────────────────────────────────────────────────────────────────
+# A clip is media like any other: it rides the same `.imgph` wrapper an image does, so every
+# design (`split`, `column`, `bleed`, the `image-full` fill) places it with the rules already
+# written — a video is just an `<img>` that moves.
+#
+# What makes it *presentable* is `data-autoplay`: Reveal starts the media when its slide comes up
+# and pauses it on the way out, so a demo recording runs the moment the presenter arrives instead
+# of waiting on a click at the podium. The native `autoplay` attribute is deliberately NOT used —
+# it fires at page load, which would run every clip in the deck at once, on slides nobody is
+# looking at, and leave each one finished by the time it is reached.
+_VIDEO_MIME = {"webm": "video/webm", "mp4": "video/mp4", "m4v": "video/mp4",
+               "ogv": "video/ogg", "ogg": "video/ogg", "mov": "video/quicktime"}
+# every YouTube shape an author actually pastes — the watch page, a share link, an embed URL,
+# a Shorts link, a livestream permalink — all carry the same 11-char id
+_YT_RE = re.compile(r"(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|embed/|shorts/|live/)"
+                    r"|youtu\.be/)([A-Za-z0-9_-]{6,})")
+_YT_START_RE = re.compile(r"[?&](?:t|start)=(\d+)")
+_VIDEO_INLINE_WARN = 32 * 1024 * 1024      # the deck is ONE self-contained file; say so past this
+
+
+def _mflag(media, key, default=False):
+    """A model media flag, tolerating the string spellings a fill step sometimes emits."""
+    v = media.get(key, default)
+    return v.strip().lower() not in ("", "0", "false", "no", "off") if isinstance(v, str) else bool(v)
+
+
+def _video_tag(src_attr, alt, media):
+    """One `<video>` in the shared media frame. `controls` stays on: autoplay is the default, not a
+    lock — a presenter who wants to scrub back to the interesting second still can."""
+    flags = "".join(f" {f}" for f in ("loop", "muted") if _mflag(media, f))
+    auto = " data-autoplay" if _mflag(media, "autoplay", True) else ""
+    return (f'<div class="imgph has vid"><video{auto}{flags} controls playsinline preload="auto" '
+            f'title="{_esc(alt)}" {src_attr}></video></div>')
+
+
+def _embed_video(image):
+    """`image` as embedded video markup, or None when it isn't video (the caller falls through to
+    the image path). Three sources, one frame: a YouTube link, a remote video URL, a local file."""
+    import base64
+    src = str(image.get("src") or "").strip()
+    if not src:
+        return None
+    alt = str(image.get("alt") or "")
+    m = _YT_RE.search(src)
+    if m:
+        start = _YT_START_RE.search(src)
+        q = "rel=0&amp;modestbranding=1&amp;playsinline=1&amp;enablejsapi=1"   # attribute-escaped
+        q += f"&amp;start={start.group(1)}" if start else ""
+        # `data-src`, not `src`: Reveal loads the player only when the slide comes up (and unloads
+        # it on the way out), so a deck with six embeds doesn't boot six YouTube players at open.
+        # With `data-autoplay` Reveal then posts `playVideo` to the frame as soon as it is ready —
+        # which is why `autoplay=1` is not in the query: the postMessage route plays it *with*
+        # sound, where the URL parameter is only honoured muted.
+        auto = " data-autoplay" if _mflag(image, "autoplay", True) else ""
+        return (f'<div class="imgph has vid"><iframe class="ytembed"{auto} '
+                f'data-src="https://www.youtube.com/embed/{_esc(m.group(1))}?{q}" '
+                f'title="{_esc(alt) or "YouTube video"}" frameborder="0" '
+                f'allow="autoplay; fullscreen; encrypted-media; picture-in-picture" '
+                f'allowfullscreen></iframe></div>')
+    ext = src.split("?")[0].split("#")[0].rsplit(".", 1)[-1].lower()
+    if ext not in _VIDEO_MIME:
+        return None
+    if src.startswith(("http://", "https://")):
+        return _video_tag(f'src="{_esc(src)}"', alt, image)     # streamed from its URL, not inlined
+    _, path = _resolve_img(image, *_CUR_ROOTS)
+    if path is None:
+        return None                                             # missing → the usual placeholder
+    data = Path(path).read_bytes()
+    if len(data) > _VIDEO_INLINE_WARN:
+        print(f"[html] large_video: {path} is {len(data)/1048576:.0f} MB and is inlined into the "
+              f"deck (one self-contained file) — consider re-encoding it smaller", file=sys.stderr)
+    b64 = base64.b64encode(data).decode("ascii")
+    return _video_tag(f'src="data:{_VIDEO_MIME[ext]};base64,{b64}"', alt, image)
+
+
 def _embed(alt, path):
     """Embed a resolved image self-contained: inline SVG, or a data-URI <img>, else a placeholder."""
     import base64
@@ -363,8 +438,14 @@ _CUR_ROOTS = (None, None)                  # (talk_root, asset_dir) — bound pe
 
 
 def _embed_img(image) -> Markup:
-    """Resolve a model `{src,alt}` image and embed it self-contained. A missing/None image
-    renders the placeholder, so templates never branch on whether an image is present."""
+    """Resolve a model `{src,alt}` media entry and embed it self-contained. A missing/None entry
+    renders the placeholder, so templates never branch on whether media is present. Video (a local
+    clip, a video URL, a YouTube link) is embedded by `_embed_video` in the same frame; anything
+    else is an image."""
+    if isinstance(image, dict):
+        vid = _embed_video(image)
+        if vid is not None:
+            return Markup(vid)
     alt, path = _resolve_img(image, *_CUR_ROOTS)
     return Markup(_embed(alt, path))
 
@@ -843,6 +924,16 @@ function fitCover(st){                       // full-bleed text slides (quote/st
 function fitAll(scope){ var r=(scope||document);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
+// Reveal already plays `data-autoplay` media on slide entry and pauses it on exit. This only
+// covers the one case it can't: a browser refuses a sound-on play() until the page has seen a
+// gesture, so on a deck opened straight onto a video slide the promise rejects and the clip sits
+// on a frozen first frame. Retry it muted — a silent demo running is far closer to what the
+// presenter meant than a still — and leave the controls up so sound is one click away.
+function playMedia(sec){ if(!sec) return;
+  sec.querySelectorAll('video[data-autoplay]').forEach(function(v){
+    var p=v.play();
+    if(p&&p.catch)p.catch(function(){ v.muted=true; var q=v.play(); if(q&&q.catch)q.catch(function(){}); });
+  }); }
 window.deckAnim=function(a){var on=(a!=='off');if(window.Reveal&&Reveal.configure){
   Reveal.configure({fragments:on, transition:on?'slide':'none', backgroundTransition:on?'fade':'none'});
   if(Reveal.sync)Reveal.sync(); if(Reveal.layout)Reveal.layout();}};   // off → all fragments show at once, no transition
@@ -876,7 +967,8 @@ Reveal.initialize({
   keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();
   try{deckAnim(document.documentElement.getAttribute('data-deck-anim')||'on');}catch(e){}
-  Reveal.on('slidechanged', function(e){ if(e.currentSlide) fitAll(e.currentSlide); });
+  playMedia(Reveal.getCurrentSlide());
+  Reveal.on('slidechanged', function(e){ if(e.currentSlide){ fitAll(e.currentSlide); playMedia(e.currentSlide); } });
   Reveal.on('resize', function(){ setTimeout(fitAll, 60); });
 });"""
 
