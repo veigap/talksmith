@@ -13,6 +13,29 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.83.0] — 2026-08-11
+
+### Changed
+
+- **Numbers are now checked against the sources, not copied on faith.** The Editor applies a
+  standing *numeric fidelity* rule while drafting and while applying your feedback: every figure,
+  percentage, count, date and unit has to trace to a corpus record; anything *computed* from other
+  numbers (a percentage, a ratio, a "3×", a total, a growth rate) is recalculated from the sourced
+  inputs and its derivation is written into the slide's `Sources`, so a later round re-checks it
+  instead of re-deriving it. A correct calculation over a wrong base is still a wrong number, and
+  that is the kind that survives review — so a derived figure is only accepted once its inputs are.
+  The same pass hunts the inconsistencies that read as fine: scale and unit slips (M for K,
+  `%` for percentage points), fiscal vs. calendar periods, a rate over the wrong base, rounding
+  that changes the claim, a figure superseded by a newer source, and a projection presented as
+  something measured. It also checks that a quantity reads the same everywhere it appears — body,
+  speaker notes, thesis, diagram labels — and that parts add up to their stated total.
+  When something doesn't check out, nothing is quietly "fixed": if the corpus settles it the value
+  is corrected **and propagated to every derived and repeated instance** in the same round; if the
+  corpus contradicts itself or lacks the figure, the slide keeps only what is sourced and the
+  discrepancy lands in `Open questions` with both values and their records, for you to decide.
+  Changing a number in a review round re-runs the whole check on that number and everything derived
+  from it.
+
 ## [0.82.0] — 2026-08-11
 
 ### Added
