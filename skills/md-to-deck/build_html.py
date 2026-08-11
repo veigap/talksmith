@@ -27,6 +27,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
+import build_index as _idx             # noqa: E402
 import html_style as _hs              # noqa: E402
 import model_freshness as _fresh       # noqa: E402
 
@@ -208,6 +209,21 @@ def main(argv=None) -> int:
     out = args.output or (out_dir / "index.html")
     out.write_text(html, encoding="utf-8")
     print(f"[html] {n} slides → {out}", file=sys.stderr)
+
+    # Refresh the working-directory landing page. Only for a workflow render written to its
+    # canonical place: an ad-hoc `-o` render or a `--model` fixture render isn't a deck the
+    # presenter is meant to find from the root. Never fatal — a deck that rendered is delivered
+    # whether or not its index could be rewritten.
+    if args.talk and out == out_dir / "index.html":
+        try:
+            _idx.stamp_render(out_dir, model, n, args.draft)
+            root = _idx.workspace_root(args.talk)
+            written = _idx.update_index(root) if root else None
+            if written:
+                print(f"[html] index → {written}", file=sys.stderr)
+        except OSError as e:
+            print(f"[html] warning: index not updated ({e})", file=sys.stderr)
+
     print(str(out))
     return 0
 

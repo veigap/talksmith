@@ -1,0 +1,41 @@
+/* Working-directory landing page (build_index.py → <root>/index.html).
+   Layered on top of theme.css, which owns the palette tokens, the fonts and the light/dark
+   toggle chrome — so a card is painted from the same tokens as a slide and the moon/sun button
+   behaves identically here. Nothing below re-declares a token; this file is layout only. */
+body.tsindex{font-family:var(--sans);color:var(--fi);
+  padding:clamp(32px,7vh,84px) clamp(20px,6vw,64px) 64px}
+.tsindex .wrap{max-width:1080px;margin:0 auto}
+
+/* masthead — the red rule is the deck's one accent, used once, so the page reads as Talksmith
+   without dressing every card in it */
+.tsindex .mast{border-top:3px solid var(--red);padding-top:18px;margin-bottom:34px}
+.tsindex h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;letter-spacing:-.02em;
+  font-weight:800;margin:0 0 8px}
+.tsindex .lede{margin:0;color:var(--fm);font-size:15px;line-height:1.5;max-width:56ch}
+
+/* card grid — auto-fills, so 1 talk reads as a single wide card and 9 as a tidy wall */
+.tsindex .decks{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  list-style:none;padding:0;margin:0}
+.tsindex .deck{display:flex;flex-direction:column;gap:10px;height:100%;
+  padding:20px 20px 18px;background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+  text-decoration:none;color:inherit;
+  transition:border-color .15s,transform .15s,box-shadow .15s}
+.tsindex .deck:hover{border-color:var(--red);transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.09)}
+.tsindex .deck:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+.tsindex .dt{font-size:19px;font-weight:700;line-height:1.25;letter-spacing:-.01em;margin:0}
+.tsindex .dsub{margin:0;color:var(--fm);font-size:13.5px;line-height:1.45}
+/* meta pushes to the card's foot so cards with a 1-line and a 3-line subtitle still align */
+.tsindex .dmeta{margin:auto 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  padding-top:12px;border-top:1px solid var(--hair);
+  font-family:var(--mono);font-size:11.5px;color:var(--fm)}
+.tsindex .dmeta .sep{opacity:.45}
+
+/* a live view is a moving target, not a deliverable — say so on the card itself */
+.tsindex .badge{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;padding:2px 8px;border-radius:999px;
+  background:var(--pill);color:var(--chip-ink)}
+.tsindex .deck.draft{border-style:dashed}
+
+.tsindex .foot{margin:38px 0 0;color:var(--fm);font-size:12px;font-family:var(--mono)}

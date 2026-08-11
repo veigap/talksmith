@@ -1,0 +1,25 @@
+{# Working-directory landing page body — one card per rendered deck (build_index.py). #}
+<div class="wrap">
+  <header class="mast">
+    <h1>{{ L.heading }}</h1>
+    <p class="lede">{{ L.lede }}</p>
+  </header>
+  <ul class="decks">
+    {% for e in entries %}
+    <li>
+      <a class="deck{% if e.draft %} draft{% endif %}" href="{{ e.href }}">
+        <p class="dt">{{ e.title }}</p>
+        {% if e.institution %}<p class="dsub">{{ e.institution }}</p>{% endif %}
+        {% if e.cls %}<p class="dsub">{{ e.cls }}</p>{% endif %}
+        <p class="dmeta">
+          {% if e.draft %}<span class="badge">{{ L.draft }}</span>{% endif %}
+          {% if e.slides %}<span>{{ e.slides }} {{ L.slides }}</span><span class="sep">·</span>{% endif %}
+          {% if e.presenter %}<span>{{ e.presenter }}</span><span class="sep">·</span>{% endif %}
+          <span>{{ L.rendered }} {{ e.rendered }}</span>
+        </p>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="foot">{{ L.foot }}</p>
+</div>

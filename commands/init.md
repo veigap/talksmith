@@ -38,10 +38,11 @@ This command does **not** scaffold `config/` files, the `talks/` directory, or t
      '# --- Talksmith --- (regenerable build artifacts & caches — keep out of Git)' \
      '.DS_Store' '.venv/' '__pycache__/' '*.pyc' \
      'talks/*/output/' 'talks/*/images/.critique/' '.icons/' \
+     '/index.html' '/talksmith-index.html' \
      '.claude/settings.local.json' \
      >> ./.gitignore
    ```
-   The source a Talk is built from — `draft.md`, `final.md`, `memory.md`, `research/corpus/`, `images/` (the committed SVG/PNG diagrams), and `config/` — stays tracked; only the regenerable `output/`, caches, and local settings are ignored. Emit:
+   The root `index.html` is the generated landing page every HTML render rewrites (it links into the ignored `output/` decks, so it is regenerable too). The source a Talk is built from — `draft.md`, `final.md`, `memory.md`, `research/corpus/`, `images/` (the committed SVG/PNG diagrams), and `config/` — stays tracked; only the regenerable `output/`, caches, and local settings are ignored. Emit:
    ```
    [init] .gitignore updated with Talksmith build-artifact ignores (any existing entries preserved).
    ```

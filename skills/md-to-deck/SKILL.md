@@ -156,6 +156,17 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
 - **No critique loop.** `html-strict` is a single-pass GENERATE — no automated FEEDBACK/critique
   cycles. The presenter reviews the deck and resolves anything by editing the source (which re-fills
   the model) and re-rendering.
+- **Landing page.** Every `html-strict` render (deliverable *and* Step-5.5 live view) also rewrites
+  `index.html` **at the working-directory root** — a card per rendered Talk, linking to its deck
+  ([`build_index.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_index.py)). A deck buried at
+  `talks/<Talk>/output/html/index.html` is unfindable and unshareable; the root page is the one link
+  the presenter keeps. The whole set is re-scanned on every render, so it self-heals if deleted and
+  older Talks keep their cards; each render leaves a `output/html/.render.json` stamp (mode + deck
+  metadata + slide count) that the scan reads. Live views are listed with an *in progress* badge.
+  **It never clobbers a hand-written page:** a root `index.html` without Talksmith's
+  `<!-- talksmith:index -->` marker is left alone and the page goes to `talksmith-index.html`
+  instead. Failure here is logged, never fatal — the deck is still delivered. Regenerate on demand
+  with `python3 build_index.py --root .`.
 
 The rest of this file (Path A) does not apply to `html-strict`.
 
@@ -260,7 +271,11 @@ talks/<Talk>/
     │   ├── pptx-strict/slide-NN.png
     │   └── pptx-free-form/slide-NN.png
     └── html/                             # html-strict deck — index.html + .icons/ (build_html.py; final or draft model)
+                                          #   + .render.json (render stamp read by the root landing page)
 ```
+
+Plus one file **outside** the Talk, at the working-directory root: `index.html` — the landing page
+listing every rendered Talk (see *Landing page* above).
 
 **Per-mode isolation.** Each `.pptx` render writes a suffixed deck `output/final.<style>.pptx` (with its `.critique/<style>/` PNGs), so strict and free-form renders coexist; the latest is copied to the canonical `output/final.pptx`. Each slide's chosen `template` lives in the shared `slide-model.json`. `html-strict` writes only under `output/html/`.
 

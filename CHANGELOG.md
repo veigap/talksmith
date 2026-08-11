@@ -13,6 +13,25 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.82.0] — 2026-08-11
+
+### Added
+
+- **A landing page at the root of your working directory.** Every HTML render now also writes
+  `index.html` next to `talks/` — one card per Talk you have rendered here, each linking to its
+  deck. Until now a finished deck lived three folders down at
+  `talks/<Talk>/output/html/index.html`, which is neither findable nor a link you would hand
+  someone; the root page is the single entry point you keep and share. It is rebuilt from a fresh
+  scan on every render, so it comes back if you delete it and Talks rendered months ago keep their
+  cards, ordered newest render first. A card shows the deck's title, class, presenter, slide count
+  and render date; in-progress live views (the preview offered during Review) are listed too, marked
+  **in progress**. It is styled from the same palette and fonts as the decks, works offline, and
+  carries the same light/dark toggle. **It will not overwrite a page of yours:** a root `index.html`
+  Talksmith did not write is left untouched and the listing goes to `talksmith-index.html` instead.
+  A render whose index could not be written still delivers the deck. `/talksmith:init` now also
+  ignores the generated page in `.gitignore` — re-run it in existing working directories to pick
+  that up (or add `/index.html` yourself).
+
 ## [0.81.0] — 2026-08-05
 
 ### Added
