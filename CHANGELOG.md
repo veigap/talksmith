@@ -13,6 +13,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.83.2] — 2026-08-12
+
+### Fixed
+
+- **The bundled example deck (`tests/examples/talksmith-intro`) was a week stale** and no longer
+  showed what the renderer actually does: it predated `~~strike~~`, video slides, the
+  `concept-columns` template, the paragraph breaks in speaker notes and the sandboxed-iframe
+  `SecurityError` guard. Regenerated. No behavior change — the example is a reference for readers,
+  and one that lags the code teaches the wrong thing.
+
 ## [0.83.1] — 2026-08-12
 
 ### Fixed
