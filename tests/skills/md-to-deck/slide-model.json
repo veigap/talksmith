@@ -538,7 +538,7 @@
         },
         {
           "label": "`code` inline",
-          "body": "A field name like `slide-model.json` or a flag like `--print-pdf` keeps the mono face."
+          "body": "A field name like `slide-model.json` or a flag like `--print-pdf` keeps the mono face, and **a `.md` file named inside a bolded phrase** stays bold across it."
         },
         {
           "label": "~~Strike~~ a superseded value",

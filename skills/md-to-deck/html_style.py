@@ -731,7 +731,7 @@ _MD_STRIKE = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
 # report footer, or an `### Sources` block actually carries — an author who writes a naked URL
 # means a link, and dropping it to grey text is the one case where the deck loses information the
 # markdown had.
-_URLCH = r"[^\s()\[\]{}'\"*`~]"          # what may sit inside a URL once one has started
+_URLCH = r"[^\s()\[\]{}'\"*`~\x00\x01]"     # what may sit inside a URL once one has started
 _LINKISH = re.compile(
     r"(?P<md>\[(?P<mdtext>[^\]\n]+)\]\(\s*(?P<mdurl>(?:https?:|mailto:)[^)\s]+)\s*\))"
     r"|(?P<angle>&lt;(?P<angleurl>(?:https?:|mailto:)[^\s]+?)&gt;)"
@@ -766,6 +766,7 @@ def _emph(s: str) -> str:
 
 
 _SLOT = re.compile(r"\x00(\d+)\x00")
+_CODE_SLOT = re.compile(r"\x01(\d+)\x01")
 
 
 def _marks(s: str) -> str:
@@ -798,23 +799,29 @@ def _marks(s: str) -> str:
 
 def _inline_md(text: str) -> str:
     """`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[text](url)` and bare/angle URLs in
-    already-escaped text. Code spans are cut out first so the marks inside them stay literal — a
-    body that shows `**kwargs` as code means it."""
+    already-escaped text. Code spans resolve first and are held aside behind a slot marker, the
+    same trick `_marks` uses for links and for the same two reasons: the marks *inside* a code span
+    must stay literal (a body that shows `**kwargs` as code means it), but emphasis *around* one
+    must still pair — `**a `file.md` inside the repo**` is one bold span, and naming a file inside
+    a bolded phrase is how authors write. Cutting the line at each code span instead left the
+    opening `**` in one fragment and the closing `**` in the next, so neither ever matched."""
     # most leaves carry no mark at all — skip the passes. A `/` is the cheapest URL tell that
     # covers all three link shapes (`https://`, `www.x/…`, `host.tld/…`); prose rarely has one.
     if not (set("`*[~/") & set(text)):
         return text
-    text = text.replace("\x00", "")         # NUL is the link slot marker — never authored content
-    out, last = [], 0
-    for m in _MD_CODE.finditer(text):
-        out.append(_marks(text[last:m.start()]))
+    # the two slot markers — never authored content
+    text = text.replace("\x00", "").replace("\x01", "")
+    held = []
+
+    def stash(m):
         span = m.group(2)
         if span.startswith(" ") and span.endswith(" "):   # ``  `x`  `` — one pad space each side
             span = span[1:-1]
-        out.append(f"<code>{span}</code>")
-        last = m.end()
-    out.append(_marks(text[last:]))
-    return "".join(out)
+        held.append(f"<code>{span}</code>")
+        return f"\x01{len(held) - 1}\x01"
+
+    marked = _marks(_MD_CODE.sub(stash, text))
+    return _CODE_SLOT.sub(lambda m: held[int(m.group(1))], marked) if held else marked
 
 
 # Fields that are **not** prose and must survive byte-for-byte: a code block (its asterisks and

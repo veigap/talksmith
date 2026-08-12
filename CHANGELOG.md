@@ -13,6 +13,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.83.1] — 2026-08-12
+
+### Fixed
+
+- **Bold, italic and strikethrough now carry across an inline code span.** A phrase like
+  `**an `.md` file in the repo**` rendered with the `**` markers still visible as literal text:
+  the renderer cut the line open at each code span and looked for emphasis in each fragment
+  separately, so the opening `**` and the closing `**` never met. Code spans are now held aside
+  behind a slot marker — the same trick links already used — and emphasis runs over the whole
+  line before the code is put back. Marks *inside* a code span still stay literal (`` `**kwargs` ``
+  is still `**kwargs`), and a URL adjacent to a code span still stops at it. Affects every text
+  field of every template, plus speaker notes; re-render an existing deck to pick it up.
+
 ## [0.83.0] — 2026-08-11
 
 ### Changed
