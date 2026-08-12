@@ -158,6 +158,17 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* the media centres in its track, but the content column must **stretch**: the fit pass measures
    .cbody's own height to decide whether to scale, and a shrink-to-fit box always "fits". */
 .stage.d-split>.cbody{align-self:stretch}
+/* ...and so must the media, for a different reason: a split's picture is bounded by its ROW — what
+   the head leaves — and NOT by the slide-wide `max-height` cap further down. A portrait figure
+   reaches its *width* bound long before that cap, computes a height taller than the row, and, the
+   figure frame being `overflow:visible` so an inline SVG's hairline is not clipped, paints straight
+   over the title. Stretching `.smedia` and giving the frame the row's height turns that cap into a
+   percentage the picture can actually resolve against; `overflow:hidden` is only a backstop, and
+   cannot crop, because the picture is now bounded before it reaches it. */
+.stage.d-split>.smedia{align-self:stretch}
+.stage.d-split>.smedia>.imgph{height:100%;overflow:hidden}
+.stage.d-split>.smedia>.imgph.svg>svg,
+.stage.d-split>.smedia>.imgph.has>:is(img,video,iframe){max-height:100%}
 /* a design with no content to put beside the media (an image the presenter talks over, its detail
    in the notes) collapses rather than projecting an empty column */
 .stage.d-split:has(.cfit:not(:has(*))){grid-template-columns:1fr}

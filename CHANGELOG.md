@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.83.3] — 2026-08-12
+
+### Fixed
+
+- **A tall image no longer paints over the slide's title.** On a split slide — text on one side,
+  a contained picture on the other — the picture was bounded only by a slide-wide height cap, not
+  by the space the title and lead actually leave it. A portrait figure (anything appreciably taller
+  than it is wide) hit its *width* limit first, computed a height taller than the row it sits in,
+  and spilled upward across the heading, which became unreadable. It is now bounded by its own
+  column. Nothing is cropped and no landscape figure changes size. Re-render an existing deck to
+  pick it up.
+
 ## [0.83.2] — 2026-08-12
 
 ### Fixed
