@@ -1070,7 +1070,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <script>
 function fitContent(cb){
   var cf=cb.querySelector('.cfit'); if(!cf) return;
-  var rw=cb.clientWidth, rh=cb.clientHeight; if(rh<20||rw<20) return;
+  var cs=getComputedStyle(cb);
+  var rw=cb.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),
+      rh=cb.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  if(rh<20||rw<20) return;
   var s=1;                                   // solve: laid out at width rw/s, visual height (h*s) must fit rh
   // NB: an image's height cap (theme.css) is deliberately left in plain cqw — a share of the
   // *slide*, which does not grow when .cfit is laid out wider here. That is what lets a picture

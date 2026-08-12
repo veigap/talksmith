@@ -13,6 +13,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.83.4] — 2026-08-12
+
+### Fixed
+
+- **Text in a caption band no longer runs off the bottom of its box.** On the banded design —
+  an image across the top with a caption underneath — the last line was sliced in half and the
+  band itself pushed past the edge of the slide. The auto-fit pass measured the band including
+  its own padding, so it believed it had about a line more room than it did, and both scaled the
+  text too little and laid it out too wide. It now measures the space the text actually has.
+  Only padded bands were ever affected; every other slide fits exactly as before.
+
 ## [0.83.3] — 2026-08-12
 
 ### Fixed
