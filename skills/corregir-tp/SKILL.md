@@ -43,14 +43,40 @@ exhaustiva de entregables con su seccion fuente. Por cada uno:
   (ej. "si no corre en 10 minutos no cumple el requisito"). Hecho-pero-distinto = no
   conforme. Citar la frase del enunciado que ancla cada exigencia dura.
 
-**Paso 2: Relevamiento de hechos por entrega** (hechos separados de valoracion,
-evidencia siempre citada archivo:linea):
-- ¿El HEAD entregado compila y corre? (caso real: dos ediciones web de ultimo momento
-  rompieron una entrega que "andaba")
-- Secrets en working tree y en historial de git
-- Commits: distribucion temporal y autoria (insumo de ajuste individual)
-- ¿Los resultados reportados corresponden a la version entregada?
-- Transcript de la presentacion: mapear secciones pedidas + citas textuales utiles
+**Paso 2: Extraccion por equipo con subagentes → ficha intermedia.** Lanzar UN
+subagente por equipo, en paralelo. Cada subagente recibe el enunciado, el inventario
+del paso 0 y los insumos de SU equipo (repo + transcript/video), y produce
+`ficha-<equipo>.md`: una representacion intermedia detallada, estructurada en funcion
+del enunciado, de la que despues se deriva la version numerica. El subagente NO pone
+nota; extrae y clasifica. Esquema de la ficha:
+
+1. **Identificacion**: integrantes, links (repo, presentacion), ubicacion de la
+   entrega dentro del repo si esta mezclada con otras.
+2. **Relevamiento de hechos del repo** (hechos separados de valoracion, evidencia
+   siempre citada archivo:linea):
+   - ¿El HEAD entregado compila y corre? (caso real: dos ediciones web de ultimo
+     momento rompieron una entrega que "andaba")
+   - Secrets en working tree y en historial de git
+   - Commits: distribucion temporal y autoria (insumo de ajuste individual)
+   - ¿Los resultados reportados corresponden a la version entregada?
+3. **P1/P2 por deliverable**: checklist existe/conforme con la cita del enunciado.
+4. **P3 por area tecnologica**: tecnica usada, clasificacion (paso 3) y evidencia.
+5. **Presentacion, descompuesta en LAS SECCIONES que el enunciado exige**
+   (textuales, en su orden). Por cada seccion:
+   - presente / ausente / vaciada de contenido
+   - **calidad de como la presentaron**: claridad, profundidad, correccion
+   - **evaluacion cualitativa contra los contenidos de clase**: ¿nombran y explican
+     bien los conceptos del curso? ¿justifican contra lo dictado o solo describen?
+     ¿presentan como "lo enseñado" algo que no lo es? (agravante 3.2.2)
+   - citas textuales del transcript que anclan cada juicio
+6. **Consistencia presentacion ↔ repo**: ¿lo que dicen coincide con lo que el codigo
+   entregado hace? Registrar cada discrepancia (funcionalidad mostrada que no esta en
+   el HEAD, tecnica declarada que el codigo no implementa, resultados del video que no
+   salen de la version entregada, integrantes que aparecen en uno y no en el otro).
+7. **Señales para ajuste individual** (autoria de commits vs presencia en video).
+
+Consolidar: leer las fichas, verificar que usan la misma vara, resolver asimetrias de
+evidencia antes de puntuar.
 
 **Paso 3: Clasificacion P3 por area tecnologica**, contra el inventario:
 - **3.1 Uso lo enseñado, bien aplicado** → muy bueno; sostiene o suma
@@ -61,21 +87,49 @@ evidencia siempre citada archivo:linea):
 - Agravante de 3.2.2: presentar lo primitivo con el nombre de lo enseñado (llamar
   "RAG" a un matching de palabras) o como virtud.
 
-**Paso 4: Nota.** Base sobre 10 = proporcion P1+P2. Modulacion P3 por area.
-Magnitudes default calibrables por el docente. Ajuste individual ±1 solo con
-evidencia y motivo registrado. Redondeo segun la catedra.
+**Paso 4: Modelo numerico (Excel), derivado de las fichas.** La nota se divide en
+DOS bloques con nota propia sobre 10 cada uno:
 
-**Presentacion oral/video:** doble rol. Como deliverable (P2: las secciones que el
-enunciado exige, textuales). Como evidencia de P3: ¿explican sus tecnicas con los
-conceptos del curso bien nombrados? ¿justifican contra lo dictado o solo describen?
-¿la seccion de aprendizajes muestra incorporacion real o generalidades?
+- **Bloque ENTREGA (repositorio)**: criterios derivados de P1/P2 (contrato, formatos,
+  reproducibilidad, secrets, interfaz, etica/privacidad...) y de P3 por area
+  (tecnica usada vs enseñada, una fila por area). Los criterios P3 de las areas
+  centrales llevan los pesos mas altos del bloque.
+- **Bloque PRESENTACION**: (a) presencia de las secciones exigidas por el enunciado y
+  (b) calidad de como las presentaron (claridad, profundidad, correccion conceptual
+  contra los contenidos de clase). Las inconsistencias presentacion↔repo de la ficha
+  restan aca o en Entrega segun donde este la mentira.
+
+Mecanica: escala **1 a 5** por criterio (celda en blanco = no evaluado, se excluye de
+la normalizacion); cada criterio tiene un **% del bloque editable** (suman 100% por
+bloque, con celda verificadora); cada bloque produce su nota /10 por promedio
+ponderado; **ponderacion global editable entre Entrega y Presentacion** (celdas knob);
+fila de **ajuste por equipo** (±1 solo con evidencia y motivo registrado); redondeo
+editable. Cada celda de puntaje lleva su justificacion en una hoja Evidencia.
+Advertir al docente la propiedad del piso: en escala 1-5 el minimo aporta 20% del
+criterio; para que una regresion duela mas hay que subirle el peso o usar el ajuste.
+Construir el Excel con un script regenerable (formulas vivas, no valores pegados) y
+marcar visualmente las celdas editables.
 
 ## Outputs
 
 - `inventario-contenidos.md` (paso 0)
-- Una planilla por equipo: P1/P2 checklist + tabla P3 por area + evidencia citada +
-  devolucion de 4-6 lineas honesta y accionable
-- Tabla/Excel resumen con notas y justificacion por criterio, apto como acta
+- `ficha-<equipo>.md` por equipo (paso 2): la representacion intermedia con toda la
+  evidencia citada; es la fuente del Excel y de la devolucion
+- Excel acta (paso 4): hoja de puntajes con los dos bloques y knobs, hoja de
+  evidencia, hoja de politicas docentes fechadas, hoja resumen con links
+- `devolucion-<equipo>.md` por equipo: el documento QUE VE EL ALUMNO
+
+**Devolucion al alumno.** Formato fijo: **nota final**, un **parrafo de aciertos**,
+un **parrafo de errores**, y una **reflexion final con takeaways para la vida
+profesional** (que les enseña este trabajo sobre como van a trabajar con estas
+tecnologias en serio). Reglas duras:
+- Los alumnos NO deben tener acceso ni poder deducir la metodologia numerica: nada de
+  criterios con pesos, puntajes parciales, escalas, nombres de bloques ni aritmetica
+  de la nota. Prosa docente, no rubrica.
+- Honesta y accionable: los errores se nombran con sus consecuencias, no se
+  suavizan hasta desaparecer.
+- Consistente con el acta: todo lo dicho debe estar respaldado por la ficha, pero
+  traducido a lenguaje de devolucion.
 
 ## Racionalizaciones a rechazar (observadas en correccion real)
 
@@ -105,3 +159,7 @@ conceptos del curso bien nombrados? ¿justifican contra lo dictado o solo descri
 - Confundir "pocos commits" con "poco trabajo" (pudo desarrollarse fuera de git);
   lo objetivo es la perdida de historial, no la holgazaneria
 - Cambiar criterios sin registrar la decision del docente con fecha
+- Filtrar la mecanica numerica en la devolucion al alumno (mencionar pesos, bloques o
+  puntajes parciales permite ingenieria inversa de la rubrica)
+- Puntuar la presentacion solo por presencia de secciones sin evaluar la calidad
+  conceptual de lo dicho, o sin cruzarla contra el repo entregado
