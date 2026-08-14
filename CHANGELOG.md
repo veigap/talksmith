@@ -13,6 +13,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.69.0] — 2026-08-11
+
+### Added
+- **`corregir-tp` skill** — toolbox skill (outside the presentation workflow, like
+  `desrobotizar`; Spanish-language, explicit invocation): a generalized method for
+  grading student course projects against two concrete references — the assignment
+  brief (deliverables: existence + conformity) and the content actually taught in
+  class (applied well / surpassed / regressed below what was taught, which subtracts
+  hard). Distilled from a real grading run where a word-list matcher was initially
+  scored as a "defensible trade-off" in a course that taught full semantic RAG.
+  Ships a rationalization table and red-flags list drawn from that documented
+  baseline failure, and was verified with a fresh-agent scenario test (classifies
+  the witness case correctly as a regression, under time pressure and with an
+  eloquent justification as bait).
+
 ## [0.68.0] — 2026-07-17
 
 Bug-triage batch from the `claude-cowork` production run — correctness fixes and new guardrails across Polish and Render.
