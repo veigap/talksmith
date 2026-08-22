@@ -2,18 +2,21 @@
 
 This file is the **one authoritative definition of how each render format behaves** —
 `pptx-strict`, `pptx-free-form`, and `html-strict`: which render substrate, which audits, which
-critique action, cycle cap, and deliverable, per phase.
+critique action, cycle cap, and deliverable, per phase. The three **CLASSIFY** phases are
+deliberately identical across all three formats: they operate on `slide-model.json`, the shared
+IR, so a template chosen (or corrected) there is chosen for every substrate that reads it.
 
 - **The config** (which action each format runs per phase) is the **matrix** below.
 - **The design/quality bar** the FEEDBACK action walks — the CONTENT / AESTHETIC /
   DISTRIBUTION / LAYOUT-CONFORMANCE practices — lives in its own file,
   [`slide-design.md`](slide-design.md). This file only names the *categories*; the
   practices themselves are there.
-- **The slide-template catalog** every mode classifies against at GENERATE (and the
-  critique checks against at FEEDBACK) is [`slide-templates.md`](slide-templates.md) —
-  the shared home for *which template a slide is, when it applies, and the format it must
-  take* (cards, not bullets). GENERATE picks + renders the template; FEEDBACK reviews the
-  slide against that template's format.
+- **The slide-template catalog** every mode classifies against at CLASSIFY (and the
+  critiques check against at CLASSIFY-REVIEW and FEEDBACK) is
+  [`slide-templates.md`](slide-templates.md) — the shared home for *which template a slide
+  is, when it applies, and the format it must take* (cards, not bullets). CLASSIFY picks the
+  template and records the walk; CLASSIFY-REVIEW re-runs that walk independently per slide;
+  GENERATE renders it; FEEDBACK reviews the rendered slide against that template's format.
 - **The generic visualization floor** — universal good-design principles + the hard
   "must-never-happen" defects (text/image overlap, off-slide bleed, illegible contrast,
   distorted images) — is [`visual-guidance.md`](visual-guidance.md). Every GENERATE honors
@@ -37,6 +40,9 @@ performed). To change a format's behavior, edit its cell here — one place.
 
 | Phase / effort | `pptx-strict` | `pptx-free-form` | `html-strict` |
 |---|---|---|---|
+| **CLASSIFY** (fill `slide-model.json`) | `fill-traced` | `fill-traced` | `fill-traced` |
+| **CLASSIFY-CHECK** (model-only audits) | `model-floor` | `model-floor` | `model-floor` |
+| **CLASSIFY-REVIEW** (per-slide critique) | `critic-all` | `critic-all` | `critic-all` |
 | **GENERATE** (render) | `native-render` | `native-render` | `html-render` |
 | **CONTROL** (deterministic audits) | `audit-full` | `audit-floor` | `audit-none` |
 | **FEEDBACK** (multimodal critique) | `walk-all` | `no-critique` | `no-critique` |
@@ -52,20 +58,28 @@ performed). To change a format's behavior, edit its cell here — one place.
 
 Each action is defined once and reused across formats via the matrix above.
 
-Every GENERATE action first **classifies each slide against the shared catalog**
-[`slide-templates.md`](slide-templates.md) (its *Classification procedure*) and renders
-the matched template's *Format*, falling back to the mode default when nothing matches.
-The universal invariant — labeled enumerations are cards/panels, never plain bullets —
-holds in all three. Each slide's chosen `template` (and its decomposed fields) lives in the shared
-`slide-model.json` ([`../../schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)),
-the FILL-step output that every mode renders from.
+Classification is **not** part of GENERATE — it is the three CLASSIFY phases above, run once on
+the shared `slide-model.json` ([`../../schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md))
+before any render. By the time a GENERATE action runs, each slide's `template` and decomposed
+fields are already fixed, and every GENERATE simply renders that template's *Format*. There is no
+"mode default" to fall back to: nothing matching is `fallback`, which `model-floor` treats as a
+**failure** to resolve (the walk missed a signal, or the catalog needs an entry) rather than an
+outcome to render. The universal invariant — labeled enumerations are cards/panels, never plain
+bullets — holds in all three.
 - `native-render` — author the deck with the official `skill://antropic-skills:/pptx`, starting from a working copy of the style's `base-template.pptx` (`Presentation(<base_template_path>)`), per that style's `pptx-prompt.md`. Authors each slide from its `slide-model.json` fields — the `template` is already chosen (strict additionally runs the `audits/layout_fit.py` gate). Never re-parses `final.md`. Cowork-only. Full contract: [`SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*.
 - `html-render` — [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py) renders a **styled HTML / Reveal.js** deck from `slide-model.json`: `html_style.render_model_slide` maps each slide's fields onto its per-type Jinja template (`templates/html/*.j2`) in the strict palette + **IBM Plex** fonts — cards, per-concept Material Symbols icons (catalog-matched, fetched by `icon_fetch.py`, recoloured, inlined), callout boxes, code surfaces, numbered strips — with the cover synthesized from the `deck` object. Slides render inside a vendored+inlined **Reveal.js** shell: navigation, deck-to-window scaling, overview (`Esc`), transitions, full screen (`F`), **speaker notes** (`s`), **PDF export** (`?print-pdf`); the only custom code is a per-slide content-fit. SVG images inline, PNG/JPG as data-URIs. Deterministic (the styled layer always renders); no `.pptx`, no native skill, Cowork-independent (needs `jinja2`). Renders the draft model (`--draft`) or final model → `output/html/index.html`.
+
+**CLASSIFY / CLASSIFY-CHECK / CLASSIFY-REVIEW** (the model is the shared IR, so these three are
+**identical across all formats** — they run on `slide-model.json` alone, before any render, and a
+choice fixed here is fixed for every substrate that reads it)
+- `fill-traced` — the LLM FILL step: classify each slide against [`slide-templates.md`](slide-templates.md), decompose it into that template's fields, and **record the discriminator walk in `_choice`** — signals, ≥2 candidates, the pick, and the catalog rule rejecting each other candidate ([`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md) → *The classification trace*). Filled **one section per batch**, re-reading the *Classification procedure* at the head of each: a single pass over the whole deck anchors on its own accumulating output and collapses onto the two negatively-defined entries (`concept-breakdown`, `content-text`).
+- `model-floor` — `audits/degenerate_enum.py` + **`audits/template_diversity.py`** + the two coverage preflights (`field_coverage.py`, `image_coverage.py`). The first three read the model alone; `image_coverage` also reads the source. `template_diversity` is the one that asks *was a richer template available and passed over?* — it **fails** on any `fallback` slide and reports `[dominance]`/`[composition]`/`[run]`/`[format-flat]`/`[no-alternative]` as advisories. `[composition]` is the one a per-template count can't produce: it groups templates by what they *look like* rather than what they mean, catching a deck that is half card grids across two templates neither of which is individually dominant. Those advisories are a worklist, never an instruction to force variety: a deck genuinely made of labeled sets *is* mostly `concept-breakdown`.
+- `critic-all` — dispatch [`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md) **once per content slide, in parallel**, each blind to every other slide's classification (the same independence rule that makes `diagram-critic` work). Verdicts: `confirm` / `reclassify` / `format` / `weak-trace`; apply them, re-run `model-floor`, single pass. Frame templates and the synthesized cover are skipped. **The `--draft` live view skips this phase** — the draft model is in flux and re-renders on every review.
 
 **CONTROL** (all deterministic Python audits; a non-zero exit ends the phase)
 - `audit-full` — OOXML invariants + `audits/block_coverage.py` + `audits/aspect_ratios.py` + `audits/cover_fidelity.py` + **`audits/notes_coverage.py`** + **`audits/palette_fonts.py`** + **`audits/layout_fit.py`** + **`audits/icon_coverage.py`**. The last three enforce the strict template (layout-conformance) and are strict-only; the rest are the shared floor. **`audits/icon_coverage.py`** fails the build when a concept-breakdown or callout slide rendered **zero** icons — closing the gap where a render silently skips the §17 icon-fetch step and ships naked cards (no other audit looked at icons, so it passed clean).
 - `audit-floor` — OOXML invariants + `audits/block_coverage.py` + `audits/aspect_ratios.py` + `audits/cover_fidelity.py` + `audits/notes_coverage.py`. The shared floor; no palette/fonts, no layout-fit. `audits/notes_coverage.py` fails the build if any `### Notes` block lands in an empty notes pane (notes are load-bearing and template-independent).
-- `audit-none` — no audits run: the format produces no `.pptx`, and every deterministic audit parses a rendered deck. `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_html.py` renders every slide unit).
+- `audit-none` — no *render* audits run: the format produces no `.pptx`, and every audit in this phase parses a rendered deck. (The model-only audits still guard it — they run one phase earlier, at `model-floor`, which is exactly why that phase is format-independent.) `block-coverage`'s guarantee (every source block becomes a slide element) instead holds **by construction** (`build_html.py` renders every slide unit).
 
 **FEEDBACK** (multimodal walk of slide pixels against the practices in [`slide-design.md`](slide-design.md))
 - `walk-all` — walk **CONTENT + TEMPLATE + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, applying the strict elaborations in `pptx-strict/pptx-prompt.md` §20. TEMPLATE reviews each slide against its classified template's *Format* in [`slide-templates.md`](slide-templates.md).

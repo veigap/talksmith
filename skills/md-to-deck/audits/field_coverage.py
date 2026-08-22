@@ -33,6 +33,15 @@ _UNIVERSAL = {
     # `design` divides the canvas and `media` is what it places; `lead` is the title's sub-line,
     # emitted by the shared head block. (`aside` is the legacy spelling of a `column-*` design.)
     "design", "media", "aside", "lead",
+    # `_choice` is the classification trace (schemas/slide-model.md -> *The classification
+    # trace*): metadata about *why* this template was picked, read by template_diversity.py
+    # and the slide-classifier-critic, never by a renderer. Like `_source`, its being
+    # unconsumed is the design, not a finding.
+    "_choice",
+    # `stats` is a band the shared `stage` macro renders under any content body (the
+    # "stat pair as the lower band" composition), so like `highlights` it is consumed
+    # regardless of template. The `stat` template renders its own and suppresses the band.
+    "stats",
 }
 
 # Per-template consumed fields = the schema contract (required ∪ optional) PLUS a few extras a
@@ -69,7 +78,11 @@ _CONSUMES = {
     "big-number": {"number", "caption", "title"},
     "quote": {"quote", "attribution"},
     "timeline": {"title", "milestones", "lead"},
-    "pros-cons": {"title", "pros", "cons"},
+    # `pro_label`/`con_label` override the localized column headers (pros-cons.j2 reads
+    # `s.pro_label or L.pros`), so a deck can name the two sides itself.
+    "pros-cons": {"title", "pros", "cons", "pro_label", "con_label"},
+    # a cross-tab: the axis names and tick labels are content, not chrome to drop
+    "matrix": {"title", "columns", "rows", "cells", "x_label", "y_label"},
     "quiz": {"question", "answer", "title", "options", "correct", "explanation", "image", "answer_label", "layout"},
     "single-point": {"title", "point"},
     "callout": {"callout", "tone", "title"},
@@ -82,6 +95,48 @@ _CONSUMES = {
 }
 
 
+# The **required** half of the same contract (`schemas/slide-model.md` -> *Per-template field
+# contract*). `_CONSUMES` catches a field the template will ignore; this catches the mirror
+# defect — a template missing the field that *defines* it. A `content+cards+image` with no
+# `media` is not that template at all: it is a `concept-breakdown` that recorded a picture it
+# doesn't have, and it renders as a card set with a hole where the image column belongs. That
+# is a misclassification, and nothing looked for it (an absent field is invisible to a
+# set-difference check, which is why it needs its own map).
+#
+# Alternatives are listed as tuples: any one satisfies the requirement. `media`/`image` and
+# `cards`/`rows` are the current/legacy spellings of one field, and `content-image` genuinely
+# accepts either text shape.
+_REQUIRES = {
+    "statement": ("title",),
+    "concept-breakdown": ("title", ("cards", "rows")),
+    "card-row": ("title", ("cards", "rows")),
+    "icon-list": ("title", ("cards", "rows")),
+    "process": ("title", "steps"),
+    "figures": ("title", "figures"),
+    "image-grid": ("images",),
+    "image-full": ("title", ("image", "media")),
+    "content-image": ("title", ("image", "media"), ("facts", "lead")),
+    "content+cards+image": ("title", ("cards", "rows"), ("image", "media")),
+    "value-columns": ("title", "columns"),
+    "concept-columns": ("title", "columns"),
+    "stat": ("title", "stats"),
+    "big-number": ("number", "caption"),
+    "quote": ("quote",),
+    "timeline": ("title", "milestones"),
+    "pros-cons": ("title", "pros", "cons"),
+    "matrix": ("title", "columns", "rows", "cells"),
+    "quiz": ("question", "answer"),
+    "single-point": ("title", "point"),
+    "callout": ("callout", "tone"),
+    "code-example": ("title", "code"),
+    "content-text": ("title", "big", "panels"),
+    "closing-hero": ("title",),
+    "closing-cta": ("title", "items"),
+    # `section-agenda`/`divider` need only a title, which every slide has; `fallback` is
+    # already a flagged classification miss and requires nothing.
+}
+
+
 def _nonempty(v) -> bool:
     if v is None:
         return False
@@ -90,18 +145,31 @@ def _nonempty(v) -> bool:
     return True
 
 
-def audit(model: dict) -> list[tuple[str, str, list[str]]]:
-    """Return (slide_ref, template, [unconsumed non-empty fields]) for each offending slide."""
-    out: list[tuple[str, str, list[str]]] = []
+def _missing(slide: dict, template: str) -> list[str]:
+    """Required fields the slide doesn't carry. A tuple of names is satisfied by any one of
+    them (current/legacy spellings, or a genuinely either-or contract)."""
+    out = []
+    for req in _REQUIRES.get(template, ()):
+        names = req if isinstance(req, tuple) else (req,)
+        if not any(_nonempty(slide.get(nm)) for nm in names):
+            out.append(" | ".join(names))
+    return out
+
+
+def audit(model: dict) -> list[tuple[str, str, list[str], list[str]]]:
+    """Return (slide_ref, template, [unconsumed non-empty fields], [missing required fields])
+    for each offending slide."""
+    out: list[tuple[str, str, list[str], list[str]]] = []
     for idx, s in enumerate(model.get("slides", [])):
         t = s.get("template", "fallback")
         if t not in _CONSUMES:                 # fallback / unknown → not audited
             continue
         allowed = _CONSUMES[t] | _UNIVERSAL
         extra = sorted(k for k, v in s.items() if k not in allowed and _nonempty(v))
-        if extra:
+        gone = _missing(s, t)
+        if extra or gone:
             ref = s.get("title") or f"slide[{idx}]"
-            out.append((str(ref)[:60], t, extra))
+            out.append((str(ref)[:60], t, extra, gone))
     return out
 
 
@@ -119,13 +187,18 @@ def main(argv=None) -> int:
 
     offenders = audit(model)
     if not offenders:
-        print(f"field_coverage: ok — every populated field is consumed by its template")
+        print("field_coverage: ok — every template gets the fields it needs, and nothing it ignores")
         return 0
 
-    print(f"field_coverage: {len(offenders)} slide(s) carry field(s) their template will ignore "
+    print(f"field_coverage: {len(offenders)} slide(s) whose fields don't match their template "
           f"(likely a misclassification — the content won't render):", file=sys.stderr)
-    for ref, t, extra in offenders:
-        print(f"  - {t:22} {ref!r}: ignored → {', '.join(extra)}", file=sys.stderr)
+    for ref, t, extra, gone in offenders:
+        if gone:
+            print(f"  - {t:22} {ref!r}: MISSING required → {', '.join(gone)} "
+                  f"(a template without the field that defines it is the wrong template)",
+                  file=sys.stderr)
+        if extra:
+            print(f"  - {t:22} {ref!r}: ignored → {', '.join(extra)}", file=sys.stderr)
     return 1 if args.strict else 0
 
 

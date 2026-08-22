@@ -702,7 +702,25 @@
           "body": "It differs from process only in that here, when matters more than the step."
         }
       ],
-      "lead": "An optional lead can frame the sequence before the dates begin."
+      "lead": "An optional lead can frame the sequence before the dates begin.",
+      "_choice": {
+        "signals": [
+          "labeled_items=4",
+          "date_labels=true",
+          "is_ordered=true",
+          "n_images=0"
+        ],
+        "candidates": [
+          "timeline",
+          "process",
+          "concept-breakdown"
+        ],
+        "picked": "timeline",
+        "rejected": {
+          "process": "date_labels fires first: the labels carry *when*, so the rail is the point",
+          "concept-breakdown": "the set is ordered, which disqualifies it"
+        }
+      }
     },
     {
       "template": "timeline",
@@ -725,7 +743,25 @@
           "marker": "3"
         }
       ],
-      "lead": "The optional per-milestone marker rides inside the dot:"
+      "lead": "The optional per-milestone marker rides inside the dot:",
+      "_choice": {
+        "signals": [
+          "labeled_items=4",
+          "date_labels=true",
+          "is_ordered=true",
+          "n_images=0"
+        ],
+        "candidates": [
+          "timeline",
+          "process",
+          "concept-breakdown"
+        ],
+        "picked": "timeline",
+        "rejected": {
+          "process": "date_labels fires first: the labels carry *when*, so the rail is the point",
+          "concept-breakdown": "the set is ordered, which disqualifies it"
+        }
+      }
     },
     {
       "template": "concept-columns",
@@ -1222,6 +1258,23 @@
       "image": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
+      },
+      "_choice": {
+        "signals": [
+          "labeled_items=3",
+          "is_ordered=false",
+          "n_images=1"
+        ],
+        "candidates": [
+          "content+cards+image",
+          "concept-breakdown",
+          "content-image"
+        ],
+        "picked": "content+cards+image",
+        "rejected": {
+          "concept-breakdown": "requires images == 0; would drop the shared diagram",
+          "content-image": "dissolves the labels into facts, losing the per-concept icon"
+        }
       }
     },
     {
@@ -1247,6 +1300,23 @@
       "image": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
+      },
+      "_choice": {
+        "signals": [
+          "labeled_items=3",
+          "is_ordered=false",
+          "n_images=1"
+        ],
+        "candidates": [
+          "content+cards+image",
+          "concept-breakdown",
+          "content-image"
+        ],
+        "picked": "content+cards+image",
+        "rejected": {
+          "concept-breakdown": "requires images == 0; would drop the shared diagram",
+          "content-image": "dissolves the labels into facts, losing the per-concept icon"
+        }
       }
     },
     {
@@ -1455,7 +1525,8 @@
         "src": "images/clip.webm",
         "alt": "Demo recording"
       },
-      "items": [
+      "notes": "A clip on a slide is a demo recording: it runs while the presenter narrates over it. Because the video carries the point and the PDF export only prints its first frame, whatever it shows has to be said here too — a reader of the deck never sees it move.",
+      "cards": [
         {
           "label": "Autoplays",
           "body": "Reveal starts it when the slide comes up and pauses it on the way out."
@@ -1464,8 +1535,7 @@
           "label": "Same frame",
           "body": "A video takes the box an image would, in every design."
         }
-      ],
-      "notes": "A clip on a slide is a demo recording: it runs while the presenter narrates over it. Because the video carries the point and the PDF export only prints its first frame, whatever it shows has to be said here too — a reader of the deck never sees it move."
+      ]
     },
     {
       "template": "concept-breakdown",
@@ -1477,7 +1547,8 @@
         "muted": true,
         "loop": true
       },
-      "items": [
+      "notes": "The column design crops media to fill its strip, which for video means the same rule as for a photo: nothing load-bearing goes in it. Ambient motion behind a text slide is what this is for — muted and looping, so it never ends mid-talk and never competes with the presenter's voice.",
+      "cards": [
         {
           "label": "Atmosphere",
           "body": "A column crops to fill, so nothing in the clip is meant to be read."
@@ -1486,8 +1557,7 @@
           "label": "Looping",
           "body": "muted + loop is the shape ambient motion takes: it cycles, quietly."
         }
-      ],
-      "notes": "The column design crops media to fill its strip, which for video means the same rule as for a photo: nothing load-bearing goes in it. Ambient motion behind a text slide is what this is for — muted and looping, so it never ends mid-talk and never competes with the presenter's voice."
+      ]
     },
     {
       "template": "single-point",
@@ -1635,6 +1705,148 @@
       "title": "Closing"
     },
     {
+      "template": "fallback",
+      "section": "Visual & data",
+      "title": "fallback: the last resort when nothing matches",
+      "big": "A slide reaching fallback means the catalog is missing an entry — the render now warns.",
+      "points": [
+        "fallback still refuses plain bullets: its points render as accented panels.",
+        "big defaults to the title when the fill omits it.",
+        "A recurring fallback is a signal to add a real template, not to style this one."
+      ]
+    },
+    {
+      "template": "matrix",
+      "section": "Frames & openers",
+      "title": "matrix: cells indexed by two named axes",
+      "lead": "A quadrant is not four cards — a cell means what it means because of where it sits.",
+      "x_label": "PREDICTED",
+      "columns": [
+        "Positive",
+        "Negative"
+      ],
+      "y_label": "ACTUAL",
+      "rows": [
+        "Positive",
+        "Negative"
+      ],
+      "cells": [
+        {
+          "label": "True positive",
+          "body": "Called it, and it was there.",
+          "tone": "good"
+        },
+        {
+          "label": "False negative",
+          "body": "Missed it. The expensive one in medicine.",
+          "tone": "bad"
+        },
+        {
+          "label": "False positive",
+          "body": "False alarm. The expensive one in spam.",
+          "tone": "bad"
+        },
+        {
+          "label": "True negative",
+          "body": "Correctly left alone.",
+          "tone": "good"
+        }
+      ],
+      "notes": "A matrix earns its own template because the axes carry meaning. Filed as four concept cards, the labels survive and the axes vanish — and the axes were the point. The tone colours reuse the pros-cons pair rather than introducing a third palette."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Frames & openers",
+      "title": "media as a code panel — cards keep their cards",
+      "design": "split-right",
+      "media": {
+        "code": "scaler = StandardScaler()\nscaler.fit(X_train)            # train only\nX_val  = scaler.transform(X_val)\nX_test = scaler.transform(X_test)",
+        "language": "python"
+      },
+      "cards": [
+        {
+          "label": "Learned from train",
+          "body": "The statistics come from one split and one split only."
+        },
+        {
+          "label": "Applied to all three",
+          "body": "Same parameters, every time — that is what makes it a transform."
+        },
+        {
+          "label": "Silent when wrong",
+          "body": "Leak the test set in and nothing raises; the score just flatters you."
+        }
+      ],
+      "notes": "Before media could hold code, this slide had two bad options: drop the snippet to keep the cards, or become a code-example and flatten the cards into an explanation column. Both lose content. The design places the panel; the template still just emits cards."
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Frames & openers",
+      "title": "media as a small aligned grid",
+      "design": "split-right",
+      "media": {
+        "columns": [
+          {
+            "header": "Situation",
+            "cells": [
+              "Small tabular net",
+              "Deep net",
+              "Vision",
+              "Transformers"
+            ]
+          },
+          {
+            "header": "Reach for",
+            "cells": [
+              "L2",
+              "Dropout",
+              "Augmentation first",
+              "Both, plus warmup"
+            ]
+          }
+        ]
+      },
+      "cards": [
+        {
+          "label": "Early stopping",
+          "body": "Cheapest of the lot: stop when validation turns."
+        },
+        {
+          "label": "More data",
+          "body": "The one that always works, and the one nobody has."
+        }
+      ],
+      "notes": "A lookup table is supporting evidence here, not the slide — so it rides in media like a diagram would. Rendered with the same compare-strip classes value-columns uses, so a table beside a body and a table that is the body read as one piece."
+    },
+    {
+      "template": "content-image",
+      "section": "Frames & openers",
+      "title": "a stat band under the body",
+      "design": "split-right",
+      "media": {
+        "src": "pipeline.svg",
+        "alt": "The pipeline"
+      },
+      "lead": "Two figures that comment on the body — without making the whole slide a stat.",
+      "facts": [
+        {
+          "label": "The hook is a contrast",
+          "body": "A pair of numbers can carry a slide's opening without being its structure."
+        }
+      ],
+      "stats": [
+        {
+          "value": "99%",
+          "caption": "accuracy on the imbalanced set"
+        },
+        {
+          "value": "0 / 100",
+          "caption": "frauds actually caught"
+        }
+      ],
+      "notes": "The catalog always described a stat pair as the lower band of a content slide, but only the stat template had a stats field — so a slide with this hook had to become a stat and demote its cards. The band is now universal; stat is for when the numbers are the whole slide."
+    },
+    {
       "template": "closing-hero",
       "section": "Closing",
       "title": "Questions?",
@@ -1657,17 +1869,6 @@
           "label": "Repo",
           "body": "github.com/austral/talksmith"
         }
-      ]
-    },
-    {
-      "template": "fallback",
-      "section": "Visual & data",
-      "title": "fallback: the last resort when nothing matches",
-      "big": "A slide reaching fallback means the catalog is missing an entry — the render now warns.",
-      "points": [
-        "fallback still refuses plain bullets: its points render as accented panels.",
-        "big defaults to the title when the fill omits it.",
-        "A recurring fallback is a signal to add a real template, not to style this one."
       ]
     }
   ]

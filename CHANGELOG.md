@@ -13,6 +13,98 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.84.0] — 2026-08-21
+
+### Added
+
+- **Slide layouts are now chosen deliberately, and the choice is double-checked.** Decks were
+  collapsing onto one or two layouts — most slides came out as the same card grid — which reads as
+  monotony no matter how good the writing is. Three things caused it, and all three are fixed.
+  The pass that picks a layout now **records why**: which signals it found in the slide, which
+  layouts were genuinely in the running, and the catalog rule that ruled out each one it passed
+  over. It also now works **one section at a time** instead of classifying the whole deck in a
+  single sweep, so it stops drifting toward whatever it just used. And every content slide is then
+  **re-read by an independent reviewer** that sees only that slide, re-derives the layout from
+  scratch, and either confirms the pick or overturns it citing the rule — deliberately blind to the
+  rest of the deck, since a reviewer who can see twenty identical slides reads the twenty-first as
+  normal. Layouts that survive that are kept: a talk genuinely built from parallel concepts *is*
+  mostly card grids, and variety for its own sake would be a worse defect.
+- **A deck-wide layout report before anything renders.** A new check prints the layout distribution
+  and flags what is worth a second look: one layout holding more than 40% of the content slides,
+  **more than half the deck simply *looking* the same**, four or more consecutive slides on the same
+  layout, every card grid composed identically, or a slide whose choice recorded no alternative.
+  That "looking the same" check is the one that matters most in practice: a card grid with a diagram
+  beside it and one without are different layouts that read as the same slide, so a deck can be 54%
+  card grids with no individual layout above 33% — every threshold passing while the audience sees
+  one slide on repeat. The report now leads with that view. It also **fails the render on a no-match slide**, which
+  previously slipped through as a stderr warning after the fact. All of it runs on the deck model
+  alone, so the HTML deck gets the same protection the `.pptx` path already had.
+
+### Changed
+
+- **The layout catalog gained an anti-default escape check.** The two entries that fire when
+  *nothing else* matched — the card grid and the prose fallback — now require five explicit
+  questions before they are accepted (are the labels dates? is there an order? are the bodies
+  numbers? do the items align in columns? is there an image?). A `yes` to any re-routes the slide to
+  the layout that was actually right. Landing on a card grid after five honest `no`s is still
+  correct and still common; landing there without asking is what produced the monotony.
+- **`render-modes.md` gained the three classify phases** (fill → check → review), identical across
+  all three render formats because they operate on the shared deck model. Classification is no
+  longer described as part of GENERATE, and there is no longer a "mode default" to fall back to.
+- **A slide missing the field that defines its layout is now caught.** The field check already
+  flagged content a layout would silently *ignore*; it now also flags the mirror defect — a
+  "cards beside a picture" slide carrying no picture, a metrics slide with no metrics. A layout
+  without the thing that makes it that layout is the wrong layout, and an absent field is invisible
+  to the check that was there. Found one such slide on the first real deck it ran against.
+
+- **A slide can now put a code snippet or a small table beside its points, instead of choosing.**
+  The catalog always described this shape — "points on one side, a supporting picture, worked
+  example, or code on the other" — but only a picture could actually be filled in. So a slide with
+  three points and a code snippet had to give one of them up, and it did: sometimes the snippet
+  vanished, sometimes the points were flattened into a paragraph. Both now render together, in any
+  layout, on any slide type. Code and tables are always given room to be read rather than cropped.
+- **A pair of headline figures can sit under a slide's body without taking the whole slide.**
+  Previously the only way to keep two big numbers was to make the slide *about* the numbers, which
+  demoted everything else on it to footnotes. Any slide can now carry the figure band.
+- **New slide type: a matrix.** Cells arranged against two named axes — a confusion matrix, an
+  impact/effort grid, a risk quadrant. These had no home: written as content they came out as
+  unrelated cards with the axes deleted, so the only way to get one was to draw it as a picture.
+  Cells can be tinted with the same good/bad pair the pros-and-cons slide uses.
+- **A one-line caption is allowed under a full-bleed image again.** The rule that picked this
+  layout said "no text in the body" while the layout itself offered an optional caption line, so
+  any slide that used the caption disqualified itself and got a different layout. One short line
+  now counts as a caption; two sentences still means the text leads, which is a different slide.
+- **Comparison tables are no longer pushed out of the compare-grid by their width.** The
+  "2–3 columns" figure was written as a *width budget* — how much grid fits beside a picture —
+  but it had also been copied into the rule that decides *what a comparison table is*. Any table
+  with a fourth column therefore had nowhere to go and was rendered as a stack of cards, one per
+  row, with each row's cells run together into a single line — losing exactly the alignment that
+  made it a table. Width is now a budget again: a wide grid gets more room on a full-width slide,
+  the leading factor column doesn't count against it, and a table too big for the slide is one to
+  **split**, never one to demote. Tables written the other way round (the compared things down
+  the side, the shared questions across the top) and two-column lookup tables now also keep their
+  grid and their headers. Found by reviewing a real 54-slide deck, where this one rule accounted
+  for nine of the seventeen cases where a slide's right layout was unreachable.
+
+### Fixed
+
+- **A one-sentence definition no longer has to masquerade as a quotation.** The big-claim slide
+  caps at about sixteen words — not for taste, but because it is full-bleed and its type does not
+  shrink, so a longer line runs off the slide. With nowhere else to go, definitions were being
+  wrapped in quote marks to borrow the large type, which presents the speaker's own words as
+  somebody else's. Longer single claims now route to the single-point slide, which has room, and
+  the reason for the cap is written down next to it.
+- **A card grid could be told to use a layout that no longer exists.** The vertical `list`
+  arrangement was retired some releases ago, but two places still routed slides to it — so a
+  lead plus a few prose points was sent to a value that renders as something else. Those now say
+  what they mean.
+- **`pros-cons` slides can name their own two columns.** `pro_label` / `con_label` were already
+  honoured by the render but missing from the documented contract, so the field check reported
+  them as content that would be dropped when in fact they worked. Documented, and the false
+  positive is gone.
+- **Two slides in the bundled style reference rendered with no cards.** They listed their content
+  under a field only the closing slide reads, so it was dropped entirely. Both render correctly now.
+
 ## [0.83.4] — 2026-08-12
 
 ### Fixed

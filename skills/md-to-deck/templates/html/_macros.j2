@@ -52,14 +52,14 @@
    mentions `.side-left`. #}
 {% set p = s.design.split('-') %}
 <div class="stage d-{{ p[0] }}{{ ' side-' ~ p[1] if p|length > 1 else '' }}">
-<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}
+<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}{% if s.stats and s.template != 'stat' %}<div class="stats statband{{ frag(s) }}">{% for st in s.stats %}<div class="stat"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}</div>{% endif %}
 </div></div>
 {% if hlbot %}{{ hlband(hlbot, ' hl-bottom', frag(s)) }}{% endif %}
 {% if hlsrc %}{{ hlband(hlsrc, ' hl-source', '') }}{% endif %}
 {# guarded on the *design*, not on `s.media`: a slide can carry media the resolved design does
    not place (a legacy `image` on a template that never composed one), and emitting it anyway
    would drop an unplaced picture into a stage with no rule to position it. #}
-{% if s.design != 'full' %}<div class="smedia">{{ embed_img(s.media) }}</div>{% endif %}
+{% if s.design != 'full' %}<div class="smedia">{{ smedia(s.media) }}</div>{% endif %}
 </div>
 {% endmacro %}
 {# Enumeration items appear one at a time (Reveal fragments) by default; `reveal: together`
@@ -69,3 +69,28 @@
    the presenter clicks in each item. Group containers (e.g. highlights) call `frag(s)` too and
    stay a single fragment. #}
 {% macro frag(s) %}{{ '' if s.reveal == 'together' else ' fragment fade-up' }}{% endmacro %}
+{# **What the media is, is not the template's business.** The design divides the canvas and the
+   stage places whatever `s.media` holds; a template only supplies content. So media is
+   polymorphic, dispatched on shape:
+
+     {src, alt}                  a picture or a clip  (the original, and still the common case)
+     {code, language?}           a code / worked-example panel
+     {columns:[{header,cells}]}  an aligned grid — a small supporting table
+
+   The two non-picture shapes exist because the catalog already promised them: the
+   `content+cards+image` entry says "labeled cards on one side AND a supporting
+   image/**example/code** on the other", and `process`/`value-columns` gloss their media as "a
+   supporting diagram/**example**". Only an image `src` could ever be filled, so a card set beside
+   a code fence or beside a small lookup table had no legal home — and the fill's escape was to
+   drop one half. It dropped the code, or it flattened the cards. Both are content loss the
+   two-file contract forbids, and neither raised anything.
+
+   Emitting them here rather than in a template is the whole point: every content template gets
+   both for free, exactly as it already gets every design. `code-example` and `value-columns` keep
+   their own body-level markup — there the code or the grid **is** the slide, not what sits beside
+   it — and reuse the same classes, so the two read as one piece in two places. #}
+{% macro smedia(m) %}
+{%- if m is mapping and m.code %}<div class="codebox mcode">{% for l in lines(m.code)[:18] %}{{ l }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>
+{%- elif m is mapping and m.columns %}<div class="compare mtable" style="--cc:{{ m.columns | length or 1 }}"><div class="chead">{% for c in m.columns %}<span>{{ c.header }}</span>{% endfor %}</div>{% for row in pivot(m.columns) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}</div>
+{%- else %}{{ embed_img(m) }}{%- endif %}
+{% endmacro %}

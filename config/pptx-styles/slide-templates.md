@@ -64,7 +64,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `body_len` | Per-item body length in characters, post-Markdown-strip. "Short" ≤ ~80 chars; "prose" > ~80. Judge by the **longest** item. |
    | `two_groups` | The body splits into **two symmetric groups** compared against each other (A-vs-B, before/after, myth/reality), or a pipe-table of `factor \| A \| B` rows. |
    | `big_metrics` | 2–4 standalone numbers/metrics with labels (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`). |
-   | `one_claim` | A single dominant assertion (≤ ~16 words) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
+   | `one_claim` | A single dominant assertion (**≤ ~16 words** — past that it is `single-point`, because `statement` is full-bleed and does not shrink to fit) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
    | `one_two_words` | The whole slide is 1–2 words (`Q&A`, `Gracias`). |
    | `is_voiced` | The dominant line is **someone else's words**: a `>` blockquote, a line wrapped in quotation marks, and/or an attribution line opening `—`/`–` or naming a source (`Anthropic:`, `— Ana Pérez, CISO`). A claim in the presenter's own voice is not voiced. |
    | `is_question` | The title or the body's dominant line **asks** something the slide then answers — a `¿…?`/`…?` line followed by its resolution, a `Pregunta … Respuesta …` split, or multiple-choice options (A/B/C/D). A rhetorical question with no answer on the slide does **not** count. |
@@ -72,7 +72,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `polarity` | The two groups are explicitly **upside vs downside**, not just A vs B — `Ventajas`/`Riesgos`, `Pros`/`Contras`, `Beneficios`/`Limitaciones`, `Qué gana`/`Qué cuesta`. |
    | `one_metric` | **One** dominant figure is the whole slide (`$2.50`, `18%`, `1M`) with a one-line caption and nothing else competing. (2–4 figures is `big_metrics`.) |
    | `is_cta` | A terminal (or section-terminal) slide whose items are **next steps / resources / links / where-to-go** — names + URLs + one-line descriptors, not concepts. |
-   | `image_only` | `n_images ≥ 1` and the body carries **no prose and no enumeration** beyond the title — a screenshot or diagram the presenter narrates, its detail in `### Notes`. An explicit "just the image" author instruction produces exactly this. |
+   | `image_only` | `n_images ≥ 1`, **no enumeration**, and no body prose **beyond one short framing line** (≤ ~120 chars) — a screenshot or diagram the presenter narrates, its detail in `### Notes`. That one line is the `image-full` `lead`, which its *Format* and the schema both grant: reading `image_only` as "no prose at all" made the lead-bearing variant unselectable, because any line that would fill it voided the signal. Two sentences or more is prose that *leads*, and that is `content-image`. An explicit "just the image" author instruction produces exactly this. |
 
 2. **Enumerate every catalog entry whose _Match_ fires** given those signals.
 3. **Apply the disambiguators** (each entry's *Match* names what it is **not**) to pick
@@ -88,14 +88,22 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - **Columns**: cells that align **row by row** over a shared factor → `value-columns`; columns
      that share **no row structure**, each explaining its own term → `concept-columns`. Reading
      across a row is the test: if it says nothing, it is not a table.
-   - `has_table`: **2–3 comparable value-columns** (A-vs-B, before/after, or three options over
-     shared factors) → `value-columns`; a **label/value or N-level/N-column** table →
-     `concept-breakdown` (card-per-row grid), **not** `value-columns`. (A pipe-table is never a
+   - `has_table`: **comparable value columns** (A-vs-B, before/after, or N options over shared
+     factors) → `value-columns` — including a **transposed** table (compared things down the
+     left, shared factors across the top: transpose it back, don't demote it) and a **lookup**
+     table whose two headers are load-bearing (`Situación → Elegir`). Only a table whose columns
+     are **heterogeneous attributes of the row key**, with no factor read across (`Variable |
+     Ejemplo | Codificación | # de inputs`), is `concept-breakdown` card-per-row. **Width is
+     never the discriminator**: a table past the column/row budget is a split candidate, not a
+     different template — demoting it collapses each row into one card body and loses the
+     alignment that is the slide. (A pipe-table is never a
      native `<a:tbl>`.) A table that also has **one shared supporting image** is still
      `value-columns`, with `image` + `layout` — the mirror of the `content+cards+image` rule one
      step down. The image is not a reason to reclassify, and the table is not a reason to drop the
      image: sending the slide to `content+cards+image` to keep the picture collapses each row into
      a single card body (`"A: … B: …"`) and loses the column alignment that is the whole point.
+   - cells indexed by **two named axes** (a cross-tab, not a list) → `matrix`, before the
+     column rules: a quadrant has two axes, `value-columns` has one.
    - `two_groups` → `pros-cons` when `polarity` (the two groups are upside vs downside, and the
      colour-coding is the point), else `value-columns` (a neutral compare).
    - `labeled_items ≥ 2` and `date_labels` → `timeline` (the rail; *when* is the axis), else
@@ -110,9 +118,10 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `concept-breakdown` (**including a
      2-item set** → two cards). It requires `images == 0` — any source image disqualifies it (its
      per-card icons are renderer-added, not source pictures). Then pick its `format` by count and
-     body length: `row` for a lead + 3–5 short items, `list` for a lead + 3–5 prose items or an
-     anaphora, `editorial` for 2–8 short items when the composition wanted is **flat** (no cards),
-     `grid` otherwise. That is a **formatting** choice made after the template, not a
+     body length: `row` for a lead + 3–5 items whose bodies are **all ≤ ~80 chars**, `editorial`
+     for 2–8 short items when the composition wanted is **flat** (no cards), `grid` otherwise —
+     prose bodies and anaphoras included. **`list` is retired and is not a value** (see *Every
+     format is a grid*); a model carrying it renders as `grid`. That is a **formatting** choice made after the template, not a
      second classification.
    - `labeled_items == 1` (a lead + one point) → `single-point`, or `callout` when that point is
      a **tone-carrying aside** (a tip, a warning, an analogy — the pink/blue panel *is* the
@@ -124,7 +133,8 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
      `content-image`.
    - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
-     one counter-point — e.g. a myth→reality slide) → `statement`.
+     one counter-point — e.g. a myth→reality slide) → `statement`; the same shape **past ~16
+     words** → `single-point`, never a `quote` dressed up to get the type size.
    - `is_cta` (resources / next steps / links) → `closing-cta`; `one_two_words` + `is_terminal`
      → `closing-hero`.
    - only prose, none of the above → `content-text` (flag as restructure candidate).
@@ -132,7 +142,53 @@ Decide the template **from the content**, as a discriminator walk — not first-
    richer one matches. The same rule applies *within* a walk step: when two entries both fire,
    take the one that keeps more structure — a card set over a fact list, a timeline over a
    step list, a quote over a statement.
-4. **No entry matches → `fallback`** (log it).
+4. **Before writing the slide, run the anti-default escape check.** Three entries act as sinks,
+   and a deck collapses onto them:
+   - `concept-breakdown` (and its `card-row`/`icon-list` spellings) and `content-text` are defined
+     **negatively** — the first fires on "labeled set, **not** ordered, **no** image", the second on
+     "**none** of the above". Every other entry needs a signal to be **positively detected**, so any
+     detection you missed lands in one of these by construction.
+   - `content+cards+image` is the third, and it is subtler: its trigger, *an image is present*, is
+     detectable **by shape**, while the discriminators that outrank it — `two_groups`, `has_table`,
+     `date_labels`, `is_ordered` — all require **reading** the items and seeing how they relate.
+     Shape beats reading every time under output pressure, so a shared picture quietly pulls
+     comparisons, tables and timelines into a card set. Its `image` is never the reason to pick it:
+     `value-columns`, `timeline` and `process` all carry a supporting image too.
+
+   All three are also the cheapest to fill — a near-transcription of the source bullets, where
+   `timeline`/`stat`/`value-columns`/`figures` each need the content restructured first. So before
+   accepting any of the three, answer all six — a `yes` re-classifies:
+
+   | Ask | A `yes` means |
+   |---|---|
+   | Are the labels **dates or periods**? | `timeline` — check this *before* `is_ordered`, or every timeline is swallowed by `process` |
+   | Do the items imply an **order** (steps, `1.`, `Paso N`, a flow)? | `process` |
+   | Are the bodies **numbers** — is a figure the payload rather than prose? | `stat` (2–4) / `big-number` (1) |
+   | Do the items **align row by row** over a shared factor, or split into two groups? | `value-columns`, or `pros-cons` when the split is upside/downside |
+   | Is there an image — **one shared** or **one per item**? | `content+cards+image` / `figures`. Never drop a picture to keep `concept-breakdown`, whose `images == 0` precondition is what disqualified it |
+   | *(when you landed on `content+cards+image`)* Do the items **read across** — two sides of a comparison, or rows over shared factors? | `value-columns`, **carrying the image**. This is the single most common miss: the picture is not a reason to collapse aligned columns into card bodies, and `value-columns` has an `image` slot precisely so you don't have to choose. Its own titles give it away — *"A contra B"*, *"A vs B"*, *"X e Y no son lo mismo"* |
+
+   Landing on `concept-breakdown` after six honest `no`s is correct and common — it is the right
+   home for an unordered labeled set. What is forbidden is landing there *by default*, having
+   checked nothing. Same for `content-text`: the catalog calls it a restructure candidate because
+   most such slides are a hidden `concept-breakdown` or `content-image`. And a
+   `content+cards+image` **with no `media`** is not this template at all — it is a
+   `concept-breakdown` that recorded a picture it doesn't have.
+
+5. **Record the walk.** The chosen template is written to `slide-model.json` together with
+   **`_choice`** — the signals detected, the **candidates** whose *Match* fired (**at least two**,
+   richest first), the pick, and **the catalog rule that rules out each rejected candidate**. Field
+   contract: [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md) → *The
+   classification trace*. This is not paperwork: step 2 above ("enumerate every entry whose *Match*
+   fires") is the load-bearing step of the walk and is invisible in the output without it, and an
+   invisible step is a skipped step. Naming the plainer template you refused to demote to is what
+   makes "never fall to a plainer template" checkable rather than aspirational — by
+   `audits/template_diversity.py` and by the `slide-classifier-critic`, which re-runs the walk
+   independently.
+
+6. **No entry matches → `fallback`.** Treat this as a defect, not an outcome: `audits/template_diversity.py`
+   **fails** on any `fallback` slide. Either the walk missed a signal, or the catalog has a real gap
+   worth an entry — resolve which before rendering.
 
 See **Matching examples** below for worked classifications, including the tricky ties.
 
@@ -167,7 +223,7 @@ sub-category follows, grouped by family.
 | **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list / editorial) is then picked by count + body length — `editorial` being the same set composed **flat**, without cards |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
-| **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` | a decision framed upside/downside (colour-coded) → `pros-cons`; 2–3 parallel value columns → `value-columns` (which may carry one supporting image) |
+| **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` · `matrix` | a decision framed upside/downside (colour-coded) → `pros-cons`; **two named axes** (cells indexed by position) → `matrix`; parallel value columns over one shared factor → `value-columns` (which may carry supporting media) |
 | **Visual** — images carry the content | `image-full` · `content-image` · `content+cards+image` · `figures` · `image-grid` | **one image and no prose → `image-full`**; 1–3 supporting prose → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
 | **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
 
@@ -199,6 +255,14 @@ precise rules.
 > the body it frames instead of being pinned. Both bands are the same component in a different
 > place: same classes, same per-`kind` colour and icon. A slide may carry both.
 >
+> **Optional stat band.** Any content slide may carry `stats: [{value, caption}]` (2–4) as a band
+> under its body — the composition this catalog describes as "a stat pair as the lower band of a
+> `content-image` slide". It is the same card as the `stat` template's, one size down, because
+> here the figures *comment on* a body instead of being the whole slide. Until it existed, a slide
+> whose hook was a two-figure contrast had one way to keep the figures — classify the whole slide
+> as `stat` — and that cost it its cards, which were demoted to highlight lines. **A pair of
+> figures is not a reason to pick `stat`**; `stat` is for when the numbers *are* the slide.
+>
 > **Design, then style.** Every slide in this catalog is a **design** — how the canvas is divided —
 > filled with a **style**, which is the template below. Pick the design first, then the template;
 > they are independent, and **every** content template accepts **every** design, because the
@@ -213,8 +277,20 @@ precise rules.
 > | `column-right` / `column-left` | a narrow full-bleed strip, **cropped to fill** | atmosphere only — never anything that must be read |
 > | `bleed` | media fills the slide, content over it | a picture that *is* the slide |
 >
-> `media: {src, alt}` is the picture the design places — set from an author
-> `<!-- design: <value> -->` hint when there is one. **Contained vs cropped is the split/column
+> **`media` is what the design places, and it is not always a picture.** Three shapes:
+> `{src, alt}` — an image or a clip; `{code, language?}` — a code / worked-example panel;
+> `{columns: [{header, cells}]}` — a small aligned grid. Set the design from an author
+> `<!-- design: <value> -->` hint when there is one.
+>
+> The last two exist because this catalog already promised them and could not deliver:
+> `content+cards+image` says "labeled cards on one side **AND a supporting image/example/code** on
+> the other", and `process`/`value-columns` gloss their media as "a supporting diagram/**example**"
+> — but only an image path was fillable. So a card set beside a code fence, or beside a small
+> lookup table, had no legal home, and the fill's only escape was to drop half the slide: the code
+> fence disappeared, or the cards were flattened into an explanation column. **Content is never
+> dropped** — if the supporting half is code or a table, put it in `media` and keep the cards.
+> A code panel or a grid is *read*, so it is contained, never cropped: on a `column-*` or `bleed`
+> design the renderer contains it in the matching `split` instead of slicing it. **Contained vs cropped is the split/column
 > distinction**: a chart in a `column` gets cut. The design is never a reason to pick a different
 > template — wanting the picture on the left is what `split-left` is for, not a reason to demote a
 > card set to prose (full contract:
@@ -277,6 +353,15 @@ precise rules.
 - **Match:** the slide's message is **one bold claim, myth/reality, or short quote** —
   a single dominant line ≤ ~16 words, no enumeration, no code. Recurs as a series
   (e.g. myth-buster sequence).
+- **The ~16-word cap is a rendering constraint, not a matter of taste, and it is load-bearing.**
+  This template is full-bleed: it emits its own stage and does **not** go through the per-slide
+  content-fit, so its type does not shrink to fit. A claim past the cap does not render smaller —
+  it renders off the slide. **A single dominant line that runs longer is `single-point`**, whose
+  card is inside the fit pass and has room; a definition of a technical term is the usual case.
+  Do not dress it as a `quote` to get the large type: `is_voiced` means *someone else's* words,
+  and a presenter's own definition wrapped in `>` is a misattribution the audience reads as a
+  citation. (Lifting the cap means teaching the full-bleed templates to fit first — see
+  `closing-hero`, `divider` and `quote`, which share the limitation.)
 - **Format:** the claim set **large (40–52 pt) Helvetica Bold**, occupying the upper-left
   ≈ 60% of the canvas; an optional supporting image at the right/bottom, or an optional
   one-line sub-statement (`#3B3535`, 18–22 pt) beneath. **No bullets, no cards.** The
@@ -491,8 +576,10 @@ precise rules.
 ### Aligned columns — parallel values, read across
 
 #### `value-columns`
-- **Match:** **2–3 aligned columns of parallel values**, read row by row against a shared
-  left-hand factor or against each other. Two symmetric groups set against each other is the
+- **Match:** **aligned columns of parallel values**, read row by row against a shared
+  left-hand factor or against each other — **2–3 value columns beside media, up to 4 at
+  `design: full`**, and the leading *factor* column does not count toward that number (a
+  `factor → X → Y → Z` table is three value columns, not four). Two symmetric groups set against each other is the
   common case — A-vs-B, before/after, single-model vs cascade, myth vs reality — but it is not
   the only one: three options judged on the same factors, or a pipe-table of factor→X→Y→Z rows,
   belong here too. What selects this template is **the columns being parallel and comparable**,
@@ -510,12 +597,44 @@ precise rules.
   This is the fifth body-plus-image composition, not a separate template — a table and a diagram
   on the same slide never have to trade against each other. An optional `lead` frames the grid,
   with or without an image. At half width the grid still reads as a grid (columns stay aligned;
-  it never degrades to one row per cell), so keep it to **≤3 columns × ≤5 rows** — past that the
-  build warns and the slide wants splitting. There is no `image-top`: a grid under a
+  it never degrades to one row per cell), so **beside media keep it to ≤3 value columns × ≤5
+  rows**; at `design: full` the budget is **≤4 value columns × ≤7 rows**. Past that the build
+  warns and the slide wants splitting.
+
+  **The cap is a width budget, not a definition.** It says how much grid fits, not what makes a
+  slide this template — that is the columns being parallel and comparable. Reading it as a Match
+  condition is what pushed every 4-column table to `concept-breakdown` card-per-row, where each
+  row collapses into one `·`-joined body and the alignment that *was* the slide is gone. A table
+  wider or longer than the budget is a **split candidate**, not a different template: split it by
+  rows and keep the grid. Two shapes are worth naming because they read as violations and are not:
+  a **transposed** table (the compared things down the left, the shared factors across the top) is
+  the same table — transpose it back rather than demoting it; and a **lookup** table (one key
+  column + one value column, e.g. `Situación → Elegir`) belongs here too when the header words are
+  load-bearing chrome, even though it is technically label/value — demoting it drops the headers
+  and each card reads as an unlabelled pair. There is no `image-top`: a grid under a
   full-width image is a different slide, not a layout of this one.
 - **Strict recipe:** §11 (pipe-table → card-grid) / two §7.2 columns; with an image, §11 composed
   with §13 (body beside a picture) — no new geometry. **Provenance:** ref
   S44 (compare-strip), S6 (pair).
+
+#### `matrix` (cells indexed by two named axes)
+
+- **Match:** the body is a **cross-tab**, not a list: 4–9 cells whose meaning comes from *where
+  they sit* — two named axes with 2–3 ticks each. A confusion matrix (`PREDICHO` × `REALIDAD`),
+  an impact/effort grid, a risk quadrant, a RACI square. The test is that moving a cell to
+  another position changes what it means. **Not** `value-columns` (whose rows read across a
+  *shared factor* column, one axis, not two) and **not** `concept-breakdown` (four peers in no
+  particular arrangement — which is exactly what a quadrant degrades to when it is misfiled here,
+  losing the axes that were the content).
+- **Format:** the axis names as small uppercase chrome — the x name above the column ticks, the y
+  name rotated down the left of the row ticks — around a grid of cells, each a card with a short
+  label and a one-line body. An optional per-cell `tone` (`good` / `bad`) fills it with the
+  deck's existing valence pair, so a "correct" cell reads the same as a `pros-cons` pro does.
+  Cells reveal one at a time. **No bullets**, and never a native table.
+- **Why it exists:** until this entry, a 2×2 was only expressible as a *picture*. A presenter who
+  drew the matrix in ASCII got it rendered; one who wrote it as content got four unrelated cards
+  with the axes deleted. The axes are the slide.
+- **Strict recipe:** §11 (card grid) with the two head strips; no new geometry.
 
 #### `concept-columns` (parallel explanations, side by side)
 - **Match:** **2–4 terms explained side by side**, each column a **self-contained explanation** —
@@ -798,20 +917,22 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | a labeled set (**≥2**) | ordered (steps/1./Paso), labels not dates | `process` |
 | a labeled set (**≥2**) | **each item** has an image | `figures` |
 | a labeled set (**≥2**) | **one shared** supporting image | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts |
-| a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 short, `list` = lead + 3–5 prose or an anaphora, `editorial` = 2–8 short items composed flat (no cards), `grid` otherwise |
+| a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 items, every body ≤ ~80 chars; `editorial` = 2–8 short items composed flat (no cards); `grid` otherwise — prose bodies and anaphoras included. **`list` is retired; it is not a value** |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |
 | numbers/metrics | **1** hero figure + caption | `big-number` |
 | numbers/metrics | 2–4 big figures + labels | `stat` |
-| a table | **2–3 comparable value-columns** (A vs B, or options over shared factors) | `value-columns` |
-| a table | 2–3 comparable value-columns **+ one shared image** | `value-columns` with `image` + `layout` — **never** flatten the rows into `content+cards+image` cards to keep the picture |
-| a table | label/value or **N-level/N-column** | `concept-breakdown` (card-per-row) |
+| a table | **comparable value columns** (A vs B, N options over shared factors, a transposed table, or a 2-col lookup whose headers carry meaning) | `value-columns` — width is a split budget, never a reason to demote |
+| a table | comparable value columns **+ one shared image** | `value-columns` with `media` + `design` (≤3 value columns × ≤5 rows beside media) — **never** flatten the rows into `content+cards+image` cards to keep the picture |
+| a table | columns are **heterogeneous attributes of the row key**, nothing reads across | `concept-breakdown` (card-per-row) |
+| a cross-tab | cells indexed by **two named axes** (2×2, impact/effort, confusion matrix) | `matrix` — never four peer cards with the axes dropped |
 | two groups | upside vs downside (`polarity`) | `pros-cons` |
 | two groups | a neutral A vs B / before-after | `value-columns` |
 | images | ≥4, variety is the message | `image-grid` |
 | images | 1–3 supporting prose | `content-image` |
 | images | **image only** — no prose, no enumeration | `image-full` (header, then the image edge to edge); **not** `image-grid` |
 | one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
+| one big claim | **longer than ~16 words** (a one-sentence definition) | `single-point` — `statement` is full-bleed and does not shrink to fit |
 | one big claim | it is **someone else's words** (quoted/attributed) | `quote` |
 | a question | the slide answers it (opt. A/B/C/D choices) | `quiz` |
 | section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `section-agenda`/`divider` |

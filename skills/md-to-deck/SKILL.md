@@ -51,7 +51,9 @@ the live view) and produce `output/slide-model.json` conforming to
 [`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md): a `deck` object (cover +
 the ordered section list) and one object per slide. For **each** slide you:
 - **classify** it against the catalog [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md)
-  (its *Match* rules) — set `template`;
+  (its *Match* rules) — set `template`, **and record the walk in `_choice`** (signals, ≥2
+  candidates, the pick, the catalog rule rejecting each other candidate; contract in the schema's
+  *The classification trace*);
 - **decompose** the body into exactly that template's **required fields** (e.g. `stat` →
   `stats:[{value,caption}]`; `concept-breakdown` → `cards:[{label,body}]`; `value-columns` →
   `columns:[{header,cells}]`) — splitting a metric from its caption, grouping symmetric blocks into
@@ -62,6 +64,17 @@ the ordered section list) and one object per slide. For **each** slide you:
   set `section` to the section the slide belongs to.
 The judgment is the LLM's, against a fixed field contract. Write to
 `talks/<Talk>/output/slide-model.json` (or `slide-model.draft.json` for `--draft`).
+
+> **Fill one section at a time, not the deck in one pass — and re-read the catalog's
+> *Classification procedure* at the head of each batch.** Classifying 40 slides inside a single
+> generation puts the catalog at the top of the context and the model's own accumulating output
+> everywhere else; by the back half, the strongest prior is not the catalog but the twenty
+> templates already written, and each `concept-breakdown` emitted makes the next one likelier.
+> That anchoring is what produces a deck collapsed onto one template. Batching by section breaks
+> the loop: each batch restarts from the walk, and the batches stay short enough that the
+> discriminators are still the salient thing in context. Assemble the batches into one
+> `slides` array in document order — the batching is a working discipline, not a change to the
+> output, which is a single `slide-model.json`.
 
 > **Copy the author's inline markup verbatim too — it is resolved, not shipped as characters.**
 > Every text field of every template accepts `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``,
@@ -101,7 +114,33 @@ it guards every mode, including html-strict, which otherwise runs no deck-parsin
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/degenerate_enum.py output/slide-model.json
+# was the template chosen, or defaulted into? distribution + fallback + anchoring runs
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py output/slide-model.json
 ```
+
+`degenerate_enum` and the two coverage preflights below all check the **internal consistency of a
+choice already made**. `template_diversity` asks the other question — *was a richer template
+available and passed over?* — which nothing used to ask, and which matters most in `html-strict`
+(CONTROL is `audit-none`, FEEDBACK is `no-critique`, so an unexamined model shipped straight to the
+deck). It **fails** on any `fallback` slide (the catalog defines it as "nothing matched": either the
+walk missed a signal or the catalog needs an entry — resolve which). Its other findings are
+**advisory** and are the worklist for Step 1.6, never an instruction to rewrite a choice:
+`[dominance]` one template over 40% of content slides (15% for `content-text`/`fallback`),
+**`[composition]`** more than half the deck *looking* the same, `[run]` 4+ consecutive slides on one
+template, `[format-flat]` every `concept-breakdown` composed the same way, `[no-alternative]` slides
+whose `_choice` names fewer than two candidates.
+
+> **`[composition]` is the one that catches the monotony a per-template count misses.** The catalog
+> groups templates by what a slide *does*; a deck reads as monotonous by what its slides *look
+> like*, and the two do not coincide. `content+cards+image` is `concept-breakdown` with a picture
+> beside it — different families in the catalog, the same grid of labeled cards on screen. A real
+> 54-slide deck held 18 of the first and 11 of the second: **54% card grids with nothing above
+> 33%**, so every per-template threshold passed while the audience saw one slide repeated. So
+> dominance is checked twice, per template and per composition group, and the report always prints
+> the composition rollup — read that line before the template table. **Diversity is not
+the goal** — a deck genuinely made of labeled sets *is* mostly `concept-breakdown`, and forcing
+variety classifies slides into templates their content can't support. The finding says *re-examine
+this*, and Step 1.6 is what re-examines it. Pass `--warn-only` for the `--draft` live view.
 
 Alongside it, two **coverage preflights** catch content that would silently vanish — both model-only, so they guard every mode (advisory by default, `--strict` to fail):
 
@@ -121,6 +160,43 @@ misclassification (a lead + one point is `single-point`, per the catalog's `labe
 rule). Surface the FAIL line, **re-classify that slide in the model**, and re-check before
 rendering. Skip with `--warn-only` only for the `--draft` live view, where an in-progress model is
 expected to be incomplete.
+
+**Step 1.6 — CLASSIFY-REVIEW (the independent critique, LLM).** The deterministic checks above can
+only spot *shapes* — a one-item enum, an ignored field, a template holding half the deck. They
+cannot tell a slide that is rightly a `concept-breakdown` from one that was never walked. That
+judgment needs a second reading of the content, and it has to be **independent** of the pass that
+made the choice: a fill that anchored on its own output will re-confirm that output, because the
+same accumulated context is what produced it.
+
+Dispatch the [`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md)
+**once per content slide, in parallel**. Each critic gets one slide's `source` unit (verbatim from
+`final.md`/`draft.md`), its `template`, its `_choice`, its `position`, `deck.sections` and the
+presentation language — and **nothing about any other slide's classification**. That blindness is
+the mechanism, exactly as it is for the `diagram-critic`: a critic that can see the deck is
+`concept-breakdown` twenty times over reads the twenty-first as normal. Skip the frame templates
+(`section-agenda`, `divider`, `closing-hero`, `closing-cta`) — those are positional, not content
+choices, and the cover is synthesized.
+
+Each returns one JSON verdict — `confirm`, `reclassify`, `format`, or `weak-trace` — with the
+catalog rule it applied. Then:
+
+| Verdict | What you do |
+|---|---|
+| `confirm` | Nothing. This is the expected majority — a repeated template that survives an independent walk is a correct classification, not a defect. |
+| `reclassify` | The critic named a catalog rule the pick violates. **Re-classify that slide in the model** and re-decompose its body into the new template's required fields (a template change is a field change — a `process` becoming a `timeline` needs `milestones`, not `steps`). Update `_choice` to the walk that now holds. |
+| `format` | Set the `concept-breakdown` `format` the critic gives. No re-decomposition — the fields are the same. |
+| `weak-trace` | The pick stands but the trace doesn't support it. Rewrite that slide's `_choice` with the walk you can actually defend; if you can't, it was a `reclassify` the critic was too generous about. |
+
+Re-run `degenerate_enum` + `template_diversity` + `field_coverage` after applying any change — a
+re-classification moves fields, and moved fields are exactly what those audits check. **One pass
+only:** re-dispatching critics over the slides you just edited buys little and risks churning a
+slide between two defensible templates. Report the counts in the render log
+(`N confirmed, M re-classified, K format, J weak-trace`) and surface any `reclassify` you chose not
+to apply, with the reason.
+
+**Skip this step for the `--draft` live view.** The draft model is expected to be in flux and the
+live view re-renders on every review; the critique belongs to the deliverable render, where the
+classification is what ships.
 
 **Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)
 loads the model and maps each slide's fields onto its Jinja template — no parsing, no classification:
@@ -221,6 +297,8 @@ The rest of this file (Path A) does not apply to `html-strict`.
    **Per-mode paths.** Everywhere below, `output/final.pptx`, `output/.critique/` resolve to the per-style forms `output/final.<style>.pptx`, `output/.critique/<style>/`. The `slide-model.json` is shared (one per Talk). After a successful render the per-style deck is also copied to the canonical `output/final.pptx`.
 
 2.5. **Template is decided in FILL.** Each slide's `template` is set in `slide-model.json`, per the catalog. **pptx-strict** re-checks it deterministically at CONTROL (`audits/layout_fit.py`, model vs emitted).
+
+2.6. **CHECK + CLASSIFY-REVIEW the model** — Path B's **Steps 1.5 and 1.6**, run verbatim here. They read the model alone, so they are mode-independent and this path gets them for the same reason it gets the FILL: it is the same artifact. `layout_fit.py` at CONTROL checks that the *emitted* deck matches the template the model names — it takes the model's choice as given and never asks whether that choice was the right one. Run `degenerate_enum` + `template_diversity` + the two coverage preflights, then dispatch the `slide-classifier-critic` per content slide and apply its verdicts, **before** the render at step 3. Re-classifying after the deck is authored means re-authoring the slide.
 3. **Render** by invoking the pptx skill against the **7-stage workflow** in `<spec_path>` §19.3 (for strict: open base-template as working copy → cover §4 → agenda §5 → discard slides 3–15 → content slides §15/§6–§9/§13 → dividers §5.6 → backgrounds §1 → speaker notes). Pass: **`slide-model.json`**, the image paths, the base template, the icon library, and the visual spec — each slide is authored from its model fields. All substantive rules live in `<spec_path>` and are not duplicated here.
 
    **Acceptance bar:** open the rendered deck next to `<base_template_path>` — slides 1–2 must be pixel-equivalent modulo placeholder text. Author-from-scratch = failure.
@@ -281,19 +359,25 @@ listing every rendered Talk (see *Landing page* above).
 
 ## Progress reporting (log-only)
 
-Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one bracketed stage line per phase**; the orchestrator drives a live stage rail from them and **never relays the raw tags to chat** (per [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Suppression rule*). Tag namespaces the skill owns: `[pptx`, `[cycle`, `[html`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`. Any of these reaching chat verbatim is a leak.
+Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one bracketed stage line per phase**; the orchestrator drives a live stage rail from them and **never relays the raw tags to chat** (per [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Suppression rule*). Tag namespaces the skill owns: `[pptx`, `[cycle`, `[html`, `[classify`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`, `[fallback]`, `[dominance]`, `[composition]`, `[run]`, `[format-flat]`, `[no-alternative]`, `[degenerate-enum]`. Any of these reaching chat verbatim is a leak.
 
 **Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` (single pass, no cycles).
 
-**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
+**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`, `audits/degenerate_enum.py`, `audits/template_diversity.py`, `audits/field_coverage.py`), the internal vocabulary of classification (template ids like `concept-breakdown` / `content+cards+image`, `slide-model.json`, `_choice`, `slide-classifier-critic`, the verdicts `confirm`/`reclassify`/`weak-trace`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
 
 **Stage rails** — the orchestrator renders these as a one-line rail and edits it in place; glyphs and rules are its own (`orchestrator.md` → *Interaction defaults* → *stage rail*). This skill owns only the stage names per mode:
 
 ```
-pptx-strict:      Formatting source → Building draft slides → Reviewing slides (N/3) → Applying fixes → Final check
-pptx-free-form:   Formatting source → Building slides → Sanity check
-html-strict:      Formatting source → Rendering the deck → Ready to view
+pptx-strict:      Formatting source → Choosing slide layouts → Double-checking layouts → Building draft slides → Reviewing slides (N/3) → Applying fixes → Final check
+pptx-free-form:   Formatting source → Choosing slide layouts → Double-checking layouts → Building slides → Sanity check
+html-strict:      Formatting source → Choosing slide layouts → Double-checking layouts → Rendering the deck → Ready to view
 ```
+
+*Choosing slide layouts* is FILL + the model audits; *Double-checking layouts* is the per-slide
+classification critique (Step 1.6), which is the slow one on a long deck — chunk it
+(*"Double-checking layouts, 18 of 34…"*). The `--draft` live view skips both extra stages and keeps
+the original three-stage rail. Report the outcome in presenter language: **"adjusted the layout on
+4 slides (7, 12, 20, 28)"**, never the verdict vocabulary or a template id.
 
 `html-strict` "Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF).
 

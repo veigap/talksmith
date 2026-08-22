@@ -66,6 +66,8 @@ deliverable; `draft.md` → live in-progress view).
   carry **`section`** (the section it belongs to, for the pill), **`notes`** (speaker notes,
   verbatim → Reveal `<aside class="notes">` / the PPTX notes pane, **never** on the slide face), and
   **`highlights`** (see below). Beyond those, each template requires exactly the fields in its row.
+  Every content slide also carries **`_choice`** — the record of *why* that `template` was picked
+  (see *The classification trace* below). It is metadata: the renderers ignore it.
 - **`highlights`** — an **optional** common field on any content slide: a list of one or more
   emphasized lines, rendered in an accented band beside the slide body. Each entry is a string **or**
   `{body, label?, kind?, position?}` (the `label` renders bold before a colon). Use it for a line that
@@ -113,12 +115,36 @@ deliverable; `draft.md` → live in-progress view).
   Both bands are the same piece in a different place: identical classes, accent colour and icon.
   An unrecognized value falls back to `bottom`, like an unrecognized `kind` falls back to `takeaway`.
   A slide carrying both a `bottom` band and a `source` stacks them in that order at the foot.
+- **`stats`** — an **optional** common field on any content slide: `[{value, caption}]` (2–4),
+  rendered as a band of figure cards under the body. It is the same card the `stat` template
+  uses, one size down, because here the figures comment on a body instead of being the slide.
+  On a `stat` slide the template renders them itself, so the band is suppressed. Use it when a
+  slide's hook is a two-figure contrast that supports the body — **a pair of figures is not a
+  reason to classify the whole slide as `stat`**, which costs it its cards.
 - **`design` + `media`** — a slide is a **design** filled with a **style**, and the two are chosen
   in that order. The **design** is how the canvas is divided; the **style** is the `template`, the
   shape the content takes inside it. They are independent: **every content template accepts every
   design**, because the renderer's stage places the media and the template only emits content.
 
-  `media` is `{src, alt}` — the one picture the design places. `design` is one of:
+  **`media` is what the design places, and it has three shapes** — the template never branches on
+  which, because *what* the media is is not the template's business:
+
+  | shape | is | notes |
+  |---|---|---|
+  | `{src, alt}` | an image or a clip | the original, and still the common case |
+  | `{code, language?}` | a code / worked-example panel | rendered in the same code surface `code-example` uses |
+  | `{columns: [{header, cells}]}` | a small aligned grid | the same compare-strip `value-columns` uses |
+
+  The two non-picture shapes close a gap this schema created: the catalog's `content+cards+image`
+  promises "labeled cards on one side **and a supporting image/example/code** on the other", and
+  `process` / `value-columns` gloss their media as "a supporting diagram/**example**" — but only an
+  image path was fillable. So a card set beside a code fence, or beside a small lookup table, had
+  no legal shape, and the fill's only escape was to drop half the slide. **Never do that** — put
+  the supporting half in `media` and keep the cards. Because code and a grid are *read*, they are
+  always contained: on a `column-*` or `bleed` design the renderer places them in the matching
+  `split` rather than cropping them.
+
+  `design` is one of:
 
   | `design` | The canvas | Use it for |
   |---|---|---|
@@ -238,7 +264,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `section-agenda` | `title` (section name) | — (roadmap + active index derived from `deck.sections`) |
 | `divider` | `title` | — (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
-| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`list`\|`editorial`) — see below |
+| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`editorial`; **`list` is retired** — a model carrying it renders as `grid`) — see below |
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
@@ -246,12 +272,13 @@ when the content warrants. Field names are the contract — the renderers read e
 | `content-image` | `title`, `media:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` | `lead`, per-card `icon` (else content-matched), `design` |
 | `concept-columns` | `title`, `columns:[{label,body}]` (2–4) | **`subtitle`** — the block's own heading, naming what the columns are (`IA Tradicional vs. Foundation Models`); it is a *name*, distinct from the `lead`, which is a framing sentence. Per column: **`text`** — free text after the description, a **list** → bullets or a **string** → paragraphs (blank-line separated), because the columns genuinely differ in shape; `text_label` (a bold lead over it, e.g. `Características:`), `example` (a bold closing line, e.g. `Ejemplos: …`), `emphasis` (`true` on **at most one** column — a filled accent panel with the column inverted). Also slide-level `lead`. Columns share **no** row structure — that is what separates this from `value-columns` |
-| `value-columns` | `title`, `columns:[{header,cells:[str]}]` (2–3) | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). Beside media the grid keeps ≤3 columns and ≤5 rows — past that the build warns and the slide should split |
+| `value-columns` | `title`, `columns:[{header,cells:[str]}]` | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). **Width budget, not a definition:** beside media, ≤3 value columns × ≤5 rows; at `design: full`, ≤4 × ≤7. A leading *factor* column (`header: ""` or the factor's name) does not count toward that number, so a `factor → X → Y → Z` table is 4 entries and in contract. Past the budget the slide is a **split candidate**, never a demotion to `concept-breakdown` — see the catalog |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
 | `timeline` | `title`, `milestones:[{label,body}]` | `lead`, per-milestone `marker` |
-| `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | — |
+| `matrix` | `title`, `columns:[str]` (2–3 x-axis ticks), `rows:[str]` (2–3 y-axis ticks), `cells:[{label,body}]` (`columns × rows`, in reading order: row 1 left→right, then row 2) | `x_label` / `y_label` (the axis **names**, rendered as chrome — a matrix without them is four cards), per-cell `tone` (`good`\|`bad`), `lead` |
+| `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | `pro_label` / `con_label` — override the two column headers when the sides have real names (`Qué hacer` / `Qué no hacer`, `Antes` / `Después`); omitted, they fall to the `deck.lang` chrome labels |
 | `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `design` + `media` (shown beside the quiz — use a `split`, never a `column`, so it is not cropped), `answer_label` (label on the answer panel; default "Respuesta") |
 | `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched) |
 | `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched) |
@@ -260,6 +287,49 @@ when the content warrants. Field names are the contract — the renderers read e
 | `closing-hero` | `title` | `body` |
 | `closing-cta` | `title`, `items:[{label,body}]` | — |
 | `fallback` | `title` | `big` (the dominant line; defaults to `title`), `points:[str]` (rendered as accent panels, never plain bullets) — *last resort; the renderer warns, and a recurring fallback means the catalog needs a new entry. An unlabeled list is **not** a fallback: it is a `process` numbered list (or, for an anaphora, a label-only `concept-breakdown`)* |
+
+### The classification trace — `_choice` (required on every content slide)
+
+Picking a template is a **discriminator walk**, defined once in the catalog
+([`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) →
+*Classification procedure*): collect the surface signals, **enumerate every entry whose _Match_
+fires**, then apply the disambiguators to pick exactly one — never falling to a plainer template
+when a richer one fits. Step 2 of that walk is the load-bearing one, and it used to be invisible:
+the model emitted only its conclusion, so nothing distinguished a walk that ran from one that
+pattern-matched the first plausible entry. That is not a hypothetical failure mode — it is the one
+that produced decks two thirds classified `concept-breakdown`, because a flat `cards:[{label,body}]`
+is a near-transcription of the source bullets while `timeline`, `stat`, `value-columns` and
+`figures` each require restructuring the content first.
+
+**`_choice` makes the walk a deliverable.** The fill writes it on every slide except the
+synthesized cover:
+
+```json
+{ "template": "content+cards+image", "title": "Tres capas de defensa",
+  "cards": [ ... ], "media": { "src": "images/layers.svg", "alt": "Las tres capas" },
+  "_choice": {
+    "signals": ["labeled_items=3", "is_ordered=false", "date_labels=false", "n_images=1"],
+    "candidates": ["content+cards+image", "concept-breakdown", "content-image"],
+    "picked": "content+cards+image",
+    "rejected": {
+      "concept-breakdown": "requires images == 0; keeping it would drop the shared diagram",
+      "content-image": "dissolves the three labels into facts, losing the per-concept icon"
+    } } }
+```
+
+| Field | Contract |
+|---|---|
+| `signals` | The signals **actually detected**, as `name=value` strings, using the names in the catalog's signal table (`labeled_items`, `is_ordered`, `date_labels`, `n_images`, `has_code`, `two_groups`, `big_metrics`, `one_claim`, `is_voiced`, `is_question`, `polarity`, `one_metric`, `image_only`, `is_cta`, …). List the ones you checked, not every signal that exists. |
+| `candidates` | **At least two** template ids — the entries whose *Match* fired, **richest first**. One candidate means the walk did not run: every content slide has a plainer alternative it could have been demoted to, and naming that alternative is what proves the demotion was refused. |
+| `picked` | The chosen id. Must equal the slide's `template`. |
+| `rejected` | One line per non-picked candidate: **the catalog rule that rules it out**, not a preference. "Would drop the shared image", "`date_labels` makes this a timeline, not a process", "the numbers are the payload, not prose points". A rejection citing no rule is a guess. |
+
+**`_choice` is metadata, like `_source`** — `build_html.py` and the PPTX renderer read fields by
+name and never see it, so it costs nothing at render. It exists to be *read*: by
+[`audits/template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py),
+whose `[no-alternative]` finding is exactly "fewer than two candidates", and by the
+[`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md), which re-runs
+the walk independently and checks each rejection against the catalog.
 
 > `cover` takes no row: it is **synthesized from the `deck` object**, never authored as a slide
 > (see `deck` above). Every other `template` value the renderers accept is listed here — a value

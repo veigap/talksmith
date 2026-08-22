@@ -562,3 +562,53 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .secagnow{text-align:right}
 .secagnum{font-size:11cqw;font-weight:800;color:var(--red);font-family:var(--mono);line-height:.85;letter-spacing:-.02em}
 .secagtitle{font-size:4.8cqw;font-weight:800;color:var(--ink);margin:1.6cqw 0 0;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+
+/* ── media that is not a picture ───────────────────────────────────────────────────────────
+   The stage places whatever `media` holds (see _macros.j2 `smedia`): a code panel or a small
+   aligned grid, beside the content, in any contained design. Both reuse the body-level classes
+   they already have — `.codebox`, `.compare` — so a supporting panel and a slide that *is* that
+   panel read as one piece. Only the two body-level assumptions have to be undone here: those
+   classes push themselves to the bottom of a full-width body (`margin-top:auto`), which in a
+   media column would strand them under the fold, and the code panel needs the column's height
+   rather than its own so a long snippet scrolls its own box instead of the slide. */
+.smedia>.mcode,.smedia>.mtable{margin-top:0;width:100%}
+.smedia>.mcode{height:100%;overflow:hidden;font-size:1.95cqw}
+.stage.d-banded>.smedia>:is(.mcode,.mtable){max-height:32cqw;overflow:hidden}
+.smedia>.mtable{align-self:center}
+.smedia>.mtable .chead{font-size:2.1cqw}
+.smedia>.mtable .crow{font-size:2cqw}
+.smedia>.mtable .crow>span{padding:1cqw 1.3cqw}
+/* A stat band under the body — the composition the catalog describes as "a stat pair as the lower
+   band of a content-image slide". It is the same `.stat` card as the `stat` template's, one size
+   down, because here it comments on a body rather than being the whole slide. Inside `.cfit`, so
+   it scales with the content it belongs to (unlike `highlights`, which are pinned to the edge). */
+.statband{margin-top:0}
+.statband>.stat{padding:2cqw 1.8cqw;gap:.6cqw}
+.statband .statn{font-size:5cqw}
+.statband .statl{font-size:1.9cqw}
+
+/* ── matrix: cells indexed by two named axes ───────────────────────────────────────────────
+   A confusion matrix, an impact/effort grid, a risk quadrant. What makes it this and not four
+   cards is that a cell's meaning comes from *where it sits* — so the axis names and tick labels
+   are laid out as chrome around the cell block, and the block itself is a plain grid whose track
+   counts come from the model. Three areas plus the cells, so the heads stay glued to the block at
+   any 2–3 count without a second rule per count. */
+.matrix{display:grid;gap:1.4cqw;margin-top:auto;
+  grid-template-columns:auto auto 1fr;
+  grid-template-areas:". . xlab" ". . xhead" "ylab yhead cells";}
+.mxlab,.mylab{font-size:1.9cqw;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--body)}
+.mxlab{grid-area:xlab;text-align:center}
+.mylab{grid-area:ylab;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;align-self:center}
+.mxhead{grid-area:xhead;display:grid;grid-template-columns:repeat(var(--mx,2),1fr);gap:1.4cqw}
+.myhead{grid-area:yhead;display:grid;grid-template-rows:repeat(var(--my,2),1fr);gap:1.4cqw}
+.mxhead>span,.myhead>span{font-size:2.2cqw;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center}
+.myhead>span{padding:0 1cqw;max-width:16cqw}
+.mgrid{grid-area:cells;display:grid;grid-template-columns:repeat(var(--mx,2),1fr);gap:1.4cqw}
+.mcell{background:var(--card);border-radius:1.6cqw;padding:2cqw 2.2cqw;display:flex;flex-direction:column;gap:.7cqw;
+  border-top:.5cqw solid transparent}
+.mcell h4{margin:0;font-size:2.5cqw;font-weight:800;color:var(--ink)}
+.mcell p{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.3}
+/* valence reuses the deck's existing pair (`pros-cons` blue/pink), not a new colour: a matrix
+   cell that is "the good one" should read the same as a pro does three slides earlier. */
+.mcell.good{background:var(--call-blue)}
+.mcell.bad{background:var(--call-pink)}

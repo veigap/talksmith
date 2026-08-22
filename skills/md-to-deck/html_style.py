@@ -478,6 +478,7 @@ _TMPL = {
     "stat": "stat.j2", "content-text": "content-text.j2", "content+cards+image": "content-cards-image.j2",
     "closing-cta": "closing-cta.j2", "quote": "quote.j2", "timeline": "timeline.j2",
     "big-number": "big-number.j2", "pros-cons": "pros-cons.j2", "quiz": "quiz.j2",
+    "matrix": "matrix.j2",
     "fallback": "fallback.j2",
 }
 
@@ -705,6 +706,13 @@ def _design(slide: dict, t: str) -> tuple:
     # an unrecognized design, or one with nothing to place, is just `full`
     if design not in _DESIGNS or (design != "full" and not media):
         design = "full"
+    # A code panel or a supporting grid has to be **read**, so it can only go in a design that
+    # contains it. `column-*` and `bleed` crop their media to fill — the same reason the catalog
+    # says a chart in a column gets cut — and cropped code is unreadable rather than merely ugly.
+    # Contain it instead of silently slicing it; a picture is unaffected.
+    if design in ("column-left", "column-right", "bleed") and isinstance(media, dict) \
+            and not media.get("src") and (media.get("code") or media.get("columns")):
+        design = "split-left" if design == "column-left" else "split-right"
     return design, media
 
 

@@ -1,0 +1,14 @@
+{% import "_macros.j2" as m %}
+{% call m.stage(s) %}
+{# A cross-tab: cells indexed by two named axes, not a list of peers. The axis names and the tick
+   labels are the content — strip them and the cells become four unrelated cards, which is exactly
+   what happened before this entry existed. Grid areas keep the two heads glued to the cell block
+   whatever the counts are. #}
+<div class="matrix" style="--mx:{{ s.columns | length or 2 }};--my:{{ s.rows | length or 2 }}">
+{% if s.x_label %}<div class="mxlab">{{ s.x_label }}</div>{% endif %}
+<div class="mxhead">{% for c in s.columns %}<span>{{ c }}</span>{% endfor %}</div>
+{% if s.y_label %}<div class="mylab">{{ s.y_label }}</div>{% endif %}
+<div class="myhead">{% for r in s.rows %}<span>{{ r }}</span>{% endfor %}</div>
+<div class="mgrid">{% for cell in s.cells %}<div class="mcell {{ cell.tone or 'neutral' }}{{ m.frag(s) }}">{% if cell.label %}<h4>{{ cell.label | nocolon }}</h4>{% endif %}{% if cell.body %}<p>{{ cell.body }}</p>{% endif %}</div>{% endfor %}</div>
+</div>
+{% endcall %}

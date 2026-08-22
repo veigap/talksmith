@@ -82,11 +82,14 @@ ENUM_FIELD = {
     "concept-columns": ("columns", 2),
     "closing-cta": ("items", 2),
     "content-text": ("panels", 2),
+    # a cross-tab needs at least a 2x2: one or two cells is a list, and a list has no axes
+    "matrix": ("cells", 4),
 }
 
 # What a lone-item slide most likely should have been — steers the repair.
 ADVICE = {
     "content-text": "single-point (lead + one point), or add the missing supporting panels",
+    "matrix": "concept-breakdown (cells with no second axis are just parallel cards)",
     "concept-breakdown": "single-point (one labeled item)",
     "card-row": "single-point (one labeled item)",
     "content+cards+image": "content-image (one image + prose), or single-point",
