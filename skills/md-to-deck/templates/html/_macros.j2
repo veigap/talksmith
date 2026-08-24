@@ -51,8 +51,19 @@
    once per side; written as two, `.d-split` carries what both sides share and only the placement
    mentions `.side-left`. #}
 {% set p = s.design.split('-') %}
-<div class="stage d-{{ p[0] }}{{ ' side-' ~ p[1] if p|length > 1 else '' }}">
-<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ caller() }}{% if s.stats and s.template != 'stat' %}<div class="stats statband{{ frag(s) }}">{% for st in s.stats %}<div class="stat"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}</div>{% endif %}
+{# **Whether the body came out empty is decided here, not in CSS.** A template legitimately emits
+   nothing (a `content-image` with no facts — the screenshot a presenter talks over), and a split
+   with an empty content track has to collapse rather than project a blank half-slide. CSS cannot
+   ask that question: `.cfit:not(:has(*))` is the natural spelling and it is *invalid* — `:has()`
+   may not be nested inside `:has()`, so the whole selector was dropped by the parser and the
+   collapse never fired. Jinja knows the answer for free: render the body once, and state it as a
+   class the stylesheet can select on. Empty means the whole of `.cfit` — the body, the `top`
+   band that would frame it and the stat band — since that is the box the collapse removes. #}
+{% set body = caller() %}
+{% set statband = s.stats and s.template != 'stat' %}
+{% set bodyless = not (body | trim) and not hltop and not statband %}
+<div class="stage d-{{ p[0] }}{{ ' side-' ~ p[1] if p|length > 1 else '' }}{{ ' bodyless' if bodyless else '' }}">
+<div class="shead">{{ header(s) }}</div><div class="cbody"><div class="cfit">{% if hltop %}{{ hlband(hltop, ' hl-top', '') }}{% endif %}{{ body }}{% if statband %}<div class="stats statband{{ frag(s) }}">{% for st in s.stats %}<div class="stat"><span class="statn">{{ st.value }}</span><span class="statl">{{ st.caption }}</span></div>{% endfor %}</div>{% endif %}
 </div></div>
 {% if hlbot %}{{ hlband(hlbot, ' hl-bottom', frag(s)) }}{% endif %}
 {% if hlsrc %}{{ hlband(hlsrc, ' hl-source', '') }}{% endif %}

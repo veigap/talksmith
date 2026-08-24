@@ -125,10 +125,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.d-split>.smedia>.imgph.svg>svg,
 .stage.d-split>.smedia>.imgph.has>:is(img,video,iframe){max-height:100%}
 /* a design with no content to put beside the media (an image the presenter talks over, its detail
-   in the notes) collapses rather than projecting an empty column */
-.stage.d-split:has(.cfit:not(:has(*))){grid-template-columns:1fr}
-.stage.d-split:has(.cfit:not(:has(*)))>.cbody{display:none}
-.stage.d-split:has(.cfit:not(:has(*)))>.smedia{grid-column:1/-1}
+   in the notes) collapses rather than projecting an empty column. `.bodyless` is set by the stage
+   macro, which renders the body and knows whether anything came out; the CSS-only spelling of the
+   same question — `:has(.cfit:not(:has(*)))` — is invalid (`:has()` cannot nest inside `:has()`),
+   so it was silently dropped and every media-only split kept a dead half. */
+.stage.d-split.bodyless{grid-template-columns:1fr}
+.stage.d-split.bodyless>.cbody{display:none}
+.stage.d-split.bodyless>.smedia{grid-column:1/-1}
 /* ── banded: media across the top, the content as a band under it */
 .stage.d-banded{display:flex;flex-direction:column}
 .stage.d-banded>.smedia{order:2;margin-bottom:2.4cqw}
@@ -453,8 +456,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    Placing the media is the DESIGN block's job, and so is the split's track ratio; what is left
    here is how each content shape behaves once its column is only half the slide. Both sides share
    one rule — `.d-split` carries the shape, `.side-left` only the placement. */
-/* a lone image is the slide's whole body, so it may claim the height the text column would have */
-.stage.d-split:has(.cfit:not(:has(*))) :is(.imgph.svg svg,.imgph.has img,.imgph.has video,.imgph.has iframe){max-height:52cqw}
+/* A lone image claims the width the text column would have — the collapse above gives it the whole
+   track. It does NOT get extra *height*: the row is the same row either way, and the picture is
+   bounded by it (see `.d-split>.smedia` in the DESIGN block). The old rule here lifted the cap to
+   52cqw so a lone image could grow taller than its row; it never fired, because the selector that
+   guarded it was invalid — and the moment the guard was fixed it cropped every lone diagram
+   against the frame's `overflow:hidden`. A picture that outgrows its row is not bigger, it is cut. */
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 /* the comparison strip stays a grid at half width — columns must still read as columns, so
    collapsing to one row per cell would undo the point. It gives up type size and cell padding. */

@@ -13,6 +13,20 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.84.1] — 2026-08-24
+
+### Fixed
+
+- **A slide whose only content is a picture no longer wastes half the canvas.** The rule that
+  collapses the empty text column of an image-only split slide had never once fired: it asked the
+  question in CSS as `:has(.cfit:not(:has(*)))`, and `:has()` may not be nested inside `:has()`, so
+  browsers discarded the selector silently. Every such slide kept a dead empty half with the
+  picture squeezed into the other one. The stage macro now renders the body, sees for itself that
+  nothing came out, and says so with a `bodyless` class the stylesheet can select on — the picture
+  takes the full width. Removed alongside it: a companion rule that let a lone picture grow taller
+  than its row, dead for the same reason, and which cropped the diagram against the figure frame
+  the moment the guard started working.
+
 ## [0.84.0] — 2026-08-21
 
 ### Added
