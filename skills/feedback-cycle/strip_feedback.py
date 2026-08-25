@@ -33,7 +33,11 @@ _H3_FEEDBACK = re.compile(r"^\s{0,3}#{3}\s+Presenter feedback\s*:?\s*$", re.I)
 _PARA_FEEDBACK = re.compile(r"^\s{0,3}\*\*\s*Presenter feedback\s*:?\s*\*\*\s*$", re.I)
 _BULLET_FEEDBACK = re.compile(r"^(\s*)[-*+]\s+\*\*\s*Presenter feedback\s*:?\s*\*\*", re.I)
 _HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
-_HR = re.compile(r"^-{3,}\s*$")
+# Indent-tolerant on the same terms as _HEADING, and it has to be: `# Cut material` archives a whole
+# cut slide as one indented bullet — its `### Presenter feedback` heading AND its closing `---`
+# both carry that indent. Anchored at column 0, this matched the heading but not the separator, so
+# the sweep ran straight past the end of the record and swallowed the next one whole.
+_HR = re.compile(r"^\s{0,3}-{3,}\s*$")
 _BULLET = re.compile(r"^(\s*)[-*+]\s")
 _BLANK = re.compile(r"^\s*$")
 
@@ -65,9 +69,19 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
         ln = lines[i]
 
         if _H3_FEEDBACK.match(ln):
-            # A slide-level H3 field: runs until the next heading (any level) or `---` or EOF.
+            # A slide-level H3 field: runs until the next heading (any level), `---`, a dedent, or
+            # EOF. The dedent is the boundary the other two cannot supply: inside `# Cut material`
+            # a whole archived slide is one indented bullet, and the last record of a run has no
+            # closing `---` to stop at. A bullet shallower than this heading is by definition a new
+            # record, never a continuation of this one. For an un-indented feedback field — every
+            # ordinary slide — no bullet can be shallower than column 0, so nothing changes there.
+            base = _indent(ln)
             j = i + 1
-            while j < len(lines) and not (_HEADING.match(lines[j]) or _HR.match(lines[j])):
+            while j < len(lines) and not (
+                _HEADING.match(lines[j])
+                or _HR.match(lines[j])
+                or (_BULLET.match(lines[j]) and _indent(lines[j]) < base)
+            ):
                 j += 1
             for k in range(i, j):
                 drop[k] = True

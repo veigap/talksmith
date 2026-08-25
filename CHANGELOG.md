@@ -13,6 +13,30 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.85.0] — 2026-08-25
+
+### Fixed
+
+- **`# Cut material` no longer loses archived slides on every Polish.** Stripping presenter feedback
+  read a `---` separator only at column 0, but `# Cut material` archives each cut slide as one
+  indented bullet, so its feedback heading *and* its closing separator are both indented. The
+  heading matched, the separator did not, and the sweep ran past the end of the record and deleted
+  the next one — silently, on every run. In one talk that was 19 of 20 records describing what was
+  cut and why. The separator is now indent-tolerant on the same terms as the heading, and a bullet
+  shallower than the feedback heading also ends the record — which is what saves the last record of
+  a run, the one with no closing separator to stop at. Two regression tests cover both; the suite
+  previously had no case with indented structure at all, which is why this shipped.
+
+### Changed
+
+- **`polish-ascii gc` refuses to run before `cleanup`.** `gc` decides what is orphaned by looking
+  for image references in `final.md` — which only exist *after* `cleanup` rewrites the ASCII fences
+  into images. Run before that, it saw no references at all and reported every live diagram as
+  orphaned; `--apply` at that moment would have deleted the deck's whole diagram set. The correct
+  order was operator discipline with nothing enforcing it. A live ASCII fence is now treated as
+  proof that `cleanup` has not run, and `gc` exits with an error naming the offending blocks
+  instead of answering from data it cannot trust.
+
 ## [0.84.2] — 2026-08-24
 
 ### Fixed

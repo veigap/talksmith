@@ -126,6 +126,33 @@ CASES.append((
     [],
 ))
 
+# 8. `# Cut material`: a whole archived slide is ONE indented bullet, so its `### Presenter
+# feedback` heading and its closing `---` are both indented. `_HR` was anchored at column 0, so the
+# sweep matched the heading, missed the separator, and ran on until the *next* record's `---` —
+# deleting that record's opening bullet and fusing its `### Content` into the previous one.
+CASES.append((
+    "cut_material_indented_separator_ends_the_sweep",
+    ("# Cut material\n\n"
+     "- **Slide 2.2** — cut in round 2.\n\n  ### Content\n\n  - point one.\n\n"
+     "  ### Presenter feedback\n\n  - \"drop Cognition\" [closed]\n\n  ---\n\n"
+     "- **Slide 2.4** — cut in round 2.\n\n  ### Content\n\n  - point two.\n\n  ---\n\n"
+     "- **Slide 2.6** — cut in round 2.\n"),
+    ["**Slide 2.2**", "**Slide 2.4**", "**Slide 2.6**", "point one.", "point two."],
+    ["Presenter feedback", "drop Cognition"],
+))
+
+# 9. …and the last record of a run has no closing `---` at all, so the separator cannot be what
+# stops the sweep. A bullet shallower than the feedback heading is a new record by definition.
+CASES.append((
+    "cut_material_dedent_ends_the_sweep_without_a_separator",
+    ("# Cut material\n\n"
+     "- **Slide 3.1** — cut.\n\n  ### Content\n\n  - point one.\n\n"
+     "  ### Presenter feedback\n\n  - \"drop this\" [closed]\n\n"
+     "- **Slide 3.2** — cut.\n\n  ### Content\n\n  - must not be lost.\n"),
+    ["**Slide 3.1**", "**Slide 3.2**", "point one.", "must not be lost."],
+    ["Presenter feedback", "drop this"],
+))
+
 
 def main() -> int:
     failures = 0

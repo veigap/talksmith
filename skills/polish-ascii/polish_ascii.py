@@ -786,6 +786,28 @@ def cmd_gc(args: argparse.Namespace) -> int:
         print("gc: no images/ directory — nothing to collect")
         return 0
 
+    # `gc` reads "referenced" out of final.md, so it is only meaningful AFTER `cleanup` has
+    # rewritten the ASCII fences into image refs. Run before that, final.md still holds the fences
+    # and carries *no* image references at all — so every live diagram looks orphaned and `--apply`
+    # deletes the whole set. The ordering (cleanup → gc) was operator discipline only; nothing enforced it.
+    # A live renderable fence is proof cleanup has not run, which makes the reference count
+    # untrustworthy, so refuse rather than report a wrong answer. Reusing `scan()` rather than a
+    # private regex keeps this from drifting away from what the rest of the pipeline calls a block.
+    # NOT `_renderable()`: that also demands a `render` decision, which only a *plan* carries — a
+    # raw scan has none, so it would call every block un-renderable and never fire. What counts
+    # here is a live fence `cleanup` would have rewritten. A documentation-only block is excluded
+    # on purpose: it is meant to stay a fence, so it is no evidence either way.
+    pending = [b for b in scan(final_path)["blocks"] if not b.get("documentation_only")]
+    if pending:
+        print(f"error: {len(pending)} ASCII block(s) in final.md are still un-rendered fences — "
+              "`cleanup` has not run yet, so final.md has no image references and every generated "
+              "diagram would look orphaned. Run `cleanup` first, then `gc`.", file=sys.stderr)
+        for b in pending[:5]:
+            print(f"  {b.get('slide_id', '?')} line {b['ascii']['start_line']}", file=sys.stderr)
+        if len(pending) > 5:
+            print(f"  … and {len(pending) - 5} more", file=sys.stderr)
+        return 2
+
     referenced = _referenced_stems(final_path.read_text())
     orphans = sorted(s for s in _generated_diagram_stems(images_dir) if s not in referenced)
 
