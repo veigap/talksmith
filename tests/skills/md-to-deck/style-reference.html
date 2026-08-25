@@ -169,6 +169,23 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.d-split>.smedia>.imgph{height:100%;overflow:hidden}
 .stage.d-split>.smedia>.imgph.svg>svg,
 .stage.d-split>.smedia>.imgph.has>:is(img,video,iframe){max-height:100%}
+/* `max-height:100%` says the right thing and an inline SVG obeys it, but a **raster does not**: a
+   percentage max-height on a replaced element resolves against the containing block's height, that
+   block's height is itself `100%`, and Chrome gives up and treats the whole thing as `none`. So the
+   <img> kept the height its width implied — twice its frame — and the frame's `overflow:hidden`,
+   there only as a backstop, became a crop: the bottom third of the picture simply gone.
+   Stretching it as a grid item asks no percentage question at all. The frame is already a grid
+   (`place-items:center`); an item with `auto` size and `stretch` alignment takes the area's box
+   exactly, and `object-fit:contain` fits the picture inside it at its own aspect ratio. The caps
+   `max-height` is deliberately NOT set here: the design's own cap (32cqw banded) is a length and
+   resolves fine, so it still applies and still wins over the inert percentage above.
+   **Stills only.** A `<video>` is left on the plain path: it is already 16:9, so it never reaches
+   the crop this fixes, and stretching it is actively worse — the element paints its own black
+   background, so the letterbox `object-fit` leaves turns into two black bands around the clip. */
+.stage.d-split>.smedia>.imgph.has>img,
+.stage.d-banded>.smedia>.imgph.has>img{
+  align-self:stretch;justify-self:stretch;min-width:0;min-height:0;
+  width:auto;height:auto;max-width:100%;object-fit:contain}
 /* a design with no content to put beside the media (an image the presenter talks over, its detail
    in the notes) collapses rather than projecting an empty column. `.bodyless` is set by the stage
    macro, which renders the body and knows whether anything came out; the CSS-only spelling of the
@@ -179,10 +196,25 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stage.d-split.bodyless>.smedia{grid-column:1/-1}
 /* ── banded: media across the top, the content as a band under it */
 .stage.d-banded{display:flex;flex-direction:column}
-.stage.d-banded>.smedia{order:2;margin-bottom:2.4cqw}
+/* `flex-shrink:100` decides WHICH of the two gives up height when the column does not fit, and the
+   picture is the honest answer: it loses a little scale and stays whole, where the caption under it
+   would lose *words* — `.cbody` is `min-height:0` and `overflow:hidden`, so shrinking it clips text
+   outright, and below ~20px of usable height the fit pass bails out rather than scaling, leaving
+   the overflow on screen. Weighting the shrink (base × factor) sends essentially all of it to the
+   media while leaving `.cbody` shrinkable as a last resort, so a heavy body still reaches the fit
+   pass instead of pushing the picture off the slide. */
+.stage.d-banded>.smedia{order:2;margin-bottom:2.4cqw;min-height:0;flex-shrink:100}
 .stage.d-banded>.cbody{order:3}   /* keeps the base flex:1 1 auto, so the fit pass has a height */
 .stage.d-banded>.smedia .imgph{width:100%}
 .stage.d-banded>.smedia .imgph :is(img,video,iframe),.stage.d-banded>.smedia .imgph svg{max-height:32cqw}
+/* …and the picture is bounded by the box the flex line actually leaves it, not by that cap alone.
+   The cap is a share of the slide; what the media gets is whatever is left after the head and the
+   band under it, which on a crowded slide is less. `.smedia` was shrinkable (flex default) but the
+   frame inside it was not, so the picture kept its capped height, overflowed a box 90px shorter,
+   and — the frame being `overflow:visible` so an inline SVG's hairline is not clipped — painted
+   straight over the caption. Giving the frame the box's height makes the shrink reach the picture. */
+.stage.d-banded>.smedia>.imgph{height:100%;overflow:hidden}
+.stage.d-banded>.smedia>.imgph.svg>svg{max-height:100%}
 /* the band under a banded image is a caption, so it reads as one: the soft accent box a highlight
    uses. It sits on the shared stage child, not on one template's private class, so *any* template
    can take this design — but only when its content is prose. A structured body (cards, a grid, a

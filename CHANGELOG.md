@@ -13,6 +13,26 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.84.2] — 2026-08-24
+
+### Fixed
+
+- **A picture no longer paints over the note under it, or loses its bottom third to a crop.** Three
+  faults with one shape: the layout worked out how much room the picture had, and the picture
+  ignored the answer.
+  - **Banded slides** (media across the top, a caption band under it) shrank the media's box when
+    the column did not fit, but not the picture inside it, so the diagram carried on over the
+    caption — and over the source line below that. The frame now takes the box's height, so the
+    shrink reaches the picture; and the *picture* is what yields, not the caption, which can only
+    give up height by clipping words.
+  - **A photo or screenshot beside text** was cut off at the frame's edge. It was told
+    `max-height:100%`, but a percentage max-height on a raster whose frame is itself sized in
+    percent does not resolve — the browser drops it, the image kept the height its width implied,
+    and the frame's overflow guard turned into a crop. It is now stretched to the frame and fitted
+    inside it, which asks no percentage question. Diagrams (inline SVG) were never affected, and a
+    video is deliberately left alone: it is already 16:9, and stretching it would band the clip in
+    its own black background.
+
 ## [0.84.1] — 2026-08-24
 
 ### Fixed
