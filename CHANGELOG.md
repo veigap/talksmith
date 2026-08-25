@@ -13,6 +13,34 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.86.0] — 2026-08-25
+
+### Added
+
+- **Talksmith now writes down its own bugs.** A new `talksmith_bugs.md` at the root of the
+  working directory is the running log of inconsistencies and malfunctions **in the tool itself**
+  — a skill that errors, a file a spec promised and didn't deliver, two specs contradicting each
+  other, a subagent report that can't be consumed as contracted, a render that came out broken.
+  Until now those were absorbed by the fallback and forgotten: the presenter got a slightly worse
+  deck and nobody ever learned why. Logging is **mandatory** and part of handling the defect, not
+  an alternative to it — the run still degrades gracefully and never stops to ask about a bug.
+- **Entries are written to be fixed by someone who wasn't in the session:** full context (Talk,
+  step, exact file/skill/spec section, what was being processed), observed `expected:` vs
+  `actual:` with verbatim error text, **how to reproduce it** — or an explicit
+  `repro: unknown — <why>`, never a guessed one — and any fix worth trying. Proposed fixes live in
+  their own `suggested_fix:` field and are stated **as suggestions**, since they are mid-run
+  hypotheses rather than diagnoses; `none — cause not understood` is a valid, useful entry.
+  Talksmith never acts on its own suggestion: it records, works around, and leaves the fix to a
+  human upstream. Repeat occurrences bump one entry's `seen:` count instead of piling up rows, so
+  a systemic defect looks systemic.
+- The orchestrator is the **sole writer** (append-only), so parallel subagents can't race on the
+  file; roles surface anomalies in their closing reports and it decides what is a defect. Nothing
+  about this reaches the presenter mid-step — at most one plain line when a step closes with
+  something logged. Format spec: `schemas/talksmith-bugs.md`.
+
+*Stub note: the working-directory `CLAUDE.md` gained a row documenting the new file. Cosmetic —
+the behavior ships with the spec, so re-running `/talksmith:init` is optional.*
+
 ## [0.85.0] — 2026-08-25
 
 ### Fixed

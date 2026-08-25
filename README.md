@@ -103,6 +103,7 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 ```
 <your-subject-repo>/
 ├── CLAUDE.md                 # thin stub from /talksmith:init; auto-loads the plugin spec — leave it alone
+├── talksmith_bugs.md         # defects Talksmith hit while running — context, repro, suggested fix
 ├── config/
 │   ├── profile.md            # Subject, Presenter(s), audience, duration, language
 │   ├── learnings.md          # durable editorial rules promoted from recurring feedback

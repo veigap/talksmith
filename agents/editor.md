@@ -287,6 +287,7 @@ Do **not** hand-strip these blocks — the blank-line-before-boundary guard is l
 - **Field semantics** live in `${CLAUDE_PLUGIN_ROOT}/schemas/draft.md` → *Field semantics* table. Read it when filling a field.
 - **Show your work.** Return the affected section (or a diff summary) so the orchestrator can confirm with the presenter.
 - **Two-file discipline.** Steps 1–5 only ever write `draft.md`. Step 6 only ever writes `final.md`. Never edit `draft.md` from Step 6 onward — that is the property that makes Polish re-runnable.
+- **Surface tool defects, never log them yourself.** If something in *Talksmith* misbehaves while you work — a promised file missing, a spec that contradicts another, a helper that errors — say so in your closing report with the context and error text, and keep going with the fallback. The orchestrator owns `talksmith_bugs.md` and is its sole writer; you never touch it (see [`${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md`](../schemas/talksmith-bugs.md)).
 
 ## Presenter feedback log
 

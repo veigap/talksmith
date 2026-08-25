@@ -27,6 +27,7 @@ Everything the presenter owns is created on demand by the workflow, not scaffold
 | Path | Purpose | Created by |
 |---|---|---|
 | `CLAUDE.md` | This stub. | `/talksmith:init` |
+| `talksmith_bugs.md` | Inconsistencies and malfunctions Talksmith hit while running — each with context, a repro, and a **suggested** fix, so they can be reported upstream and fixed. Not feedback about your talk. | Orchestrator · any step, on demand |
 | `config/profile.md` | Subject-level profile (Subject, Audience, Language, …). | Editor · Step 0.5 |
 | `config/learnings.md` | Promoted editorial rules. | Editor · Step 8 |
 | `config/feedback-backlog.md` · `config/feedback-processed.md` | Cross-Talk feedback log + archive. | Editor · Steps 5 / 8 |
