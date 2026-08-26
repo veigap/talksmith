@@ -259,6 +259,20 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
 - **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
   fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a
   render error, report the live view is unavailable — never fatal.
+  **`jinja2` is the only non-stdlib dependency, and the commands here say bare `python3`** — on a
+  machine with more than one interpreter (a Homebrew python and the system one, a venv that isn't
+  active) PATH can hand the render the one without it. That failure now names itself: the render
+  prints the missing module, the interpreter it actually ran under, and the `-m pip install`
+  command for that interpreter. Verify any candidate up front with `<python> -c "import jinja2"`.
+- **Is the deck on disk still current?** One cheap check — a hash, no FILL, no LLM:
+  ```
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py rendered --talk talks/<Talk>
+  ```
+  Exit `0` current · `3` stale · `4` can't tell · `2` nothing rendered. Every render copies the
+  model's `_source` binding into `output/html/.render.json`, so this compares the rendered deck
+  against the markdown as it stands now. It exists because a live-view refresh is a full FILL pass
+  and therefore gets skipped: without this, a stale deck is indistinguishable from a current one.
+  A stale deck is also badged **out of date** on the working-directory landing page.
 - **No critique loop.** `html-strict` is a single-pass GENERATE — no automated FEEDBACK/critique
   cycles. The presenter reviews the deck and resolves anything by editing the source (which re-fills
   the model) and re-rendering.

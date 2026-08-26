@@ -29,7 +29,18 @@ from pathlib import Path
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import html_style as _hs  # noqa: E402
+# The HTML path's one non-stdlib dependency (jinja2) is imported by `html_style`.
+# Surface its absence as the one-line `failed:` this CLI uses everywhere else — the
+# message html_style raises names the missing module, the interpreter, and the fix.
+# Only when run as a command: an importer (the render tests) still gets the ImportError.
+try:
+    import html_style as _hs  # noqa: E402
+    import model_freshness as _fresh  # noqa: E402
+except ImportError as _e:     # noqa: E402
+    if __name__ != "__main__":
+        raise
+    print(f"failed: {_e}", file=sys.stderr)
+    raise SystemExit(2) from None
 
 MARKER = "<!-- talksmith:index -->"
 INDEX_NAME = "index.html"
@@ -48,12 +59,19 @@ def workspace_root(talk: Path) -> Path | None:
 
 
 def stamp_render(out_dir: Path, model: dict, slides: int, draft: bool) -> None:
-    """Record what this render was, beside the deck it produced."""
+    """Record what this render was, beside the deck it produced.
+
+    `source` copies the model's `_source` binding (file + SHA-256 of the markdown it was filled
+    from) so a later run can tell whether this deck is still current *without* re-running FILL —
+    the live view's refresh is a full LLM pass, expensive enough to skip and therefore expensive
+    enough to fall behind quietly. See `model_freshness.stamp_state`.
+    """
     deck = model.get("deck", {})
     payload = {
         "mode": "draft" if draft else "final",
         "slides": slides,
         "rendered": datetime.now().isoformat(timespec="seconds"),
+        "source": model.get("_source") or {},
         **{k: deck.get(k, "") for k in
            ("title", "institution", "class", "presenter", "date", "lang")},
     }
@@ -68,10 +86,12 @@ def _entry(deck_html: Path, root: Path) -> dict | None:
     html_dir = deck_html.parent
     talk = html_dir.parent.parent
     info: dict = {}
+    stamped = False
     stamp = html_dir / STAMP
     if stamp.is_file():
         try:
             info = json.loads(stamp.read_text(encoding="utf-8"))
+            stamped = True
         except (json.JSONDecodeError, OSError):
             info = {}
     if not info:
@@ -92,8 +112,13 @@ def _entry(deck_html: Path, root: Path) -> dict | None:
     rendered = info.get("rendered") or datetime.fromtimestamp(mtime).isoformat(timespec="seconds")
     href = "/".join(quote(part) for part in
                     deck_html.relative_to(root).as_posix().split("/"))
+    # Is the deck on disk still the current one? Only the stamp can answer — the model fallback
+    # below describes a *model*, which says nothing about when the HTML was written. A card that
+    # cannot tell stays unbadged: "out of date" is a claim, not a default.
+    stale = stamped and _fresh.stamp_state(info, talk)[0] == "stale"
     return {
         "href": href,
+        "stale": stale,
         "title": info.get("title") or talk.name.replace("-", " "),
         "institution": info.get("institution", ""),
         "cls": info.get("class", ""),

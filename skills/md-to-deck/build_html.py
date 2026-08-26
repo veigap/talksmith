@@ -27,9 +27,19 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
-import build_index as _idx             # noqa: E402
-import html_style as _hs              # noqa: E402
-import model_freshness as _fresh       # noqa: E402
+# The HTML path's one non-stdlib dependency (jinja2) is imported by `html_style`.
+# Surface its absence as the one-line `failed:` this CLI uses everywhere else — the
+# message html_style raises names the missing module, the interpreter, and the fix.
+# Only when run as a command: an importer (the render tests) still gets the ImportError.
+try:
+    import build_index as _idx             # noqa: E402
+    import html_style as _hs              # noqa: E402
+    import model_freshness as _fresh       # noqa: E402
+except ImportError as _e:                  # noqa: E402
+    if __name__ != "__main__":
+        raise
+    print(f"failed: {_e}", file=sys.stderr)
+    raise SystemExit(2) from None
 
 sys.path.insert(0, str(_HERE / "audits"))
 

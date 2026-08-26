@@ -13,6 +13,7 @@
         {% if e.cls %}<p class="dsub">{{ e.cls }}</p>{% endif %}
         <p class="dmeta">
           {% if e.draft %}<span class="badge">{{ L.draft }}</span>{% endif %}
+          {% if e.stale %}<span class="badge stale" title="{{ L.stale_hint }}">{{ L.stale }}</span>{% endif %}
           {% if e.slides %}<span>{{ e.slides }} {{ L.slides }}</span><span class="sep">·</span>{% endif %}
           {% if e.presenter %}<span>{{ e.presenter }}</span><span class="sep">·</span>{% endif %}
           <span>{{ L.rendered }} {{ e.rendered }}</span>

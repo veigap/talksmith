@@ -37,5 +37,9 @@ body.tsindex{font-family:var(--sans);color:var(--fi);
   text-transform:uppercase;padding:2px 8px;border-radius:999px;
   background:var(--pill);color:var(--chip-ink)}
 .tsindex .deck.draft{border-style:dashed}
+/* …and a deck whose source moved on since it was rendered is worse than a moving target: it
+   looks finished and is wrong. The accent is spent here rather than on the card frame, so the
+   badge reads at a glance without turning the whole wall red. */
+.tsindex .badge.stale{background:var(--red);color:#fff}
 
 .tsindex .foot{margin:38px 0 0;color:var(--fm);font-size:12px;font-family:var(--mono)}

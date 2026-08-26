@@ -13,6 +13,36 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.90.0] — 2026-08-26
+
+### Added
+
+- **The landing page marks a deck that is out of date.** Every render already recorded what it
+  produced; it now also records the exact bytes of the markdown it was rendered from, so a later
+  run can tell — with one hash, no LLM — whether the deck on disk still matches the outline. A
+  deck whose source has moved on is badged **out of date** on the working-directory index, and
+  `model_freshness.py rendered --talk talks/<Talk>` answers the same question from the command
+  line (exit `0` current, `3` stale, `4` can't tell, `2` nothing rendered). A deck rendered by an
+  older Talksmith carries no such record and stays unbadged — *can't tell* is not *out of date*.
+
+### Fixed
+
+- **A missing `jinja2` now names the interpreter that is missing it.** The HTML render's one
+  non-stdlib dependency was imported three modules deep, so on a machine with more than one
+  `python3` — a Homebrew build, the system one, an inactive venv — the documented command failed
+  with a raw traceback that named neither the dependency nor which interpreter had come up short.
+  It now fails in one readable line with the module, the interpreter's full path, and the exact
+  `-m pip install` that fixes it.
+- **The live view no longer goes quietly stale during Review.** Step 5.5 asked for a *silent*
+  refresh after every round that changed `draft.md`, but a refresh is not a script: the render
+  refuses to run against a stale model, so re-firing means a full fill pass — every slide
+  re-classified, one critic per slide. Being expensive and invisible, it simply stopped happening,
+  and presenters were reading decks several rounds behind with nothing to indicate it. The step now
+  says what a refresh costs, re-fires on rounds that actually reshape the deck rather than on every
+  wording fix, and — the part that matters — checks staleness cheaply after each round so a view
+  that has fallen behind is *said out loud* instead of silently offered as current. The end-of-
+  Review checkpoint runs the same check before offering the deck at all.
+
 ## [0.89.2] — 2026-08-26
 
 ### Fixed
