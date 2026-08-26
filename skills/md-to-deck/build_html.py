@@ -180,19 +180,39 @@ def _coverage_warn(model: dict, model_path: Path, source_md: Path, limit: int = 
     **Warns, never blocks.** The match is a heuristic (see `audits/text_coverage.py`), and a deck
     that renders is still delivered; the presenter decides whether a flagged line matters. Run the
     audits directly for the full list.
+
+    **A failure here is reported by kind.** An unreadable or malformed file is a condition of the
+    deck: skip the check, say so quietly, render anyway. Anything else — a signature that drifted,
+    a missing name — is a defect in the plugin, and it gets a loud, differently-worded line,
+    because the failure mode this function had was precisely a silent one: a call site left stale
+    by an audit refactor, its `TypeError` swallowed into a warning that read like the icon
+    warnings beside it. The safety net was down for two releases and the render never said so in
+    words anyone would read as "broken". `tests/skills/md-to-deck/test_render_coverage.py` now
+    calls this directly so the drift cannot recur unnoticed.
     """
     try:
         import text_coverage as _tc            # noqa: PLC0415  (advisory, optional)
         import notes_coverage as _nc           # noqa: PLC0415
+        import block_coverage as _bc           # noqa: PLC0415
         text = source_md.read_text(encoding="utf-8")
         r = _tc.audit(text, model)
-        ndrops, _ = _nc.reconcile_source(_nc.parse_source_md(str(source_md)),
-                                         _nc.model_notes(str(model_path)))
-    except Exception as e:                     # never let an advisory check break a render
+        nmodel, nindex = _nc.model_notes(str(model_path))
+        ndrops, _ = _nc.reconcile_source(_nc.parse_source_md(str(source_md)), nmodel, nindex)
+        bslots, bindex = _bc.model_callout_slots(str(model_path))
+        bdrops, _ = _bc.reconcile_source(_bc.parse_source_md(str(source_md)), bslots, bindex)
+    except (OSError, ValueError) as e:         # a condition of the deck, not a bug in the check
         print(f"[html] warning: coverage check skipped ({type(e).__name__}: {e})", file=sys.stderr)
+        return
+    except Exception as e:                     # never let an advisory check break a render …
+        print(f"[html] BUG: the built-in coverage check is broken and did NOT run — "
+              f"{type(e).__name__}: {e}. This is a plugin defect, not a problem with your deck; "
+              f"the render below is unchecked. Run audits/text_coverage.py, "
+              f"audits/notes_coverage.py and audits/block_coverage.py by hand, and report it.",
+              file=sys.stderr)
         return
 
     notes, content = r.notes_drops, r.content_drops
+    ndrops = ndrops + bdrops
     if not r.drops and not r.missing and not ndrops:
         print(f"[html] coverage: ok — {r.checked} source lines present in the model",
               file=sys.stderr)

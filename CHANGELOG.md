@@ -13,6 +13,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.89.1] — 2026-08-26
+
+### Fixed
+
+- **The render's built-in coverage check had not run since it shipped.** Recalibrating the audits
+  in 0.88.0 changed two function signatures; every caller inside the audits was updated and the
+  one inside the renderer was missed. The `except` clause wrapping it turned the resulting error
+  into a warning that read like the icon warnings printed beside it, so the render kept succeeding
+  and the safety net was simply down — on every deck, for two releases, saying nothing anyone
+  would read as "broken". The call site is fixed, and it now also runs the block-coverage stage,
+  so all three audits run inside the render.
+- **A broken check now says so, loudly and in different words than a skipped one.** An unreadable
+  or malformed file is a condition of the deck: skip quietly, render anyway. Anything else is a
+  defect in the plugin and prints `[html] BUG: … the render below is unchecked`, naming it as a
+  plugin problem rather than a content finding. And the renderer's call into the audits now has
+  its own regression test — the audits were tested, their call site was not, which is exactly
+  where they broke.
+
 ## [0.89.0] — 2026-08-26
 
 Two more false positives from running the coverage audits against a real deck. Both were the same

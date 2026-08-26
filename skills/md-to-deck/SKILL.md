@@ -230,11 +230,18 @@ test — has no resolvable source and is exempt; `--allow-stale` is the explicit
 
 **Built-in coverage warning.** The freshness guard proves the model was filled from *this*
 source; it says nothing about whether the fill kept the source's content. So in `--talk` mode
-`build_html.py` also runs the `text_coverage` + `notes_coverage` source stage and prints what
-`final.md` says that the model does not carry. It **warns, never blocks** — the deck renders and
-is delivered; the presenter decides whether a flagged line matters. Surface the lines (never the
-audit's name — see the suppression vocabulary) and offer to re-fill those slides. `--no-coverage`
-skips it.
+`build_html.py` also runs the source stage of all three coverage audits (`text_coverage`,
+`notes_coverage`, `block_coverage`) and prints what `final.md` says that the model does not carry.
+It **warns, never blocks** — the deck renders and is delivered; the presenter decides whether a
+flagged line matters. Surface the lines (never the audit's name — see the suppression vocabulary)
+and offer to re-fill those slides. `--no-coverage` skips it.
+
+> **`[html] BUG:` is not a deck problem.** If that line appears, the coverage pass itself failed
+> to run and the render is **unchecked** — the deck below it was never compared against the
+> source. It means a defect in the plugin (this exact pass once sat broken for two releases behind
+> a `TypeError` that printed as an ordinary "skipped" warning). Do not report it as a content
+> finding: run the three audits by hand, and log it per `${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md`.
+> A plain `coverage check skipped` line, by contrast, is benign — an unreadable or malformed file.
 
 The **same `slide-model.json` is the shared IR for PPTX** — both renderers read fields, so a slide
 looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see Path A.)
