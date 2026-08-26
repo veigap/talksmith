@@ -47,7 +47,9 @@ How a line is judged present:
     slide is a judgment call, not a drop.
 
 What it reads on the source side:
-    Slide bodies (`### Content` or bare prose under a `##`) and `### Speaker notes`. **Only `##`
+    Slide bodies (`### Content` or bare prose under a `##`) and `### Speaker notes`. A markdown
+    table is read **cell by cell**: the source is row-major and the model is column-major, so a
+    row's words are never consecutive in the model however completely its cells survived. **Only `##`
     blocks are slides** (schemas/draft.md): the thesis claim, the agenda arc and a section's
     `**Goal of this section:**` sit under an `#` heading and are working meta the deck never
     renders — the agenda slide is built from `deck.sections`, not from the agenda block — so
@@ -99,6 +101,9 @@ _SENTENCE_SPLIT = re.compile(r"(?<=[.!?;])\s+")
 _HEADING_NUM = re.compile(r"^\s*\d+[.)]\s*")
 # A line that starts its own unit: list item, numbered item, or table row.
 _NEW_UNIT = re.compile(r"^\s*(?:[-*+]\s|\d+[.)]\s|\|)")
+# A markdown table row, and its `|---|:--:|` separator (structure, carrying no content).
+_TABLE_ROW = re.compile(r"^\s*\|")
+_TABLE_RULE = re.compile(r"^\s*\|[\s:|-]*\|?\s*$")
 
 # Below this length a token is a function word in Spanish and English alike (de, la, and, the),
 # present in any text and worthless as evidence that a line survived.
@@ -197,6 +202,7 @@ class Fragment:
     slide: str
     where: str        # "content" | "notes"
     text: str
+    kind: str = "prose"   # "prose" | "cell" — a table cell is judged by its own rule
 
 
 def _mask(lines: list[str]) -> list[str]:
@@ -296,12 +302,29 @@ def fragments(text: str) -> tuple[list[Fragment], list[tuple[int, str]], list[st
             continue
         if where == "skip" or not in_slide:
             continue
-        if _NEW_UNIT.match(s):                               # list marker / table row
+        if _TABLE_ROW.match(s):
+            # A table row is checked **cell by cell**, never as a row. The source is row-major
+            # and the model is column-major (`value-columns` stores `columns[].cells[]`, `matrix`
+            # stores cells in reading order), so no five consecutive words of a row survive
+            # anywhere in the model even when every one of its cells is present — the row is the
+            # one shape a word-window can never find. Verified on a real deck: 6 of 13 reported
+            # drops were intact table rows.
+            flush()
+            if _TABLE_RULE.match(s):
+                continue                                     # `|---|---|` is structure, not text
+            for cell in s.strip().strip("|").split("|"):
+                cell = cell.strip()
+                for part in _SENTENCE_SPLIT.split(cell):
+                    part = part.strip()
+                    if part:
+                        frags.append(Fragment(line=i + 1, slide=slide, where=where, text=part,
+                                              kind="cell"))
+            continue
+        if _NEW_UNIT.match(s):                               # list marker
             flush()
         if not unit:
             unit_line = i + 1
         body = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", s)    # list marker
-        body = re.sub(r"^\|", "", body).replace("|", " ")    # table row
         unit.append(body.strip())
     flush()
     return frags, titles, waivers
@@ -366,6 +389,22 @@ def audit(text: str, model: dict, window: int = 5) -> Report:
     for f in frags:
         tk = tokens(f.text)
         if len(tk) < 3:
+            # Too short for a word window — but a one-word table cell can still be distinctive
+            # ("Augmentation"), and dropping a cell is a real defect. Judge those by their
+            # distinctive words instead; a cell of pure function words or bare figures
+            # ("Sí", "70%") is genuinely unjudgeable and stays skipped.
+            distinctive = [t for t in tk if len(t) >= _CONTENT_WORD_MIN]
+            if f.kind != "cell" or not distinctive:
+                continue
+            checked += 1
+            if all(t in vocab for t in distinctive):
+                matched_slides.add(f.slide)
+                continue
+            low = f.text.lower()
+            if any(w and w in low for w in waivers):
+                matched_slides.add(f.slide)
+                continue
+            drops.append(Drop(f.line, f.slide, f.where, f.text, "drop", None))
             continue
         checked += 1
         if present(tk, hay, window):

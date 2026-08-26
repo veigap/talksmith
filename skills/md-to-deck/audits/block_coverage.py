@@ -143,6 +143,7 @@ class MdSlide:
     title: str
     callouts: int = 0
     callout_lines: list[int] = field(default_factory=list)
+    quote_blocks: int = 0        # of those callouts, how many are plain `>` blockquotes
     body: list[str] = field(default_factory=list)
 
     def windows(self, window: int = 5, limit: int = 8) -> list[str]:
@@ -262,35 +263,44 @@ def parse_source_md(path: str) -> list[MdSlide]:
             continue
         if skip or cur is None:
             continue
-        if (_CALLOUT_ADMONITION.match(raw) or _CALLOUT_QUOTE_BOLD.match(raw)
-                or _CALLOUT_BULLET.match(raw)):
+        is_quote = bool(_CALLOUT_ADMONITION.match(raw) or _CALLOUT_QUOTE_BOLD.match(raw))
+        if is_quote or _CALLOUT_BULLET.match(raw):
             cur.callouts += 1
             cur.callout_lines.append(i)
+            if is_quote:
+                cur.quote_blocks += 1
         if raw.strip() and raw.strip() not in {"---", "***", "___"}:
             cur.body.append(raw)
     return out
 
 
-def model_callout_slots(path: str) -> tuple[list[tuple[str, int]], SlideIndex]:
-    """Per model slide: (title, callout-shaped landing places), plus the title-or-text index.
+@dataclass
+class ModelSlot:
+    """What one model slide offers a source callout, and what template it resolved to."""
+    title: str
+    slots: int
+    template: str
+
+
+def model_callout_slots(path: str) -> tuple[list[ModelSlot], SlideIndex]:
+    """Per model slide: its callout-shaped landing places and template, plus the slide index.
 
     A source callout may legitimately land as a `callout`-template slide, a `callout` field, or a
     `highlights` entry — the schema lets the fill route an aside either way, so all three count.
     """
     model = json.loads(open(path, encoding="utf-8").read())
-    slides = model.get("slides", [])
-    out: list[tuple[str, int]] = []
+    out: list[ModelSlot] = []
     entries: list[tuple[str, str]] = []
-    for sl in slides:
+    for sl in model.get("slides", []):
         slots = 1 if (sl.get("template") == "callout" or sl.get("callout")) else 0
         slots += len(sl.get("highlights") or [])
         title = sl.get("title") or sl.get("section") or ""
-        out.append((title, slots))
+        out.append(ModelSlot(title=title, slots=slots, template=sl.get("template") or ""))
         entries.append((title, slide_text(sl)))
     return out, SlideIndex(entries)
 
 
-def reconcile_source(md: list[MdSlide], slots: list[tuple[str, int]],
+def reconcile_source(md: list[MdSlide], slots: list[ModelSlot],
                      index: SlideIndex) -> tuple[list[Drop], list[Unmatched]]:
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
@@ -301,11 +311,22 @@ def reconcile_source(md: list[MdSlide], slots: list[tuple[str, int]],
         if idx is None:
             unmatched.append(Unmatched(h2_line=m.line, h2_title=m.title))
             continue
-        n = slots[idx - 1][1]
-        if m.callouts > n:
+        slot = slots[idx - 1]
+        # Classify the source blocks against the template the slide RESOLVED to, not in the
+        # abstract. On a `quote` slide the blockquote *is* the slide — it lands in the `quote`
+        # field, which is not a callout slot — so counting it as an aside reports a drop on every
+        # correctly-filled quote slide. Same blind spot as the title matching fixed in 0.88.0,
+        # one layer down: the slide matched, and then its content was read as if it were a body.
+        expected = m.callouts
+        if slot.template == "quote":
+            expected -= m.quote_blocks
+        if expected <= 0:
+            continue
+        n = slot.slots
+        if expected > n:
             drops.append(Drop(
                 slide_num=idx, h2_title=m.title, block_type="callout(s)",
-                source_count=m.callouts, render_count=n, target="model",
+                source_count=expected, render_count=n, target="model",
                 note=f"final.md lines {m.callout_lines}; the model gives this slide "
                      f"{n} callout/highlights slot(s)",
             ))
@@ -620,7 +641,7 @@ def main(argv: list[str] | None = None) -> int:
         drops += d
         unmatched += u
         stages.append(f"source({Path(source_md).name})")
-        m_blocks += sum(x.callouts for x in md)
+        m_blocks += sum(x.callouts for x in md)   # authored blocks, before template classification
 
     if args.final_pptx:
         try:

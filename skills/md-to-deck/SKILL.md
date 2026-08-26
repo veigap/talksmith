@@ -164,6 +164,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py output/
 
 `notes_coverage --source` and `block_coverage --source` are the same two audits that run at CONTROL against a `.pptx`, pointed one step earlier at the model: a `### Speaker notes` block that never reached `notes`, and a callout the fill left with nowhere to land. Both take `--source` implicitly from the model's freshness stamp, so `--source` can be omitted on a stamped model.
 
+> **A source block is classified against the template its slide resolved to, not in the abstract.** On a `quote` slide the blockquote *is* the slide — it lands in the `quote` field, which is not a callout slot — so reading it as an aside reports a drop on every correctly filled quote slide. And a **markdown table is audited cell by cell**: the source row is row-major, `value-columns` and `matrix` store it column-major, so no run of a row's words is ever consecutive in the model however completely its cells survived. Both were false positives that fired on every deck that had the shape, which is worse than a missing check — it teaches the reader to skim the line where a real drop appears.
+
 > **All three match a slide by title *or* by its text.** `quote`, `big-number`, `image-grid`, `quiz` and `callout` carry no `title` field at all (see the schema's per-template contract), so a title-only match reports every slide of those templates as unmatched — permanent noise in exactly the line (`[unmatched]`) where a genuinely missing slide would appear. When the title does not resolve, the audits look for a distinctive run of the source slide's words and match the one model slide that carries it.
 
 A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: an enumeration template

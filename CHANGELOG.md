@@ -13,6 +13,26 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.89.0] — 2026-08-26
+
+Two more false positives from running the coverage audits against a real deck. Both were the same
+mistake as the one 0.88.0 fixed, one layer further in: reading a source slide as though every
+template were prose-plus-asides.
+
+### Fixed
+
+- **A pull-quote's blockquote was counted as a dropped aside.** On a `quote` slide the blockquote
+  *is* the slide — it lands in the `quote` field, and that template offers no callout slot — so
+  every correctly filled quote slide reported a drop. Source blocks are now classified against the
+  template the slide actually resolved to. 0.88.0 made those slides *matchable*; this makes their
+  content read correctly once matched.
+- **Markdown tables were reported lost whenever they were rendered as columns.** A source table
+  row is row-major and the model stores it column-major (`value-columns` cells, `matrix` cells),
+  so no run of a row's words is ever consecutive in the model even when every cell is present —
+  the one shape a word-window can never find. On a real deck that was 6 of 13 reported drops.
+  Tables are now read cell by cell, the `|---|` separator ignored; a cell too short for a word
+  window is judged by its distinctive words instead, so losing a one-word cell is still caught.
+
 ## [0.88.0] — 2026-08-26
 
 Calibration of the coverage audit shipped in 0.87.0, from its first run against a real 62-slide

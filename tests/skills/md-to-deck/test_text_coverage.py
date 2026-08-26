@@ -118,6 +118,49 @@ FAITHFUL = {
 }
 
 
+# A markdown table, and the column-major model the fill turns it into. The two are transposes of
+# each other: no five consecutive words of a source ROW are ever adjacent in the model.
+TBL_SRC = """---
+presentation: Prueba
+---
+
+# 1. Sección
+
+---
+
+## 1. Train, validation y test
+
+### Content
+
+| Criterio | Train | Validation | Test |
+|---|---|---|---|
+| Actualiza los pesos | Sí | No | No |
+| Augmentation | Sí | No | No |
+| Proporción típica | 70% | 20% | 10% |
+"""
+
+TBL_MODEL = {
+    "deck": {"title": "Prueba", "sections": ["Sección"]},
+    "slides": [{
+        "template": "value-columns",
+        "title": "Train, validation y test",
+        "columns": [
+            {"header": "Criterio",
+             "cells": ["Actualiza los pesos", "Augmentation", "Proporción típica"]},
+            {"header": "Train", "cells": ["Sí", "Sí", "70%"]},
+            {"header": "Validation", "cells": ["No", "No", "20%"]},
+            {"header": "Test", "cells": ["No", "No", "10%"]},
+        ],
+    }],
+}
+
+
+def _table_missing_cell():
+    m = json.loads(json.dumps(TBL_MODEL))
+    m["slides"][0]["columns"][0]["cells"] = ["Actualiza los pesos", "Proporción típica"]
+    return m
+
+
 def _variant(**changes):
     """FAITHFUL with one slide-level field replaced."""
     m = json.loads(json.dumps(FAITHFUL))
@@ -215,6 +258,17 @@ CASES = [
          {"label": "Error", "body": "La diferencia entre lo predicho y lo esperado."}]),
      0, "downgraded is not discarded — an author who wants to check the rewrites must be able to",
      ("--show-rewrites",), "text-rewritten", ""),
+    ("table-is-transposed-not-lost",
+     TBL_SRC, TBL_MODEL,
+     0, "the source table is row-major and the model column-major, so a row's words are never "
+        "consecutive in the model however completely its cells survived — 6 of 13 reported drops "
+        "on a real deck were intact tables",
+     (), "", "text-drop"),
+    ("table-cell-actually-dropped",
+     TBL_SRC, _table_missing_cell(),
+     1, "reading tables cell-by-cell must not turn into ignoring them: a one-word cell is short "
+        "for a word window but distinctive enough to judge, and losing it loses a table row",
+     (), "Augmentation", ""),
     ("notes-paraphrase-is-a-drop",
      SRC,
      _variant(notes="Acá conviene aclarar que la sumatoria no corre sobre ejemplos."),
