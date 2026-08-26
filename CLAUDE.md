@@ -42,6 +42,7 @@ There is intentionally **no `templates/` folder**. `/talksmith:init` only copies
 | **Template-classification critique** — independence rule, verdict vocabulary, the bar for overturning a pick | [`agents/slide-classifier-critic.md`](agents/slide-classifier-critic.md) |
 | **The classification trace** `_choice` (signals / candidates / rejections) | [`schemas/slide-model.md`](schemas/slide-model.md) → *The classification trace* |
 | **Template-distribution thresholds** (dominance share, run length, fallback = failure) | [`skills/md-to-deck/audits/template_diversity.py`](skills/md-to-deck/audits/template_diversity.py) |
+| **Content survival through FILL** — how a `final.md` line is judged present in the model (word-window match), the `deck-omit-text` waiver, why `_choice` is excluded | [`skills/md-to-deck/audits/text_coverage.py`](skills/md-to-deck/audits/text_coverage.py) (the *rule* it enforces is [`schemas/slide-model.md`](schemas/slide-model.md) → *Never drop content*) |
 | **Polymorphic `media`** (image \| code panel \| aligned grid) + the universal `stats` band — the stage places them, no template branches | [`skills/md-to-deck/templates/html/_macros.j2`](skills/md-to-deck/templates/html/_macros.j2) (`smedia`, `stage`); contract in [`schemas/slide-model.md`](schemas/slide-model.md) |
 | ASCII detection tiers, sidecar layout, fence-rewrite rules | [`skills/polish-ascii/SKILL.md`](skills/polish-ascii/SKILL.md) (behavior enforced in `polish_ascii.py`) |
 | `generate-image` directive detection, `.imgprompt` sidecar, `.imgstamp` idempotency, directive→aside rewrite | [`skills/polish-images/SKILL.md`](skills/polish-images/SKILL.md) (behavior enforced in `polish_images.py`) |
@@ -68,6 +69,8 @@ Every cross-reference from one bundled file to another uses `${CLAUDE_PLUGIN_ROO
 References to **user data** (the bytes the user owns in their subject working directory) stay cwd-relative: `talks/…`, `config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`. Never prefix these with `${CLAUDE_PLUGIN_ROOT}/`.
 
 When developing the plugin in-repo (Claude Code opened at this directory), `${CLAUDE_PLUGIN_ROOT}` should resolve to the repo root. If your dev tooling doesn't auto-set it, export `CLAUDE_PLUGIN_ROOT="$(pwd)"` before launching `claude`.
+
+> **A cloned marketplace is not an installed plugin.** Having this repo on disk (even registered in `~/.claude/plugins/known_marketplaces.json`) is enough to *read* the specs by absolute path, and that is the documented fallback when `${CLAUDE_PLUGIN_ROOT}` is unset. It is **not** enough to run anything: with no `enabledPlugins` entry there are no `talksmith:*` skills and no `/talksmith:*` slash commands in the session, so every skill has to be invoked as a plain script by absolute path and the orchestrator's role dispatch silently has nothing to dispatch to. Check with `echo ${CLAUDE_PLUGIN_ROOT}` (empty = not installed); fix with `/plugin install talksmith@talksmith`, then reload the session.
 
 ## Common edits
 

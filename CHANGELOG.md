@@ -13,6 +13,38 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.87.0] — 2026-08-26
+
+### Added
+
+- **The deck is now checked against what the talk actually says.** A new coverage audit compares
+  every load-bearing line of `final.md` with the slide model the render consumes, and reports the
+  lines that never made it. This closes the gap that produced the defect it was written for: on a
+  real deck, 37 live sentences had been dropped while decomposing the talk into slides — among
+  them the one line saying whether a formula's sum ran over examples or over output units. The
+  deck rendered, every existing check passed, and the presenter read the slide wrong. A line
+  counts as present when any five consecutive words of it survive anywhere in the model, so the
+  regrouping the fill step is *supposed* to do never trips it; a clause that is simply absent
+  does. Deliberate omissions can be waived in `final.md` with `<!-- deck-omit-text: <substring> -->`.
+- **The HTML render runs that check itself.** Rendering a Talk now prints what the source says
+  that the deck does not carry — dropped lines, whole missing slides, missing speaker notes.
+  It **warns and renders anyway**: the deck is still delivered, and the presenter decides whether
+  a flagged line matters. `--no-coverage` turns it off.
+
+### Fixed
+
+- **Two content checks could never run on an HTML deck.** The block- and notes-coverage audits
+  both *required* a rendered `.pptx`, so on the HTML render path — which never produces one — they
+  were silently skipped, and that path is exactly the one with the least other checking. Both now
+  take the deck as an optional argument: without it they compare the source against the model
+  instead, catching a dropped callout or a dropped `### Speaker notes` block one step earlier, at
+  the point where the loss actually happens. The source file is found automatically from the
+  model's freshness stamp, so the check needs no extra arguments in normal use. Numbered slide
+  headings (`## 3. Título`) no longer defeat slide matching in either audit.
+- Contributor docs now warn that a cloned marketplace is not an installed plugin: reading the
+  specs by absolute path works, but without a real install there are no `talksmith:*` skills and
+  no slash commands in the session.
+
 ## [0.86.0] — 2026-08-25
 
 ### Added

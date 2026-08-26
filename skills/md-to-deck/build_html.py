@@ -31,6 +31,8 @@ import build_index as _idx             # noqa: E402
 import html_style as _hs              # noqa: E402
 import model_freshness as _fresh       # noqa: E402
 
+sys.path.insert(0, str(_HERE / "audits"))
+
 
 # A slide is a **design** (how the canvas is divided) filled with a **style** (the template's
 # content shape). `design` is universal — every content template takes every design, because the
@@ -164,6 +166,50 @@ def render(model: dict, talk_root: Path, out_dir: Path):
                     lang=lang), len(model.get("slides", []))
 
 
+def _coverage_warn(model: dict, model_path: Path, source_md: Path, limit: int = 12) -> None:
+    """Advisory FILL-coverage pass: what `final.md` says that the model does not carry.
+
+    The freshness guard above proves the model was filled from *this* source; it says nothing
+    about whether the fill kept the source's content. That is the FILL step's hardest rule
+    (`schemas/slide-model.md` → *Never drop content*) and the one an LLM decomposition actually
+    breaks — silently, because a model missing a clause is still a valid model and every other
+    audit passes. Until now the two audits that could have caught it (`block_coverage`,
+    `notes_coverage`) both required a rendered `.pptx`, so this path — the HTML render, which
+    never produces one — shipped with no content check at all.
+
+    **Warns, never blocks.** The match is a heuristic (see `audits/text_coverage.py`), and a deck
+    that renders is still delivered; the presenter decides whether a flagged line matters. Run the
+    audits directly for the full list.
+    """
+    try:
+        import text_coverage as _tc            # noqa: PLC0415  (advisory, optional)
+        import notes_coverage as _nc           # noqa: PLC0415
+        text = source_md.read_text(encoding="utf-8")
+        drops, missing, checked = _tc.audit(text, model)
+        ndrops, _ = _nc.reconcile_source(_nc.parse_source_md(str(source_md)),
+                                         _nc.model_notes(str(model_path)))
+    except Exception as e:                     # never let an advisory check break a render
+        print(f"[html] warning: coverage check skipped ({type(e).__name__}: {e})", file=sys.stderr)
+        return
+
+    if not drops and not missing and not ndrops:
+        print(f"[html] coverage: ok — {checked} source lines present in the model", file=sys.stderr)
+        return
+
+    print(f"[html] warning: {len(drops)}/{checked} source line(s), {len(missing)} slide(s) and "
+          f"{len(ndrops)} notes block(s) of {source_md.name} are MISSING from the model — the deck "
+          f"renders, but that content is not on it. Re-check the FILL step; full list: "
+          f"audits/text_coverage.py {source_md} {model_path}", file=sys.stderr)
+    # Whole missing slides and dropped notes first — they are the severe findings; individual
+    # lines fill whatever of the budget is left.
+    lines = ([m.fmt(source_md.name) for m in missing] + [d.fmt() for d in ndrops]
+             + [d.fmt(source_md.name) for d in drops])
+    for ln in lines[:limit]:
+        print("  " + ln, file=sys.stderr)
+    if len(lines) > limit:
+        print(f"  … {len(lines) - limit} more", file=sys.stderr)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--talk", type=Path, default=None, help="Talk root, e.g. talks/<Talk>")
@@ -173,6 +219,8 @@ def main(argv=None) -> int:
     ap.add_argument("-o", "--output", type=Path, default=None, help="output .html")
     ap.add_argument("--allow-stale", action="store_true",
                     help="skip the source-freshness guard (--talk mode); render the on-disk model as-is")
+    ap.add_argument("--no-coverage", action="store_true",
+                    help="skip the advisory FILL-coverage warning (--talk mode)")
     args = ap.parse_args(argv)
 
     if args.model:
@@ -204,6 +252,11 @@ def main(argv=None) -> int:
             print(f"[html] FAILED: {reason}. Refusing to render — re-run the md-to-deck FILL step "
                   f"(or pass --allow-stale to override).", file=sys.stderr)
             return 2
+
+    if args.talk and not args.no_coverage:
+        source_md = _fresh.source_path(args.talk, args.draft)
+        if source_md.is_file():
+            _coverage_warn(model, src, source_md)
 
     html, n = render(model, talk_root, out_dir)
     out = args.output or (out_dir / "index.html")

@@ -142,16 +142,25 @@ the goal** — a deck genuinely made of labeled sets *is* mostly `concept-breakd
 variety classifies slides into templates their content can't support. The finding says *re-examine
 this*, and Step 1.6 is what re-examines it. Pass `--warn-only` for the `--draft` live view.
 
-Alongside it, two **coverage preflights** catch content that would silently vanish — both model-only, so they guard every mode (advisory by default, `--strict` to fail):
+Alongside it, four **coverage preflights** catch content that would silently vanish. None needs a rendered deck, so they guard every mode — `html-strict` included (advisory by default, `--strict` to fail):
 
 ```bash
 # fields the chosen template will ignore (e.g. an image on a `divider`, a second image on `content-image`)
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/field_coverage.py output/slide-model.json
 # image refs in final.md that never made it into the model (a slide would render with no image)
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py final.md output/slide-model.json
+# lines of final.md the model does not carry — the content the deck will simply never show
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/text_coverage.py final.md output/slide-model.json
+# `### Speaker notes` blocks and callouts that never reached their slide's model entry
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/notes_coverage.py output/slide-model.json --source final.md
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py output/slide-model.json --source final.md
 ```
 
-`field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — skip it for the `--draft` live view (which fills from `draft.md`).
+`field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — skip it, and the three below, for the `--draft` live view (which fills from `draft.md`).
+
+`text_coverage` is the one that enforces the schema's hardest rule, **[*Never drop content*](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)**: every load-bearing line of `final.md` has to be translated into the model, and an LLM decomposition drops clauses silently — the model stays valid, every other audit stays green, and the slide ships missing the sentence that disambiguated it. A line counts as present when any five consecutive words of it survive anywhere in the model, so the regrouping FILL is *supposed* to do never trips it; what trips it is a clause that is simply not there. Fix by moving the line into a field, a card, a fact or `highlights` — or, when the omission is deliberate, waive it in `final.md` with `<!-- deck-omit-text: <substring> -->`. The `_choice` trace is excluded from the search on purpose: its rationale quotes the source, so counting it would let the classification alibi the drop.
+
+`notes_coverage --source` and `block_coverage --source` are the same two audits that run at CONTROL against a `.pptx`, pointed one step earlier at the model: a `### Speaker notes` block that never reached `notes`, and a callout the fill left with nowhere to land. Both take `--source` implicitly from the model's freshness stamp, so `--source` can be omitted on a stamped model.
 
 A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: an enumeration template
 (`content-text` panels, `concept-breakdown` cards, `stat` stats, `process` steps, …)
@@ -212,6 +221,14 @@ or unstamped model** — it never silently renders an outdated one. So if FILL+s
 should, immediately before), the render proceeds; if the source changed underneath a stale model, it
 stops with a clear message telling you to re-run FILL. (`--model` direct mode — the committed style
 test — has no resolvable source and is exempt; `--allow-stale` is the explicit override.)
+
+**Built-in coverage warning.** The freshness guard proves the model was filled from *this*
+source; it says nothing about whether the fill kept the source's content. So in `--talk` mode
+`build_html.py` also runs the `text_coverage` + `notes_coverage` source stage and prints what
+`final.md` says that the model does not carry. It **warns, never blocks** — the deck renders and
+is delivered; the presenter decides whether a flagged line matters. Surface the lines (never the
+audit's name — see the suppression vocabulary) and offer to re-fill those slides. `--no-coverage`
+skips it.
 
 The **same `slide-model.json` is the shared IR for PPTX** — both renderers read fields, so a slide
 looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see Path A.)
@@ -313,13 +330,13 @@ The rest of this file (Path A) does not apply to `html-strict`.
 5. **CONTROL — deterministic audits** (a non-zero exit is a render failure: surface the FAIL lines verbatim, repair, re-render). Run against `output/final.pptx`:
    - `audits/aspect_ratios.py` *(floor)* — every `<p:pic>`'s rendered `cx:cy` matches its source's intrinsic ratio (1% tolerance). Catches non-uniform scaling.
    - `audits/cover_fidelity.py` *(floor)* — slide 1 is byte-equivalent to `<base_template_path>` slide 1 modulo the four cover slots.
-   - `audits/block_coverage.py` *(floor)* — every model slide's structured blocks (cards/rows/stats/figures/image) survived into the deck (no silent drops on busy slides).
-   - `audits/notes_coverage.py` *(floor)* — every model slide that carries `notes` reached a non-empty notes pane (notes are load-bearing, template-independent).
+   - `audits/block_coverage.py` *(floor)* — every model slide's structured blocks (cards/rows/stats/figures/image) survived into the deck (no silent drops on busy slides). Its `--source` stage ran already at Step 1.5.
+   - `audits/notes_coverage.py` *(floor)* — every model slide that carries `notes` reached a non-empty notes pane (notes are load-bearing, template-independent). Same: the `--source` half ran at Step 1.5.
    - `audits/palette_fonts.py` *(**pptx-strict only**)* — every color/font is in the strict §2/§3.1 set.
    - `audits/layout_fit.py` *(**pptx-strict only**)* — the emitted layout equals the layout expected for the slide's model `template`; catches emitting a plainer layout than the model calls for.
    - `audits/icon_coverage.py` *(**pptx-strict only**)* — a concept-breakdown/callout slide whose model carries icon-bearing fields rendered at least one icon (catches a silently skipped §17 icon-fetch).
 
-   Free-form runs the four floor audits only. Each is a standalone CLI, comparing the deck against the model: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/<name>.py talks/<Talk>/output/final.pptx [talks/<Talk>/output/slide-model.json]`.
+   Free-form runs the four floor audits only. Each is a standalone CLI, comparing the deck against the model: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/<name>.py talks/<Talk>/output/final.pptx [talks/<Talk>/output/slide-model.json]`. `block_coverage` and `notes_coverage` take the model first and the deck as an **optional** second argument — omit it and they run their `--source` stage against `final.md` instead, which is what makes them usable on a deck that renders only to HTML.
 6. **Render per-slide critique PNGs** to `output/.critique/<style>/slide-NN.png` so the FEEDBACK sub-agent walks actual pixels. Priority: (1) the pptx skill's slide-to-image endpoint if it has one; (2) `libreoffice --headless --convert-to pdf` then `pdftoppm -r 150 -png`. If both fail the deck is still valid — report `slide_previews: failed: <reason>` and continue (visual critique can't run, but the `.pptx` is unaffected).
 7. **FEEDBACK / REGENERATE** per mode (see *Render flow*). **pptx-strict** runs the multi-cycle critique loop; **pptx-free-form** is single-pass (presenter reviews afterward).
 8. **Report:** `style: <mode>`, slide count, images resolved, and each audit's result (`aspect_audit`, `cover_fidelity`, `block_coverage`, `notes_coverage`, and — strict — `palette_fonts`, `layout_fit`, `icon_coverage` — each `ok | N fail | skipped:non-strict`), `slide_previews: <count|failed>`, plus any warnings from the pptx skill.
@@ -363,7 +380,7 @@ Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one br
 
 **Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` (single pass, no cycles).
 
-**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`, `audits/degenerate_enum.py`, `audits/template_diversity.py`, `audits/field_coverage.py`), the internal vocabulary of classification (template ids like `concept-breakdown` / `content+cards+image`, `slide-model.json`, `_choice`, `slide-classifier-critic`, the verdicts `confirm`/`reclassify`/`weak-trace`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
+**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`, `audits/degenerate_enum.py`, `audits/template_diversity.py`, `audits/field_coverage.py`, `audits/text_coverage.py`), the internal vocabulary of classification (template ids like `concept-breakdown` / `content+cards+image`, `slide-model.json`, `_choice`, `slide-classifier-critic`, the verdicts `confirm`/`reclassify`/`weak-trace`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
 
 **Stage rails** — the orchestrator renders these as a one-line rail and edits it in place; glyphs and rules are its own (`orchestrator.md` → *Interaction defaults* → *stage rail*). This skill owns only the stage names per mode:
 
