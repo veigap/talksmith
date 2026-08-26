@@ -587,6 +587,17 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .pc-pro{background:var(--call-blue)}.pc-con{background:var(--call-pink)}
 .pccol .ic{width:6cqw;height:6cqw}.pccol h3{margin:0;font-size:3.1cqw;font-weight:800;color:var(--ink)}
 .pccol p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.35}
+/* One rule per line. `pros`/`cons` are a LIST of rules, so they stack: joined into a sentence
+   they read as one run-on line and the reader cannot count them, which is the whole job of this
+   slide. Size steps down as the list grows (the per-slide fit pass shrinks further if needed). */
+.pclist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1.2cqw}
+.pclist li{position:relative;padding-left:2.8cqw;font-size:2.4cqw;color:var(--ink);line-height:1.3}
+.pclist li::before{content:"";position:absolute;left:.5cqw;top:.52em;width:1cqw;height:1cqw;
+  border-radius:50%;background:currentColor;opacity:.45}
+.pclist:has(li:nth-child(5)){gap:1cqw}
+.pclist:has(li:nth-child(5)) li{font-size:2.2cqw}
+.pclist:has(li:nth-child(7)){gap:.8cqw}
+.pclist:has(li:nth-child(7)) li{font-size:2cqw}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 /* runtime theme switcher — small control, hidden in PDF export */
@@ -1199,12 +1210,19 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </svg></div></div></div>
 </section><section class="slide" data-kind="pros-cons"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">pros-cons: upside versus downside</h2></div><div class="cbody"><div class="cfit"><div class="proscons">
-<div class="pccol pc-pro"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m346-60-76-130-151-31 17-147-96-112 96-111-17-147 151-31 76-131 134 62 134-62 77 131 150 31-17 147 96 111-96 112 17 147-150 31-77 130-134-62-134 62Zm27-79 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Zm-43 133 227-225-45-41-182 180-95-99-46 45 141 140Z"/></svg></span><h3>Ventajas</h3><p>The pro column uses the blue tint with a check · Best for a decision framed as a trade-off · Each line is one short point</p></div>
-<div class="pccol pc-con"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg></span><h3>Riesgos</h3><p>The con column uses the pink tint with a mark · Author-directed: two labeled groups · Not for a general A-versus-B comparison</p></div>
+<div class="pccol pc-pro"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m346-60-76-130-151-31 17-147-96-112 96-111-17-147 151-31 76-131 134 62 134-62 77 131 150 31-17 147 96 111-96 112 17 147-150 31-77 130-134-62-134 62Zm27-79 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Zm-43 133 227-225-45-41-182 180-95-99-46 45 141 140Z"/></svg></span><h3>Ventajas</h3><ul class="pclist"><li>The pro column uses the blue tint with a check</li><li>Best for a decision framed as a trade-off</li><li>Each line is one short point</li></ul></div>
+<div class="pccol pc-con"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg></span><h3>Riesgos</h3><ul class="pclist"><li>The con column uses the pink tint with a mark</li><li>Author-directed: two labeled groups</li><li>Not for a general A-versus-B comparison</li></ul></div>
 </div>
 </div></div>
 </div>
-</section><section class="slide" id="sec-4" data-kind="section-agenda"><div class="stage"><div class="secag">
+</section><section class="slide" data-kind="pros-cons"><div class="stage d-full">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">pros-cons: uneven, longer lists</h2><p class="lead">The count is the point of the slide, so the rules stack instead of running together.</p></div><div class="cbody"><div class="cfit"><div class="proscons">
+<div class="pccol pc-pro"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m346-60-76-130-151-31 17-147-96-112 96-111-17-147 151-31 76-131 134 62 134-62 77 131 150 31-17 147 96 111-96 112 17 147-150 31-77 130-134-62-134 62Zm27-79 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Zm-43 133 227-225-45-41-182 180-95-99-46 45 141 140Z"/></svg></span><h3>Qué hacer</h3><ul class="pclist"><li>Split before you explore the data</li><li>Split by group, never by row</li><li>Fix the seed and store the split</li><li>Augment the training set only</li><li>Write down what you decided and why</li></ul></div>
+<div class="pccol pc-con"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg></span><h3>Qué no hacer</h3><ul class="pclist"><li>Tune against the test set</li><li>Re-split because the number came out wrong</li><li>Trust the library's default cut</li></ul></div>
+</div>
+</div></div>
+</div>
+<aside class="notes"><p>Edge case for the style test: five rules against three, each a short clause. Guards the count-stepped sizing and the uneven-column layout — the shape that first showed the items had been joined into a single run-on line.</p></aside></section><section class="slide" id="sec-4" data-kind="section-agenda"><div class="stage"><div class="secag">
 <div class="secaglist">
 <a class="secagrow " href="#sec-0"><span class="secagn">01</span><span>Frames &amp; openers</span></a>
 <a class="secagrow " href="#sec-1"><span class="secagn">02</span><span>Statement &amp; emphasis</span></a>

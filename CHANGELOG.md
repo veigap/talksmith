@@ -13,6 +13,16 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.89.2] — 2026-08-26
+
+### Fixed
+
+- **A do's-and-don'ts slide no longer runs its rules together into one line.** The `pros-cons`
+  template joined each column's items with a separator into a single paragraph, so four rules of
+  five words each read as one long run-on sentence and the audience could not count them —
+  counting them is the whole job of that slide. Each item is now its own line. The style test
+  gained an uneven, longer pair of columns (five against three) to keep the shape honest.
+
 ## [0.89.1] — 2026-08-26
 
 ### Fixed

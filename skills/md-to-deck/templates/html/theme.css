@@ -542,6 +542,17 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .pc-pro{background:var(--call-blue)}.pc-con{background:var(--call-pink)}
 .pccol .ic{width:6cqw;height:6cqw}.pccol h3{margin:0;font-size:3.1cqw;font-weight:800;color:var(--ink)}
 .pccol p{margin:0;font-size:2.4cqw;color:var(--ink);line-height:1.35}
+/* One rule per line. `pros`/`cons` are a LIST of rules, so they stack: joined into a sentence
+   they read as one run-on line and the reader cannot count them, which is the whole job of this
+   slide. Size steps down as the list grows (the per-slide fit pass shrinks further if needed). */
+.pclist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1.2cqw}
+.pclist li{position:relative;padding-left:2.8cqw;font-size:2.4cqw;color:var(--ink);line-height:1.3}
+.pclist li::before{content:"";position:absolute;left:.5cqw;top:.52em;width:1cqw;height:1cqw;
+  border-radius:50%;background:currentColor;opacity:.45}
+.pclist:has(li:nth-child(5)){gap:1cqw}
+.pclist:has(li:nth-child(5)) li{font-size:2.2cqw}
+.pclist:has(li:nth-child(7)){gap:.8cqw}
+.pclist:has(li:nth-child(7)) li{font-size:2cqw}
 /* speaker notes live in <aside class="notes"> — Reveal hides them on the slide, shows them in speaker view */
 @media(prefers-reduced-motion:reduce){.reveal .slides section{transition:none!important}}
 /* runtime theme switcher — small control, hidden in PDF export */

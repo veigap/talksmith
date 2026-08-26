@@ -1,7 +1,7 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
 <div class="proscons">
-<div class="pccol pc-pro">{{ icon('verified') }}<h3>{{ s.pro_label or L.pros }}</h3>{% if s.pros %}<p>{{ s.pros | join(' · ') }}</p>{% endif %}</div>
-<div class="pccol pc-con">{{ icon('dangerous') }}<h3>{{ s.con_label or L.cons }}</h3>{% if s.cons %}<p>{{ s.cons | join(' · ') }}</p>{% endif %}</div>
+<div class="pccol pc-pro">{{ icon('verified') }}<h3>{{ s.pro_label or L.pros }}</h3>{% if s.pros %}<ul class="pclist">{% for p in s.pros %}<li>{{ p }}</li>{% endfor %}</ul>{% endif %}</div>
+<div class="pccol pc-con">{{ icon('dangerous') }}<h3>{{ s.con_label or L.cons }}</h3>{% if s.cons %}<ul class="pclist">{% for c in s.cons %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}</div>
 </div>
 {% endcall %}

@@ -990,6 +990,27 @@
       ]
     },
     {
+      "template": "pros-cons",
+      "title": "pros-cons: uneven, longer lists",
+      "section": "Ordered & comparison",
+      "lead": "The count is the point of the slide, so the rules stack instead of running together.",
+      "pro_label": "Qué hacer",
+      "con_label": "Qué no hacer",
+      "pros": [
+        "Split before you explore the data",
+        "Split by group, never by row",
+        "Fix the seed and store the split",
+        "Augment the training set only",
+        "Write down what you decided and why"
+      ],
+      "cons": [
+        "Tune against the test set",
+        "Re-split because the number came out wrong",
+        "Trust the library's default cut"
+      ],
+      "notes": "Edge case for the style test: five rules against three, each a short clause. Guards the count-stepped sizing and the uneven-column layout — the shape that first showed the items had been joined into a single run-on line."
+    },
+    {
       "template": "section-agenda",
       "title": "Visual & data"
     },
