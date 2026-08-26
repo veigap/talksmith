@@ -52,7 +52,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field as dc_field
 from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -65,7 +65,11 @@ from block_coverage import (  # noqa: E402  (shared pptx / source machinery)
     _looks_like_agenda,
     _HEADING_NUM,
     _NONSLIDE_HEADING,
+    _SKIP_H3,
+    SlideIndex,
+    content_windows,
     resolve_source,
+    slide_text,
 )
 
 
@@ -78,6 +82,10 @@ class SourceSlide:
     h2_line: int
     h2_title: str
     has_notes: bool = False
+    body: list[str] = dc_field(default_factory=list)
+
+    def windows(self) -> list[str]:
+        return content_windows(self.body)
 
 
 def parse_model(path: str) -> list[SourceSlide]:
@@ -101,13 +109,15 @@ def parse_model(path: str) -> list[SourceSlide]:
 def parse_source_md(path: str) -> list[SourceSlide]:
     """Per `##` slide of `final.md`: does it carry a non-empty `### Speaker notes` block?
 
-    Everything under `# Cut material` / `# Open questions` is out of scope, as is fenced code
-    (a notes heading inside a code sample is a sample, not a notes block).
+    Only `##` blocks are slides (schemas/draft.md) — an `#` heading opens a section, whose body is
+    working meta. Everything under `# Cut material` / `# Open questions` is out of scope, as is
+    fenced code (a notes heading inside a code sample is a sample, not a notes block). The body is
+    kept so a slide whose template has no `title` can still be matched by its text.
     """
     text = open(path, encoding="utf-8").read()
     out: list[SourceSlide] = []
     cur: SourceSlide | None = None
-    in_notes = in_fence = False
+    in_notes = in_fence = skip = False
     for i, raw in enumerate(text.split("\n"), start=1):
         if _NONSLIDE_HEADING.match(raw):
             break
@@ -116,54 +126,52 @@ def parse_source_md(path: str) -> list[SourceSlide]:
             continue
         if in_fence:
             continue
-        if raw.startswith("## ") or raw.startswith("# "):
-            title = _HEADING_NUM.sub("", raw.split(" ", 1)[1].strip()) if " " in raw else ""
-            cur = SourceSlide(h2_line=i, h2_title=title)
+        if raw.startswith("## "):
+            cur = SourceSlide(h2_line=i, h2_title=_HEADING_NUM.sub("", raw[3:].strip()))
             out.append(cur)
-            in_notes = False
+            in_notes = skip = False
+            continue
+        if raw.startswith("# "):
+            cur, in_notes, skip = None, False, False
             continue
         if raw.startswith("### "):
             head = re.sub(r"[^\w\s]", "", raw[4:].strip().lower()).strip()
             in_notes = "speaker notes" in head or head == "notes"
+            skip = head in _SKIP_H3
             continue
-        if in_notes and cur is not None and raw.strip() and raw.strip() not in {"---", "***"}:
+        if cur is None or not raw.strip() or raw.strip() in {"---", "***", "___"}:
+            continue
+        if in_notes:
             cur.has_notes = True
+        elif not skip:
+            cur.body.append(raw)
     return out
 
 
-def model_notes(path: str) -> list[tuple[str, bool]]:
-    """(title, model slide carries non-empty `notes`) per model slide."""
+def model_notes(path: str) -> tuple[list[tuple[str, bool]], SlideIndex]:
+    """Per model slide: (title, carries non-empty `notes`), plus the title-or-text index."""
     model = json.loads(open(path, encoding="utf-8").read())
-    return [((sl.get("title") or sl.get("section") or ""),
-             bool((sl.get("notes") or "").strip()))
-            for sl in model.get("slides", [])]
+    out: list[tuple[str, bool]] = []
+    entries: list[tuple[str, str]] = []
+    for sl in model.get("slides", []):
+        title = sl.get("title") or sl.get("section") or ""
+        out.append((title, bool((sl.get("notes") or "").strip())))
+        entries.append((title, slide_text(sl)))
+    return out, SlideIndex(entries)
 
 
-def reconcile_source(md: list[SourceSlide],
-                     model: list[tuple[str, bool]]) -> tuple[list[Drop], list[Unmatched]]:
-    by_title: dict[str, tuple[int, bool]] = {}
-    for idx, (title, has) in enumerate(model, start=1):
-        key = _normalize_title(title)
-        if key and key not in by_title:
-            by_title[key] = (idx, has)
-
+def reconcile_source(md: list[SourceSlide], model: list[tuple[str, bool]],
+                     index: SlideIndex) -> tuple[list[Drop], list[Unmatched]]:
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
     for sslide in md:
         if not sslide.has_notes:
             continue
-        key = _normalize_title(sslide.h2_title)
-        hit = by_title.get(key)
-        if hit is None:
-            cands = [v for k, v in by_title.items()
-                     if k.startswith(key[:20]) or key.startswith(k[:20])]
-            if len(cands) == 1:
-                hit = cands[0]
-        if hit is None:
+        idx = index.find(sslide.h2_title, sslide.windows())
+        if idx is None:
             unmatched.append(Unmatched(h2_line=sslide.h2_line, h2_title=sslide.h2_title))
             continue
-        idx, has = hit
-        if not has:
+        if not model[idx - 1][1]:
             drops.append(Drop(slide_num=idx, h2_title=sslide.h2_title, target="model"))
     return drops, unmatched
 
@@ -331,11 +339,11 @@ def main(argv: list[str] | None = None) -> int:
     if source_md:
         try:
             md = parse_source_md(source_md)
-            model = model_notes(args.model_json)
+            model, index = model_notes(args.model_json)
         except (FileNotFoundError, OSError, ValueError) as e:
             print(f"audit_notes_coverage: cannot run the source stage: {e}", file=sys.stderr)
             return 2
-        d, u = reconcile_source(md, model)
+        d, u = reconcile_source(md, model, index)
         drops += d
         unmatched += u
         stages.append(f"source({Path(source_md).name})")

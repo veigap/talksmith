@@ -376,6 +376,17 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `<!-- reveal: … -->` hint into `reveal`.
 - **`### Speaker notes`** → lifted **verbatim** into the slide's `notes` (never onto the slide
   face). Keep image `src` paths exactly as written (`images/…`).
+  **Verbatim means every sentence — copy the block, do not summarize it.** Notes are the one field
+  that costs nothing to keep: they never compete for room on the slide, so there is no budget to
+  respect and nothing at all to gain by compressing them. Shortening them only loses. On one deck
+  the fill wrote a tidy paraphrase of a slide's notes and, in doing so, cut the sentence that
+  answered the question the note itself poses (*why the harmonic mean and not the average?* —
+  "the harmonic mean tends toward the smaller of the two"), along with a mnemonic and a warning.
+  The slide still read fine; the presenter, who gives the class off these notes, no longer had the
+  answer in hand when a student asked. Body prose may be restructured — that is what decomposing
+  into fields *is* — but notes are copied. `audits/text_coverage.py` enforces exactly this
+  asymmetry, and it is the reason the audit reports a missing notes line more severely than a
+  missing body line.
 
 **Decomposing the body into fields** — the field-mapping judgment, once the template is chosen:
 - **Inline markup survives — copy it, don't strip it.** Every text field of every template accepts

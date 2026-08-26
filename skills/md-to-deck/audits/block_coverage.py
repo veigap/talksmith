@@ -69,6 +69,9 @@ import zipfile
 from dataclasses import dataclass, asdict, field
 from pathlib import Path, PurePosixPath
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from text_coverage import tokens  # noqa: E402  (one tokenizer, shared by every coverage audit)
+
 NS = {
     "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
     "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
@@ -140,14 +143,98 @@ class MdSlide:
     title: str
     callouts: int = 0
     callout_lines: list[int] = field(default_factory=list)
+    body: list[str] = field(default_factory=list)
+
+    def windows(self, window: int = 5, limit: int = 8) -> list[str]:
+        """Distinctive word windows of this slide's body, for matching a slide by its text."""
+        return content_windows(self.body, window=window, limit=limit)
+
+
+def content_windows(body: list[str], window: int = 5, limit: int = 8) -> list[str]:
+    """Up to `limit` `window`-word runs drawn from a slide's body text."""
+    out: list[str] = []
+    for line in body:
+        tk = tokens(line)
+        for i in range(0, max(1, len(tk) - window + 1)):
+            run = tk[i:i + window]
+            if len(run) >= window:
+                out.append(" ".join(run))
+                if len(out) >= limit:
+                    return out
+    return out
+
+
+class SlideIndex:
+    """Model slides addressable by title **or** by the text they carry.
+
+    Title alone is not an address. `quote`, `big-number`, `image-grid`, `quiz` and `callout` have
+    no `title` field at all (schemas/slide-model.md), so a title-only index reports every slide of
+    those templates as unmatched — and then never audits them. Falling back to a text match fixes
+    that without loosening the title path: a source slide is matched by content only when exactly
+    one model slide carries a distinctive run of its words.
+    """
+
+    def __init__(self, entries: list[tuple[str, str]]):
+        """entries: (title, full slide text) in model order."""
+        self.by_title: dict[str, int] = {}
+        self.texts: list[str] = []
+        for idx, (title, text) in enumerate(entries, start=1):
+            key = _normalize_title(title)
+            if key and key not in self.by_title:
+                self.by_title[key] = idx
+            self.texts.append(" " + " ".join(tokens(text)) + " ")
+
+    def find(self, title: str, windows: list[str] | None = None) -> int | None:
+        key = _normalize_title(title)
+        if key in self.by_title:
+            return self.by_title[key]
+        if key:
+            cands = [i for k, i in self.by_title.items()
+                     if k.startswith(key[:20]) or key.startswith(k[:20])]
+            if len(cands) == 1:
+                return cands[0]
+        if not windows:
+            return None
+        hits: dict[int, int] = {}
+        for w in windows:
+            needle = f" {w} "
+            for i, text in enumerate(self.texts, start=1):
+                if needle in text:
+                    hits[i] = hits.get(i, 0) + 1
+        if not hits:
+            return None
+        best = max(hits.values())
+        winners = [i for i, n in hits.items() if n == best]
+        return winners[0] if len(winners) == 1 else None
+
+
+def slide_text(slide: dict) -> str:
+    """Every content string of one model slide (keys beginning with `_` excluded)."""
+    chunks: list[str] = []
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if not k.startswith("_"):
+                    walk(v)
+        elif isinstance(o, list):
+            for x in o:
+                walk(x)
+        elif isinstance(o, str):
+            chunks.append(o)
+
+    walk(slide)
+    return " ".join(chunks)
 
 
 def parse_source_md(path: str) -> list[MdSlide]:
-    """Callout blocks per slide of `final.md`.
+    """Callout blocks (and body text, for matching) per slide of `final.md`.
 
-    Skipped: fenced code, `# Cut material` / `# Open questions`, and the `### Sources`,
-    `### Presenter feedback` and `### Speaker notes` sub-blocks — a callout quoted in the notes is
-    prose the presenter says, not a block the slide owes the audience.
+    Only `##` blocks are slides (schemas/draft.md): the thesis claim, the agenda arc and a
+    section's `**Goal of this section:**` live under an `#` heading and are working meta the deck
+    never renders. Also skipped: fenced code, `# Cut material` / `# Open questions`, and the
+    `### Sources`, `### Presenter feedback` and `### Speaker notes` sub-blocks — a callout quoted
+    in the notes is prose the presenter says, not a block the slide owes the audience.
     """
     text = open(path, encoding="utf-8").read()
     out: list[MdSlide] = []
@@ -161,11 +248,13 @@ def parse_source_md(path: str) -> list[MdSlide]:
             continue
         if in_fence:
             continue
-        if raw.startswith("## ") or raw.startswith("# "):
-            title = _HEADING_NUM.sub("", raw.split(" ", 1)[1].strip()) if " " in raw else ""
-            cur = MdSlide(line=i, title=title)
+        if raw.startswith("## "):
+            cur = MdSlide(line=i, title=_HEADING_NUM.sub("", raw[3:].strip()))
             out.append(cur)
             skip = False
+            continue
+        if raw.startswith("# "):
+            cur, skip = None, False          # a section heading opens meta, not a slide
             continue
         if raw.startswith("### "):
             head = re.sub(r"[^\w\s]", "", raw[4:].strip().lower()).strip()
@@ -177,48 +266,42 @@ def parse_source_md(path: str) -> list[MdSlide]:
                 or _CALLOUT_BULLET.match(raw)):
             cur.callouts += 1
             cur.callout_lines.append(i)
+        if raw.strip() and raw.strip() not in {"---", "***", "___"}:
+            cur.body.append(raw)
     return out
 
 
-def model_callout_slots(path: str) -> list[tuple[str, int]]:
-    """(title, callout-shaped landing places) per model slide.
+def model_callout_slots(path: str) -> tuple[list[tuple[str, int]], SlideIndex]:
+    """Per model slide: (title, callout-shaped landing places), plus the title-or-text index.
 
     A source callout may legitimately land as a `callout`-template slide, a `callout` field, or a
     `highlights` entry — the schema lets the fill route an aside either way, so all three count.
     """
     model = json.loads(open(path, encoding="utf-8").read())
+    slides = model.get("slides", [])
     out: list[tuple[str, int]] = []
-    for sl in model.get("slides", []):
+    entries: list[tuple[str, str]] = []
+    for sl in slides:
         slots = 1 if (sl.get("template") == "callout" or sl.get("callout")) else 0
         slots += len(sl.get("highlights") or [])
-        out.append((sl.get("title") or sl.get("section") or "", slots))
-    return out
+        title = sl.get("title") or sl.get("section") or ""
+        out.append((title, slots))
+        entries.append((title, slide_text(sl)))
+    return out, SlideIndex(entries)
 
 
-def reconcile_source(md: list[MdSlide],
-                     slots: list[tuple[str, int]]) -> tuple[list[Drop], list[Unmatched]]:
-    by_title: dict[str, tuple[int, str, int]] = {}
-    for idx, (title, n) in enumerate(slots, start=1):
-        key = _normalize_title(title)
-        if key and key not in by_title:
-            by_title[key] = (idx, title, n)
-
+def reconcile_source(md: list[MdSlide], slots: list[tuple[str, int]],
+                     index: SlideIndex) -> tuple[list[Drop], list[Unmatched]]:
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
     for m in md:
         if not m.callouts:
             continue                      # only a slide that authored one can drop one
-        key = _normalize_title(m.title)
-        hit = by_title.get(key)
-        if hit is None:
-            cands = [v for k, v in by_title.items()
-                     if k.startswith(key[:20]) or key.startswith(k[:20])]
-            if len(cands) == 1:
-                hit = cands[0]
-        if hit is None:
+        idx = index.find(m.title, m.windows())
+        if idx is None:
             unmatched.append(Unmatched(h2_line=m.line, h2_title=m.title))
             continue
-        idx, _title, n = hit
+        n = slots[idx - 1][1]
         if m.callouts > n:
             drops.append(Drop(
                 slide_num=idx, h2_title=m.title, block_type="callout(s)",
@@ -427,6 +510,12 @@ def reconcile(
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
     for s in sources:
+        if not s.callouts and not s.images:
+            # Nothing to look for, so nothing to report — and no reason to demand a title match.
+            # Templates the schema gives no `title` (quote, big-number, image-grid, quiz, callout)
+            # can never match one, and reporting them as `[unmatched]` teaches the reader to skip
+            # the very line where a genuinely lost slide would appear.
+            continue
         key = _normalize_title(s.h2_title)
         match = by_title.get(key)
         if match is None:
@@ -523,11 +612,11 @@ def main(argv: list[str] | None = None) -> int:
     if source_md:
         try:
             md = parse_source_md(source_md)
-            slots = model_callout_slots(args.model_json)
+            slots, index = model_callout_slots(args.model_json)
         except (FileNotFoundError, OSError, ValueError) as e:
             print(f"audit_block_coverage: cannot run the source stage: {e}", file=sys.stderr)
             return 2
-        d, u = reconcile_source(md, slots)
+        d, u = reconcile_source(md, slots, index)
         drops += d
         unmatched += u
         stages.append(f"source({Path(source_md).name})")

@@ -185,25 +185,30 @@ def _coverage_warn(model: dict, model_path: Path, source_md: Path, limit: int = 
         import text_coverage as _tc            # noqa: PLC0415  (advisory, optional)
         import notes_coverage as _nc           # noqa: PLC0415
         text = source_md.read_text(encoding="utf-8")
-        drops, missing, checked = _tc.audit(text, model)
+        r = _tc.audit(text, model)
         ndrops, _ = _nc.reconcile_source(_nc.parse_source_md(str(source_md)),
                                          _nc.model_notes(str(model_path)))
     except Exception as e:                     # never let an advisory check break a render
         print(f"[html] warning: coverage check skipped ({type(e).__name__}: {e})", file=sys.stderr)
         return
 
-    if not drops and not missing and not ndrops:
-        print(f"[html] coverage: ok — {checked} source lines present in the model", file=sys.stderr)
+    notes, content = r.notes_drops, r.content_drops
+    if not r.drops and not r.missing and not ndrops:
+        print(f"[html] coverage: ok — {r.checked} source lines present in the model",
+              file=sys.stderr)
         return
 
-    print(f"[html] warning: {len(drops)}/{checked} source line(s), {len(missing)} slide(s) and "
-          f"{len(ndrops)} notes block(s) of {source_md.name} are MISSING from the model — the deck "
-          f"renders, but that content is not on it. Re-check the FILL step; full list: "
-          f"audits/text_coverage.py {source_md} {model_path}", file=sys.stderr)
-    # Whole missing slides and dropped notes first — they are the severe findings; individual
-    # lines fill whatever of the budget is left.
-    lines = ([m.fmt(source_md.name) for m in missing] + [d.fmt() for d in ndrops]
-             + [d.fmt(source_md.name) for d in drops])
+    # Notes first, and counted apart from body prose. They are copied verbatim, so a missing notes
+    # line is unambiguously lost — while a body line with no literal match is often just the fill
+    # restructuring prose into fields, which `text_coverage` already sorts out into its own tier.
+    print(f"[html] warning: {len(notes)} speaker-notes line(s), {len(content)} body line(s) and "
+          f"{len(r.missing) + len(ndrops)} slide(s)/notes block(s) of {source_md.name} are missing "
+          f"from the model (of {r.checked} checked). The deck renders; that content is not on it. "
+          f"Full list: audits/text_coverage.py {source_md} {model_path}", file=sys.stderr)
+    # Severe findings first — a whole slide, then a dropped notes block, then individual lines;
+    # body lines fill whatever of the budget is left.
+    lines = ([m.fmt(source_md.name) for m in r.missing] + [d.fmt() for d in ndrops]
+             + [d.fmt(source_md.name) for d in notes + content])
     for ln in lines[:limit]:
         print("  " + ln, file=sys.stderr)
     if len(lines) > limit:

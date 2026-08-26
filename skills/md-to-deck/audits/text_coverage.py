@@ -10,46 +10,70 @@ Why this exists:
     leave the fourth clause behind; the model stays *valid*, every other audit passes, and the
     slide ships missing the sentence that disambiguated it.
 
-    That is not hypothetical. On one deck a manual sweep found **37 live sentences** of `final.md`
+    That is not hypothetical. On one deck a manual sweep found 37 live sentences of `final.md`
     absent from the model — among them the one line that said whether a formula's Σ ran over
     examples or over output units. The deck rendered, every audit was green, and the presenter
     read the slide wrong. `audits/block_coverage.py` and `audits/notes_coverage.py` could not have
     caught it: both compare the model against a rendered `.pptx`, so they are blind to what FILL
-    dropped *before* the render — and on an HTML-only deck they had no `.pptx` to run against at
-    all.
+    dropped *before* the render — and on an HTML-only deck they had no `.pptx` to run against.
 
-    This audit is that check, mechanised, and it is **format-independent**: it compares the source
-    to the model, so it guards `html-strict` exactly as it guards the `.pptx` paths. It is the text
+    This audit is that check, mechanised, and it is **format-independent**: it compares source to
+    model, so it guards `html-strict` exactly as it guards the `.pptx` paths. It is the text
     counterpart of `audits/image_coverage.py`, which does the same for image refs.
 
-How it decides a line was dropped:
-    A source fragment is **present** when any window of `--window` consecutive words (default 5)
-    from it appears, in order, in the model's text. That tolerates the decomposition FILL is
-    *supposed* to do — a sentence split across a card's `label` and `body`, a lead-in separator
-    consumed, punctuation normalized — while still catching a clause that simply is not there.
-    Short fragments (3-4 words) must appear whole; anything shorter is skipped as too weak to
-    judge. Matching is deck-wide, not per-slide: a line moved to a neighbouring slide is a
-    judgment call, not a drop.
+**Body prose and speaker notes are judged differently, because their contracts differ.**
+
+    Notes are **copied verbatim** into `notes` — they never compete for room on the slide, so
+    there is nothing to gain by compressing them and a missing notes line is simply a lost line.
+    They are reported strictly: no match, no excuse.
+
+    Body prose is **decomposed**, and decomposition legitimately rewrites. A verified case: two
+    prose bullets became a comparison table, every word changed, nothing was lost. Any literal
+    match counts that as a drop, and a report where most rows are innocent is a report a presenter
+    learns to skip. So a body line with no literal match is sorted into two tiers:
+
+      `[text-drop]`      — no word window matched **and** most of its distinctive words are absent
+                           from the model. Nothing of this line is on the deck.
+      `[text-rewritten]` — no window matched, but its distinctive words are almost all present.
+                           Almost always a legitimate restructuring; hidden unless
+                           `--show-rewrites`, and never counted as a failure.
+
+How a line is judged present:
+    Any window of `--window` consecutive words (default 5) appearing, in order, in the model's
+    text. That tolerates the decomposition FILL is *supposed* to do — a sentence split across a
+    card's `label` and `body`, a lead-in separator consumed, punctuation normalized — while still
+    catching a clause that is not there. Short fragments (3-4 words) must appear whole; anything
+    shorter is skipped as too weak to judge. Matching is deck-wide: a line moved to a neighbouring
+    slide is a judgment call, not a drop.
 
 What it reads on the source side:
-    Slide bodies (`### Content` or bare prose under the `##`) and `### Speaker notes` — notes are
-    lifted verbatim into `notes`, so a missing notes line is a hard defect. Skipped: `### Sources`
-    and `### Presenter feedback` blocks, fenced code (bulky enough that a drop is visible, and
-    `code` carries its own bytes), HTML comments (directives and `<!-- ascii-source: … -->`
-    echoes), image refs, YAML frontmatter, and everything under `# Cut material` /
-    `# Open questions`. A line explicitly waived with `<!-- deck-omit-text: <any substring> -->`
-    anywhere in the file is never reported.
+    Slide bodies (`### Content` or bare prose under a `##`) and `### Speaker notes`. **Only `##`
+    blocks are slides** (schemas/draft.md): the thesis claim, the agenda arc and a section's
+    `**Goal of this section:**` sit under an `#` heading and are working meta the deck never
+    renders — the agenda slide is built from `deck.sections`, not from the agenda block — so
+    everything before a section's first `##` is out of scope. Also skipped: `### Sources` and
+    `### Presenter feedback`, fenced code (bulky enough that a drop is visible, and `code` carries
+    its own bytes), HTML comments, image refs, YAML frontmatter, and everything under
+    `# Cut material` / `# Open questions`. A line waived with
+    `<!-- deck-omit-text: <any substring> -->` anywhere in the file is never reported.
 
 What it reads on the model side:
     Every string in `slide-model.json` except keys beginning with `_` — notably `_choice`, whose
     rationale prose quotes the source and would mask exactly the drops this looks for.
 
+A whole missing slide:
+    Reported only when **nothing** of the slide reached the model — neither its title nor any of
+    its lines. Title alone is not enough to go on: `quote`, `big-number`, `image-grid`, `quiz` and
+    `callout` slides carry no `title` field at all, so a title-only test calls every one of them
+    missing.
+
 Usage:
-    python3 text_coverage.py <final.md> <slide-model.json> [--window N] [--strict] [--json]
+    python3 text_coverage.py <final.md> <slide-model.json>
+        [--window N] [--strict | --strict-notes] [--show-rewrites] [--json]
 
 Exit codes:
-    0  no drops (or drops found without `--strict` — the list goes to stderr)
-    1  drops found AND --strict
+    0  no drops (or drops found without a --strict flag — the list goes to stderr)
+    1  drops found AND --strict, or notes drops AND --strict-notes
     2  a file could not be read / parsed
 """
 from __future__ import annotations
@@ -75,6 +99,12 @@ _SENTENCE_SPLIT = re.compile(r"(?<=[.!?;])\s+")
 _HEADING_NUM = re.compile(r"^\s*\d+[.)]\s*")
 # A line that starts its own unit: list item, numbered item, or table row.
 _NEW_UNIT = re.compile(r"^\s*(?:[-*+]\s|\d+[.)]\s|\|)")
+
+# Below this length a token is a function word in Spanish and English alike (de, la, and, the),
+# present in any text and worthless as evidence that a line survived.
+_CONTENT_WORD_MIN = 4
+# Share of a line's distinctive words that must be present for "rewritten" rather than "dropped".
+_REWRITE_RECALL = 0.7
 
 
 # --------------------------------------------------------------------------- #
@@ -114,7 +144,7 @@ def _haystack(model: dict) -> str:
 
 
 def _title_haystack(model: dict) -> str:
-    """Model slide titles / section names only — for the whole-slide-missing check."""
+    """Model slide titles / section names only — the first half of the missing-slide test."""
     out: list[str] = []
     for s in model.get("slides", []):
         for k in ("title", "section", "lead"):
@@ -142,6 +172,19 @@ def present(frag_tokens: list[str], hay: str, window: int) -> bool:
         f" {' '.join(frag_tokens[i:i + window])} " in hay
         for i in range(n - window + 1)
     )
+
+
+def word_recall(frag_tokens: list[str], vocab: set[str]) -> float | None:
+    """Share of the fragment's distinctive words present anywhere in the model.
+
+    High recall with no window match is the signature of a rewrite: the fill kept the content and
+    changed the phrasing (two bullets folded into a table, a sentence recast as a card). Returns
+    None when the fragment carries too few distinctive words to judge.
+    """
+    content = {t for t in frag_tokens if len(t) >= _CONTENT_WORD_MIN}
+    if len(content) < 3:
+        return None
+    return len(content & vocab) / len(content)
 
 
 # --------------------------------------------------------------------------- #
@@ -201,6 +244,7 @@ def fragments(text: str) -> tuple[list[Fragment], list[tuple[int, str]], list[st
     titles: list[tuple[int, str]] = []
     slide = ""
     where = "content"
+    in_slide = False        # only `##` blocks are slides; `#` bodies are working meta
 
     # A paragraph wrapped across source lines is ONE sentence; splitting per line would report
     # each half separately and, worse, cut a real sentence below the window. Accumulate
@@ -225,14 +269,21 @@ def fragments(text: str) -> tuple[list[Fragment], list[tuple[int, str]], list[st
             flush()
             break                                            # not delivered material
         s = lines[i].strip()
+        if original.startswith("## "):
+            flush()
+            slide = _HEADING_NUM.sub("", original[3:].strip())
+            titles.append((i + 1, slide))
+            where, in_slide = "content", True
+            continue
+        if original.startswith("# "):
+            # A section / thesis / agenda heading. Its own body is meta — the deck builds its
+            # agenda from `deck.sections`, and a section's goal is a note to the author.
+            flush()
+            slide = _HEADING_NUM.sub("", original[2:].strip())
+            where, in_slide = "content", False
+            continue
         if not s:
             flush()
-            continue
-        if original.startswith("## ") or original.startswith("# "):
-            flush()
-            slide = _HEADING_NUM.sub("", original.split(" ", 1)[1].strip()) if " " in original else ""
-            titles.append((i + 1, slide))
-            where = "content"
             continue
         if original.startswith("### "):
             flush()
@@ -243,7 +294,7 @@ def fragments(text: str) -> tuple[list[Fragment], list[tuple[int, str]], list[st
         if s in {"---", "***", "___"}:
             flush()
             continue
-        if where == "skip":
+        if where == "skip" or not in_slide:
             continue
         if _NEW_UNIT.match(s):                               # list marker / table row
             flush()
@@ -264,12 +315,16 @@ def fragments(text: str) -> tuple[list[Fragment], list[tuple[int, str]], list[st
 class Drop:
     line: int
     slide: str
-    where: str
+    where: str        # "content" | "notes"
     text: str
+    tier: str         # "drop" | "rewritten"
+    recall: float | None = None
 
     def fmt(self, src: str) -> str:
         t = self.text if len(self.text) <= 110 else self.text[:107] + "…"
-        return f'[text-drop] {src}:{self.line} ({self.where}) "{self.slide}" — "{t}"'
+        tag = "text-drop" if self.tier == "drop" else "text-rewritten"
+        tail = "" if self.recall is None else f" [{self.recall:.0%} of its words are in the model]"
+        return f'[{tag}] {src}:{self.line} ({self.where}) "{self.slide}" — "{t}"{tail}'
 
 
 @dataclass
@@ -278,35 +333,69 @@ class MissingSlide:
     title: str
 
     def fmt(self, src: str) -> str:
-        return f'[slide-missing] {src}:{self.line} "{self.title}" — no model slide carries this title'
+        return (f'[slide-missing] {src}:{self.line} "{self.title}" — nothing from this slide '
+                f'(neither title nor any line) reached the model')
 
 
-def audit(text: str, model: dict, window: int = 5) -> tuple[list[Drop], list[MissingSlide], int]:
+@dataclass
+class Report:
+    drops: list[Drop]            # tier "drop" only — notes and content
+    rewrites: list[Drop]         # tier "rewritten" — advisory
+    missing: list[MissingSlide]
+    checked: int
+
+    @property
+    def notes_drops(self) -> list[Drop]:
+        return [d for d in self.drops if d.where == "notes"]
+
+    @property
+    def content_drops(self) -> list[Drop]:
+        return [d for d in self.drops if d.where == "content"]
+
+
+def audit(text: str, model: dict, window: int = 5) -> Report:
     frags, titles, waivers = fragments(text)
     hay = _haystack(model)
     thay = _title_haystack(model)
+    vocab = set(hay.split())
 
     drops: list[Drop] = []
+    rewrites: list[Drop] = []
     checked = 0
+    matched_slides: set[str] = set()
     for f in frags:
         tk = tokens(f.text)
         if len(tk) < 3:
             continue
         checked += 1
+        if present(tk, hay, window):
+            matched_slides.add(f.slide)
+            continue
         low = f.text.lower()
         if any(w and w in low for w in waivers):
+            matched_slides.add(f.slide)
             continue
-        if not present(tk, hay, window):
-            drops.append(Drop(line=f.line, slide=f.slide, where=f.where, text=f.text))
+        # Notes are copied verbatim, so there is no rewrite tier for them: a notes line that did
+        # not match is a notes line that was summarized away, which is exactly the defect.
+        recall = None if f.where == "notes" else word_recall(tk, vocab)
+        if recall is not None and recall >= _REWRITE_RECALL:
+            rewrites.append(Drop(f.line, f.slide, f.where, f.text, "rewritten", recall))
+            matched_slides.add(f.slide)
+        else:
+            drops.append(Drop(f.line, f.slide, f.where, f.text, "drop", recall))
 
+    # A slide is missing only when nothing of it landed — not merely when its title did not.
+    # `quote`, `big-number`, `image-grid`, `quiz` and `callout` have no `title` field at all
+    # (schemas/slide-model.md), so a title-only test reports every one of them.
     missing: list[MissingSlide] = []
     for line, title in titles:
-        tk = tokens(title)
-        if len(tk) < 2:
+        if title in matched_slides:
             continue
-        if not present(tk, thay, min(window, 4)) and not present(tk, hay, min(window, 4)):
-            missing.append(MissingSlide(line=line, title=title))
-    return drops, missing, checked
+        tk = tokens(title)
+        if len(tk) >= 2 and (present(tk, thay, min(window, 4)) or present(tk, hay, min(window, 4))):
+            continue
+        missing.append(MissingSlide(line=line, title=title))
+    return Report(drops=drops, rewrites=rewrites, missing=missing, checked=checked)
 
 
 # --------------------------------------------------------------------------- #
@@ -320,7 +409,12 @@ def main(argv=None) -> int:
     ap.add_argument("--window", type=int, default=5,
                     help="consecutive words that must match to call a line present (default 5)")
     ap.add_argument("--strict", action="store_true",
-                    help="exit 1 when lines are missing (default: warn, exit 0)")
+                    help="exit 1 on any drop (default: warn, exit 0)")
+    ap.add_argument("--strict-notes", action="store_true",
+                    help="exit 1 on a dropped notes line only — notes are copied verbatim, so "
+                         "those are unambiguous; body prose is legitimately restructured")
+    ap.add_argument("--show-rewrites", action="store_true",
+                    help="also list body lines that look restructured rather than dropped")
     ap.add_argument("--json", action="store_true", help="emit the full report on stdout")
     args = ap.parse_args(argv)
 
@@ -335,33 +429,59 @@ def main(argv=None) -> int:
         print(f"text_coverage: cannot read model {args.model}: {e}", file=sys.stderr)
         return 2
 
-    drops, missing, checked = audit(text, model, window=max(2, args.window))
+    r = audit(text, model, window=max(2, args.window))
+    notes, content = r.notes_drops, r.content_drops
 
     if args.json:
         print(json.dumps({
             "final": str(args.final),
             "model": str(args.model),
             "window": args.window,
-            "summary": {"checked": checked, "drops": len(drops), "missing_slides": len(missing)},
-            "drops": [asdict(d) for d in drops],
-            "missing_slides": [asdict(m) for m in missing],
+            "summary": {"checked": r.checked, "notes_drops": len(notes),
+                        "content_drops": len(content), "rewritten": len(r.rewrites),
+                        "missing_slides": len(r.missing)},
+            "notes_drops": [asdict(d) for d in notes],
+            "content_drops": [asdict(d) for d in content],
+            "rewritten": [asdict(d) for d in r.rewrites],
+            "missing_slides": [asdict(m) for m in r.missing],
         }, ensure_ascii=False, indent=2))
 
-    if not drops and not missing:
-        print(f"text_coverage: ok — {checked} source lines, all present in {args.model.name}")
+    if not r.drops and not r.missing:
+        extra = f" ({len(r.rewrites)} restructured)" if r.rewrites else ""
+        print(f"text_coverage: ok — {r.checked} source lines, all present in "
+              f"{args.model.name}{extra}")
+        # Downgraded is not discarded: an author who asked to see the restructured lines gets
+        # them even when nothing failed — that list is how the tier itself gets audited.
+        if args.show_rewrites:
+            for d in r.rewrites:
+                print("  " + d.fmt(args.final.name), file=sys.stderr)
         return 0
 
-    pct = (100.0 * len(drops) / checked) if checked else 0.0
-    print(f"text_coverage: {len(drops)}/{checked} source line(s) ({pct:.0f}%) MISSING from the "
-          f"model, {len(missing)} slide(s) with no model counterpart — content the deck will "
-          f"never show. Re-check the FILL step (schemas/slide-model.md → \"Never drop content\"): "
-          f"move each line into a field, a card, a fact or `highlights`; waive a deliberate "
-          f"omission with `<!-- deck-omit-text: <substring> -->`.", file=sys.stderr)
-    for m in missing:
+    print(f"text_coverage: {len(notes)} speaker-notes line(s), {len(content)} body line(s) and "
+          f"{len(r.missing)} slide(s) of {args.final.name} are MISSING from the model "
+          f"(of {r.checked} checked; {len(r.rewrites)} more were restructured, not lost"
+          f"{'' if args.show_rewrites else ' — --show-rewrites to list them'}).",
+          file=sys.stderr)
+    if notes:
+        print("  Notes are copied verbatim, so each of these is a line the presenter has lost:",
+              file=sys.stderr)
+    for m in r.missing:
         print("  " + m.fmt(args.final.name), file=sys.stderr)
-    for d in drops:
+    for d in notes + content:
         print("  " + d.fmt(args.final.name), file=sys.stderr)
-    return 1 if args.strict else 0
+    if args.show_rewrites:
+        for d in r.rewrites:
+            print("  " + d.fmt(args.final.name), file=sys.stderr)
+    print(f"  Fix in the model (schemas/slide-model.md → \"Never drop content\"): move each line "
+          f"into a field, a card, a fact or `highlights`; copy notes verbatim rather than "
+          f"summarizing them; waive a deliberate omission with "
+          f"`<!-- deck-omit-text: <substring> -->`.", file=sys.stderr)
+
+    if args.strict and r.drops:
+        return 1
+    if args.strict_notes and notes:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

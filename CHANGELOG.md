@@ -13,6 +13,42 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.88.0] — 2026-08-26
+
+Calibration of the coverage audit shipped in 0.87.0, from its first run against a real 62-slide
+deck: of the 153 lines it reported, one class was a genuine and serious finding and the rest were
+the audit's own blind spots.
+
+### Fixed
+
+- **Slides that carry no title were reported missing — always.** Five templates (`quote`,
+  `big-number`, `image-grid`, `quiz`, `callout`) have no title field at all, and all three
+  coverage audits matched slides by title, so every slide of those templates came back unmatched
+  no matter how correctly it was rendered. The audits now fall back to matching a slide by a
+  distinctive run of its own words, and a slide with nothing to check is no longer asked for a
+  title at all. This mattered more than it looks: permanent false noise in the `unmatched` line
+  teaches the reader to skip the one line where a genuinely lost slide would appear.
+- **The thesis, the agenda and section goals were audited as if they were slides.** They are
+  working notes under a `#` heading, and the deck builds its agenda from its section list rather
+  than from the agenda block. Only `##` blocks are slides now.
+- **Body prose is no longer reported as lost when it was merely restructured.** Decomposing a
+  slide into fields legitimately rewrites — two prose bullets become a comparison table, every
+  word moves, nothing is lost — and a literal matcher called all of that a drop. A body line with
+  no literal match is now split into a real drop (its distinctive words are absent too) and a
+  restructuring (its words are all present in another shape); only the first is counted, and the
+  rest are listed only on request with `--show-rewrites`.
+
+### Changed
+
+- **Speaker notes are held to a stricter standard than slide prose, and the spec now says why.**
+  Notes are copied verbatim: they never compete for room on screen, so compressing them can only
+  lose. On the deck above the fill wrote a tidy paraphrase of 27 slides' notes and cut, among
+  other things, the sentence answering the question the note itself poses — leaving the presenter
+  without the answer at the moment a student asks. So notes are never treated as "restructured",
+  `--strict-notes` fails the step on a single dropped notes line, and the render's built-in
+  warning counts and lists notes separately from body prose. The fill step's instruction now
+  states the rule and the reason instead of just the word "verbatim".
+
 ## [0.87.0] — 2026-08-26
 
 ### Added
