@@ -13,6 +13,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.90.2] — 2026-08-28
+
+### Fixed
+
+- **The exported PDF no longer ends every page in a hairline of page colour.** Reveal shortens each
+  printed page wrapper by one pixel by default — a guard for command-line printers that round the
+  last device pixel onto a blank page — so a 720px slide sat in a 719px box inside a 720px sheet and
+  left a 1px band of the deck's page colour along the bottom of all of them. This deck exports
+  through the browser, which doesn't need the guard; the printed slide now fills the sheet exactly.
+
+### Changed
+
+- **The PDF button says which print destination to pick.** A deck's `@page` size (13.33×7.5in, the
+  deck's own 16:9 canvas) is honoured only when the print destination is *Save as PDF*. Choose a
+  physical printer and its paper wins instead: the slide is shrunk to the paper's width and floated
+  between white bands — the deck looks mis-sized when nothing about it changed. The button's tooltip
+  and the skill's two "export PDF" pointers now name the destination.
+
 ## [0.90.1] — 2026-08-28
 
 ### Fixed

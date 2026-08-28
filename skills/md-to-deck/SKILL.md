@@ -253,7 +253,9 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   `output/html/index.html`. Icons cache under `.icons/` (gitignored).
 - **Presentation.** Reveal owns navigation (→ / ← / click), deck-to-window scaling, slide overview
   (`Esc`), transitions, full screen (`F`), **speaker notes** (`notes` → `<aside class="notes">`,
-  shown with `s`), and **PDF export** (`?print-pdf` → Print → Save as PDF). The only custom code is
+  shown with `s`), and **PDF export** (`?print-pdf` → Print → **destination `Save as PDF`**, which is
+  the only destination that honours the deck's `@page` size — a printer destination substitutes its
+  own paper and shrink-to-fits the slide onto it). The only custom code is
   a per-slide content-fit. A discreet Light/Dark toggle (moon/sun) is top-right. Fonts are IBM Plex
   Sans/Mono (vendored, inlined).
 - **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
@@ -423,7 +425,7 @@ classification critique (Step 1.6), which is the slow one on a long deck — chu
 the original three-stage rail. Report the outcome in presenter language: **"adjusted the layout on
 4 slides (7, 12, 20, 28)"**, never the verdict vocabulary or a template id.
 
-`html-strict` "Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF).
+`html-strict` "Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF — pick `Save as PDF` as the print destination, or the paper size overrides the deck's 16:9 page).
 
 ## Rules
 

@@ -1024,12 +1024,16 @@ if(!canHash){document.addEventListener('click',function(ev){
   var el=document.getElementById(a.getAttribute('href').slice(1)); if(!el)return;
   var i=[].indexOf.call(document.querySelectorAll('.reveal .slides > section'), el);
   if(i<0)return; ev.preventDefault(); if(window.Reveal&&Reveal.slide)Reveal.slide(i);});}
+// `pdfPageHeightOffset:0` (Reveal defaults to -1): the offset shortens every `.pdf-page` to 719px
+// inside a 720px `@page`, so each exported page ends in a 1px band of the deck's `--page` colour
+// under the slide. The -1 exists for CLI printers that round the last device pixel onto a blank
+// page; Chrome's `@page`-sized export doesn't, and this deck exports through Chrome.
 Reveal.initialize({
   width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t',
   hash:canHash, respondToHashChanges:canHash, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
-  keyboard:true, pdfSeparateFragments:false, pdfMaxPagesPerSlide:1, plugins:[ RevealNotes ]
+  keyboard:true, pdfSeparateFragments:false, pdfMaxPagesPerSlide:1, pdfPageHeightOffset:0, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();
   try{deckAnim(document.documentElement.getAttribute('data-deck-anim')||'on');}catch(e){}
   playMedia(Reveal.getCurrentSlide());
@@ -1234,7 +1238,7 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<button class="deckanim" data-deck-anim-toggle type="button" '
         f'aria-label="Toggle animations" title="Animations">{_ANIM_ICONS}</button>\n'
         f'<button class="deckpdf" data-deck-pdf type="button" '
-        f'aria-label="Export to PDF" title="Export to PDF">{_PDF_ICON}</button>\n'
+        f'aria-label="Export to PDF" title="Export to PDF (destination: Save as PDF)">{_PDF_ICON}</button>\n'
         f'<button class="deckfull" data-deck-full type="button" '
         f'aria-label="Toggle fullscreen" title="Fullscreen">{_FULL_ICONS}</button>\n'
         f'<button class="deckstyle" data-deck-style-toggle type="button" '
