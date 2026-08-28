@@ -39,6 +39,10 @@ This standard applies to feedback rounds too: a presenter bullet that changes a 
 
 **Pending-stub awareness.** When a slide's `### Sources` cites a `research/corpus/` record that contains `<!-- pending: ... -->` markers, keep the citation and add a note to `Open questions`: `Slide <section>.<slide> cites pending stub corpus/<file>.md — re-verify after librarian Phase 2`.
 
+**A corpus `Inconsistencies` item is not automatically a work order.** Items are marked by the librarian (`${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md` → *Claim discipline*): a `[verified]` item names the check behind it and may be acted on directly; an `[open question]` goes to `Open questions` for the presenter and **never licenses an edit on its own**. Treat an **unmarked** item — written by a librarian pass predating this rule — as an `[open question]`, and be especially wary of any item asserting that something in the outside world *does not exist* (a model, a product, a paper, a figure). Deleting a correct fact on a bad note is unrecoverable: the source is already gone from the deck by the time anyone notices.
+
+**A truncated excerpt has nothing behind it.** When restoring text the source rendered incompletely, `Raw / preserved excerpts` is the place to look — but an excerpt followed by `<!-- truncated-in-source: no complete version available -->` **is** the complete record: there is no fuller version to find. Close the sentence with your own judgement, keeping strictly to what the fragment already claims, and log it in `Open questions` (`Slide <section>.<slide>: sentence closed by the editor — original truncated in corpus/<file>.md`) so the presenter can supply the real ending. Do not re-read raw asset folders hunting for it; do not leave the fragment cut off on the slide.
+
 **The corpus is the canonical interface for source material.** Raw asset folders (`research/articles/`, `research/llm-chats/`, `research/web/`) are inputs to Step 3 only — once the librarian has run, the editor reads exclusively from `research/corpus/`. Image references and source citations always resolve through the corpus, never directly into raw folders. If the corpus is missing a needed image or claim, the fix is to re-run the librarian, not to reach around it.
 
 ## Steps
@@ -124,7 +128,7 @@ Hard rules for the editor when *producing* ASCII:
 - The fence pair brackets the diagram bytes only — no headings, no prose, no Markdown list markers inside.
 - The optional `<!-- ascii-note: ... -->` HTML comment follows the closing fence with at most one blank line between them.
 
-Downstream extractors key on the `ascii` tag alone (the glyph heuristic survives only as a legacy fallback — detection priority order: [`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
+Downstream extractors key on the `ascii` tag **alone** — there is no payload heuristic and no fallback tier, so an untagged fence is never rendered no matter what it draws ([`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
 
 The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent. **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
 
@@ -153,7 +157,7 @@ The orchestrator picks one of three modes; the Editor's authoring sequence insid
 You don't **have** to tag templates — the render classifies each slide from its content — but **when you have a clear intent for a slide, you may record it** as an optional metadata line right under the slide's `##` heading:
 
 - `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `concept-breakdown`), for when the content is ambiguous or you specifically want that treatment;
-- `<!-- reveal: together -->` — opt **out** of progressive reveal on this slide (sequential reveal is the default; the HTML deck steps through enumerated items on click). The legacy `sequential` value still parses but is a no-op.
+- `<!-- reveal: together -->` — opt **out** of progressive reveal on this slide (sequential reveal is the default; the HTML deck steps through enumerated items on click). `together` is the only recognized value — anything else leaves the default in place.
 - `<!-- layout: <value> -->` — pin the **arrangement within** the chosen template, when the type is right but the default placement isn't. Read by **every slide that carries its own supporting image** — `content-image`, `content+cards+image`, and `process`/`quiz` when they have one: `text-left` (default — body left, image right) and `image-left` (mirrored — the image leads the eye and the body follows). `content-image` additionally takes `image-top` (stacked — image over a short caption), which the others don't: a card set or a step list under a full-width image is a different slide, not a layout. So wanting the image first is never a reason to give up a template's structure — pin `image-left` on the one that fits the content. Unlike `aside`, none of these crop, so all are safe for a diagram the audience must read. A value the template doesn't take falls back to its default (with a warning at render) rather than erroring.
 - `<!-- format: <value> -->` — pin the **presentation of a labeled set** (`concept-breakdown`), when the type is right but the default arrangement isn't: `grid` (default — a card per concept), `row` (one horizontal band of short cards), `list` (a vertical stack with room for prose), and `editorial` (**no cards at all** — a flat grid of icon + label + body on the canvas, up to 8 concepts, separated by white space and a hairline). Pin `editorial` when the panels would only add weight and the slide should read as an organized collection of concepts rather than an application screen; leave it off to keep the cards. An unrecognized value falls back to `grid` with a warning at render.
 - `<!-- aside: [left|right] ![alt](path) -->` — give the slide a **full-bleed image column** down one edge (`right` if you don't say). The image is **atmosphere, not information**: it reinforces the point's tone while the audience reads the text beside it. The column crops to fill, so never put something that must be *read* there — a diagram, chart, or screenshot the audience needs belongs in the slide body as a normal `![alt](path)` ref, which the render gives to a template that owns its image. Don't add an aside to a slide that already carries an image ref.
@@ -178,6 +182,7 @@ Per-round loop:
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
           --draft talks/<Talk>/draft.md --line <N>
       ```
+      Bullets found by `find-open` are the presenter's, so the default origin is right. **When *you* add a bullet to a `Presenter feedback` block** to log a change you made on your own initiative, stamp it `--origin editor`. That keeps your change log out of the cross-Talk backlog — step (d) refuses to mirror it, and step 4 stops counting it as pending.
    b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Every rewritten line of presentation prose follows the *Anti-slop authoring standard* (top of this file) — a feedback fix that introduces a slop pattern is a defect. A fix that touches a number re-runs the *Numeric fidelity standard* on it **and on everything derived from it elsewhere in the Talk** — the new value is worth nothing if a stale copy of the old one survives two slides later. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
    c. **Close** with the resolution wording.
       ```bash
@@ -199,7 +204,7 @@ Per-round loop:
        --draft talks/<Talk>/draft.md \
        --backlog config/feedback-backlog.md
    ```
-   Catches any `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each.
+   Catches any **presenter-origin** `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each. Editor-origin bullets are excluded by default and reported only as a count; add `--origin all` if you need to see them.
 
 The Step 6 (c) `rescue-open` pass uses the same helper (`feedback_cycle.py rescue-open`) but **runs against `final.md`**, not `draft.md`, and is invoked from Step 6 — not here.
 
@@ -266,7 +271,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-ope
 ```
 The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "<verbatim>"` under `# Open questions` (creating the section before `# Cut material` if missing), and skips entries already present. `[closed]` bullets and raw un-stamped bullets are ignored. (`draft.md` retains the full feedback log verbatim — this rescue only mutates `final.md`.)
 
-(d) **Strip `Presenter feedback` fields (from `final.md`).** This is deterministic, not a hand-edit — delegate it to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill's `strip_feedback.py`, which removes all three forms at every level (Thesis, Agenda, Section, Slide) — H3 (`### Presenter feedback`), paragraph (`**Presenter feedback:**`), legacy bullet (`- **Presenter feedback:**`) — **and guarantees a blank line before every `---` slide boundary**, so a strip can never leave `text\n---` for Markdown to misread as a setext-H2 underline (the bug this replaces):
+(d) **Strip `Presenter feedback` fields (from `final.md`).** This is deterministic, not a hand-edit — delegate it to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill's `strip_feedback.py`, which removes both authored forms at every level (Thesis, Agenda, Section, Slide) — H3 (`### Presenter feedback`) and paragraph (`**Presenter feedback:**`) — **and guarantees a blank line before every `---` slide boundary**, so a strip can never leave `text\n---` for Markdown to misread as a setext-H2 underline (the bug this replaces):
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md

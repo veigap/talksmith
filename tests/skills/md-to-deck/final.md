@@ -95,8 +95,9 @@ Ocho es el techo del formato: una grilla regular de cuatro por dos.
 
 ---
 
-## Card-row · 3 short cards
-<!-- template: card-row -->
+## concept-breakdown · format row · 3 short cards
+<!-- template: concept-breakdown -->
+<!-- format: row -->
 
 Tres innovaciones que cambiaron la síntesis de imágenes.
 
@@ -106,8 +107,8 @@ Tres innovaciones que cambiaron la síntesis de imágenes.
 
 ---
 
-## Icon-list · el id legacy cae al card grid
-<!-- template: icon-list -->
+## concept-breakdown · the default card grid
+<!-- template: concept-breakdown -->
 
 Tres razones para dejar que el modelo piense en voz alta.
 

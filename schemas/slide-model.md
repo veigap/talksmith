@@ -193,12 +193,12 @@ deliverable; `draft.md` → live in-progress view).
   presenter talks over it, and neither the PDF export (which prints the poster frame) nor a
   reader of the deck ever sees it move.
 
-  > **The old spellings still work.** `image` is read as `media`; `layout: text-left / image-left /
-  > image-top` as `split-right` / `split-left` / `banded`; `aside: {image, side}` as
-  > `column-right` / `column-left`. Existing models render exactly as they did, with no warning.
-  > New models should write `design` + `media`: `layout` only existed on five templates and only
-  > when the slide carried an `image`, and `aside` was a second vocabulary for the same decision —
-  > which is precisely what made a template that wasn't on the list impossible to compose.
+  > **`design` + `media` is the only spelling.** The pair replaced three older vocabularies for the
+  > same decision — a per-template `layout` allowlist, a parallel `aside` column, and composition
+  > hard-coded inside five templates — which between them made a template that wasn't on the
+  > allowlist impossible to compose. None of the three is read any more: a model that writes
+  > `layout`, `aside`, or `image` on a composed template carries a field no renderer consumes, and
+  > the field audit flags it.
 - **`format`** — an **optional** field on `concept-breakdown`, choosing how the labeled set is
   arranged. Like `design`, it is a *formatting* decision made **after** the template, not a second
   classification: the shape ("N parallel labeled concepts") is what picks the template, and this
@@ -211,7 +211,7 @@ deliverable; `draft.md` → live in-progress view).
   | `editorial` | 2–8 short-bodied concepts on a **flat** composition — no cards | a regular grid *without* panels: small icon beside the label, body indented under it. 2·4 → 2 cols, 3·5·6 → 3, 7·8 → 4; a short last row centers (5 → 3+2, 7 → 4+3) |
 
   **All three formats are grids.** A labeled set is N *parallel* concepts, and parallel concepts
-  read side by side. The retired `list` format stacked them in one column, spending the full slide
+  read side by side. A fourth format, `list`, stacked them in one column, spending the full slide
   width on one item and making peers read as a sequence; there is no vertical-stack arrangement any
   more. A model that still carries `format: "list"` renders as `grid` and the build warns. If the
   per-item prose really needs a full-width column, the slide is not a labeled set → `content-text`,
@@ -229,11 +229,11 @@ deliverable; `draft.md` → live in-progress view).
   *(Unrelated to the selectable deck **style** also named `editorial`, which only swaps colour and
   type tokens. This is composition; that is palette.)*
 
-  The legacy template ids **`card-row`** and **`icon-list`** are still accepted: `card-row` means
-  `concept-breakdown` with `format: row`, and `icon-list` — whose `list` format is retired —
-  renders as the default `grid`, keeping its `lead` and its items. New
-  models should emit `concept-breakdown`. Items go in `cards:[{label,body}]`; `rows:` is accepted
-  as the legacy spelling of the same list. Set it from an author `<!-- format: … -->` hint in
+  **`concept-breakdown` is the only id for this shape.** It once had two siblings — `card-row` and
+  `icon-list` — that were arrangements, not shapes, and three Match rules for one shape made this
+  the family the fill misclassified most. They are gone: a model naming either renders as
+  `fallback`. `card-row` is now `format: row`, and `icon-list` is the default `grid`. Items always
+  go in `cards:[{label,body}]`. Set `format` from an author `<!-- format: … -->` hint in
   `draft.md`/`final.md` when there is one; otherwise pick it from the content by the table above.
   An unrecognized value renders as `grid` and warns, so a typo is visible rather than silent.
 - **`reveal`** — an **optional opt-out** on any slide that reveals progressively. By **default** —
@@ -247,8 +247,8 @@ deliverable; `draft.md` → live in-progress view).
   `bottom` highlights and no enumeration still gets that one closing step.
   The `.pptx` render is static and always shows everything at once, whatever this says.
   Set it from an author `<!-- reveal: together -->` hint in `draft.md`/`final.md`.
-  Only `"together"` is recognized; any other value (including the legacy `"sequential"`) leaves
-  the default in place, so a typo animates rather than silently flattening the slide.
+  Only `"together"` is recognized; any other value leaves the default in place, so a typo animates
+  rather than silently flattening the slide.
 - **Never drop content.** Every load-bearing line in the source must be *translated* into the
   model — as a field value, a card/row/step, a fact, or a `highlights` entry. Do not omit a line
   because it looks redundant with an image or another slide; move it to `highlights` if it's a

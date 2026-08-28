@@ -322,7 +322,7 @@ The rest of this file (Path A) does not apply to `html-strict`.
 ### Inputs (Path A)
 
 - **Active `Talk` path** (absolute) and **`config/profile.md`** (cover placeholders `{{PRESENTATION_TITLE}}`/`{{PRESENTER}}` substitute from `Subject`/`Presenter`; agenda language from `Presentation language`).
-- **Base template** = `<base_template_path>` (opened as a working copy, not a theme reference; presenter override optional — the legacy `pptx-strict/template.pptx` 53-slide reference is **not** a valid override).
+- **Base template** = `<base_template_path>` (opened as a working copy, not a theme reference; presenter override optional — the `pptx-strict/template.pptx` 53-slide reference deck is **not** a valid override).
 - **Visual spec** = `<spec_path>` — the rendering contract for any slide that isn't a verbatim base-template slide. The operating manual for the renderer is `pptx-strict/pptx-prompt.md` §19 (reading order §19.2, 7-stage workflow §19.3, output contract + OOXML invariants §19.4, verification §19.5, anti-patterns §19.6). Pass it verbatim to the native skill as instructions context. When this skill and the spec disagree, **the spec wins**.
 
 ### Process (Path A)

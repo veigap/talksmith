@@ -31,8 +31,8 @@ _UNIVERSAL = {
     "template", "section", "notes", "reveal", "highlights", "lang", "id", "_source",
     # consumed by the shared `stage` macro, so they are template-independent by construction:
     # `design` divides the canvas and `media` is what it places; `lead` is the title's sub-line,
-    # emitted by the shared head block. (`aside` is the legacy spelling of a `column-*` design.)
-    "design", "media", "aside", "lead",
+    # emitted by the shared head block.
+    "design", "media", "lead",
     # `_choice` is the classification trace (schemas/slide-model.md -> *The classification
     # trace*): metadata about *why* this template was picked, read by template_diversity.py
     # and the slide-classifier-critic, never by a renderer. Like `_source`, its being
@@ -49,28 +49,22 @@ _UNIVERSAL = {
 # the schema half: schemas/slide-model.md → *Per-template field contract*. Keep in sync when a
 # template gains/loses a field.
 #
-# `layout` and `image` are the **legacy** spellings of `design` and `media`, and stay listed
-# per-template rather than in _UNIVERSAL: html_style.py `_design` only maps them forward on the
-# five templates that used to compose their own image, so on any other template they really are
-# ignored fields worth flagging. `build_html` is the finer-grained authority — it also validates
-# the *values* and warns when a design rides a slide with no media at all, which this set-based
+# `build_html` is the finer-grained authority — it also validates field *values* and warns when a
+# design rides a slide with no media (or media rides a slide with no design), which this set-based
 # audit can't express.
 _CONSUMES = {
     "section-agenda": {"title"},
     "divider": {"title", "number"},
     "statement": {"title", "sub"},
-    # one labeled set, three accepted ids: `cards` is canonical, `rows` the legacy `icon-list`
-    # spelling, `format` the arrangement that used to be a separate template.
-    "concept-breakdown": {"title", "cards", "rows", "lead", "format"},
-    "card-row": {"title", "cards", "rows", "lead", "format"},
-    "icon-list": {"title", "cards", "rows", "lead", "format"},
-    "process": {"title", "steps", "image", "layout"},
+    # one labeled set; `format` is the arrangement that used to be three separate template ids.
+    "concept-breakdown": {"title", "cards", "lead", "format"},
+    "process": {"title", "steps"},
     "figures": {"title", "figures", "lead"},
     "image-grid": {"images", "title"},
     "image-full": {"title", "image", "lead"},
-    "content-image": {"title", "image", "facts", "layout"},
-    "content+cards+image": {"title", "cards", "image", "layout"},
-    "value-columns": {"title", "columns", "image", "layout"},
+    "content-image": {"title", "facts"},
+    "content+cards+image": {"title", "cards"},
+    "value-columns": {"title", "columns"},
     # a column here is a whole explanation, not a cell: label + body + its own feature list,
     # its label, a closing example line, and the emphasis flag on at most one of them
     "concept-columns": {"title", "columns", "subtitle"},
@@ -83,7 +77,7 @@ _CONSUMES = {
     "pros-cons": {"title", "pros", "cons", "pro_label", "con_label"},
     # a cross-tab: the axis names and tick labels are content, not chrome to drop
     "matrix": {"title", "columns", "rows", "cells", "x_label", "y_label"},
-    "quiz": {"question", "answer", "title", "options", "correct", "explanation", "image", "answer_label", "layout"},
+    "quiz": {"question", "answer", "title", "options", "correct", "explanation", "answer_label"},
     "single-point": {"title", "point"},
     "callout": {"callout", "tone", "title"},
     "code-example": {"title", "code", "language", "explanation"},
@@ -103,20 +97,18 @@ _CONSUMES = {
 # is a misclassification, and nothing looked for it (an absent field is invisible to a
 # set-difference check, which is why it needs its own map).
 #
-# Alternatives are listed as tuples: any one satisfies the requirement. `media`/`image` and
-# `cards`/`rows` are the current/legacy spellings of one field, and `content-image` genuinely
-# accepts either text shape.
+# Alternatives are listed as tuples: any one satisfies the requirement — `content-image` genuinely
+# accepts either text shape, and `image-full` names its own picture field `image` while every
+# composed template takes `media`.
 _REQUIRES = {
     "statement": ("title",),
-    "concept-breakdown": ("title", ("cards", "rows")),
-    "card-row": ("title", ("cards", "rows")),
-    "icon-list": ("title", ("cards", "rows")),
+    "concept-breakdown": ("title", "cards"),
     "process": ("title", "steps"),
     "figures": ("title", "figures"),
     "image-grid": ("images",),
     "image-full": ("title", ("image", "media")),
-    "content-image": ("title", ("image", "media"), ("facts", "lead")),
-    "content+cards+image": ("title", ("cards", "rows"), ("image", "media")),
+    "content-image": ("title", "media", ("facts", "lead")),
+    "content+cards+image": ("title", "cards", "media"),
     "value-columns": ("title", "columns"),
     "concept-columns": ("title", "columns"),
     "stat": ("title", "stats"),
@@ -147,7 +139,7 @@ def _nonempty(v) -> bool:
 
 def _missing(slide: dict, template: str) -> list[str]:
     """Required fields the slide doesn't carry. A tuple of names is satisfied by any one of
-    them (current/legacy spellings, or a genuinely either-or contract)."""
+    them — an either-or contract."""
     out = []
     for req in _REQUIRES.get(template, ()):
         names = req if isinstance(req, tuple) else (req,)

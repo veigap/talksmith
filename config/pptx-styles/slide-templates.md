@@ -144,7 +144,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    step list, a quote over a statement.
 4. **Before writing the slide, run the anti-default escape check.** Three entries act as sinks,
    and a deck collapses onto them:
-   - `concept-breakdown` (and its `card-row`/`icon-list` spellings) and `content-text` are defined
+   - `concept-breakdown` and `content-text` are defined
      **negatively** — the first fires on "labeled set, **not** ordered, **no** image", the second on
      "**none** of the above". Every other entry needs a signal to be **positively detected**, so any
      detection you missed lands in one of these by construction.
@@ -430,8 +430,9 @@ precise rules.
 
 > **One shape, one entry.** A set of parallel labeled items is a *single* classification decision;
 > how it is arranged is a `format` field, not a different template. This used to be three catalog
-> entries (`concept-breakdown`, `card-row`, `icon-list`) whose Match rules differed only by item
-> count and body length — three rules for one shape, and the family the fill misclassified most.
+> entries — `concept-breakdown`, `card-row` and `icon-list` — whose Match rules differed only by
+> item count and body length: three rules for one shape, and the family the fill misclassified
+> most. The two extra ids are gone; a model naming either renders as `fallback`.
 > The only count that still changes the *template* is **exactly 1**, which is `single-point`
 > (emphasis, not enumeration). All forbid plain bullets.
 
@@ -444,12 +445,10 @@ precise rules.
   pictures. **If the slide has any `![]()` image, it is NOT this** → `figures` (a per-item image),
   `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + one shared image).
   **Not:** ordered/numbered (→ `process`); exactly one item (→ `single-point`).
-- **Accepted ids.** `card-row` and `icon-list` remain valid `template` values: `card-row` selects
-  the `row` format below, and `icon-list` — whose `list` format is retired — now renders as the
-  default `grid`. New models should emit `concept-breakdown` and set `format` when the default
-  isn't right.
+- **The only id.** `concept-breakdown` is the whole family; `format` picks the arrangement. What
+  used to be `card-row` is `format: row`, and what used to be `icon-list` is the default `grid`.
 - **Every format is a grid.** A labeled set is N *parallel* concepts, and parallel concepts read
-  **side by side**. The retired `list` format stacked them one under the other in a single column,
+  **side by side**. A fourth format, `list`, stacked them one under the other in a single column,
   which spent the whole slide width on one item at a time and made a set of peers read as a
   sequence. There is no vertical-stack arrangement any more: if the per-item prose genuinely needs
   a full-width column, the slide is not a labeled set (→ `content-text`, or split it).
@@ -690,9 +689,9 @@ precise rules.
 - **Match:** one main claim supported by **1–3** `![]()` images; the prose leads, the
   images are evidence — **the prose is required**. An image with *no* `lead` and no `facts` is
   not this template: it is `image-full`, which drops the text column and bleeds the image to the
-  edges. (The renderer still guards the empty case — a legacy model that carries a bare image here
-  renders the image full width rather than an empty bordered column — but new models should
-  classify it as `image-full`.) **Not:** a labeled set of ≥2 concepts that happens to have one
+  edges. (The renderer still guards the empty case — a model that carries a bare image here
+  renders the image full width rather than an empty bordered column — but the classification is
+  `image-full`.) **Not:** a labeled set of ≥2 concepts that happens to have one
   image — that is `content+cards+image`, and demoting its cards to `facts` costs them their icons.
 - **Name:** the `template` value is **`content-image`** (hyphen), even though the strict
   PPTX recipe for it is named "§13 content+image". Recipe names and `template` values are

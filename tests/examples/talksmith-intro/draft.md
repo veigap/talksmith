@@ -315,7 +315,8 @@ The shape of the workflow: setup happens once per talk (profile the audience, fr
 ---
 
 ## 2. Draft your way
-<!-- template: card-row -->
+<!-- template: concept-breakdown -->
+<!-- format: row -->
 <!-- reveal: sequential -->
 
 Three modes, one line each.
@@ -414,7 +415,8 @@ The durable/derived split: draft.md and research/corpus/ are the assets — they
 ---
 
 ## 5. One source, three outputs
-<!-- template: card-row -->
+<!-- template: concept-breakdown -->
+<!-- format: row -->
 
 Sell the projection idea concretely: the same source ships in three formats.
 
@@ -441,7 +443,7 @@ The render paths from one final.md: the HTML deck is a single self-contained fil
 ---
 
 ## 6. Presenting the HTML deck: shortcuts
-<!-- template: icon-list -->
+<!-- template: concept-breakdown -->
 
 Show that the HTML deliverable is a real presentation tool, not just a web page — live, on this very deck.
 
@@ -467,7 +469,7 @@ What the framework provides and why it matters: navigation is keyboard-first (ar
 ---
 
 ## 7. Presenting the HTML deck: the buttons
-<!-- template: icon-list -->
+<!-- template: concept-breakdown -->
 
 Finish the tour with the Talksmith chrome — the affordances presenters reach for without keyboard shortcuts.
 
@@ -502,7 +504,7 @@ What each button does under the hood: light/dark swaps the CSS token set and per
 ---
 
 ## 1. Five roles, one source of truth
-<!-- template: icon-list -->
+<!-- template: concept-breakdown -->
 
 Who's actually doing the work.
 
@@ -751,7 +753,7 @@ The scopes are the point of this slide: create the repo once per subject (it's t
 ---
 
 ## 4. What lives in the repo
-<!-- template: icon-list -->
+<!-- template: concept-breakdown -->
 
 Orient them in the folder they'll be committing to.
 

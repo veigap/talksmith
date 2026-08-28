@@ -72,15 +72,7 @@ CASES.append((
     ["Presenter feedback", "reorder", "done"],
 ))
 
-# 4. Legacy inline bullet with deeper sub-bullets.
-CASES.append((
-    "legacy_bullet_with_subbullets",
-    "### Content\n\n- a real point\n- **Presenter feedback:**\n  - [open] 2026-01-01 — \"x\"\n  - [open] 2026-01-02 — \"y\"\n- another real point\n",
-    ["a real point", "another real point"],
-    ["Presenter feedback", "\"x\"", "\"y\""],
-))
-
-# 4b. A resolved entry whose `Resolution:` wraps onto an indented continuation line. The sweep used
+# 4. A resolved entry whose `Resolution:` wraps onto an indented continuation line. The sweep used
 # to require a *bullet* to keep going, so it cut at the wrap and left the continuation on the slide.
 CASES.append((
     "paragraph_form_with_wrapped_resolution",
@@ -91,13 +83,14 @@ CASES.append((
     ["Presenter feedback", "reorder the intro", "Resolution", "instead of arriving after it"],
 ))
 
-# 4c. Same wrap, legacy inline-bullet form — and the real point after it survives.
+# 4b. A `- **Presenter feedback:**` bullet is NOT a feedback field. The inline bullet form was a
+# third authored shape once; it is gone, and the stripper must leave any such line as ordinary
+# content rather than sweeping the bullets under it.
 CASES.append((
-    "legacy_bullet_with_wrapped_resolution",
-    "### Content\n\n- a real point\n- **Presenter feedback:**\n  - [closed] d — \"x\"\n"
-    "    Resolution: rewrote the card\n    and split the label.\n- another real point\n",
-    ["a real point", "another real point"],
-    ["Presenter feedback", "Resolution", "split the label"],
+    "inline_bullet_label_is_ordinary_content",
+    "### Content\n\n- a real point\n- **Presenter feedback:** none this round\n- another real point\n",
+    ["a real point", "another real point", "none this round"],
+    [],
 ))
 
 # 5. Multiple slides, feedback on each — every boundary preserved.

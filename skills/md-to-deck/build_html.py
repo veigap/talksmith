@@ -47,14 +47,14 @@ sys.path.insert(0, str(_HERE / "audits"))
 # A slide is a **design** (how the canvas is divided) filled with a **style** (the template's
 # content shape). `design` is universal — every content template takes every design, because the
 # stage places the media and the template only emits content. That is the whole point of the
-# field: the old per-template `layout` allowlist meant a template not on the list could not be
-# composed at all. Resolution (including mapping the old `layout`/`image`/`aside` spellings
-# forward) lives in html_style.py `_design`; this only validates what the author wrote.
+# field, so every content template can be composed. Resolution lives in html_style.py `_design`;
+# this only validates what the author wrote.
 _DESIGNS = _hs._DESIGNS
-# Every design but `full` places a picture, so one without media is a slide that says it is
-# composed and then has nothing to compose. It renders as `full` — the content is intact and
-# nothing is silently cropped — but it is an authoring slip worth naming.
-_LEGACY_LAYOUTS = tuple(_hs._LAYOUT_DESIGN)   # the old spellings, from the map that translates them
+# `design` and `media` are all-or-nothing in both directions. Every design but `full` places a
+# picture, so one without media says it is composed and then has nothing to compose; and media on a
+# `full` slide is never placed, so it is content the author will not find on screen. Either way the
+# slide renders as `full` — nothing is cropped and no content is lost — but both are slips worth
+# naming instead of leaving the author to spot the missing picture.
 
 # A value-columns grid beside an image gets half the slide. Past this it still renders — the grid
 # never degrades to a list — but the cells crowd and the fit pass pays for it in type size, so say
@@ -64,7 +64,7 @@ _VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
 # The labeled set's `format` (schemas/slide-model.md). An unrecognized value renders as `grid`,
 # which looks like a deliberate card set rather than a typo — the same reason `layout` warns.
 _FORMATS = ("grid", "row", "editorial")
-_LABELED_SET = ("concept-breakdown", "card-row", "icon-list")
+_LABELED_SET = ("concept-breakdown",)
 # `list` (the single-column stack) was retired: a labeled set is N *parallel* concepts, and
 # parallel concepts read side by side. A model that still carries it renders as `grid` like any
 # other unusable value, but says why — it isn't a typo, it's a stale model.
@@ -104,25 +104,24 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         # it reserves. Either way the slide renders as `full` — say so rather than let an author's
         # pinned intent disappear silently.
         name = s.get("title", "") or "(untitled)"
-        des, lay = s.get("design"), s.get("layout")
-        # `_design` is the one place that knows how media resolves (`media` → `image` →
-        # `aside.image`); asking it, rather than re-spelling the chain here, keeps the warning and
-        # the render agreeing about what counts as media.
+        des = s.get("design")
+        # `_design` is the one place that decides what counts as placeable media; asking it, rather
+        # than re-reading the field here, keeps the warning and the render agreeing.
         _, media = _hs._design(s, t)
         if des and des not in _DESIGNS:
             bad_layouts.append((name, t, des, f"expected {'|'.join(_DESIGNS)}"))
         elif des and des != "full" and not media:
             bad_layouts.append((name, t, des, "the slide carries no media to place"))
-        elif lay and lay not in _LEGACY_LAYOUTS:
-            bad_layouts.append((name, t, lay, f"expected {'|'.join(_LEGACY_LAYOUTS)} "
-                                              f"(`layout` is the old spelling of `design`)"))
+        elif media and (not des or des == "full"):
+            bad_layouts.append((name, t, des or "full",
+                                "the slide carries media but no design to place it in"))
         fmt = s.get("format")
         if t in _LABELED_SET and fmt:
             if fmt not in _FORMATS:
                 bad_formats.append((name, fmt, _RETIRED_FORMATS.get(
                     fmt, f"expected {'|'.join(_FORMATS)}")))
             elif fmt == "editorial":
-                items = s.get("cards") or s.get("rows") or []
+                items = s.get("cards") or []
                 cap = next((c for lim, c in _ED_BODY_MAX if len(items) <= lim), _ED_BODY_MAX[-1][1])
                 longest = max((len(i.get("body") or "") for i in items), default=0)
                 if len(items) > _ED_MAX_ITEMS:

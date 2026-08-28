@@ -108,7 +108,7 @@ Desarmar el miedo: conectar un servicio externo le da "manos" al chat, sin progr
 - Instrucciones = el **"contrato de trabajo"**: reglas en lenguaje natural que valen para todo, sin repetirlas.
 - Ejemplo (Atlas):
 
-```text
+```ascii
 Sos Atlas, el analista de mercado de un equipo de trabajo.
 Preparás un pulso semanal para colegas NO técnicos (incluido el jefe),
 que se lee en 2 minutos antes de la reunión de los lunes.

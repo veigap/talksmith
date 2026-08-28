@@ -2,8 +2,8 @@
 
 Why this exists:
     Several templates render a *set* of parallel items in a fixed grid:
-    `concept-breakdown`/`card-row`/`content+cards+image` cards, `icon-list`
-    rows, `stat` stats, `content-text` panels, etc. Their layout is built
+    `concept-breakdown`/`content+cards+image` cards, `stat` stats,
+    `content-text` panels, etc. Their layout is built
     for two or more — e.g. `content-text`'s panel strip is `repeat(3,1fr)`,
     so a single panel renders as a lonely third-width card at the bottom.
 
@@ -29,8 +29,7 @@ What it does:
 
     Enumeration fields audited (template -> field):
 
-      concept-breakdown, card-row, content+cards+image -> cards
-      icon-list      -> rows
+      concept-breakdown, content+cards+image -> cards
       process        -> steps
       figures        -> figures
       stat           -> stats
@@ -66,13 +65,9 @@ from dataclasses import asdict, dataclass
 # template -> (enumeration field, floor). Floor is 2 for every entry: a set of
 # parallel items needs at least two; one item is the degenerate case this audit
 # exists to catch. The single-item template to reach for instead is in ADVICE.
-# The labeled-set ids accept either item key — `cards` is canonical, `rows` the legacy
-# `icon-list` spelling — so the count is taken from whichever one the slide carries.
 ENUM_FIELD = {
-    "concept-breakdown": (("cards", "rows"), 2),
-    "card-row": (("cards", "rows"), 2),
+    "concept-breakdown": ("cards", 2),
     "content+cards+image": ("cards", 2),
-    "icon-list": (("rows", "cards"), 2),
     "process": ("steps", 2),
     "figures": ("figures", 2),
     "stat": ("stats", 2),
@@ -91,9 +86,7 @@ ADVICE = {
     "content-text": "single-point (lead + one point), or add the missing supporting panels",
     "matrix": "concept-breakdown (cells with no second axis are just parallel cards)",
     "concept-breakdown": "single-point (one labeled item)",
-    "card-row": "single-point (one labeled item)",
     "content+cards+image": "content-image (one image + prose), or single-point",
-    "icon-list": "single-point (one labeled item)",
     "stat": "single-point, or a `big` number in another template",
     "figures": "a single-image template (content-image)",
     "process": "single-point — a one-step process is not a process",

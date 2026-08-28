@@ -74,6 +74,50 @@ A corpus record is **complete** iff it exists, is non-empty, **and** contains no
 
 The Editor role watches for these markers via its *Pending-stub awareness* rule (in `${CLAUDE_PLUGIN_ROOT}/agents/editor.md`): a slide that cites a pending stub triggers an `Open questions` note in `draft.md` rather than silently dropping the citation. The Composer role flags pending-stub citations as `[major]` punch-list items.
 
+## Claim discipline in `Inconsistencies / open questions`
+
+This section is read by the Editor as a work list, and an item written as a flat assertion becomes an
+instruction to change the deck. So **every item declares how well it is known**, with one of two
+markers:
+
+- `- [verified] <the defect> — <what was checked against what>.` The librarian confirmed it, and
+  names the check. Only a `[verified]` item authorizes the Editor to change content on its own.
+- `- [open question] <what looks off> — <what would settle it>.` Something reads wrong but the
+  librarian could not confirm it. The Editor surfaces it to the presenter via `Open questions`; it
+  never licenses an edit by itself.
+
+**When in doubt, `[open question]`.** An internal contradiction — two numbers in the same source that
+cannot both be true — is verifiable from the source alone and is normally `[verified]`. A claim about
+the *outside world* — that a product, a model, a paper, a person, or a figure does not exist, is
+misnamed, or has been superseded — is not, unless the librarian actually checked a source that
+settles it. A false `[verified]` is worse than a missing item: it makes the Editor delete a fact that
+was right.
+
+**Claude / Anthropic model names specifically.** Before writing that a model name is unknown,
+wrong, or invented, consult the **`claude-api` skill** — it carries the current model ids, families
+and pricing, and the roster moves faster than any source in the corpus. A record once asserted that
+"Fable 5 is not a known Anthropic model" (it is: `claude-fable-5`) and the rate the deck quoted was
+correct; acting on that item would have deleted good content. If the skill is unavailable, the item is
+an `[open question]`, never an assertion.
+
+## Truncation in `Raw / preserved excerpts`
+
+The section's promise is that the Editor can restore from it any text the source rendered
+incompletely — a PPTX that clipped a text box, an HTML capture cut mid-paragraph. That promise only
+holds if a truncated excerpt is **labelled as truncated**, so:
+
+- An excerpt preserved in full needs no marker.
+- An excerpt that is **itself cut off in the original** carries
+  `<!-- truncated-in-source: no complete version available -->` on the line after it. It says: this
+  is everything that exists — do not go looking for the rest.
+- An excerpt cut off by the *extraction* (a parser limit, an unreadable region) rather than by the
+  original carries `<!-- pending: failed: <reason> -->` instead, which keeps the record incomplete
+  and re-processable.
+
+The distinction is what the Editor acts on: `truncated-in-source` means *close the sentence with your
+own judgement and flag it*; `pending: failed` means *re-run the librarian*. An unlabelled truncated
+excerpt reads as complete, and the Editor hunts for a full version that does not exist.
+
 ## Canonical empty form
 
 The librarian writes each corpus record using this shape verbatim:
@@ -103,11 +147,13 @@ ingested_at: <ISO date>
 <Data, anecdotes, case studies, figures referenced.>
 
 ## Inconsistencies / open questions
-<Chat exports: contradictions, abandoned threads, corrections, pushback. Articles: gaps, unsupported claims, follow-ups. Web captures: extraction gaps from thin page.md fallbacks.>
+<Chat exports: contradictions, abandoned threads, corrections, pushback. Articles: gaps, unsupported claims, follow-ups. Web captures: extraction gaps from thin page.md fallbacks.
+Every item is marked `- [verified] <defect> — <what was checked>.` or `- [open question] <what looks off> — <what would settle it>.` — see *Claim discipline* above. A claim about the outside world that was not actually checked is an open question, not an assertion.>
 
 ## Images / diagrams
 <Per image: filename (always `<source-stem>/images/<file>` — resolvable from research/corpus/), depiction, relevance, transcribed text. For image-type stubs, leave Depiction / Why it matters / Transcribed text empty in Phase 1 and add the appropriate <!-- pending: ... --> marker. Phase 1 has already copied the bytes into the companion folder.>
 
 ## Raw / preserved excerpts
-<Long quotes or full sections kept verbatim. Over-include rather than lose.>
+<Long quotes or full sections kept verbatim. Over-include rather than lose.
+An excerpt that is cut off in the original itself gets `<!-- truncated-in-source: no complete version available -->` on the following line — see *Truncation* above. Unmarked means complete.>
 ```

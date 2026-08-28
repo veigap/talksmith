@@ -67,9 +67,9 @@
 </div></div>
 {% if hlbot %}{{ hlband(hlbot, ' hl-bottom', frag(s)) }}{% endif %}
 {% if hlsrc %}{{ hlband(hlsrc, ' hl-source', '') }}{% endif %}
-{# guarded on the *design*, not on `s.media`: a slide can carry media the resolved design does
-   not place (a legacy `image` on a template that never composed one), and emitting it anyway
-   would drop an unplaced picture into a stage with no rule to position it. #}
+{# guarded on the *design*, not on `s.media`: a slide can carry media its design does not place
+   (`full` places nothing — `build_html` warns about that pairing), and emitting it anyway would
+   drop an unplaced picture into a stage with no rule to position it. #}
 {% if s.design != 'full' %}<div class="smedia">{{ smedia(s.media) }}</div>{% endif %}
 </div>
 {% endmacro %}

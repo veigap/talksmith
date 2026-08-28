@@ -3,7 +3,7 @@
 [`draft.md`](draft.md) is a complete, realistic Talksmith working file: a ~40-minute intro talk on Talksmith itself — what it is, how to install it, how to use it, and what happens behind the scenes. It doubles as a reference fixture:
 
 - **Follows the full `draft.md` schema** ([`schemas/draft.md`](../../../schemas/draft.md)) — Thesis, Agenda, numbered Sections/Slides, Sources, Speaker notes, an append-only `Presenter feedback` audit trail (`[open]`/`[closed]` with `Resolution:` lines), plus Open questions and Cut material.
-- **Exercises (almost) every slide type** — each slide carries a `<!-- template: … -->` hint spanning `statement`, `stat`, `value-columns`, `quote`, `content+image`, `single-point`, `divider`, `code-example`, `process`, `icon-list`, `card-row`, `concept-breakdown`, `quiz`, `content+cards+image`, `pros-cons`, `image-grid`, `big-number`, `timeline`, `content-text`, `closing-cta`, `closing-hero`. (Only `figures` — a near-duplicate of `content+image` — and the last-resort `fallback` are omitted.)
+- **Exercises (almost) every slide type** — each slide carries a `<!-- template: … -->` hint spanning `statement`, `stat`, `value-columns`, `quote`, `content+image`, `single-point`, `divider`, `code-example`, `process`, `concept-breakdown` (all three `format`s), `quiz`, `content+cards+image`, `pros-cons`, `image-grid`, `big-number`, `timeline`, `content-text`, `closing-cta`, `closing-hero`. (Only `figures` — a near-duplicate of `content+image` — and the last-resort `fallback` are omitted.)
 - **Showcases ASCII → SVG** — three render-driving ` ```ascii ` diagrams (the three-layer knowledge base, the feedback loop, and the forward/reverse pipeline) that the Diagram-Illustrator turns into styled SVGs at Polish.
 
 ## The rendered deck

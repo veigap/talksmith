@@ -118,13 +118,14 @@ class SourceSlide:
 def parse_model(path: str) -> list[SourceSlide]:
     """Expected callout/image blocks per slide, read straight from `slide-model.json` — the
     structured model already enumerates them, so there is no markdown to parse. Images = an
-    `image` field + `images[]` + each `figures[].image`; a callout block = a `callout`-template
-    slide. Matched to the deck by normalized title (its `title`, or `section` for dividers)."""
+    `media` (composed slides) or `image` (`image-full`, which names its own picture field) +
+    `images[]` + each `figures[].image`; a callout block = a `callout`-template slide. Matched to
+    the deck by normalized title (its `title`, or `section` for dividers)."""
     import json
     model = json.loads(open(path, encoding="utf-8").read())
     slides: list[SourceSlide] = []
     for idx, s in enumerate(model.get("slides", []), start=1):
-        images = (1 if s.get("image") else 0) + len(s.get("images", []))
+        images = (1 if (s.get("media") or s.get("image")) else 0) + len(s.get("images", []))
         images += sum(1 for f in s.get("figures", []) if f.get("image"))
         callouts = 1 if s.get("template") == "callout" else 0
         title = s.get("title") or s.get("section") or ""

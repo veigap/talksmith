@@ -31,8 +31,20 @@ H1 = re.compile(r"^# (?!#)(.+?)\s*$")
 H2 = re.compile(r"^## (?!#)(.+?)\s*$")
 H3_FEEDBACK = re.compile(r"^### Presenter feedback", re.IGNORECASE)
 PARA_FEEDBACK = re.compile(r"^\*\*Presenter feedback:\*\*", re.IGNORECASE)
-OPEN_BULLET = re.compile(r'^- \[open\] (\d{4}-\d{2}-\d{2}) — "(.*)"\s*$')
-CLOSED_BULLET = re.compile(r'^- \[closed\] (\d{4}-\d{2}-\d{2}) — "(.*)"\s*$')
+# A stamped bullet carries an optional **origin** qualifier between the date and the em dash:
+#   - [open] 2026-08-28 — "tighten this"              → presenter (the default; every pre-existing
+#                                                        draft.md parses unchanged)
+#   - [closed] 2026-08-28 (editor) — "tighten this"   → the Editor's own change log
+# Only presenter-origin bullets belong in the cross-Talk backlog: an editor-origin bullet is
+# internal bookkeeping for one Talk, and mirroring it pollutes the shared backlog with entries no
+# presenter ever asked for.
+PRESENTER, EDITOR = "presenter", "editor"
+_STAMPED_BULLET = (
+    r'^- \[{status}\] (?P<date>\d{{4}}-\d{{2}}-\d{{2}})'
+    r'(?: \((?P<origin>presenter|editor)\))? — "(?P<text>.*)"\s*$'
+)
+OPEN_BULLET = re.compile(_STAMPED_BULLET.format(status="open"))
+CLOSED_BULLET = re.compile(_STAMPED_BULLET.format(status="closed"))
 ANY_STAMPED = re.compile(r"^- \[(open|closed)\]", re.IGNORECASE)
 PLAIN_BULLET = re.compile(r"^- (.+?)\s*$")
 RESOLUTION_LINE = re.compile(r"^  Resolution:\s*(.*)\s*$")
@@ -111,6 +123,16 @@ def _talk_folder(md_path: Path) -> str:
     return md_path.resolve().parent.name
 
 
+def _origin_of(m: "re.Match[str]") -> str:
+    """Origin of a stamped bullet — unqualified bullets are presenter feedback."""
+    return m.group("origin") or PRESENTER
+
+
+def _origin_suffix(origin: str) -> str:
+    """Render the origin qualifier. Presenter is the default and stays implicit."""
+    return "" if origin == PRESENTER else f" ({origin})"
+
+
 # ─── find-closed-unmirrored ───────────────────────────────────────────────────
 
 def _all_closed_bullets(md_path: Path) -> list[dict[str, Any]]:
@@ -138,7 +160,7 @@ def _all_closed_bullets(md_path: Path) -> list[dict[str, Any]]:
         m = CLOSED_BULLET.match(raw)
         if not m:
             continue
-        date, verbatim = m.group(1), m.group(2)
+        date, verbatim = m.group("date"), m.group("text")
         resolution = ""
         if i + 1 < len(lines):
             rm = RESOLUTION_LINE.match(lines[i + 1])
@@ -147,6 +169,7 @@ def _all_closed_bullets(md_path: Path) -> list[dict[str, Any]]:
         results.append({
             "line": i + 1,
             "date": date,
+            "origin": _origin_of(m),
             "text": verbatim,
             "resolution": resolution,
             "location": _location_for_line(lines, i),
@@ -180,17 +203,24 @@ def cmd_find_closed_unmirrored(args: argparse.Namespace) -> int:
     talk = _talk_folder(draft_path)
     closed = _all_closed_bullets(draft_path)
     existing = _existing_backlog_keys(backlog_path, talk)
-    unmirrored = [c for c in closed if (talk, c["text"]) not in existing]
+    # Only presenter-origin bullets are candidates for the cross-Talk backlog. Editor-origin bullets
+    # are this Talk's internal change log — counting them once reported 52 "pending" rows of which
+    # almost none belonged in the backlog, drowning the real ones.
+    considered = closed if args.origin == "all" else [c for c in closed if c["origin"] == args.origin]
+    excluded = len(closed) - len(considered)
+    unmirrored = [c for c in considered if (talk, c["text"]) not in existing]
     if args.format == "json":
         json.dump(unmirrored, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0
+    suffix = f" ({excluded} non-{args.origin}-origin bullet(s) excluded)" if excluded else ""
     if not unmirrored:
-        print(f"no closed-and-unmirrored bullets for talk {talk}.")
+        print(f"no closed-and-unmirrored bullets for talk {talk}.{suffix}")
         return 0
-    print(f"found {len(unmirrored)} closed bullet(s) not yet in backlog:\n")
+    print(f"found {len(unmirrored)} closed bullet(s) not yet in backlog{suffix}:\n")
     for c in unmirrored:
-        print(f"  line {c['line']:4d}  {c['location']}")
+        origin_part = "" if c["origin"] == PRESENTER else f"  [{c['origin']}]"
+        print(f"  line {c['line']:4d}  {c['location']}{origin_part}")
         print(f"            \"{c['text']}\"")
         if c["resolution"]:
             print(f"            Resolution: {c['resolution']}")
@@ -217,9 +247,10 @@ def cmd_stamp(args: argparse.Namespace) -> int:
         return 2
     text = _strip_quotes(m.group(1))
     date = args.date or datetime.date.today().isoformat()
-    lines[idx] = f'- [open] {date} — "{text}"'
+    origin = args.origin or PRESENTER
+    lines[idx] = f'- [open] {date}{_origin_suffix(origin)} — "{text}"'
     _atomic_write(draft_path, lines)
-    print(f"stamped: line {args.line} → [open] {date}")
+    print(f"stamped: line {args.line} → [open] {date} ({origin})")
     return 0
 
 
@@ -240,8 +271,8 @@ def cmd_close(args: argparse.Namespace) -> int:
             return 2
         print(f"error: line {args.line} is not an [open] bullet: {raw!r}", file=sys.stderr)
         return 2
-    date, verbatim = m.group(1), m.group(2)
-    lines[idx] = f'- [closed] {date} — "{verbatim}"'
+    date, verbatim, origin = m.group("date"), m.group("text"), _origin_of(m)
+    lines[idx] = f'- [closed] {date}{_origin_suffix(origin)} — "{verbatim}"'
     resolution_line = f"  Resolution: {args.resolution}"
     if idx + 1 < len(lines) and RESOLUTION_LINE.match(lines[idx + 1]):
         lines[idx + 1] = resolution_line
@@ -267,7 +298,11 @@ def cmd_mirror_row(args: argparse.Namespace) -> int:
     if not m:
         print(f"error: line {args.line} is not a [closed] bullet: {raw!r}", file=sys.stderr)
         return 2
-    date, verbatim = m.group(1), m.group(2)
+    date, verbatim, origin = m.group("date"), m.group("text"), _origin_of(m)
+    if origin != PRESENTER and not args.allow_editor_origin:
+        print(f"error: line {args.line} is an {origin}-origin bullet — the cross-Talk backlog mirrors "
+              f"presenter feedback only. Pass --allow-editor-origin to override.", file=sys.stderr)
+        return 4
     if idx + 1 >= len(lines):
         print(f"error: no Resolution line after closed bullet at {args.line}", file=sys.stderr)
         return 3
@@ -369,8 +404,9 @@ def _all_open_bullets(lines: list[str]) -> list[dict[str, Any]]:
             continue
         out.append({
             "line": i + 1,
-            "date": m.group(1),
-            "text": m.group(2),
+            "date": m.group("date"),
+            "origin": _origin_of(m),
+            "text": m.group("text"),
             "location": _location_for_line(lines, i),
         })
     return out
@@ -440,12 +476,18 @@ def main(argv: list[str]) -> int:
     pf.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     pf.add_argument("--backlog", required=True)
     pf.add_argument("--format", choices=["json", "human"], default="human")
+    pf.add_argument("--origin", choices=["presenter", "editor", "all"], default="presenter",
+                    help="which bullets count as mirror candidates (default: presenter — the only "
+                         "origin the cross-Talk backlog takes)")
     pf.set_defaults(func=cmd_find_closed_unmirrored)
 
     ps = sub.add_parser("stamp", help="rewrite a single unstamped bullet in draft.md to [open] form (Step 5)")
     ps.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     ps.add_argument("--line", type=int, required=True)
     ps.add_argument("--date")
+    ps.add_argument("--origin", choices=["presenter", "editor"], default="presenter",
+                    help="who authored the bullet (default: presenter). `editor` marks a bullet the "
+                         "Editor wrote as its own change log, keeping it out of the cross-Talk backlog")
     ps.set_defaults(func=cmd_stamp)
 
     pc = sub.add_parser("close", help="flip a single [open] bullet in draft.md to [closed] + Resolution (Step 5)")
@@ -460,6 +502,8 @@ def main(argv: list[str]) -> int:
     pm.add_argument("--line", type=int, required=True)
     pm.add_argument("--tags")
     pm.add_argument("--allow-empty-tags", action="store_true")
+    pm.add_argument("--allow-editor-origin", action="store_true",
+                    help="mirror an editor-origin bullet anyway (refused by default)")
     pm.set_defaults(func=cmd_mirror_row)
 
     pr = sub.add_parser("rescue-open", help="rescue still-[open] bullets in final.md into # Open questions (Step 6 (c))")

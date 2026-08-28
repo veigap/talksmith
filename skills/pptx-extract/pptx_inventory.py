@@ -14,7 +14,7 @@ to rebuild finalpptx.md.
 
 Usage:
   python3 pptx_inventory.py <deck.pptx> --talk <talk_root> --style <strict|free-form>
-                            [--stage-new] [--json | --human] [-o <inventory.json>]
+                            [--json | --human] [-o <inventory.json>]
 
 Exit codes:
   0  inventory produced
@@ -783,9 +783,6 @@ def main(argv=None) -> int:
     ap.add_argument("pptx")
     ap.add_argument("--talk", required=True, help="Talk root, e.g. talks/<Talk>")
     ap.add_argument("--style", required=True, choices=sorted(STYLE_PALETTE))
-    ap.add_argument("--stage-new", action="store_true",
-                    help="(deprecated no-op — every content image is always staged "
-                         "under reconcile/staging/)")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--human", action="store_true")
     ap.add_argument("-o", "--output",

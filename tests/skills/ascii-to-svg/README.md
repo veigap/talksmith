@@ -18,7 +18,7 @@ slide is added.
 |---|---|---|---|
 | `s1-1-1` | hiperparametros-ai · `s3-2-1` | 63×4 · ~7.9:1 | Widest, thinnest art. The frame is easy to over-declare — prime aspect-audit bait. |
 | `s2-1-1` | claude-cowork · `s2-3-1` | 72×5 · ~7.2:1 | Wide left-to-right flow; arrows that have to *land* on their target. |
-| `s3-1-1` | claude-cowork · `s5-3-1` | 70×6 · ~5.8:1 | **No `ascii-note`** → the sparse-context path. Also a **legacy-tagged fence**, so it exercises the heuristic detection rule rather than the canonical ` ```ascii ` tag. |
+| `s3-1-1` | claude-cowork · `s5-3-1` | 70×6 · ~5.8:1 | **No `ascii-note`** → the sparse-context path: the renderer has only the slide title and Content prose to work from. Also the set's one block that is *prose in a card* rather than a box-and-arrow drawing — it renders only because its fence is tagged, which is the whole detection rule. |
 | `s4-1-1` | seguridad-governance-ai · `sc-4-1` | 57×6 · ~4.8:1 | From the 2026-07-15 production run. |
 | `s5-1-1` | seguridad-governance-ai · `s1-10-1` | 55×9 · ~3.1:1 | The block whose production render declared `viewBox="0 0 680 295"` (2.30:1) around art that wanted ~2.91:1 — and that day's visual critique passed it clean, correctly, since a PNG rasterizes *from* the viewBox and cannot reveal it. It reached the PPTX audit a full render cycle later. **This slide is not a regression test for that** — see the warning below. |
 | `s6-1-1` | claude-cowork · `s7-3-1` | 99×15 · ~3.3:1 | Widest lines in the set; dense two-panel layout. |

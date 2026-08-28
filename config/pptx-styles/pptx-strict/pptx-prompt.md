@@ -12,7 +12,7 @@ Visual specification distilled from [`config/template.pptx`](template.pptx) (53 
 |---|---|
 | Aspect ratio | **16:9** |
 | Slide size | `9144000 × 5143500` EMU (`10.00 × 5.625` inches; `720 × 405` pt) |
-| Slide background | **Pure white `#FFFFFF`** on every slide. No tints, no off-whites, no warm greys. Emit as a single `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg>` on every layout. (Historical note: the source 53-slide reference deck used a black `<p:bg>` + 95%-alpha white overlay producing apparent `#F2F2F2`; this working directory has standardized on pure white. Generators must emit `#FFFFFF` solid — do not reproduce the legacy two-layer recipe.) |
+| Slide background | **Pure white `#FFFFFF`** on every slide. No tints, no off-whites, no warm greys. Emit as a single `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg>` on every layout. |
 | Master chrome | **None** — `slideMaster1.xml` has an empty `<p:spTree>`. No footer, page number, or logo on master. Every visible mark lives on individual slides or layouts. |
 | Theme | `theme1.xml` declares Calibri Light / Calibri and the standard Office accent palette. **Zero slides use them** — every run overrides theme defaults at the `<a:rPr>` level. Treat the theme as residual scaffolding; never inherit from it. |
 | Speaker-notes pane | **Load-bearing, not decorative** — per [`principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) → *Speaker notes are the talk*, the pane carries the prose the slide replaces. Emit every `### Notes` block verbatim — no truncation, no dropping. (The sparse panes in the 53-slide source deck are a property of that deck, not the contract.) |
@@ -1098,7 +1098,7 @@ Things that look reasonable but break the template. The §-section in each row i
 | Mix icon styles in one deck | Library is line-art only — no filled silhouettes | §17.2 |
 | Stroke an icon in any color other than `#DA1B2E` | Brand red is the only icon ink | §17.2 |
 | Emit native `<a:tbl>` tables | Template has zero — convert pipe-tables to card grids | §11 |
-| Emit any background other than pure white `#FFFFFF` (grey tints, the legacy black+overlay recipe, off-whites) | All slides are pure white solid fill | §1 |
+| Emit any background other than pure white `#FFFFFF` (grey tints, a black fill under a white overlay, off-whites) | All slides are pure white solid fill | §1 |
 | Resize an image without preserving aspect ratio (stretch/squish/anamorphic crop) | Aspect ratio is fixed at the source; scale uniformly only | §12 |
 | Use a non-5760 EMU corner radius on roundRects | Constant across all pills/cards/callouts/code/dots | §2.3 |
 | Fudge agenda row count to match the placeholder's 7 (pad with blanks, or truncate sections) | Agenda row count = N (section count); clone/delete rows to match. Warn only when N > 8 (tight) or > 10 (out of room). | §5.3 + §5.5 |

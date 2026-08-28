@@ -124,19 +124,19 @@ def test_single_point_with_icon():
     return fails
 
 
-def test_icon_list_three_concepts():
+def test_labeled_set_three_concepts():
     """Three distinct concepts on one slide → three real, *different* glyphs."""
     h = _fresh_module()
     cache = _empty_cache()
     h.load_catalog(cache)
-    slide = {"template": "icon-list", "title": "t", "rows": [
+    slide = {"template": "concept-breakdown", "title": "t", "cards": [
         {"label": "Seguridad de los datos", "body": "cifrado y control de acceso"},
         {"label": "Creatividad", "body": "imaginar soluciones originales"},
         {"label": "Juicio profesional", "body": "criterio ético para decidir"},
     ]}
     html = h.render_model_slide(slide, cache)
-    fails = _check(html, "icon-list")
-    names = [r.get("icon") for r in slide["rows"]]
+    fails = _check(html, "concept-breakdown")
+    names = [r.get("icon") for r in slide["cards"]]
     if len(set(names)) != 3:
         fails.append(f"  icons repeat within one slide: {names}")
     if any(not n for n in names):
@@ -228,7 +228,7 @@ TESTS = [
     ("reproduction case (offline, empty cache)", test_reproduction_case),
     ("single-point without point.icon", test_single_point_without_icon),
     ("single-point with point.icon=psychology", test_single_point_with_icon),
-    ("icon-list, three concepts", test_icon_list_three_concepts),
+    ("concept-breakdown, three concepts", test_labeled_set_three_concepts),
     ("unknown icon warns + substitutes", test_unknown_icon_warns_and_substitutes),
     ("previously cached icon", test_cached_icon_is_used),
     ("catalog-only names resolve via alias", test_alias_for_catalog_only_names),

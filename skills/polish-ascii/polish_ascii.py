@@ -8,7 +8,7 @@ Subcommands:
   prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>]
   extract           --final <final.md> --plan <plan.json|-> [--dry-run]
   cleanup           --final <final.md> --plan <plan.json|-> [--dry-run]
-  apply             --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass (compat)
+  apply             --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass
 
 All subcommands operate on `talks/<Talk>/final.md` — the Step-6 derived file
 produced from `draft.md` by the editor's Polish copy step. `draft.md` itself
@@ -42,9 +42,12 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
     extract_block_context as _extract_block_context,
 )
 
+# The ONLY fence that holds a renderable diagram. A fence with any other info string — a real
+# language, a generic `text`, or nothing at all — is code, prose or data, and is never rendered.
+# Sniffing an untagged fence for box glyphs was tried and removed: on a deck that quotes prompts and
+# code it detected 16 blocks of which 2 were diagrams, and Step 6 rasterizes what it detects, so the
+# other 14 would have become pictures with their source deleted. The tag is cheap; guessing is not.
 CANONICAL_ASCII_TAG = "ascii"
-LEGACY_ASCII_LANG_TAGS = {"", "text", "diagram"}
-BOX_OR_ARROW = re.compile(r"[─│┌┐└┘├┤┬┴┼+|→←↑↓⇒⇐⇑⇓]|->|==>|<-|=>")
 NOTE_OPEN = "<!-- ascii-note:"
 # Per-block render override: `<!-- ascii-render: force -->` makes a block render-driving even on a
 # slide that also carries an image ref (the default would mark it documentation-only); `<!-- ascii-
@@ -53,10 +56,27 @@ NOTE_OPEN = "<!-- ascii-note:"
 _RENDER_HINT = re.compile(r"<!--\s*ascii-render:\s*(force|documentation-only|doc-only)\s*-->", re.IGNORECASE)
 
 
-def is_ascii_payload(payload: str) -> bool:
-    if BOX_OR_ARROW.search(payload):
-        return True
-    return payload.count("\n") >= 2
+def _render_hint_above(lines: list[str], fence_open_line: int) -> str | None:
+    """Read the `<!-- ascii-render: … -->` override bound to the fence opening at `fence_open_line`.
+
+    The comment sits on the line immediately above the fence, with one blank line of tolerance —
+    same proximity idea as `ascii-note`. Resolved before the accept decision so that `force` can
+    rescue a block the structural test rejects.
+    """
+    p = fence_open_line - 2  # 0-based index of the line just above the fence
+    blanks_before = 0
+    while p >= 0:
+        if lines[p].strip() == "":
+            blanks_before += 1
+            if blanks_before > 1:
+                return None
+            p -= 1
+            continue
+        hm = _RENDER_HINT.search(lines[p])
+        if hm:
+            return hm.group(1).lower().replace("doc-only", "documentation-only")
+        return None
+    return None
 
 
 def scan(final_path: Path, presentation_language: str | None = None) -> dict[str, Any]:
@@ -99,19 +119,10 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
         else:
             if FENCE_CLOSE.match(ln):
                 close_line = line_no
-                is_canonical = (fence_lang == CANONICAL_ASCII_TAG)
-                is_legacy_candidate = (fence_lang in LEGACY_ASCII_LANG_TAGS)
-                if is_canonical or is_legacy_candidate:
+                if fence_lang == CANONICAL_ASCII_TAG:
                     payload = "\n".join(buf)
-                    # Canonical `ascii` tag: trust unconditionally (deterministic block).
-                    # Legacy (empty/text/diagram): keep the glyph heuristic + flag detection_mode.
-                    accept = False
-                    detection_mode = "canonical"
-                    if is_canonical and payload.strip():
-                        accept = True
-                    elif is_legacy_candidate and payload.strip() and is_ascii_payload(payload):
-                        accept = True
-                        detection_mode = "legacy-heuristic"
+                    render_hint = _render_hint_above(lines, fence_open_line)
+                    accept = bool(payload.strip())
                     if accept and section is None:
                         # Under Thesis / Open questions / Cut material — no slide to attach to.
                         accept = False
@@ -119,22 +130,6 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                     if accept:
                         ascii_n += 1
                         slide_id = f"s{section}-{slide}-{ascii_n}"
-                        # Render-override hint on the line(s) immediately above the fence (1 blank
-                        # line of tolerance) binds to THIS block — same proximity idea as ascii-note.
-                        render_hint = None
-                        p = fence_open_line - 2  # 0-based index of the line just above the fence
-                        blanks_before = 0
-                        while p >= 0:
-                            if lines[p].strip() == "":
-                                blanks_before += 1
-                                if blanks_before > 1:
-                                    break
-                                p -= 1
-                                continue
-                            hm = _RENDER_HINT.search(lines[p])
-                            if hm:
-                                render_hint = hm.group(1).lower().replace("doc-only", "documentation-only")
-                            break
                         # Look for ascii-note right after, with up to 1 blank line tolerance
                         note = None
                         j = i + 1
@@ -164,7 +159,6 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                             },
                             "note": note,
                             "render": None,
-                            "detection_mode": detection_mode,
                             "render_hint": render_hint,   # force | documentation-only | None
                             "documentation_only": False,  # filled by _annotate_documentation_only below
                         })
@@ -215,8 +209,8 @@ def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]],
                 break
         return start, end
 
-    # Pre-compute ranges that are inside <!-- ascii-source: ... --> comments (legacy artifacts of
-    # earlier Polish passes) so we don't count their image-ref echo as a "real" image link.
+    # Pre-compute ranges that are inside <!-- ascii-source: ... --> comments (written by the fence
+    # rewrite of an earlier Polish pass) so we don't count their image-ref echo as a "real" image link.
     ignored_ranges: list[tuple[int, int]] = []
     i = 0
     while i < len(lines):
@@ -265,11 +259,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
         return 2
     result = scan(final_path, presentation_language=args.language)
     if args.format == "human":
-        legacy_count = sum(1 for b in result["blocks"] if b.get("detection_mode") == "legacy-heuristic")
         doc_only_count = sum(1 for b in result["blocks"] if b.get("documentation_only"))
         print(f"found {len(result['blocks'])} ASCII block(s) in {result['final_path']}:")
-        if legacy_count:
-            print(f"  ⚠  {legacy_count} block(s) detected via legacy glyph-heuristic — re-tag opening fence as ``` ascii ``` to make them canonical")
         if doc_only_count:
             print(f"  ℹ  {doc_only_count} block(s) marked documentation-only (slide has Markdown image ref) — pipeline will skip them")
         if result.get("skipped_non_slide"):
@@ -282,8 +273,6 @@ def cmd_scan(args: argparse.Namespace) -> int:
             ascii_lines = a["payload"].count("\n") + 1
             note_part = f"note: yes (lines {n['start_line']}–{n['end_line']})" if n else "note: no"
             flags = []
-            if b.get("detection_mode") != "canonical":
-                flags.append("legacy")
             if b.get("documentation_only"):
                 flags.append("doc-only")
             if b.get("render_hint"):
@@ -556,8 +545,6 @@ def cmd_inspect_intents(args: argparse.Namespace) -> int:
         flags = []
         if b.get("documentation_only"):
             flags.append("doc-only")
-        if b.get("detection_mode") == "legacy-heuristic":
-            flags.append("legacy")
         flag_part = f"  [{','.join(flags)}]" if flags else ""
         print(f"{sid:<10} | {title:<50} | {intent}{flag_part}")
     return 0

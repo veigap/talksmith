@@ -481,9 +481,7 @@ _ENV.filters["nocolon"] = lambda text: (Markup(_nocolon(text)) if isinstance(tex
 # catalog template id → template file
 _TMPL = {
     "divider": "divider.j2", "statement": "statement.j2", "closing-hero": "closing-hero.j2",
-    # one labeled-set template, three accepted ids: `concept-breakdown` is the canonical one and
-    # the legacy `card-row`/`icon-list` select their own `format` (see labeled-set.j2).
-    "concept-breakdown": "labeled-set.j2", "card-row": "labeled-set.j2", "icon-list": "labeled-set.j2",
+    "concept-breakdown": "labeled-set.j2",
     "process": "process.j2", "code-example": "code-example.j2", "figures": "figures.j2",
     "image-grid": "image-grid.j2", "image-full": "image-full.j2",
     "content-image": "content-image.j2", "value-columns": "value-columns.j2",
@@ -611,13 +609,9 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
         author_label=author_label or L["author"], modified_label=modified_label or L["modified"])
 
 
-# Templates whose markup places a matched icon next to each item, → the slide field holding them.
-# Which field holds a slide's icon-bearing items. The labeled-set ids accept **either** key: the
-# canonical model says `cards`, and `rows` is the legacy `icon-list` spelling the template still
-# reads, so both get their icons resolved regardless of which id/format the slide carries.
+# Templates whose markup places a matched icon next to each item → the slide field holding them.
 _ICON_LISTS = {
-    "concept-breakdown": ("cards", "rows"), "card-row": ("cards", "rows"),
-    "icon-list": ("rows", "cards"), "content+cards+image": ("cards",), "closing-cta": ("items",),
+    "concept-breakdown": ("cards",), "content+cards+image": ("cards",), "closing-cta": ("items",),
 }
 
 
@@ -695,33 +689,20 @@ def _highlights(items) -> list:
 # ── design: where the media sits, chosen before the template ─────────────────────────────────
 # A slide is a **design** (how the canvas is divided) filled with a **style** (what shape the
 # content takes). Those are separate decisions, so they are separate fields: `design` + `media`
-# are read by the `stage` macro for every content template, and the template itself no longer
-# knows whether it has an image or where it goes. Before this, the same decision was spelled three
-# different ways — a per-template `layout` allowlist, a parallel `aside` column, and hard-coded
-# composition inside five templates — so a template that wasn't in the allowlist simply couldn't
-# be composed. The old spellings still work: they map forward here, silently, so every model and
-# deck written against them renders exactly as it did.
+# are read by the `stage` macro for every content template, and the template itself never knows
+# whether it has an image or where it goes.
 _DESIGNS = ("full", "banded", "split-left", "split-right", "column-left", "column-right", "bleed")
-# `layout` was relative to the *text* ("text-left" = image on the right); `design` names where the
-# **media** goes, which is the thing being placed.
-_LAYOUT_DESIGN = {"text-left": "split-right", "image-left": "split-left", "image-top": "banded"}
-# The templates that used to own a `layout`: their image defaulted to the right-hand column, so
-# that is the design an old model without an explicit `layout` resolves to.
-_COMPOSED = ("content-image", "content+cards+image", "process", "quiz", "value-columns")
 
 
 def _design(slide: dict, t: str) -> tuple:
-    """`(design, media)` for a slide, mapping `layout`/`image`/`aside` forward. An explicit
-    `design` always wins; an unrecognized one falls back to `full`, like every other enum here."""
-    aside = slide.get("aside") or {}
-    media = slide.get("media") or slide.get("image") or aside.get("image")
+    """`(design, media)` for a slide — read straight off the model, never inferred.
+
+    `full` is the default and places no media, so the pair is all-or-nothing in both directions: an
+    unrecognized design falls back to `full` like every other enum here, a design with nothing to
+    place falls back to `full` too, and media with no design is simply not placed. Each of those is
+    an authoring slip `build_html` names rather than a shape to guess at."""
+    media = slide.get("media")
     design = slide.get("design")
-    if not design:
-        if aside:
-            design = "column-left" if str(aside.get("side", "")).lower() == "left" else "column-right"
-        elif media and t in _COMPOSED:
-            design = _LAYOUT_DESIGN.get(slide.get("layout"), "split-right")
-    # an unrecognized design, or one with nothing to place, is just `full`
     if design not in _DESIGNS or (design != "full" and not media):
         design = "full"
     # A code panel or a supporting grid has to be **read**, so it can only go in a design that

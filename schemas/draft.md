@@ -153,6 +153,10 @@ Workflow (per the editor's Step 5 contract):
 
    Keep the original date — do not bump it to "today".
 
+**Origin qualifier.** A stamped bullet may carry an origin in parentheses between the date and the em dash — `- [closed] YYYY-MM-DD (editor) — "…"`. Two values: `presenter` (the default, and what an **unqualified** bullet means, so every draft written before this existed reads correctly) and `editor`, for a bullet the Editor wrote as a log of *its own* change rather than as captured presenter feedback. The qualifier is set once at `stamp` time and carried through `close` unchanged.
+
+The distinction is not cosmetic: **only presenter-origin bullets are mirrored to [`config/feedback-backlog.md`](config/feedback-backlog.md)**. That backlog is cross-Talk, and an editor's internal change log for one Talk does not generalize — mirroring it buries the real presenter feedback under bookkeeping. `mirror-row` refuses an editor-origin bullet, and `find-closed-unmirrored` counts presenter-origin bullets only. Both are in [`feedback-cycle/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/SKILL.md).
+
 Never delete closed entries during Step 5 (they're the audit trail). Step 6 strips the entire `Presenter feedback` field from `final.md` once mirrored to the backlog; `draft.md` retains everything.
 
 ## Canonical empty form

@@ -150,13 +150,12 @@ If `context.slide_content_prose` or `context.speaker_notes` come back empty (com
 
 ## Detection rule
 
-ASCII diagrams in `final.md` use a **deterministic predefined block** — the fenced code block with the canonical `ascii` language tag is the open/close sentinel pair (analogue of `<!-- ascii-note:` + `-->`). Treat the following as ASCII diagrams, in priority order:
+ASCII diagrams in `final.md` use a **deterministic predefined block**: the fenced code block with the `ascii` language tag is the open/close sentinel pair (analogue of `<!-- ascii-note:` + `-->`). Two forms count as ASCII diagrams:
 
-1. **Canonical block — ` ```ascii ` fenced code block.** Opening fence is exactly ` ```ascii ` (lowercase, no trailing whitespace); closing fence is ` ``` ` on its own line. The payload between them is the diagram, no further inspection needed. This is the form the editor must use for all *new* ASCII (see [`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](editor.md) → *ASCII diagrams — predefined block syntax*).
-2. **Legacy heuristic — fenced block with an empty / `text` / `diagram` language tag**, accepted only when the payload contains box-drawing chars (`─│┌┐└┘├┤┬┴┼` or `+-|` as borders), arrow glyphs (`→ ← ↑ ↓ ⇒ --> ==>`), or ≥3 spatially arranged lines. Tolerated for older `draft.md` files; report each such block with a `legacy-tag` flag so the editor can re-tag it as ` ```ascii ` in `draft.md` on the next authoring pass.
-3. **HTML comments of shape `<!-- ascii-source: ... -->`** following an `images/<slide-id>-<n>-<short-description>.svg` ref. Treat the comment payload as the ASCII block. Whether it re-renders is not decided here — like every other form, its digest is compared against the SVG's stamp (see *Idempotency* above).
+1. **The ` ```ascii ` fenced code block.** Opening fence is exactly ` ```ascii ` (lowercase, no trailing whitespace); closing fence is ` ``` ` on its own line. The payload between them is the diagram, no further inspection needed. This is the only way to author one (see [`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](editor.md) → *ASCII diagrams — predefined block syntax*).
+2. **HTML comments of shape `<!-- ascii-source: ... -->`** following an `images/<slide-id>-<n>-<short-description>.svg` ref — the fence rewrite an earlier Polish pass left behind. Treat the comment payload as the ASCII block. Whether it re-renders is not decided here: like every other form, its digest is compared against the SVG's stamp (see *Idempotency* above).
 
-Skip fenced blocks with real language tags (`python`, `bash`, `javascript`, `yaml`, `json`, `sh`, etc.) under all rules — the canonical tag is the only one that triggers detection without payload inspection.
+**Every other fence is skipped** — a real language tag (`python`, `bash`, `json`, …), a `text` tag, or no tag at all. There is no payload heuristic and no fallback tier: the `ascii` tag is the only thing that selects a block. Sniffing untagged fences for box glyphs was tried and removed — it swept up quoted code and Step 6 rasterized it. `scan` in [`polish-ascii/SKILL.md`](../skills/polish-ascii/SKILL.md) → *Detection rules* is where this is enforced; do not re-derive it here.
 
 ## Output contract — SVG + PNG companion
 
@@ -171,7 +170,7 @@ The PNG is **not** the `.critique/` rasterization (that one is critique-only scr
 
 PNG width: the SVG's intrinsic `viewBox` width × 2 (so `viewBox="0 0 900 420"` → 1800-wide PNG), aspect ratio preserved. Both files come from a single [`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) invocation; rasterization mechanics (`cairosvg`-only, no fallback, aspect enforced by `rasterize.py`) are that skill's contract — see its *Rasterizer* section.
 
-When the diagram-illustrator detects a legacy file (SVG present, PNG missing) during a re-run, it re-rasterizes the PNG without re-rendering the SVG — the rasterization step is idempotent on the SVG bytes and cheap. Failures to produce the PNG surface as `failed: png_deliverable: <reason>` per the per-block report (distinct from the `.critique/` PNG companion failure, which only degrades visual critique and does not block the build).
+When a re-run finds an SVG whose PNG sibling is missing, it re-rasterizes the PNG without re-rendering the SVG — the rasterization step is idempotent on the SVG bytes and cheap. Failures to produce the PNG surface as `failed: png_deliverable: <reason>` per the per-block report (distinct from the `.critique/` PNG companion failure, which only degrades visual critique and does not block the build).
 
 ## Output filename convention
 
@@ -187,8 +186,6 @@ talks/<Talk>/images/<slide-id>-<n>-<short-description>.png
 The same basename rule applies to sidecars: `<slide-id>-<n>-<short-description>.ascii` lives next to the `.svg`.
 
 Create `images/` if it doesn't exist.
-
-**Renaming legacy files.** If a Talk already has files using the old `<slide-id>-<n>.svg` form (no description), leave them in place — the convention applies to *new* renders and re-renders only. When a re-render fires for a legacy file, write the new descriptive filename and **delete** the old `<slide-id>-<n>.svg` + sibling `.ascii` to avoid two files referring to the same diagram. Update every reference in `final.md` to the new basename in the same pass.
 
 ## Report
 

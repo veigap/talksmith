@@ -28,7 +28,6 @@ Run this **first** in the reverse pipeline, then `talksmith:pptx-diff`, then `ta
 | `pptx` | yes | Path to the edited deck, e.g. `talks/<Talk>/output/final.pptx`. |
 | `--talk` | yes | Talk root, e.g. `talks/<Talk>`. Its `images/` folder is the reference set for image de-duplication. |
 | `--style` | yes | `strict` or `free-form` — **no default**. Cover fingerprint, section-pill fill, and agenda dot colors are style-specific. `strict` supports full cover/agenda/divider classification; `free-form` only reliably identifies the cover (content grouping is flat — a warning is emitted). |
-| `--stage-new` | deprecated | No-op kept for backward compat — **every** content image is always staged under `reconcile/staging/`. Image identity is resolved later by `pptx-diff`. |
 
 ## Subcommands
 
@@ -37,7 +36,7 @@ Run this **first** in the reverse pipeline, then `talksmith:pptx-diff`, then `ta
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/pptx-extract/pptx_inventory.py \
   talks/<Talk>/output/final.pptx --talk talks/<Talk> --style <strict|free-form> \
-  --stage-new [--human]
+  [--human]
 ```
 
 Resolves true presentation order (`ppt/presentation.xml` `<p:sldIdLst>` + rels — not filename order). Per slide: detected title, body blocks (bullets/paragraph/callout/table), speaker notes (`notesSlideN.xml`), and embedded images.

@@ -16,7 +16,7 @@ Owns the **mechanical bookkeeping** of the Step 5 feedback loop end-to-end:
 Plus two Step-6 helpers:
 
 6. **Rescue** still-`[open]` bullets from `final.md` into the `# Open questions` section (so they survive the strip pass) — `find_open_notes.py` / `rescue-open`.
-7. **Strip** every `Presenter feedback` field out of `final.md` at Step 6 (d) — `strip_feedback.py` — removing all three authored forms (H3 / paragraph / legacy bullet) and **guaranteeing a blank line before every `---` slide boundary** so a strip can never fuse two slides into a setext-H2 heading. Deterministic; the Editor never hand-strips these blocks.
+7. **Strip** every `Presenter feedback` field out of `final.md` at Step 6 (d) — `strip_feedback.py` — removing both authored forms (H3 / paragraph) and **guaranteeing a blank line before every `---` slide boundary** so a strip can never fuse two slides into a setext-H2 heading. Deterministic; the Editor never hand-strips these blocks.
 
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md [--dry-run]
@@ -60,6 +60,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
 
 Rewrites a single bullet (by line number) from `- "feedback"` to `- [open] YYYY-MM-DD — "feedback"`. Date defaults to today.
 
+`--origin {presenter,editor}` records **who wrote the bullet** (default `presenter`; an unqualified bullet always reads as presenter, so older drafts are unaffected). Pass `--origin editor` for a bullet the Editor is writing as a log of its own change — it renders as `- [open] YYYY-MM-DD (editor) — "…"`, and keeps the bullet out of the cross-Talk backlog. Format owned by [`schemas/draft.md`](${CLAUDE_PLUGIN_ROOT}/schemas/draft.md) → *Presenter feedback log*.
+
 ### `close` — flip `[open]` → `[closed]` with a resolution
 
 ```bash
@@ -67,7 +69,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
   --draft talks/<Talk>/draft.md --line N --resolution "<text>"
 ```
 
-Flips the bullet to `[closed]` (keeping the original date) and inserts a `  Resolution: <text>` continuation line.
+Flips the bullet to `[closed]` (keeping the original date **and the origin qualifier**) and inserts a `  Resolution: <text>` continuation line.
 
 ### `mirror-row` — append the closed bullet to `feedback-backlog.md`
 
@@ -79,6 +81,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row
 
 Writes one fully-formed row to `feedback-backlog.md` with talk folder, date, location (nearest H1/H2 above the bullet), verbatim feedback, the resolution text, and the tag list. Location is auto-derived; tags are passed in.
 
+**Presenter-origin only.** An `(editor)`-qualified bullet is refused with exit 4 — the backlog is cross-Talk, and one Talk's internal change log does not belong in it. `--allow-editor-origin` overrides, for the rare case where an editor-authored observation really does generalize.
+
 ### `find-closed-unmirrored` — sanity check at end of round
 
 ```bash
@@ -88,6 +92,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-close
 ```
 
 Returns the list of `[closed]` bullets in `draft.md` that don't yet have a matching row in `feedback-backlog.md`. Empty list = the round is complete.
+
+**Counts presenter-origin bullets only** (`--origin {presenter,editor,all}`, default `presenter`). The Editor's own `(editor)`-qualified change-log bullets are excluded and reported as a trailing count, not listed — before this, one mass edit that closed 52 bullets reported all 52 as "pending mirror" when almost none belonged in a cross-Talk backlog, and the handful that did were invisible in the noise. `--origin all` restores the unfiltered view.
 
 ### `rescue-open` — *(Step 6 (c), against `final.md`)*
 

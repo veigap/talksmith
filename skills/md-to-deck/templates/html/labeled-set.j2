@@ -1,20 +1,19 @@
 {% import "_macros.j2" as m %}
-{# The labeled set — one template for what used to be three (`concept-breakdown`, `card-row`,
+{# The labeled set — one template for what used to be three ids (`concept-breakdown`, `card-row`,
    `icon-list`). They were never three *shapes*: all three are "N parallel labeled concepts", and
-   the catalog already said to pick between them by count and body length. Three Match rules for
-   one shape is what made this the family the fill misclassified most, and a wrong pick there costs
-   real things (a set demoted to `card-row` loses nothing visually, but one demoted the other way
-   loses its per-concept icon or its prose room).
-   Now the *shape* is the classification and the arrangement is a field: `format` picks between the
-   three presentations — `grid` (cards), `editorial` (flat) and `row`. All three are **grids**: a
-   labeled set is N *parallel* concepts, and parallel concepts read side by side. The old fourth
-   format, `list`, stacked them one under the other in a single column, which spent the whole slide
-   width on one item and made a set of peers read as a sequence — it is gone. A legacy model that
-   still carries `format: "list"` (or the `icon-list` id) falls through to `grid` below rather than
-   failing; a set whose per-item prose genuinely needs a full-width column is not this shape at all
-   (→ `content-text`, or split the slide). #}
-{% set fmt = s.format or ('row' if s.template == 'card-row' else 'grid') %}
-{% set items = s.cards or s.rows or [] %}
+   the catalog picked between them by count and body length. Three Match rules for one shape made
+   this the family the fill misclassified most, and a wrong pick cost real things (a set demoted to
+   the row form loses nothing visually, but one demoted the other way loses its per-concept icon or
+   its prose room).
+   So the *shape* is the classification and the arrangement is a field: `format` picks between the
+   three presentations — `grid` (cards, the default), `editorial` (flat) and `row`. All three are
+   **grids**: a labeled set is N *parallel* concepts, and parallel concepts read side by side. A
+   fourth format, `list`, stacked them one under the other in a single column, which spent the whole
+   slide width on one item and made a set of peers read as a sequence — it is gone, and a set whose
+   per-item prose genuinely needs a full-width column is not this shape at all (→ `content-text`, or
+   split the slide). #}
+{% set fmt = s.format or 'grid' %}
+{% set items = s.cards or [] %}
 {% call m.stage(s) %}
 {% if fmt == 'editorial' %}
 {# The same labeled set with the card chrome removed — a flat composition on the canvas, for the
@@ -33,9 +32,8 @@
 {% endfor %}
 </div>
 {% else %}
-{# `grid` is also where a legacy `list` model lands, so it renders what that format rendered: an
-   item whose `body` is empty (a bare anaphora) becomes a label-only card rather than a card with
-   an empty paragraph in it. #}
+{# `grid` is also where an unrecognized `format` lands. An item whose `body` is empty (a bare
+   anaphora) becomes a label-only card rather than a card with an empty paragraph in it. #}
 <div class="cards">
 {% for c in items %}
 <div class="ccard{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>

@@ -82,9 +82,6 @@ NS = {
     "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
 }
 
-# Emoji ranges from §17.7
-EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
-
 # §15.5 discriminator threshold for §7.4 vs §7.5
 SHORT_BODY_THRESHOLD = 80  # chars; longest body ≤ threshold → §7.4 card-row, else §7.5
 
@@ -154,26 +151,13 @@ class SourceSignals:
         self.predicted_layout = "content-text"
 
 
-def _is_emoji_bullet(line: str) -> tuple[bool, bool]:
-    """Return (is_labeled_bullet, is_emoji_prefixed). Handles variation
-    selector U+FE0F after combined emoji glyphs (e.g. `⚙️ = U+2699 U+FE0F`)."""
-    s = line.lstrip()
-    if not s.startswith("- "):
-        return False, False
-    body = s[2:].lstrip()
-    emoji_prefix = bool(re.match(EMOJI_CLASS, body))
-    if emoji_prefix:
-        body = re.sub(rf"^{EMOJI_CLASS}️?\s*", "", body)
-    labeled = bool(re.match(r"\*\*[^*]+\*\*", body))
-    return labeled, (emoji_prefix and labeled)
-
-
 # template id (from slide-model.json) → the layout vocabulary this audit checks on the
 # emitted side. Templates it cannot check emit "skip" and are ignored (no false mismatches).
 _TEMPLATE_TO_LAYOUT = {
     "code-example": "code-example", "callout": "callout",
     "value-columns": "card-grid-from-table", "image-grid": "image-grid",
-    "card-row": "card-row", "icon-list": "icon-bullet-list",
+    # The labeled set is one model id whose `format` picks the PPTX recipe: `row` is §7.4's
+    # card-row, everything else the §7.5 card grid. (`parse_model` reads `format` off the slide.)
     "concept-breakdown": "card-grid", "content-image": "content+image",
     "closing-cta": "closing-cta",
 }
@@ -191,10 +175,14 @@ def parse_model(path: str) -> list[SourceSignals]:
         sig = SourceSignals(h2_title=title, h2_line=i)
         t = s.get("template", "")
         sig.predicted_layout = _TEMPLATE_TO_LAYOUT.get(t, "skip")
-        # A `value-columns` slide carrying its own `image` emits a different shape — the grid
-        # beside a picture — so it predicts its own layout. Without this it would predict the
-        # bare card grid and every such slide would report a mismatch that isn't one.
-        if t == "value-columns" and s.get("image"):
+        # The labeled set is one template whose `format` picks the PPTX recipe: `row` emits §7.4's
+        # card-row, every other format the §7.5 card grid.
+        if t == "concept-breakdown" and s.get("format") == "row":
+            sig.predicted_layout = "card-row"
+        # A `value-columns` slide carrying its own media emits a different shape — the grid beside
+        # a picture — so it predicts its own layout. Without this it would predict the bare card
+        # grid and every such slide would report a mismatch that isn't one.
+        if t == "value-columns" and s.get("media"):
             sig.predicted_layout = "card-grid-from-table+image"
             sig.image_count = 1
         out.append(sig)

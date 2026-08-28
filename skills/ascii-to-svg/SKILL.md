@@ -21,7 +21,7 @@ The agent is the coordinator; this skill is the worker. One invocation = one SVG
 
 The agent must pass the following in the skill invocation prompt. **Two input modes** for the ASCII payload — exactly one must be provided:
 
-- **Mode A — inline (legacy / one-off renders):** pass `ascii_block` as a verbatim string. Used when no `.ascii` sidecar exists yet.
+- **Mode A — inline (one-off renders):** pass `ascii_block` as a verbatim string. For rendering a diagram outside a Step-6 pass, when no `.ascii` sidecar exists.
 - **Mode B — from file (Step 6 standard):** pass `ascii_file` = absolute path to a `.ascii` sidecar produced by [`talksmith:polish-ascii`](../polish-ascii/SKILL.md) → `extract`. The skill reads the file and **splits it on the `<!-- ascii-note:` sentinel**: everything before the sentinel (minus the separating blank line) is the ASCII payload; the comment from sentinel through `-->` populates the `ascii_note` context input. This is the canonical input mode during a normal Step 6 pass — the sidecar already carries both the source and the diagram-illustrator's render-time intent.
 
 | Input | Required? | Example |

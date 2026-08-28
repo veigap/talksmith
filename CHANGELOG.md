@@ -13,6 +13,75 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.92.0] — 2026-08-28
+
+### Removed — **every legacy compatibility path**
+
+Talksmith carried a decade's worth of "the old spelling still works" in a few months. Each one was
+cheap on its own and expensive together: two ways to say the same thing meant two code paths, two
+sets of docs, and a fill step choosing between spellings instead of between meanings. All of it is
+gone. Regenerate a Talk's `slide-model.json` (it is a build artifact — the FILL step rewrites it
+from `final.md` every render) and re-tag any untagged ASCII fence, and nothing else is needed.
+
+- **ASCII detection has one rule: the ` ```ascii ` tag.** The fallback tier that sniffed untagged
+  (and `text` / `diagram`-tagged) fences for box glyphs is gone, and with it the whole class of
+  defect it caused — see *Fixed* below. `<!-- ascii-render: force -->` goes back to meaning only
+  what it says: render this block even though the slide also has an image.
+- **The labeled set has one template id.** `card-row` and `icon-list` are removed; both were
+  *arrangements* of `concept-breakdown`, which is what `format: row | grid | editorial` is for.
+  Items live in `cards`; `rows` is no longer read. Three Match rules for one shape made this the
+  family the fill misclassified most often.
+- **A slide's media has one spelling: `design` + `media`.** `layout: text-left|image-left|image-top`,
+  `aside: {image, side}` and a bare `image` on a composed template are no longer mapped forward.
+  `image-full` keeps its own `image` field, which was never the alias. A slide carrying media with
+  no design (or a design with no media) now *warns* instead of being silently guessed at — the
+  inference used to hide exactly that authoring slip.
+- **`Presenter feedback` has two authored forms, not three.** The inline `- **Presenter feedback:**`
+  bullet is no longer swept by the Step-6 strip; a line in that shape is now ordinary content.
+- **`reveal: sequential`** (a no-op that parsed) and **`pptx-extract --stage-new`** (a no-op flag
+  kept for compatibility) are removed. So is the `<slide-id>-<n>.svg` rename rule for diagram files
+  predating the descriptive-slug convention.
+
+### Fixed
+
+- **Step 6 no longer rasterizes code samples into pictures.** The `polish-ascii` scan accepted any
+  untagged fence containing `->`, `|` or `+--`, *or* any untagged fence of three or more lines — so
+  a deck about prompting detected 16 "diagrams" of which 2 were diagrams; the rest were example
+  prompts, Python, JSON and XML, and Polish would have rendered each to SVG and deleted its source.
+  The project's own `ascii-to-svg` fixture had one: a prompt card sitting in the set as a
+  "legacy-tagged fence". Tagging a fence costs five characters; guessing cost the content.
+
+- **The cross-Talk feedback backlog stops filling with the Editor's own notes.** A stamped feedback
+  bullet can now declare its origin — `- [closed] 2026-08-28 (editor) — "…"` — and an unqualified
+  bullet still reads as presenter feedback, so existing drafts are untouched. `find-closed-unmirrored`
+  counts presenter-origin bullets only (`--origin all` restores the old view) and `mirror-row`
+  refuses an editor-origin bullet outright. Before this, one editing pass that closed 52 bullets
+  reported all 52 as pending mirror when almost none belonged in a backlog shared across Talks.
+
+- **Two audits were reading fields that no longer exist**, found while removing the aliases:
+  `block_coverage` counted a slide's image via `image` alone (so every composed slide counted zero),
+  and `layout_fit` predicted the "grid beside a picture" layout from `image` too. Both read `media`
+  now, and `layout_fit` picks the labeled set's PPTX recipe from `format` rather than from the
+  deleted template id.
+
+### Changed
+
+- **A corpus `Inconsistencies` item now states how well it is known.** Items are marked `[verified]`
+  (the librarian names the check behind it) or `[open question]` (it reads wrong but was not
+  confirmed), and only a `[verified]` item authorizes the Editor to change content on its own — an
+  unmarked item from an older pass counts as an open question. Claims that something in the outside
+  world *does not exist* are the dangerous ones: a record once asserted that "Fable 5 is not a known
+  Anthropic model" (it is, and the rate the deck quoted was right), and acting on it would have
+  deleted a correct fact. The librarian now checks Claude/Anthropic model names against the
+  `claude-api` skill before calling one unknown.
+
+- **A truncated excerpt in `Raw / preserved excerpts` says so.** That section promises the Editor a
+  restorable original, but an excerpt clipped in the *source* — a cut-off PPTX text box — was stored
+  clipped and unlabelled, sending the Editor hunting for a full version that never existed. Such
+  excerpts now carry `<!-- truncated-in-source: no complete version available -->`, and the Editor's
+  prescribed response is to close the sentence within what the fragment claims and log it under
+  `Open questions` for the presenter.
+
 ## [0.90.2] — 2026-08-28
 
 ### Fixed

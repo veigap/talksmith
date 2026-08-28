@@ -79,10 +79,8 @@ def parse_model(path: str) -> list[SourceSlide]:
     out: list[SourceSlide] = []
     for idx, s in enumerate(model.get("slides", []), start=1):
         t = s.get("template", "")
-        if t in ("concept-breakdown", "card-row", "content+cards+image"):
+        if t in ("concept-breakdown", "content+cards+image"):
             n = len(s.get("cards", []))
-        elif t == "icon-list":
-            n = len(s.get("rows", []))
         elif t == "closing-cta":
             n = len(s.get("items", []))
         elif t in ("callout", "single-point"):

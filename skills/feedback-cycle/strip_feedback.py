@@ -8,10 +8,9 @@ must live in code with a test, not in operator memory. This helper removes every
 then **guarantees a blank line before every `---` thematic break**, so the boundary can never be
 reinterpreted as a heading underline.
 
-Three authored forms are recognized (see `agents/editor.md` (d)):
-  - H3 field:      `### Presenter feedback`        (slide-level; runs to the next heading / `---`)
-  - paragraph:     `**Presenter feedback:**`       (section/agenda-level; runs over its bullets)
-  - legacy bullet: `- **Presenter feedback:**`     (older inline form; runs over deeper sub-bullets)
+Both authored forms are recognized (see `agents/editor.md` (d)):
+  - H3 field:  `### Presenter feedback`     (slide-level; runs to the next heading / `---`)
+  - paragraph: `**Presenter feedback:**`    (section/agenda-level; runs over its bullets)
 
 A leading YAML frontmatter block (delimited by `---`) is detected and passed through untouched.
 
@@ -31,7 +30,6 @@ from pathlib import Path
 
 _H3_FEEDBACK = re.compile(r"^\s{0,3}#{3}\s+Presenter feedback\s*:?\s*$", re.I)
 _PARA_FEEDBACK = re.compile(r"^\s{0,3}\*\*\s*Presenter feedback\s*:?\s*\*\*\s*$", re.I)
-_BULLET_FEEDBACK = re.compile(r"^(\s*)[-*+]\s+\*\*\s*Presenter feedback\s*:?\s*\*\*", re.I)
 _HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
 # Indent-tolerant on the same terms as _HEADING, and it has to be: `# Cut material` archives a whole
 # cut slide as one indented bullet — its `### Presenter feedback` heading AND its closing `---`
@@ -46,24 +44,23 @@ def _indent(line: str) -> int:
     return len(line) - len(line.lstrip())
 
 
-def _in_block(line: str, base: int = -1) -> bool:
-    """Is this line still inside a feedback block opened at indent `base`?
+def _in_block(line: str) -> bool:
+    """Is this line still inside the feedback block being swept?
 
-    A block is its bullets **plus their wrapped continuation lines**. Testing for a bullet alone
-    was the bug: a `Resolution:` that wraps onto an indented continuation line is neither blank nor
-    a bullet, so the sweep stopped there and the tail survived the strip. Indentation is what marks
-    continuation — anything still indented past the opener belongs to the block; a heading or a
-    `---` boundary ends it no matter how it is indented."""
+    A block is its bullets **plus their wrapped continuation lines**. Testing for a bullet alone was
+    the bug: a `Resolution:` that wraps onto an indented continuation line is neither blank nor a
+    bullet, so the sweep stopped there and the tail survived the strip. So: any bullet at any
+    indent continues the block, and so does any indented non-bullet line. A heading or a `---`
+    boundary ends it no matter how it is indented."""
     if _HEADING.match(line) or _HR.match(line):
         return False
-    ind = _indent(line)
-    return ind > base if _BULLET.match(line) else ind > max(base, 0)
+    return bool(_BULLET.match(line)) or _indent(line) > 0
 
 
 def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
     """Drop every feedback block from a body (frontmatter already removed). Returns (kept, stats)."""
     drop = [False] * len(lines)
-    stats = {"h3": 0, "paragraph": 0, "bullet": 0}
+    stats = {"h3": 0, "paragraph": 0}
     i = 0
     while i < len(lines):
         ln = lines[i]
@@ -86,31 +83,6 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
             for k in range(i, j):
                 drop[k] = True
             stats["h3"] += 1
-            i = j
-            continue
-
-        m = _BULLET_FEEDBACK.match(ln)
-        if m:
-            # Legacy inline bullet: consume it plus any deeper-indented sub-bullets (and the blank
-            # lines strictly between them).
-            base = _indent(ln)
-            j = i + 1
-            while j < len(lines):
-                if _BLANK.match(lines[j]):
-                    k = j
-                    while k < len(lines) and _BLANK.match(lines[k]):
-                        k += 1
-                    if k < len(lines) and _in_block(lines[k], base):
-                        j = k
-                        continue
-                    break
-                if _in_block(lines[j], base):
-                    j += 1
-                    continue
-                break
-            for k in range(i, j):
-                drop[k] = True
-            stats["bullet"] += 1
             i = j
             continue
 
@@ -222,7 +194,6 @@ def main(argv: list[str] | None = None) -> int:
     print(f"stripped Presenter feedback from {path}:{tag}")
     print(f"  H3 fields:        {stats['h3']}")
     print(f"  paragraph labels: {stats['paragraph']}")
-    print(f"  legacy bullets:   {stats['bullet']}")
     if not args.dry_run and (total or cleaned != original):
         path.write_text(cleaned, encoding="utf-8")
         print(f"  wrote {path} ({total} block(s) removed)")

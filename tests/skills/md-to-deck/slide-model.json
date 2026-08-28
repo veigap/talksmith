@@ -156,7 +156,7 @@
         },
         {
           "label": "When to switch",
-          "body": "If a body is too long to read comfortably here, move it to icon-list, which gives each row prose room."
+          "body": "If a body is too long to read comfortably here, move it to content-text, which gives each item prose room."
         }
       ]
     },
@@ -421,12 +421,6 @@
       "section": "Enumerations",
       "title": "aside: a full-bleed image column on the right",
       "lead": "The image reinforces the point; the text carries it.",
-      "aside": {
-        "image": {
-          "src": "images/aside-texture.svg",
-          "alt": "An abstract texture standing in for an atmospheric photo"
-        }
-      },
       "notes": "The aside is the slide-model expression of an author's `<!-- aside: ... -->` hint in draft.md. It reserves roughly 37% of the slide width as a full-bleed image column and pads the stage on that side so the head and body lay out in what remains. Because the column crops to fill rather than fitting the whole image, it is only ever atmosphere: a diagram, chart, or screenshot the audience must actually read belongs in a template that owns its image, where it is contained and legible.",
       "cards": [
         {
@@ -441,7 +435,12 @@
           "label": "Any stage-based type",
           "body": "The stage macro adds it, so every content template supports it."
         }
-      ]
+      ],
+      "design": "column-right",
+      "media": {
+        "src": "images/aside-texture.svg",
+        "alt": "An abstract texture standing in for an atmospheric photo"
+      }
     },
     {
       "template": "concept-breakdown",
@@ -457,19 +456,17 @@
           "body": "The stage pads whichever side the image takes."
         }
       ],
-      "aside": {
-        "side": "left",
-        "image": {
-          "src": "images/aside-texture.svg",
-          "alt": "An abstract texture standing in for an atmospheric photo"
-        }
-      },
-      "notes": "The left variant exists for rhythm: alternating the side across a run of slides keeps a deck from feeling like a template. The choice carries no semantics — it is purely visual pacing."
+      "notes": "The left variant exists for rhythm: alternating the side across a run of slides keeps a deck from feeling like a template. The choice carries no semantics — it is purely visual pacing.",
+      "design": "column-left",
+      "media": {
+        "src": "images/aside-texture.svg",
+        "alt": "An abstract texture standing in for an atmospheric photo"
+      }
     },
     {
-      "template": "card-row",
+      "template": "concept-breakdown",
       "section": "Enumerations",
-      "title": "card-row: 3 short cards with a lead",
+      "title": "concept-breakdown · format row · 3 short cards",
       "lead": "A lead line sits above a single horizontal row of three to five short cards:",
       "cards": [
         {
@@ -484,14 +481,15 @@
           "label": "One row",
           "body": "Three to five cards share one horizontal band."
         }
-      ]
+      ],
+      "format": "row"
     },
     {
-      "template": "icon-list",
+      "template": "concept-breakdown",
       "section": "Enumerations",
-      "title": "Legacy `icon-list` → the card grid",
-      "lead": "The retired `list` format stacked these in one column; the legacy id now renders them as **cards**:",
-      "rows": [
+      "title": "concept-breakdown · the default card grid",
+      "lead": "With no `format`, a labeled set renders as **cards**:",
+      "cards": [
         {
           "label": "Parallel reads side by side",
           "body": "A labeled set is N *peers*. Stacking them spent the whole slide width on one item and made the set read as a sequence."
@@ -510,7 +508,7 @@
       "template": "concept-breakdown",
       "section": "Enumerations",
       "title": "A bare anaphora → label-only cards",
-      "rows": [
+      "cards": [
         {
           "label": "No labels are required here."
         },
@@ -654,10 +652,11 @@
           "body": "The supporting image is contained, so a diagram here stays readable."
         }
       ],
-      "image": {
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
-      }
+      },
+      "design": "split-right"
     },
     {
       "template": "process",
@@ -678,11 +677,11 @@
           "body": "The supporting image is contained, so a diagram here stays readable."
         }
       ],
-      "image": {
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       },
-      "layout": "image-left"
+      "design": "split-left"
     },
     {
       "template": "timeline",
@@ -912,10 +911,6 @@
       "section": "Ordered & comparison",
       "title": "value-columns + image: the grid keeps its columns",
       "lead": "A table and a diagram on the same slide — neither one has to go.",
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      },
       "columns": [
         {
           "header": "What changes",
@@ -944,17 +939,17 @@
             "You commission and review"
           ]
         }
-      ]
+      ],
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "design": "split-right"
     },
     {
       "template": "value-columns",
       "section": "Ordered & comparison",
       "title": "value-columns + image: mirrored (image-left)",
-      "layout": "image-left",
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      },
       "columns": [
         {
           "header": "Factor",
@@ -972,7 +967,12 @@
             "Still left-aligned"
           ]
         }
-      ]
+      ],
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "design": "split-left"
     },
     {
       "template": "pros-cons",
@@ -1111,24 +1111,23 @@
           "body": "text-left, shown here, plus image-left and image-top."
         }
       ],
-      "image": {
-        "src": "images/portrait.svg",
-        "alt": "A tall portrait test image"
-      },
-      "layout": "text-left",
       "highlights": [
         {
           "label": "Never cropped",
           "body": "the tall portrait must show its full height, edge to edge.",
           "kind": "important"
         }
-      ]
+      ],
+      "media": {
+        "src": "images/portrait.svg",
+        "alt": "A tall portrait test image"
+      },
+      "design": "split-right"
     },
     {
       "template": "content-image",
       "section": "Visual & data",
       "title": "content-image: image-left mirrors the columns",
-      "layout": "image-left",
       "lead": "Same slide, image first — the enumeration is untouched:",
       "facts": [
         {
@@ -1144,23 +1143,24 @@
           "body": "aspect is preserved here exactly as in text-left."
         }
       ],
-      "image": {
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
-      }
+      },
+      "design": "split-left"
     },
     {
       "template": "content-image",
       "section": "Visual & data",
       "title": "content-image: image-top layout for short text",
-      "layout": "image-top",
       "facts": [
         "When the text is just a line, the image-top layout lets the image dominate the slide."
       ],
-      "image": {
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
-      }
+      },
+      "design": "banded"
     },
     {
       "template": "image-full",
@@ -1185,18 +1185,19 @@
     {
       "template": "content-image",
       "section": "Visual & data",
-      "title": "content-image: the empty-text-column guard (legacy models)",
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      },
+      "title": "content-image: the empty-text-column guard",
       "highlights": [
         {
           "kind": "note",
           "label": "Guard, not a shape to author",
           "body": "a bare image here still drops the text column instead of projecting an empty one — new models use image-full."
         }
-      ]
+      ],
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "design": "split-right"
     },
     {
       "template": "figures",
@@ -1276,10 +1277,6 @@
           "body": "A single supporting visual fills the rest."
         }
       ],
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      },
       "_choice": {
         "signals": [
           "labeled_items=3",
@@ -1296,13 +1293,17 @@
           "concept-breakdown": "requires images == 0; would drop the shared diagram",
           "content-image": "dissolves the labels into facts, losing the per-concept icon"
         }
-      }
+      },
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "design": "split-right"
     },
     {
       "template": "content+cards+image",
       "section": "Visual & data",
       "title": "content+cards+image: image-left mirrors the columns",
-      "layout": "image-left",
       "lead": "Same slide, image first — the cards are untouched:",
       "cards": [
         {
@@ -1318,10 +1319,6 @@
           "body": "the wider grid track remains the cards', not the image's."
         }
       ],
-      "image": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
-      },
       "_choice": {
         "signals": [
           "labeled_items=3",
@@ -1338,7 +1335,12 @@
           "concept-breakdown": "requires images == 0; would drop the shared diagram",
           "content-image": "dissolves the labels into facts, losing the per-concept icon"
         }
-      }
+      },
+      "media": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "design": "split-left"
     },
     {
       "template": "code-example",
@@ -1674,12 +1676,13 @@
       "correct": "On the next navigation (Reveal fragment)",
       "answer": "On next-nav — the question shows first so the audience can think, then the answer fades up.",
       "explanation": "The correct choice highlights in sync; space is reserved so the question never jumps.",
-      "image": {
+      "answer_label": "Answer",
+      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away.",
+      "media": {
         "src": "images/portrait.svg",
         "alt": "Quiz illustration"
       },
-      "answer_label": "Answer",
-      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
+      "design": "split-right"
     },
     {
       "template": "quiz",
@@ -1694,12 +1697,13 @@
       "correct": "Beside the quiz, never cropped",
       "answer": "Beside the quiz — contained, sized to its own aspect.",
       "explanation": "The quiz body and the image split the slide; the image is never cropped.",
-      "image": {
+      "answer_label": "Answer",
+      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away.",
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       },
-      "answer_label": "Answer",
-      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away."
+      "design": "split-right"
     },
     {
       "template": "quiz",
@@ -1713,13 +1717,13 @@
       "correct": "No — only the two columns swap",
       "answer": "No. The options keep their order, their letters and their alignment.",
       "explanation": "image-left is a composition choice; it never touches the enumeration.",
-      "image": {
+      "answer_label": "Answer",
+      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away.",
+      "media": {
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       },
-      "answer_label": "Answer",
-      "notes": "Let the room commit to an answer before you advance; the reveal is one navigation step away.",
-      "layout": "image-left"
+      "design": "split-left"
     },
     {
       "template": "section-agenda",

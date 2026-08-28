@@ -82,11 +82,10 @@ from pathlib import Path
 _FRAME = {"cover", "section-agenda", "divider", "closing-hero", "closing-cta"}
 
 # Every template the schema defines (`schemas/slide-model.md` → *Per-template field
-# contract*), plus the three legacy spellings `html_style.py` still maps. Anything else in a
-# model renders as `fallback` and is reported as such here — the same set the HTML build
-# warns about, checked before the render instead of during it.
+# contract*). Anything else in a model renders as `fallback` and is reported as such here —
+# the same set the HTML build warns about, checked before the render instead of during it.
 _KNOWN = _FRAME | {
-    "statement", "concept-breakdown", "card-row", "icon-list", "process", "figures",
+    "statement", "concept-breakdown", "process", "figures",
     "image-grid", "image-full", "content-image", "content+cards+image", "value-columns",
     "concept-columns", "stat", "big-number", "quote", "timeline", "pros-cons", "quiz",
     "single-point", "callout", "code-example", "content-text", "matrix", "fallback",
@@ -99,13 +98,6 @@ _KNOWN = _FRAME | {
 _LAST_RESORT = {"content-text", "fallback"}
 _LAST_RESORT_SHARE = 0.15
 
-# `card-row` and `icon-list` are legacy spellings that `html_style.py` maps onto
-# `concept-breakdown` — the same rendered template. Share and run computations fold them
-# together, or a deck that is entirely labeled sets escapes the dominance check by being
-# spelled three ways. The printed distribution keeps the raw names, which is what the model
-# actually says.
-_ALIAS = {"card-row": "concept-breakdown", "icon-list": "concept-breakdown"}
-
 
 # --- composition groups: what the *audience* sees -----------------------------------------
 # The catalog's families group templates by what a slide **does**; monotony is about what a
@@ -117,7 +109,7 @@ _ALIAS = {"card-row": "concept-breakdown", "icon-list": "concept-breakdown"}
 # 54-slide deck did (18 `content+cards+image` + 11 `concept-breakdown` = 54% card grids, with
 # nothing over 33%). So dominance is checked twice: per template, and per composition.
 _COMPOSITION = {
-    "cards":    {"concept-breakdown", "card-row", "icon-list", "content+cards+image", "figures"},
+    "cards":    {"concept-breakdown", "content+cards+image", "figures"},
     "columns":  {"value-columns", "concept-columns", "pros-cons", "matrix"},
     "sequence": {"process", "timeline"},
     "claim":    {"statement", "quote", "callout", "single-point"},
@@ -134,9 +126,8 @@ _COMP_SHARE = 0.50
 
 
 def _fam(slide: dict) -> str:
-    """The template a slide really renders as, legacy spellings folded in."""
-    t = slide.get("template", "fallback")
-    return _ALIAS.get(t, t)
+    """The template a slide renders as."""
+    return slide.get("template", "fallback")
 
 
 def _ref(slide: dict, idx: int) -> str:
