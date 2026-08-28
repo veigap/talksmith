@@ -59,7 +59,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from block_coverage import (  # noqa: E402  (shared pptx / source machinery)
     NS,
     _slide_paths,
-    _slide_rels,
+    slide_rels,
     _normalize_title,
     _extract_title,
     _looks_like_agenda,
@@ -196,7 +196,7 @@ def _notes_target(zf: zipfile.ZipFile, slide_path: str) -> str | None:
     like `ppt/notesSlides/notesSlide1.xml`.
     """
     parent = PurePosixPath(slide_path).parent          # ppt/slides
-    for target in _slide_rels(zf, slide_path).values():
+    for target in slide_rels(zf, slide_path).values():
         if "notesSlide" in target:
             parts: list[str] = []
             for seg in (parent / target).parts:

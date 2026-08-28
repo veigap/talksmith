@@ -789,7 +789,7 @@ This sub-section is the operational form of §10's bullet-glyph contract. The au
 
 #### 15.6.4 Surfacing protocol — what to do when the audit can't resolve
 
-When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the strict 3-cycle cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*) and surfaces a single structured prompt to the presenter:
+When §15.6.1 produces an ambiguous layout selection (two §15.5 rows match and the discriminator is borderline), §15.6.2 hits an emoji outside the §17.7 table at a slot the chosen layout doesn't have, or §15.6.3 detects existing bullet-style drift in the renderer, the renderer **stops the iteration budget** (per the strict 3-cycle cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Render flow (Path A)*) and surfaces a single structured prompt to the presenter:
 
 ```
 [pptx pre-emit audit] Slide N — <H2 title>
@@ -1084,7 +1084,7 @@ After emit, the renderer runs four checks in order before declaring the build a 
 
 Only after all four pass: render the deck to PNG via `soffice --headless --convert-to pdf` + `pdftoppm` (or the native skill's slide-to-image endpoint), then walk the shared quality catalog [`../slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md) — strict selects all four categories (CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE) per the [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md) matrix, with the strict elaborations in §20 — as the cycle's FEEDBACK phase.
 
-Edit + re-render up to **3 cycles total** per the strict cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*. After the cap, surface unresolved defects to the presenter rather than looping.
+Edit + re-render up to **3 cycles total** per the strict cap in [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Render flow (Path A)*. After the cap, surface unresolved defects to the presenter rather than looping.
 
 ### 19.6 Consolidated anti-patterns
 
@@ -1116,7 +1116,7 @@ The spec is self-contained; pointing any renderer (skill body, agent system mess
 
 ## 20. Post-render visual review
 
-This is the **FEEDBACK phase** of the strict render cycle (cycle contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*). The skill's FEEDBACK sub-agent runs it after CONTROL passes, reading `talks/<Talk>/output/.critique/slide-NN.png` via the `Read` tool for each slide (visual analysis on rasterized pixels — XML inspection is forbidden; text overflow, off-balance layout, image clashes, and theme drift are visual properties XML routinely misses).
+This is the **FEEDBACK phase** of the strict render cycle (cycle contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Render flow (Path A)*). The skill's FEEDBACK sub-agent runs it after CONTROL passes, reading `talks/<Talk>/output/.critique/slide-NN.png` via the `Read` tool for each slide (visual analysis on rasterized pixels — XML inspection is forbidden; text overflow, off-balance layout, image clashes, and theme drift are visual properties XML routinely misses).
 
 **The practices strict walks live in the shared catalog** [`${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-design.md). Strict selects **all four categories — CONTENT + AESTHETIC + DISTRIBUTION + LAYOUT-CONFORMANCE**, at cycle cap 3, per the per-format matrix in [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md). §20.2 below is no longer a standalone rubric; it records only the strict-specific *elaborations* keyed by catalog id (the depth the catalog deliberately omits). §20.1 (the block-coverage gate), and the shared walk discipline / aesthetic note / declare-clean contract now live in `slide-design.md`; strict inherits them and keeps only the notes below.
 

@@ -41,6 +41,10 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
     fence_line_mask as _fence_line_mask,
     extract_block_context as _extract_block_context,
 )
+from _plan import (  # noqa: E402  (shared plan-file plumbing)
+    IMG_REF_RE, IMG_EXT_RE,
+    add_plan_args, load_plan, read_json_arg, referenced_stems,
+)
 
 # The ONLY fence that holds a renderable diagram. A fence with any other info string — a real
 # language, a generic `text`, or nothing at all — is code, prose or data, and is never rendered.
@@ -339,27 +343,6 @@ def stamp_svg_digest(svg_path: Path, digest: str) -> None:
     svg_path.write_text(text)
 
 
-def _load_plan(args: argparse.Namespace) -> tuple[Path, dict[str, Any]] | int:
-    final_path = Path(args.final).resolve()
-    if not final_path.exists():
-        print(f"error: final.md not found: {final_path}", file=sys.stderr)
-        return 2
-    if args.plan == "-":
-        plan_text = sys.stdin.read()
-    else:
-        plan_path = Path(args.plan)
-        if not plan_path.exists():
-            print(f"error: plan not found: {plan_path}", file=sys.stderr)
-            return 2
-        plan_text = plan_path.read_text()
-    try:
-        plan = json.loads(plan_text)
-    except json.JSONDecodeError as e:
-        print(f"error: plan JSON invalid: {e}", file=sys.stderr)
-        return 2
-    return final_path, plan
-
-
 def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
     """Write .ascii sidecars. Returns (written, unchanged, skipped_no_render, sidecar_records)."""
     blocks = plan.get("blocks") or []
@@ -497,7 +480,7 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
-    loaded = _load_plan(args)
+    loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
@@ -511,7 +494,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
 
 
 def cmd_cleanup(args: argparse.Namespace) -> int:
-    loaded = _load_plan(args)
+    loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
@@ -526,13 +509,8 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
 _INTENT_LINE = re.compile(r"^\s*(?:[#\-*<!]\s*)*intent\s*:\s*(.+?)\s*-*>?\s*$", re.IGNORECASE | re.MULTILINE)
 
 
-def _read_json_arg(value: str) -> Any:
-    text = sys.stdin.read() if value == "-" else Path(value).read_text()
-    return json.loads(text)
-
-
 def cmd_inspect_intents(args: argparse.Namespace) -> int:
-    plan = _read_json_arg(args.plan)
+    plan = read_json_arg(args.plan)
     print(f"{'slide_id':<10} | {'title':<50} | intent")
     print(f"{'-' * 10}-+-{'-' * 50}-+-{'-' * 60}")
     for b in plan.get("blocks", []):
@@ -551,8 +529,8 @@ def cmd_inspect_intents(args: argparse.Namespace) -> int:
 
 
 def cmd_annotate_renders(args: argparse.Namespace) -> int:
-    plan = _read_json_arg(args.plan)
-    renders = _read_json_arg(args.renders)
+    plan = read_json_arg(args.plan)
+    renders = read_json_arg(args.renders)
     if not isinstance(renders, dict):
         print("error: --renders JSON must be an object mapping slide_id → {svg_basename, alt}", file=sys.stderr)
         return 2
@@ -594,7 +572,7 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
 
 
 def cmd_prepare_render_args(args: argparse.Namespace) -> int:
-    plan = _read_json_arg(args.plan)
+    plan = read_json_arg(args.plan)
     final_path_str = plan.get("final_path")
     if not final_path_str:
         print("error: plan missing 'final_path' field — re-run `scan` to regenerate", file=sys.stderr)
@@ -699,7 +677,7 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
     Must run after the renders and before the next pass — an unstamped SVG simply re-renders
     (the safe direction), so a missed stamp costs work, never correctness.
     """
-    loaded = _load_plan(args)
+    loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
@@ -731,17 +709,6 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
 
 
 # ── gc: prune orphaned generated diagram triplets ───────────────────────────
-_IMG_REF_RE = re.compile(r"!\[[^\]]*\]\(\s*(?:\./)?images/([^)\s]+?)\s*\)")
-_IMG_EXT_RE = re.compile(r"\.(svg|png|jpe?g|gif|webp|avif)$", re.IGNORECASE)
-
-
-def _referenced_stems(final_text: str) -> set[str]:
-    """Every `images/<name>` basename referenced by final.md, extension stripped → stem."""
-    out: set[str] = set()
-    for m in _IMG_REF_RE.finditer(final_text):
-        name = m.group(1).rsplit("/", 1)[-1]
-        out.add(_IMG_EXT_RE.sub("", name))
-    return out
 
 
 def _generated_diagram_stems(images_dir: Path) -> set[str]:
@@ -795,7 +762,7 @@ def cmd_gc(args: argparse.Namespace) -> int:
             print(f"  … and {len(pending) - 5} more", file=sys.stderr)
         return 2
 
-    referenced = _referenced_stems(final_path.read_text())
+    referenced = referenced_stems(final_path.read_text())
     orphans = sorted(s for s in _generated_diagram_stems(images_dir) if s not in referenced)
 
     targets: list[Path] = []
@@ -828,7 +795,7 @@ def cmd_gc(args: argparse.Namespace) -> int:
 
 def cmd_apply(args: argparse.Namespace) -> int:
     """Convenience wrapper — extract + cleanup in one pass."""
-    loaded = _load_plan(args)
+    loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
@@ -856,10 +823,6 @@ def main(argv: list[str]) -> int:
     p_scan.add_argument("--language", help="presentation language (e.g. 'Spanish'); stamped into each block's context.presentation_language so the caller doesn't need to add it post-hoc")
     p_scan.set_defaults(func=cmd_scan)
 
-    def _add_plan_args(p: argparse.ArgumentParser) -> None:
-        p.add_argument("--final", required=True, help="path to the Talk's final.md")
-        p.add_argument("--plan", required=True)
-        p.add_argument("--dry-run", action="store_true")
 
     p_inspect = sub.add_parser("inspect-intents", help="print one row per ASCII block — slide_id | slide_title | ascii-note intent — for quick eyeballing of a scan plan")
     p_inspect.add_argument("--plan", required=True, help="path to a scan JSON (or '-' for stdin)")
@@ -878,19 +841,19 @@ def main(argv: list[str]) -> int:
     p_prep.set_defaults(func=cmd_prepare_render_args)
 
     p_extract = sub.add_parser("extract", help="write .ascii sidecars from an annotated scan plan (no final.md mutation)")
-    _add_plan_args(p_extract)
+    add_plan_args(p_extract)
     p_extract.set_defaults(func=cmd_extract)
 
     p_stamp = sub.add_parser("stamp-renders", help="stamp each rendered SVG with the digest of the ASCII it was drawn from — the sole re-render signal for the next pass")
-    _add_plan_args(p_stamp)
+    add_plan_args(p_stamp)
     p_stamp.set_defaults(func=cmd_stamp_renders)
 
     p_cleanup = sub.add_parser("cleanup", help="rewrite final.md fences to image refs from an annotated scan plan (no sidecar writing)")
-    _add_plan_args(p_cleanup)
+    add_plan_args(p_cleanup)
     p_cleanup.set_defaults(func=cmd_cleanup)
 
     p_apply = sub.add_parser("apply", help="extract + cleanup in one pass (convenience)")
-    _add_plan_args(p_apply)
+    add_plan_args(p_apply)
     p_apply.set_defaults(func=cmd_apply)
 
     p_gc = sub.add_parser("gc", help="list (or --apply delete) generated diagram triplets (.svg/.png/.ascii + .critique png) no longer referenced by final.md; presenter-owned images are never touched")

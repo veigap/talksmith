@@ -44,6 +44,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final tal
 | `final_path` | yes | Positional. Path to the Talk's `final.md`. |
 | `--format` | optional | `json` (default) or `human` |
 | `--language` | optional | Presentation language (e.g. `Spanish`). When provided, stamped into each block's `context.presentation_language` so the caller doesn't need to splice it in post-hoc. |
+| `--output` / `-o` | optional | Write the plan to a file instead of stdout. |
 
 ### `extract` / `cleanup` / `apply`
 

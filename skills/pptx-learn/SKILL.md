@@ -35,6 +35,17 @@ The geometry snapshot is what makes B survive **in-place editing** of `output/fi
 
 0. **Gate.** Confirm the render was strict and a baseline exists (`output/final.generated.geometry.json`, or an as-generated `.pptx` passed explicitly). If not → emit `[pptx-learn] no-op: <reason>` and stop. Never learn from free-form/html-strict.
 
+   The baseline is a **geometry inventory**, and `learn_patterns.py inventory` is what makes one:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/pptx-learn/learn_patterns.py inventory <deck.pptx> \
+     -o talks/<Talk>/output/final.generated.geometry.json
+   ```
+
+   The strict render writes it at build time, so this is only needed when learning from a deck
+   rendered before that existed — or to re-derive one from an archived as-generated `.pptx`.
+   `diff` also accepts a `.pptx` directly on `--baseline` and inventories it in passing.
+
 1. **Measure — Python surfaces evidence.** Run [`learn_patterns.py`](learn_patterns.py):
 
    ```bash
@@ -42,10 +53,11 @@ The geometry snapshot is what makes B survive **in-place editing** of `output/fi
      --baseline talks/<Talk>/output/final.generated.geometry.json \
      --edited   <edited.pptx> \
      --min-recur 3 \
+     --min-move-emu 45720 \
      -o talks/<Talk>/reconcile/learn-candidates.json
    ```
 
-   It matches slides (by title, then order) and shapes (by role, then nearest position), computes per-shape deltas (move / resize / refont / refill), and keeps deltas that **recur across ≥ `--min-recur` slides** with a consistent direction. Each carries a `summary`, the median delta (EMU / pt / hex), the slide `class` + shape `role`, and the evidence `count` + `slides`. **This is evidence, not conclusions** — recurrence is a *pre-filter* that discards single nudges, not a promotion decision.
+   It matches slides (by title, then order) and shapes (by role, then nearest position), computes per-shape deltas (move / resize / refont / refill), and keeps deltas that **recur across ≥ `--min-recur` slides** with a consistent direction. Each carries a `summary`, the median delta (EMU / pt / hex), the slide `class` + shape `role`, and the evidence `count` + `slides`. **This is evidence, not conclusions** — recurrence is a *pre-filter* that discards single nudges, not a promotion decision. `--min-move-emu` sets the floor under which a move is noise rather than an edit (default 45720 EMU = 0.05 in); raise it on a deck that was nudged by hand a lot.
 
 1.5. **See the change (multimodal, best-effort).** For each candidate's evidence slides, render the **baseline** slide and the **edited** slide to PNG so the LLM can look at the actual before/after, not just EMU numbers — reuse the md-to-deck rasterization path (`libreoffice --headless --convert-to pdf` → `pdftoppm`) on both decks and pair them by slide. If libreoffice is unavailable, skip this and analyse from the deltas + the slides' text content; note `multimodal: unavailable` in the report.
 

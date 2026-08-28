@@ -1,6 +1,6 @@
-# Schema — `talksmith_bugs.md`
+# Schema — `talksmith-bugs.md`
 
-Specification for `talksmith_bugs.md`: the running defect log at the **root of the subject working directory** (sibling of `CLAUDE.md`, `config/`, `talks/`), where Talksmith records every inconsistency, malfunction, or self-contradiction it runs into while executing the workflow.
+Specification for `talksmith-bugs.md`: the running defect log at the **root of the subject working directory** (sibling of `CLAUDE.md`, `config/`, `talks/`), where Talksmith records every inconsistency, malfunction, or self-contradiction it runs into while executing the workflow.
 
 ## Purpose
 
@@ -121,7 +121,7 @@ Before appending, scan for an **open entry with the same `where` + same `what`**
 
 ## Presenter-facing behavior
 
-Per the orchestrator's *Speak human, not internal*: **never narrate logging in running chat**. No error text, no skill names, no ids mid-step. At most, when a step closes with defects logged, one plain line — *"I hit a couple of rough edges in the tool while doing this; they're written down in `talksmith_bugs.md`."* Nothing at all when the log stayed empty.
+Per the orchestrator's *Speak human, not internal*: **never narrate logging in running chat**. No error text, no skill names, no ids mid-step. At most, when a step closes with defects logged, one plain line — *"I hit a couple of rough edges in the tool while doing this; they're written down in `talksmith-bugs.md`."* Nothing at all when the log stayed empty.
 
 ## Canonical empty form
 

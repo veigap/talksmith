@@ -48,9 +48,6 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
-SVG_NS = "http://www.w3.org/2000/svg"
-
-
 def _parse_viewbox(vb: str) -> tuple[float, float, float, float] | None:
     parts = re.split(r"[\s,]+", vb.strip())
     if len(parts) != 4:

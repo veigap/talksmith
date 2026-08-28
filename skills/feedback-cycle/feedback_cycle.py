@@ -25,6 +25,9 @@ import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
+from _write import atomic_write_lines  # noqa: E402  (shared atomic file write)
 from typing import Any
 
 H1 = re.compile(r"^# (?!#)(.+?)\s*$")
@@ -55,15 +58,6 @@ def _read_lines(path: Path) -> list[str]:
     if not path.exists():
         raise SystemExit(f"error: file not found: {path}")
     return path.read_text(encoding="utf-8").splitlines()
-
-
-def _atomic_write(path: Path, lines: list[str]) -> None:
-    text = "\n".join(lines)
-    if not text.endswith("\n"):
-        text += "\n"
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(text, encoding="utf-8")
-    os.replace(tmp, path)
 
 
 def _strip_quotes(text: str) -> str:
@@ -249,7 +243,7 @@ def cmd_stamp(args: argparse.Namespace) -> int:
     date = args.date or datetime.date.today().isoformat()
     origin = args.origin or PRESENTER
     lines[idx] = f'- [open] {date}{_origin_suffix(origin)} — "{text}"'
-    _atomic_write(draft_path, lines)
+    atomic_write_lines(draft_path, lines)
     print(f"stamped: line {args.line} → [open] {date} ({origin})")
     return 0
 
@@ -278,7 +272,7 @@ def cmd_close(args: argparse.Namespace) -> int:
         lines[idx + 1] = resolution_line
     else:
         lines.insert(idx + 1, resolution_line)
-    _atomic_write(draft_path, lines)
+    atomic_write_lines(draft_path, lines)
     print(f"closed: line {args.line} (date {date}) + Resolution")
     return 0
 
@@ -461,7 +455,7 @@ def cmd_rescue_open(args: argparse.Namespace) -> int:
             print(f"  {line}")
         return 0
 
-    _atomic_write(final_path, new_lines)
+    atomic_write_lines(final_path, new_lines)
     print(f"rescued: {appended} appended to # Open questions, {skipped} skipped (already present)")
     return 0
 

@@ -103,7 +103,7 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 ```
 <your-subject-repo>/
 ├── CLAUDE.md                 # thin stub from /talksmith:init; auto-loads the plugin spec — leave it alone
-├── talksmith_bugs.md         # defects Talksmith hit while running — context, repro, suggested fix
+├── talksmith-bugs.md         # defects Talksmith hit while running — context, repro, suggested fix
 ├── config/
 │   ├── profile.md            # Subject, Presenter(s), audience, duration, language
 │   ├── learnings.md          # durable editorial rules promoted from recurring feedback
@@ -126,7 +126,7 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 ## More
 
 - **[docs/methodology.md](docs/methodology.md)** — the four-phase method and the "LLM wiki" knowledge-base philosophy behind it.
-- **[docs/roles.md](docs/roles.md)** — the five agents, the skills, and the render pipeline.
+- **[docs/roles.md](docs/roles.md)** — the subagents, the skills, and the render pipeline.
 - **[docs/reverse-pipeline.md](docs/reverse-pipeline.md)** — reconcile a `.pptx` you edited in Keynote/PowerPoint back into `draft.md`.
 
 ### Key conventions

@@ -64,14 +64,11 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, asdict, field
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ooxml import NS, slide_rels, solid_fill_hex  # noqa: E402  (shared OOXML reading)
 
-NS = {
-    "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
-}
+
 
 
 @dataclass
@@ -88,24 +85,6 @@ class ShapeFingerprint:
     primary_color: str | None                   # first run rPr solidFill srgbClr
     align: str | None                           # first <a:pPr algn=…>
     pic_target: str | None = None               # for <p:pic>, resolved rels target
-
-
-def _load_slide_rels(zf: zipfile.ZipFile, slide_path: str) -> dict[str, str]:
-    p = PurePosixPath(slide_path)
-    rels_path = str(p.parent / "_rels" / (p.name + ".rels"))
-    if rels_path not in zf.namelist():
-        return {}
-    out: dict[str, str] = {}
-    try:
-        root = ET.fromstring(zf.read(rels_path))
-    except (ET.ParseError, KeyError):
-        return {}
-    for rel in root.findall(f"{{{NS['rel']}}}Relationship"):
-        rid = rel.get("Id")
-        target = rel.get("Target", "")
-        if rid and target:
-            out[rid] = target
-    return out
 
 
 def _parse_xfrm(sp: ET.Element) -> tuple[tuple[int, int] | None, tuple[int, int] | None]:
@@ -127,17 +106,6 @@ def _parse_xfrm(sp: ET.Element) -> tuple[tuple[int, int] | None, tuple[int, int]
         except (TypeError, ValueError):
             pass
     return off_t, ext_t
-
-
-def _solid_fill_hex(sp: ET.Element) -> str | None:
-    sf = sp.find(f"{{{NS['p']}}}spPr/{{{NS['a']}}}solidFill")
-    if sf is None:
-        return None
-    clr = sf.find(f"{{{NS['a']}}}srgbClr")
-    if clr is None:
-        return None
-    v = clr.get("val", "")
-    return v.upper() if len(v) == 6 else None
 
 
 def _stroke_hex(sp: ET.Element) -> str | None:
@@ -210,7 +178,7 @@ def fingerprint_slide1(pptx_path: str) -> list[ShapeFingerprint]:
             root = ET.fromstring(zf.read(sp_path))
         except ET.ParseError as e:
             raise FileNotFoundError(f"{pptx_path} slide 1 malformed: {e}")
-        rels = _load_slide_rels(zf, sp_path)
+        rels = slide_rels(zf, sp_path)
         # Walk children of spTree in document order
         sptree = root.find(f"{{{NS['p']}}}cSld/{{{NS['p']}}}spTree")
         if sptree is None:
@@ -226,7 +194,7 @@ def fingerprint_slide1(pptx_path: str) -> list[ShapeFingerprint]:
             name = cnv.get("name", "") if cnv is not None else ""
             off, ext = _parse_xfrm(el)
             prst = _prst_geom(el)
-            fill = _solid_fill_hex(el)
+            fill = solid_fill_hex(el)
             stroke = _stroke_hex(el)
             font, color, algn = _primary_run(el)
             target = _pic_target(el, rels) if tag == "pic" else None

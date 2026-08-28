@@ -362,8 +362,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `### Presenter feedback` block, HTML comments, and `〔divisor〕` markers. **Exception — honour author
   directives:** a `<!-- template: <type> -->` comment pins that slide's `template` (skip
   classification), `<!-- design: <value> -->` pins its `design` field (how the
-  canvas is divided — skip the design judgement below; the older `<!-- layout: … -->` spelling is
-  read the same way), and `<!-- reveal: together -->` sets its
+  canvas is divided — skip the design judgement below), and `<!-- reveal: together -->` sets its
   `reveal` field. These are the only HTML comments read rather than dropped. (They ride from `draft.md` into `final.md` unchanged —
   Polish only strips `Presenter feedback` and rewrites ASCII fences — so the hint the author wrote
   while drafting is exactly what reaches this FILL step.)

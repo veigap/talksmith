@@ -83,7 +83,7 @@ Free-form has no branded icon catalog and no icon requirement. Use icons or not,
 
 ## 4. Render flow — single pass
 
-Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Render flow*.
+Free-form is **GENERATE → CONTROL, one pass, no critique iterations.** Full contract: [`${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Render flow (Path A)*.
 
 | Phase | What runs |
 |---|---|

@@ -75,10 +75,6 @@ DOT_MAX = 500_000
 DOT_SQUARE_TOL = 60_000
 TOP_BAND_Y = 1_300_000
 
-# Title-shape font-size threshold. Matches the original XML-side `sz >= 1700`
-# (in hundredths of a point) → 17.0 pt.
-TITLE_MIN_PT = 17.0
-
 
 # --------------------------------------------------------------------------- #
 # data model — unchanged from the pre-migration JSON schema

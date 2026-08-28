@@ -39,6 +39,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
+from _write import atomic_write_lines  # noqa: E402  (shared atomic file write)
 import _pptxlib as L
 
 FIELD_ALIASES = {"content": "content", "notes": "speaker notes", "speaker notes": "speaker notes"}
@@ -50,15 +51,6 @@ FIELD_ALIASES = {"content": "content", "notes": "speaker notes", "speaker notes"
 
 def _read_lines(path: Path) -> list[str]:
     return path.read_text(encoding="utf-8").splitlines()
-
-
-def _atomic_write(path: Path, lines: list[str]) -> None:
-    text = "\n".join(lines)
-    if not text.endswith("\n"):
-        text += "\n"
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(text, encoding="utf-8")
-    os.replace(tmp, path)
 
 
 def _find_slide(tree: dict, section_key, title: str, slide_num=None):
@@ -360,7 +352,7 @@ def cmd_replace_line(args) -> int:
         print(f"[dry-run] line {args.line}: {lines[idx]!r} → {new!r}")
         return 0
     lines[idx] = new
-    _atomic_write(draft, lines)
+    atomic_write_lines(draft, lines)
     print(f"replace-line: draft line {args.line}")
     return 0
 
@@ -379,7 +371,7 @@ def cmd_remove_line(args) -> int:
         print(f"[dry-run] remove line {args.line}: {lines[idx]!r}")
         return 0
     del lines[idx]
-    _atomic_write(draft, lines)
+    atomic_write_lines(draft, lines)
     print(f"remove-line: draft line {args.line}")
     return 0
 
@@ -417,7 +409,7 @@ def cmd_append_line(args) -> int:
         print(f"[dry-run] append after line {ins}: {new_line!r}")
         return 0
     lines[ins:ins] = [new_line]
-    _atomic_write(draft, lines)
+    atomic_write_lines(draft, lines)
     print(f"append-line: after draft line {ins} in {field}")
     return 0
 
@@ -457,7 +449,7 @@ def cmd_add_image(args) -> int:
         return 0
     _copy_image(src, dest)
     lines[ins:ins] = ["", ref]
-    _atomic_write(draft, lines)
+    atomic_write_lines(draft, lines)
     print(f"add-image: {dest_base} → draft slide {args.section} \"{slide.title}\"")
     return 0
 
@@ -493,7 +485,7 @@ def cmd_retitle(args) -> int:
         print(f"[dry-run] retitle line {slide.heading_line}: {lines[idx]!r} → {new!r}")
         return 0
     lines[idx] = new
-    _atomic_write(draft, lines)
+    atomic_write_lines(draft, lines)
     print(f"retitle: draft line {slide.heading_line}")
     return 0
 

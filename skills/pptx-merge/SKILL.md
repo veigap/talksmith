@@ -64,7 +64,23 @@ Re-plans against the *current* `draft.md` before each op (line numbers shift as 
 
 ### Granular ops (for the Editor, after authoring wording)
 
-`replace-line` · `append-line` · `remove-line` · `add-image` · `replace-image` · `retitle` — each takes explicit args, does one atomic edit, and re-validates its anchor (`--expect`) before writing. Use these to land the complex changes once the Editor has authored the exact content.
+Each does **one** atomic edit, re-validates its anchor before writing, and takes `--draft` plus
+`--dry-run`. These are how the `[needs-editor]` remainder from `apply-auto` actually lands: the
+Editor authors the wording, then drives one of these — never a hand edit of `draft.md`, which is
+what the anchor validation exists to prevent.
+
+| Subcommand | Required args | Does |
+|---|---|---|
+| `replace-line` | `--line N --text "<new>"` | Replaces one line. Pass **`--expect "<current text>"`** and the op refuses on drift instead of writing over a line that moved. |
+| `remove-line` | `--line N` | Deletes one line; same `--expect` guard. |
+| `append-line` | `--section <N> --slide-title "<title>" --field <field> --text "<line>"` | Appends a line to a named field (`Content`, `Sources`, `Speaker notes`) of one slide, located by section + title rather than by line number. |
+| `retitle` | `--section <N> --old-title "<old>" --new-title "<new>"` | Renames a slide's H2, keeping its numbering prefix. |
+| `add-image` | `--section <N> --slide-title "<title>" --alt "<alt>" --src <path>` | Copies the image into `talks/<Talk>/images/` and adds the `![alt](images/…)` ref. `--dest-basename` overrides the filename. **Idempotent** — skips when the ref already exists. |
+| `replace-image` | `--basename <existing> --src <path>` | Swaps the bytes behind an existing ref, keeping every reference to it intact. |
+
+`--line` numbers come from `plan`, and **shift as edits land** — re-run `plan` between granular ops
+rather than reusing a stale batch of line numbers. `--expect` is what makes that safe: it turns a
+stale number into an exit `3` instead of a corrupted slide.
 
 ## Output
 

@@ -67,23 +67,17 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, asdict, field
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ooxml import NS, slide_rels, model_strings  # noqa: E402  (shared audit plumbing)
+
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from text_coverage import tokens  # noqa: E402  (one tokenizer, shared by every coverage audit)
 
-NS = {
-    "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
-}
 
 # Emoji ranges from ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md §17.7 detection ranges.
 EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
-
-# Callout colors (case-insensitive); see ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md §8.
-CALLOUT_FILLS = {"F7BBC1", "B8E6F5"}
 
 # Known non-content image paths to exclude from the per-slide <p:pic> count:
 # - cover logo ppt/media/image-1-*.png (institution mark, slide 1 only)
@@ -211,22 +205,8 @@ class SlideIndex:
 
 
 def slide_text(slide: dict) -> str:
-    """Every content string of one model slide (keys beginning with `_` excluded)."""
-    chunks: list[str] = []
-
-    def walk(o):
-        if isinstance(o, dict):
-            for k, v in o.items():
-                if not k.startswith("_"):
-                    walk(v)
-        elif isinstance(o, list):
-            for x in o:
-                walk(x)
-        elif isinstance(o, str):
-            chunks.append(o)
-
-    walk(slide)
-    return " ".join(chunks)
+    """Every content string of one model slide (`_`-prefixed keys excluded — see `model_strings`)."""
+    return " ".join(model_strings(slide))
 
 
 def parse_source_md(path: str) -> list[MdSlide]:
@@ -357,24 +337,6 @@ def _slide_paths(zf: zipfile.ZipFile) -> list[str]:
     )
 
 
-def _slide_rels(zf: zipfile.ZipFile, slide_path: str) -> dict[str, str]:
-    p = PurePosixPath(slide_path)
-    rels_path = str(p.parent / "_rels" / (p.name + ".rels"))
-    if rels_path not in zf.namelist():
-        return {}
-    out: dict[str, str] = {}
-    try:
-        root = ET.fromstring(zf.read(rels_path))
-    except (ET.ParseError, KeyError):
-        return {}
-    for rel in root.findall(f"{{{NS['rel']}}}Relationship"):
-        rid = rel.get("Id")
-        target = rel.get("Target", "")
-        if rid and target:
-            out[rid] = target
-    return out
-
-
 def _normalize_title(s: str) -> str:
     # Source headings carry a locator (`## 3. Título`); model titles do not. The number is
     # addressing, not content — strip it on both sides or every numbered slide reads unmatched.
@@ -470,7 +432,7 @@ def parse_pptx(path: str) -> list[RenderSlide]:
                     elif fill == "B8E6F5":
                         slide.blue_callouts += 1
                 # Count pics, excluding icon library
-                rels = _slide_rels(zf, sp_path)
+                rels = slide_rels(zf, sp_path)
                 for pic in root.iter(f"{{{NS['p']}}}pic"):
                     blip = pic.find(
                         f"{{{NS['p']}}}blipFill/{{{NS['a']}}}blip"

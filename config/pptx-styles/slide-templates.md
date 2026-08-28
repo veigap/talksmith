@@ -715,11 +715,11 @@ precise rules.
   visual. **This is the default for `labeled_items ≥ 2` + one shared image** — it is not a rare
   hybrid to reach for only when nothing else fits.
 - **Format:** ~50/50 split: cards or a numbered list on one half + one supporting
-  image/worked-example/code panel on the other, aligned to a shared baseline. **Two layouts**
-  (`layout` field): `text-left` (default — cards left, image right) and `image-left` (mirrored —
-  image left, cards right). Pick the layout from the content the same way `content-image` does
-  (image to be read first → `image-left`); an author `<!-- layout: <value> -->` hint pins it and
-  overrides that judgement. Only the two columns swap: the cards keep their order, their icons
+  image/worked-example/code panel on the other, aligned to a shared baseline. **Two arrangements**
+  (`design` field): `split-right` (default — cards left, media right) and `split-left` (mirrored —
+  media left, cards right). Pick it from the content the same way `content-image` does (media to be
+  read first → `split-left`); an author `<!-- design: <value> -->` hint pins it and overrides that
+  judgement. Only the two columns swap: the cards keep their order, their icons
   and their left alignment, and the cards' column stays the wider of the two. There is **no
   `image-top`** here — a stack of cards under a full-width image is a different slide, not a
   variant of this one; the value is rejected with a warning rather than half-honored.

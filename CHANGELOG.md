@@ -13,6 +13,53 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.93.0] — 2026-08-28
+
+### Changed
+
+- **The `.pptx` render spec is no longer loaded on an HTML render.** `md-to-deck/SKILL.md` was one
+  7,000-word file covering both paths, so every `html-strict` render — including the Step-5.5 live
+  view, which auto-fires on every first complete draft and is by far the most frequent render —
+  pulled base templates, Keynote font rules, OOXML recipes and the strict critique loop into context
+  for nothing. Path A now lives in `md-to-deck/pptx-render.md`, read **only** after `style:` resolves
+  to `pptx-strict` / `pptx-free-form`. `SKILL.md` keeps style resolution, the shared FILL step, Path
+  B, and the output/reporting contracts both paths need.
+
+- **Deduplicated the scripts.** Two new shared modules, imported the way `_context.py` already was:
+  `_shared/_plan.py` (the plan-file envelope, the `--final/--plan/--dry-run` trio and the `gc` live
+  set — `polish-ascii` and `polish-images` are near-twins and were carrying two copies that had begun
+  to drift), and `md-to-deck/audits/_ooxml.py` (namespace map, slide relationships, solid-fill colour,
+  PNG dimensions — one copy each in five audits, under two different names, which is how a fix lands
+  in one and not the others). `_shared/_write.py` holds the atomic in-place write of a user's
+  `draft.md`. The `_`-key exclusion in the model walk — the rule that stops a coverage audit
+  confirming its own blind spot via `_choice` — is now stated once, where it can't be forgotten by
+  the second copy.
+
+### Fixed
+
+- **`skill://antropic-skills:/pptx`** — a misspelled, unresolvable URI repeated in five places
+  (`anthropic` missing its `h`; no such plugin exists, and `skill://` is not a scheme anything
+  resolves). Replaced with what the prerequisite check actually tests for: the `pptx` skill in the
+  session registry.
+
+- **Stale and missing documentation.** `pptx-merge`'s six single-edit subcommands — the documented
+  route for every change `apply-auto` hands back to the Editor — had no documentation at all, flags
+  included; they now have a table, plus the warning that `--line` numbers shift between ops and
+  `--expect` is what makes that safe. `pptx-learn`'s `inventory` subcommand and `--min-move-emu`,
+  `polish-images`' flag set (its sibling documented all of them), and `build_html.py`'s explicit
+  `--model/--talk-root/-o` form (which bypasses the freshness guard) are all documented now.
+  `CLAUDE.md` claimed six subagents and `docs/roles.md` listed five of the eight — under the heading
+  "The five roles", with a "Diagram-Diagram-Illustrator" in it.
+
+- **The defect log is `talksmith-bugs.md`**, hyphenated like every other file in the product. It was
+  the one data file spelled with an underscore while its schema used a hyphen. **If you have a
+  `talksmith_bugs.md` in a working directory, rename it** — nothing reads the old name.
+
+### Removed
+
+- Five module-level constants nothing read (`SVG_NS`, `TITLE_MIN_PT`, `DIRECTIVE_OPEN`,
+  `SKIP_SECTIONS`, `CALLOUT_FILLS`) and one dead function (`_is_emoji_bullet`).
+
 ## [0.92.0] — 2026-08-28
 
 ### Removed — **every legacy compatibility path**
@@ -38,6 +85,9 @@ from `final.md` every render) and re-tag any untagged ASCII fence, and nothing e
   inference used to hide exactly that authoring slip.
 - **`Presenter feedback` has two authored forms, not three.** The inline `- **Presenter feedback:**`
   bullet is no longer swept by the Step-6 strip; a line in that shape is now ordinary content.
+- **The `<!-- layout: … -->` authoring hint is now `<!-- design: … -->`.** It pinned a field that no
+  longer exists, so it had nothing left to fill; `design` is the same decision with the full
+  vocabulary (`split-*`, `banded`, `column-*`, `bleed`) rather than the three values `layout` had.
 - **`reveal: sequential`** (a no-op that parsed) and **`pptx-extract --stage-new`** (a no-op flag
   kept for compatibility) are removed. So is the `<slide-id>-<n>.svg` rename rule for diagram files
   predating the descriptive-slug convention.

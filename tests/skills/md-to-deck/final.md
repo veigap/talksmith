@@ -279,7 +279,7 @@ Una tabla y un diagrama en la misma lámina — ninguno de los dos se cae.
 
 ## Value-columns + imagen · espejado (image-left)
 <!-- template: value-columns -->
-<!-- layout: image-left -->
+<!-- design: split-left -->
 
 | Factor | Espejado |
 | --- | --- |
@@ -306,7 +306,7 @@ Un millón de tokens es más contexto del que parece: toda la obra de Tolkien en
 
 ## Content + image · imagen a la izquierda
 <!-- template: content-image -->
-<!-- layout: image-left -->
+<!-- design: split-left -->
 
 El diagrama se lee primero; el texto lo recorre después.
 
@@ -345,7 +345,7 @@ El diagrama se lee primero; el texto lo recorre después.
 
 ## Content + cards + image · imagen a la izquierda
 <!-- template: content+cards+image -->
-<!-- layout: image-left -->
+<!-- design: split-left -->
 
 - **Projects** Todo en un lugar fijo.
 - **Skills** Enseñar una vez, reusar.

@@ -56,6 +56,22 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final t
 - Never reads or writes `draft.md`. Never generates images — that's [`talksmith:generate-image`](../generate-image/SKILL.md). Never authors the prompt — that's the image-illustrator.
 - Does **not** touch ` ```ascii ` fences, existing `![](…)` refs, or authored `<!-- aside: … -->` hints — those belong to polish-ascii / the editor.
 
+## Flags
+
+The same shape as [`polish-ascii`](../polish-ascii/SKILL.md), subcommand for subcommand:
+
+| Flag | On | Notes |
+|---|---|---|
+| `--final` | every subcommand | Path to the Talk's `final.md`. Rewritten in place by `cleanup`; read-only everywhere else. |
+| `--plan` | `extract` · `annotate` · `prepare-render-args` · `stamp-renders` · `cleanup` | The `scan` JSON (annotated, from `annotate`, for the later ones). `-` reads stdin. |
+| `--format` | `scan` | `json` (default) or `human`. |
+| `--language` | `scan` | Presentation language, stamped into each directive's `context.presentation_language` so the caller needn't splice it in. |
+| `--output` / `-o` | `scan` · `annotate` | Write to a file instead of stdout. |
+| `--out-dir` | `prepare-render-args` | Where the per-directive `<slide_id>.json` args files land. |
+| `--repo-root` | `prepare-render-args` | Anchors the paths written into the args files when the render runs from a different cwd. Defaults to the plan's own `final.md` root — pass it only when they differ. |
+| `--dry-run` | `extract` · `cleanup` · `gc` | Print the planned change instead of touching disk. |
+| `--apply` | `gc` | Delete the orphans (`gc` lists only by default). |
+
 ## Exit codes
 
 - `0` — success.

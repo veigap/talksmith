@@ -73,14 +73,11 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, asdict, field
-from pathlib import PurePosixPath
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ooxml import NS, slide_rels, solid_fill_hex  # noqa: E402  (shared OOXML reading)
 
-NS = {
-    "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
-}
+
 
 # §15.5 discriminator threshold for §7.4 vs §7.5
 SHORT_BODY_THRESHOLD = 80  # chars; longest body ≤ threshold → §7.4 card-row, else §7.5
@@ -256,24 +253,6 @@ def _slide_paths(zf: zipfile.ZipFile) -> list[str]:
     )
 
 
-def _load_slide_rels(zf: zipfile.ZipFile, slide_path: str) -> dict[str, str]:
-    p = PurePosixPath(slide_path)
-    rels_path = str(p.parent / "_rels" / (p.name + ".rels"))
-    if rels_path not in zf.namelist():
-        return {}
-    out: dict[str, str] = {}
-    try:
-        root = ET.fromstring(zf.read(rels_path))
-    except (ET.ParseError, KeyError):
-        return {}
-    for rel in root.findall(f"{{{NS['rel']}}}Relationship"):
-        rid = rel.get("Id")
-        target = rel.get("Target", "")
-        if rid and target:
-            out[rid] = target
-    return out
-
-
 def _normalize_title(s: str) -> str:
     s = s.lower()
     s = re.sub(r"[^\w\s]+", " ", s, flags=re.UNICODE)
@@ -313,17 +292,6 @@ def _extract_title(root: ET.Element) -> str:
     return candidates[0][1]
 
 
-def _shape_solid_fill(sp: ET.Element) -> str | None:
-    sf = sp.find(f"{{{NS['p']}}}spPr/{{{NS['a']}}}solidFill")
-    if sf is None:
-        return None
-    clr = sf.find(f"{{{NS['a']}}}srgbClr")
-    if clr is None:
-        return None
-    v = clr.get("val", "")
-    return v.upper() if len(v) == 6 else None
-
-
 def _pic_geometry(pic: ET.Element) -> tuple[int, int, int, int] | None:
     """Return (x, y, cx, cy) EMU or None."""
     off = pic.find(f"{{{NS['p']}}}spPr/{{{NS['a']}}}xfrm/{{{NS['a']}}}off")
@@ -357,7 +325,7 @@ def parse_pptx(path: str) -> list[RenderEvidence]:
                 ev.infer()
                 out.append(ev)
                 continue
-            rels = _load_slide_rels(zf, sp_path)
+            rels = slide_rels(zf, sp_path)
             # Native tables
             ev.native_table_count = sum(1 for _ in root.iter(f"{{{NS['a']}}}tbl"))
             # Pics
@@ -379,7 +347,7 @@ def parse_pptx(path: str) -> list[RenderEvidence]:
                     ev.column1_icon_count += 1
             # Shape-level scans (callouts, code surface, bullets, literal • runs)
             for sp_el in root.iter(f"{{{NS['p']}}}sp"):
-                fill = _shape_solid_fill(sp_el)
+                fill = solid_fill_hex(sp_el)
                 if fill == "F7BBC1":
                     ev.callout_pink_count += 1
                 elif fill == "B8E6F5":

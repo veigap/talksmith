@@ -87,6 +87,9 @@ import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ooxml import model_strings  # noqa: E402  (shared audit plumbing)
+
 _FENCE = re.compile(r"^\s*(?:```|~~~)")
 _IMG = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 _LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
@@ -128,24 +131,10 @@ def tokens(s: str) -> list[str]:
 def _haystack(model: dict) -> str:
     """Every model string that is content, as one padded token stream.
 
-    Keys beginning with `_` are excluded: `_choice` restates the source in its rationale, so a
-    dropped line would still be "found" there — the audit would confirm its own blind spot.
+    `_`-prefixed keys are excluded by `model_strings` — see its docstring for why that matters
+    here in particular: `_choice` restates the source, so a dropped line would still be "found".
     """
-    chunks: list[str] = []
-
-    def walk(o):
-        if isinstance(o, dict):
-            for k, v in o.items():
-                if not k.startswith("_"):
-                    walk(v)
-        elif isinstance(o, list):
-            for x in o:
-                walk(x)
-        elif isinstance(o, str):
-            chunks.append(o)
-
-    walk(model)
-    return " " + " ".join(" ".join(tokens(c)) for c in chunks) + " "
+    return " " + " ".join(" ".join(tokens(c)) for c in model_strings(model)) + " "
 
 
 def _title_haystack(model: dict) -> str:

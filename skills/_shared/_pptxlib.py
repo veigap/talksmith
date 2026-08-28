@@ -455,9 +455,6 @@ FENCE = re.compile(r"^```")
 # make this robust to both patterns.
 COMMENT_CLOSE = re.compile(r"(?<!-)-->\s*$")
 
-SKIP_SECTIONS = {"thesis", "open questions", "cut material"}
-
-
 @dataclass
 class MdImage:
     alt: str

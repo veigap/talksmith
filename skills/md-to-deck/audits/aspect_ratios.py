@@ -51,13 +51,14 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, asdict
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _ooxml import NS as _NS, read_png_dims  # noqa: E402
 
+
+# The shared four, plus the two this audit alone needs to read an embedded SVG's own viewBox.
 NS = {
-    "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
+    **_NS,
     "asvg": "http://schemas.microsoft.com/office/drawing/2016/SVG/main",
     "svg": "http://www.w3.org/2000/svg",
 }
@@ -114,13 +115,6 @@ def _read_svg_dims(blob: bytes) -> tuple[float, float] | None:
     return None
 
 
-def _read_png_dims(blob: bytes) -> tuple[float, float] | None:
-    if len(blob) < 24 or blob[:8] != b"\x89PNG\r\n\x1a\n":
-        return None
-    w, h = struct.unpack(">II", blob[16:24])
-    return (float(w), float(h)) if w and h else None
-
-
 def _read_jpeg_dims(blob: bytes) -> tuple[float, float] | None:
     if len(blob) < 4 or blob[:2] != b"\xff\xd8":
         return None
@@ -155,7 +149,7 @@ def _intrinsic_dims(name: str, blob: bytes) -> tuple[float, float] | None:
     if lower.endswith(".svg"):
         return _read_svg_dims(blob)
     if lower.endswith(".png"):
-        return _read_png_dims(blob)
+        return read_png_dims(blob)
     if lower.endswith((".jpg", ".jpeg")):
         return _read_jpeg_dims(blob)
     return None
