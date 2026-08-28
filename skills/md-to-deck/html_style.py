@@ -983,6 +983,12 @@ function fitCover(st){                       // full-bleed text slides (quote/st
 function fitAll(scope){ var r=(scope||document);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
+// PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into
+// its own `.pdf-page`, given a fresh width) and only then fires `pdf-ready`. The fit each slide got
+// on screen was measured against the old geometry, so re-fit the deck here or the export prints
+// mis-scaled bodies. The event bubbles to the document, so this listener can be installed before
+// Reveal.initialize — the print view is built during initialization, ahead of its promise.
+document.addEventListener('pdf-ready', function(){ fitAll(); });
 // Reveal already plays `data-autoplay` media on slide entry and pauses it on exit. This only
 // covers the one case it can't: a browser refuses a sound-on play() until the page has seen a
 // gesture, so on a deck opened straight onto a video slide the promise rejects and the clip sits
@@ -1023,7 +1029,7 @@ Reveal.initialize({
   controls:true, progress:true, slideNumber:'c/t',
   hash:canHash, respondToHashChanges:canHash, center:false,
   transition:'slide', backgroundTransition:'fade', overview:true, touch:true,
-  keyboard:true, pdfSeparateFragments:false, plugins:[ RevealNotes ]
+  keyboard:true, pdfSeparateFragments:false, pdfMaxPagesPerSlide:1, plugins:[ RevealNotes ]
 }).then(function(){ fitAll();
   try{deckAnim(document.documentElement.getAttribute('data-deck-anim')||'on');}catch(e){}
   playMedia(Reveal.getCurrentSlide());

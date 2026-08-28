@@ -32,6 +32,19 @@
 .reveal .backgrounds{background:var(--page)}
 .reveal .slides{text-align:left}
 .reveal .slides>section{height:100%;padding:0;container-type:inline-size}
+/* PDF export (`?print-pdf`). Reveal's print stylesheet forces `.slides` to `height:auto`, so a
+   slide box that asks for `height:100%` collapses onto its own content: the stage loses the 720px
+   canvas every `cqw` and the fit pass measure against, the body is laid out at its natural height
+   and runs past the printed page — which is the sliver of a clipped row that shows up along the
+   bottom of the exported pages. Pin the printed slide to the deck's canvas instead; `overflow`
+   keeps a full-bleed slide from bleeding into the next page. Reveal sets the same width inline a
+   moment later, but it must be right *before* that, because Reveal measures each slide's
+   scrollHeight to decide how many pages it spans. Descendant, not child: the print view moves
+   every slide into a `.pdf-page` wrapper, so `.slides>section` stops matching — which is also
+   why `container-type` has to be restated here, or every `cqw` in the deck resolves against the
+   wrong box. */
+.reveal-print .reveal .slides section{width:1280px;height:720px;overflow:hidden;container-type:inline-size}
+.reveal-print .reveal .slides section.slide{background:var(--slide)}
 .reveal .slides>section.slide{background:var(--slide)}
 .reveal ::selection{background:var(--pill)}
 .reveal .progress{color:var(--red)}

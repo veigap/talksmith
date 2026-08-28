@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.90.1] — 2026-08-28
+
+### Fixed
+
+- **PDF export now prints the deck you see on screen.** Reveal's print view moves every slide into
+  its own page wrapper and lets `.slides` collapse to content height — which quietly detached the
+  deck's 1280×720 canvas: the container that all of the layout's `cqw` units are measured against
+  was gone, the per-slide fit pass sized bodies against a phantom height, and the result printed
+  over-wide and over-tall, so each page ended in the clipped strip of a row that ran off the
+  bottom. The printed slide is now pinned to the deck's own canvas, the fit pass re-runs once the
+  print view is built, and a slide can no longer spill onto a second page.
+
 ## [0.90.0] — 2026-08-26
 
 ### Added
