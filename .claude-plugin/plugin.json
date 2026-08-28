@@ -1,6 +1,6 @@
 {
   "name": "talksmith",
-  "version": "0.94.0",
+  "version": "0.95.0",
   "description": "Presenter Agent for talks and pitches. Takes raw sources (PDFs, papers, chat exports, URLs, images) through an 8-step workflow — Frame → Collect → Corpus → Draft → Review → Polish → Render → Learnings — to a structured outline you edit (draft.md), a polished deliverable (final.md), and a rendered deck: a self-contained HTML/Reveal.js presentation or a native .pptx. Diagrams are authored as ASCII and rendered to SVG under blind visual critique; a deck edited outside Talksmith can be reconciled back into the outline.",
   "author": {
     "name": "Paulo Gustavo Veiga"

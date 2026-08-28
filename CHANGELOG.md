@@ -13,6 +13,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.95.0] — 2026-08-28
+
+### Fixed
+
+- **A `slide-model.json` written against the old schema is now refused, not silently half-rendered.**
+  Retiring the alias spellings in 0.92.0 had a consequence that only showed up against a real deck: a
+  retired *template* id falls to `fallback` and warns, but a retired *field* name is just a key
+  nothing reads — so the picture, the cards or the arrangement it carried vanish with **nothing
+  said**. Rendering a production 21-slide model on the new code dropped **8 of its 12 visuals** and
+  warned about none of them.
+
+  `build_html` now checks the model's *shape* before rendering and stops (exit 2) naming every
+  offending slide and its replacement — the same code and the same instruction as the `_source`
+  freshness guard, because it is the same failure: the model is a build artifact the FILL step
+  rewrites from `final.md` on every render, so "re-run FILL" is the actual repair, not a workaround.
+  `image-full`'s own `image` field and `matrix`'s own `rows` field are excluded — they are the real
+  field names on those templates, never aliases.
+
 ## [0.94.0] — 2026-08-28
 
 ### Fixed

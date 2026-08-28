@@ -536,6 +536,7 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
         return 2
 
     missing: list[str] = []
+    bad: list[tuple[str, str]] = []
     annotated = 0
     skipped_doc = 0
     for b in plan.get("blocks", []):
@@ -554,7 +555,17 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
             b["render"] = None
             missing.append(sid)
             continue
+        # A stem-only name is normalized to `<stem>.svg`; a name carrying **any other** extension is
+        # rejected rather than suffixed. Blindly appending turned a `.png` basename — an easy thing to
+        # pass, since the Keynote-safe rule makes `final.md` reference `.png` — into
+        # `<stem>.png.svg`: a sidecar under the wrong name, a dead image ref in `final.md`, and a
+        # `stamp-renders` that then found no SVG and silently stamped nothing, so the next pass would
+        # re-render everything. Caught on a real Talk.
         if not basename.endswith(".svg"):
+            if "." in Path(basename).name:
+                bad.append((sid, basename))
+                b["render"] = None
+                continue
             basename = f"{basename}.svg"
         b["render"] = {"svg_basename": basename, "alt": entry.get("alt") or ""}
         annotated += 1
@@ -568,6 +579,13 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
     print(f"annotated {annotated} block(s); skipped {skipped_doc} documentation-only", file=sys.stderr)
     if missing:
         print(f"  ⚠  {len(missing)} block(s) had no render entry (set to render: null): {', '.join(missing)}", file=sys.stderr)
+    if bad:
+        print(f"error: {len(bad)} render entr(ies) name a file that is not an SVG. `svg_basename` is "
+              f"the rendered SVG — bare stem or `.svg`, nothing else. (The `.png` deliverable is "
+              f"referenced in final.md by the editor's Step-6(b) rewrite, not here.)", file=sys.stderr)
+        for sid, bn in bad:
+            print(f"  {sid}: {bn}", file=sys.stderr)
+        return 2
     return 0
 
 

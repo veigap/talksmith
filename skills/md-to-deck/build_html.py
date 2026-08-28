@@ -83,6 +83,54 @@ def _norm(t: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (t or "").lower())).strip()
 
 
+
+# ── retired schema shapes: a model written against an older contract ─────────────────────────────
+# `slide-model.json` is a build artifact — the FILL step rewrites it from `final.md` on every render
+# — so a model still using a retired spelling is simply one that predates its schema and has not been
+# re-filled. Rendering it anyway is the dangerous option, and *quietly* dangerous: a retired
+# `template` id at least falls to `fallback` with a warning, but a retired **field** name is just a
+# key nothing reads, so the picture, the cards or the arrangement it carried disappear from the deck
+# with nothing said. On a real 21-slide deck that was 8 of 12 visuals, silently.
+#
+# So this is a hard stop with the same exit code and the same instruction as the freshness guard:
+# re-run FILL. That is not a workaround, it is the actual repair — the model is stale in shape the
+# same way `_source` catches stale in content.
+_RETIRED_TEMPLATES = {
+    "card-row": "concept-breakdown with `format: \"row\"`",
+    "icon-list": "concept-breakdown (the default `grid` format)",
+}
+# Two of these names were *only ever* aliases, and two are aliases on most templates but the real
+# field on one — so the map carries that owner. `image-full`'s own required picture field is literally
+# `image`, and `matrix`'s vertical axis is literally `rows`; flagging either would be a false positive
+# on a perfectly current model. (The style-reference fixture caught exactly that.)
+_RETIRED_FIELDS = {
+    #  field   → (replacement, the one template that genuinely owns this name)
+    "layout": ("design", None),
+    "aside": ("design (`column-left`/`column-right`) + media", None),
+    "rows": ("cards", "matrix"),
+    "image": ("media", "image-full"),
+}
+
+
+def _retired_shapes(model: dict) -> list[str]:
+    """Slides carrying a spelling no renderer reads any more, as human-readable findings.
+
+    An *empty* retired field is not a finding: nothing was carried, so nothing was lost, and a model
+    that merely echoes a key with no value is not worth blocking a render over.
+    """
+    out = []
+    for i, s in enumerate(model.get("slides", []), start=1):
+        t = s.get("template", "")
+        ref = s.get("title") or s.get("question") or s.get("quote") or f"slide {i}"
+        if t in _RETIRED_TEMPLATES:
+            out.append(f"slide {i} \"{ref}\": template `{t}` was retired → {_RETIRED_TEMPLATES[t]}")
+        for field, (repl, owner) in _RETIRED_FIELDS.items():
+            if t == owner:
+                continue        # this template's own field, not the retired alias
+            if s.get(field):
+                out.append(f"slide {i} \"{ref}\": field `{field}` is no longer read → {repl}")
+    return out
+
 def render(model: dict, talk_root: Path, out_dir: Path):
     """slide-model.json → (html, slide_count). Deterministic; one Jinja template per slide."""
     cache = out_dir / ".icons"
@@ -286,6 +334,20 @@ def main(argv=None) -> int:
             print(f"[html] FAILED: {reason}. Refusing to render — re-run the md-to-deck FILL step "
                   f"(or pass --allow-stale to override).", file=sys.stderr)
             return 2
+
+    # Shape guard — before anything is rendered, and before the coverage warning, which would
+    # otherwise report "content missing from the model" for content the model has under a name
+    # nothing reads: a confusing symptom instead of the cause.
+    retired = _retired_shapes(model)
+    if retired:
+        print(f"[html] FAILED: {len(retired)} slide-field/template spelling(s) in {src} were retired "
+              f"and are no longer read. Refusing to render — re-run the md-to-deck FILL step, which "
+              f"rewrites the model from the current source.", file=sys.stderr)
+        for r in retired[:12]:
+            print(f"  {r}", file=sys.stderr)
+        if len(retired) > 12:
+            print(f"  … and {len(retired) - 12} more", file=sys.stderr)
+        return 2
 
     if args.talk and not args.no_coverage:
         source_md = _fresh.source_path(args.talk, args.draft)
