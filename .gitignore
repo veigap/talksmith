@@ -15,6 +15,19 @@ tests/skills/*/output/**
 !tests/skills/*/output/**/slide-model.json
 !tests/skills/*/output/**/images/**
 
+# Working-directory user data. These are created by the orchestrator in a *user's* subject
+# directory from the canonical empty forms in schemas/ — they are not bundled assets, and a copy
+# committed here ships in every install as a second version of a form that can drift from its
+# schema. A dev session run in this repo (which CLAUDE.md tells you not to do) creates them; this
+# keeps them out of the commit.
+config/profile.md
+config/learnings.md
+config/feedback-backlog.md
+config/feedback-processed.md
+config/strict-learnings.md
+talksmith-bugs.md
+knowledge-library/
+
 .icons/
 talks/*/images/.critique/
 tests/skills/*/images/.critique/

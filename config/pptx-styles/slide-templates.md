@@ -327,7 +327,8 @@ precise rules.
   section, so there is no roadmap position to highlight. The discriminator against
   `section-agenda` is exactly that: title names a `deck.sections` entry → `section-agenda`;
   it doesn't → `divider`. Not a content choice.
-- **Format:** the title alone, full-bleed, no roadmap, no body prose, no images. A beat of
+- **Format:** the title alone, full-bleed, no roadmap, no body prose, no images — optionally
+  over a `number`, the sub-part's numeral, when the source numbers its sub-parts. A beat of
   visual silence between sub-parts — if it wants a claim, it is a `statement`; if it wants
   the section list, it is a `section-agenda`.
 - **Strict recipe:** §5 (section break, roadmap omitted).

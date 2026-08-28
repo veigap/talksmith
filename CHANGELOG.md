@@ -13,6 +13,39 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.94.0] — 2026-08-28
+
+### Fixed
+
+- **The Composer can no longer write.** It is declared read-only in three places — its frontmatter
+  (*"Never writes"*), its own body (*"does not write to disk"*), and the orchestrator's role table —
+  and was granted every tool anyway, Write and Bash included. It now carries
+  `tools: Read, Grep, Glob`, the same enforcement the two critics already had. A reviewer that can
+  edit what it reviews stops producing a punch-list and starts quietly applying it, and the Editor's
+  sole-writer contract on `draft.md` — the thing that lets parallel roles run without racing — goes
+  with it.
+
+- **The orchestrator's role table listed five of the eight roles.** `image-illustrator`,
+  `diagram-critic` and `slide-classifier-critic` were missing from the first table in the spec the
+  agent loads at session start. It now lists the six the orchestrator dispatches, and names the two
+  critics separately with what each is allowed to see — they are spawned by the work, not by the
+  orchestrator, and their blindness is the point.
+
+- **`divider`'s `number` field was undeclared.** The template renders a section numeral above the
+  title; the schema's per-template table said the type takes `title` and nothing else, so the FILL
+  step was never told the field existed. Declared in both the schema and the catalog's *Format*.
+  (The field audit had been carrying a note about the omission, which is how it stayed invisible.)
+
+### Removed
+
+- **Four working-directory files that were committed into the plugin repo** — `config/profile.md`,
+  `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`. These belong
+  in a *user's* subject directory, created by the orchestrator from the canonical empty forms in
+  `schemas/`; `config/profile.md` was a verbatim second copy of `schemas/profile.md`'s form. They
+  shipped in every install as precisely the drift-prone duplicate `CLAUDE.md` argues against two
+  paragraphs earlier. Now gitignored, along with the other files a dev session in this repo would
+  create. Two stray `.DS_Store` files are untracked too.
+
 ## [0.93.0] — 2026-08-28
 
 ### Changed

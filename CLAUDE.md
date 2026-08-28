@@ -28,6 +28,8 @@ The **Talksmith** Claude Code plugin. Installable surface:
 
 There is intentionally **no `templates/` folder**. `/talksmith:init` only copies `talksmith-orch.md` → user's `CLAUDE.md` and `talksmith-agents.md` → user's `AGENTS.md` (a pointer to the former). Everything else the user might need (`config/profile.md`, `config/learnings.md`, `config/feedback-backlog.md`, `config/feedback-processed.md`, `talks/<folder>/…`) is created by the orchestrator itself once the stub is loaded, bootstrapping from the *Canonical empty form* sections inside [`schemas/`](schemas/). Adding a `templates/` shortcut would duplicate the canonical empty forms and immediately drift from them.
 
+> **The same rule applies to this repo's own `config/`.** Those four files were once committed here — `config/profile.md` was a verbatim second copy of `schemas/profile.md`'s canonical empty form — and shipped in every install as exactly the drift-prone duplicate the paragraph above argues against. They are now gitignored. If a dev session in this repo creates them (it shouldn't — test in a scratch directory), leave them untracked. The only bundled config is `principles.md`, `diagram-style.md` and `pptx-styles/`.
+
 ## Ownership map — where a fact lives
 
 **Every fact is stated once, in the file that owns it; every other file points there.** These files are LLM context — duplication costs tokens on every load and drifts. When editing, move detail to its owner rather than restating it; when you find a rule stated twice, keep the owner's copy and turn the other into a pointer.

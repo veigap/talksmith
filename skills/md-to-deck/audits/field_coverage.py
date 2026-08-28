@@ -44,10 +44,11 @@ _UNIVERSAL = {
     "stats",
 }
 
-# Per-template consumed fields = the schema contract (required ∪ optional) PLUS a few extras a
-# template renders that the schema table omits (e.g. `divider` draws `number`). Source of truth for
-# the schema half: schemas/slide-model.md → *Per-template field contract*. Keep in sync when a
-# template gains/loses a field.
+# Per-template consumed fields = the schema contract (required ∪ optional). Source of truth:
+# schemas/slide-model.md → *Per-template field contract*. Keep in sync when a template gains or
+# loses a field — and when the two disagree, the schema is what needs fixing, not this map: the
+# schema is what the FILL step reads, so a field only this map knows about is one the model will
+# never be told to produce.
 #
 # `build_html` is the finer-grained authority — it also validates field *values* and warns when a
 # design rides a slide with no media (or media rides a slide with no design), which this set-based

@@ -262,7 +262,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `template` | Required fields | Optional |
 |---|---|---|
 | `section-agenda` | `title` (section name) | — (roadmap + active index derived from `deck.sections`) |
-| `divider` | `title` | — (a plain sub-opener within a section) |
+| `divider` | `title` | `number` — the sub-part's numeral, set above the title; omit it and the title stands alone (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
 | `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`editorial`; **`list` is retired** — a model carrying it renders as `grid`) — see below |
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
