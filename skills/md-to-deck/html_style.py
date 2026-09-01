@@ -515,18 +515,21 @@ _CODE_NAMES = {
 }
 
 
-def _codeprep(code, language=None, limit: int = 20) -> dict:
-    """One code panel's render inputs: `{text, lang, label, more}`.
+def _codeprep(code, language=None) -> dict:
+    """One code panel's render inputs: `{text, lang, label}`.
 
     `text` is the snippet as it should be *read*: tabs expanded (a tab is 8 columns in a `<pre>`
     and 4 in every editor the code was written in), blank top/bottom lines dropped, and the
     common indentation removed — a method lifted out of a class arrives indented four columns,
     which on a slide is a quarter of the panel spent on nothing.
 
-    `more` is how many lines the cap dropped. The panel is a fixed box on a fixed canvas, so a
-    long snippet has to end somewhere; ending it *visibly* is the difference between a cut and a
-    silent truncation. The badge (`label`) is only set when the model named the language — hljs
-    auto-detects the rest, and labelling a guess states as fact something we don't know."""
+    **Nothing is dropped.** There is no line cap: a long snippet gets *smaller*, not shorter
+    (`fitCode` in the deck's script shrinks the panel's type until the code fits its box). A cap
+    was the earlier answer and it was the wrong one — it made the renderer decide which lines of
+    the author's code the audience may see, and the two-file contract has no room for that.
+
+    The badge (`label`) is only set when the model named the language — hljs auto-detects the
+    rest, and labelling a guess states as fact something we don't know."""
     if not isinstance(code, str):
         code = "\n".join(code or [])
     lines = code.expandtabs(4).splitlines()
@@ -536,12 +539,9 @@ def _codeprep(code, language=None, limit: int = 20) -> dict:
         lines.pop()
     pad = min((len(ln) - len(ln.lstrip()) for ln in lines if ln.strip()), default=0)
     lines = [ln[pad:].rstrip() for ln in lines]
-    more = max(0, len(lines) - limit) if limit else 0
-    if more:
-        lines = lines[:limit]
     key = re.sub(r"[^a-z+#-]", "", str(language or "").strip().lower())
     lang = _CODE_LANGS.get(key, "")
-    return {"text": "\n".join(lines), "lang": lang, "more": more,
+    return {"text": "\n".join(lines), "lang": lang,
             "label": _CODE_NAMES.get(lang, "") if lang and lang != "plaintext" else ""}
 
 
@@ -1035,6 +1035,44 @@ function fitContent(cb){
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
+// A code panel carries the **whole** snippet, so the snippet is what has to give: shrink the
+// panel's type until the code fits the box CSS bounds it to (`.split .codebox` / `.smedia>.mcode`).
+// Like fitContent, this is a reflow measurement CSS can't express — font size changes the wrapping
+// that decides the height, so it iterates. The alternative was a line cap, which let the renderer
+// decide which of the author's lines the audience gets to see. Only ever shrinks: it resets to the
+// stylesheet's size first, so a re-fit after a resize can grow back to it but never past it.
+function fitCode(cb){
+  var pre=cb.querySelector('.cbcode'); if(!pre) return;
+  pre.style.fontSize='';                                  // the stylesheet's size is the ceiling
+  // A body panel's CSS cap is a share of the *slide* (theme.css), which is a guess: the real room
+  // it has is whatever the header left, and a two-line title leaves less than a one-line one. Ask
+  // the layout instead. Without this the panel fits itself to the guess and fitContent then scales
+  // the whole body down to the truth — the code shrinking twice, for one overflow.
+  cb.style.maxHeight='';
+  var cbody=cb.closest?cb.closest('.cbody'):null, cf=cb.closest?cb.closest('.cfit'):null;
+  if(cbody&&cf){
+    var bs=getComputedStyle(cbody),
+        avail=cbody.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom);
+    // whatever else shares `.cfit` (a top highlight band, the stat band) is owed its own room
+    var others=0;
+    [].forEach.call(cf.children, function(ch){ if(!ch.contains(cb)){ others++; avail-=ch.offsetHeight; } });
+    avail-=others*(parseFloat(getComputedStyle(cf).gap)||0);   // the gaps those siblings introduce
+    if(avail>60) cb.style.maxHeight=avail+'px';
+  }
+  var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
+  if(pre.scrollHeight-pre.clientHeight<=1) return;         // fits as authored (the common case)
+  // Binary search rather than a shrink ratio: height is monotone in font size but *not* linear —
+  // a smaller type also unwraps long lines — so a ratio estimate lands well under the size that
+  // would have fitted, and the code ends up smaller than it needed to be. Sixteen halvings settle
+  // on the largest size that fits — fewer left visible slack under the last line — and cost
+  // sixteen reflows of one element.
+  var lo=base*0.2, hi=base, fit=lo;
+  for(var k=0;k<16;k++){
+    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px';
+    if(pre.scrollHeight-pre.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
+  }
+  pre.style.fontSize=fit+'px';
+}
 function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
   cf.style.transform='none';
@@ -1043,6 +1081,13 @@ function fitCover(st){                       // full-bleed text slides (quote/st
   if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
 }
 function fitAll(scope){ var r=(scope||document);
+  // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
+  // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
+  // the slide no longer has. Natural layout first, then code type, then the body scale — each
+  // step measured against the one before it.
+  r.querySelectorAll('.reveal .slides section .cfit').forEach(function(cf){
+    cf.style.transform='none'; cf.style.width=''; cf.style.marginTop=''; });
+  r.querySelectorAll('.reveal .slides section .codebox').forEach(fitCode);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
 // PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into

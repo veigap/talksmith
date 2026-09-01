@@ -101,7 +101,7 @@
    their own body-level markup — there the code or the grid **is** the slide, not what sits beside
    it — and reuse the same classes, so the two read as one piece in two places. #}
 {% macro smedia(m) %}
-{%- if m is mapping and m.code %}{{ codepanel(m.code, m.language, 16, 'mcode') }}
+{%- if m is mapping and m.code %}{{ codepanel(m.code, m.language, 'mcode') }}
 {%- elif m is mapping and m.columns %}<div class="compare mtable" style="--cc:{{ m.columns | length or 1 }}"><div class="chead">{% for c in m.columns %}<span>{{ c.header }}</span>{% endfor %}</div>{% for row in pivot(m.columns) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}</div>
 {%- else %}{{ embed_img(m) }}{%- endif %}
 {% endmacro %}
@@ -112,16 +112,16 @@
    badge, dark ground — rather than a grey text box in one place and something else in the other.
 
    The split of work is the same one the rest of this renderer keeps. `codeprep` (html_style.py)
-   does what markup can't: pick the grammar id from the model's `language`, expand tabs, strip the
-   snippet's common indentation, cap the line count and report how many lines the cap dropped.
-   **highlight.js**, vendored and inlined, tokenizes `pre.cbcode > code` when the page loads —
-   with no `language-*` class it auto-detects, which is why an unknown language is left unlabelled
-   rather than forced to plaintext. And `theme.css` alone says what a token looks like.
+   does what markup can't: pick the grammar id from the model's `language`, expand tabs and strip
+   the snippet's common indentation. **highlight.js**, vendored and inlined, tokenizes
+   `pre.cbcode > code` when the page loads — with no `language-*` class it auto-detects, which is
+   why an unknown language is left unlabelled rather than forced to plaintext. And `theme.css`
+   alone says what a token looks like.
 
-   `limit` is per call site on purpose: the body panel owns the slide and can hold more lines than
-   a media column standing beside content. Whatever the cap drops is *stated* (`+N`), never
-   silently cut — the two-file contract does not allow content to vanish without a word. #}
-{% macro codepanel(code, language, limit, extra='') %}
-{%- set c = codeprep(code, language, limit) -%}
-<div class="codebox{{ ' ' ~ extra if extra else '' }}"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span>{% if c.label %}<span class="cblang">{{ c.label }}</span>{% endif %}</div><pre class="cbcode"><code{% if c.lang %} class="language-{{ c.lang }}"{% endif %}>{{ c.text }}</code></pre>{% if c.more %}<div class="cbmore">⋯ +{{ c.more }}</div>{% endif %}</div>
+   **The panel holds the whole snippet.** It is bounded in CSS (a share of the slide here, its
+   column there) and `fitCode` in the deck's script shrinks its type until the code fits that box
+   — a long snippet reads smaller, it does not read shorter. #}
+{% macro codepanel(code, language, extra='') %}
+{%- set c = codeprep(code, language) -%}
+<div class="codebox{{ ' ' ~ extra if extra else '' }}"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span>{% if c.label %}<span class="cblang">{{ c.label }}</span>{% endif %}</div><pre class="cbcode"><code{% if c.lang %} class="language-{{ c.lang }}"{% endif %}>{{ c.text }}</code></pre></div>
 {%- endmacro %}

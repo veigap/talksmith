@@ -60,6 +60,10 @@ _DESIGNS = _hs._DESIGNS
 # never degrades to a list — but the cells crowd and the fit pass pays for it in type size, so say
 # so rather than let the slide silently squeeze. Split the rows, or drop the image.
 _VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
+# Lines a code panel holds at its authored type size. Past this the deck still shows the **whole**
+# snippet — the panel shrinks its type to fit, nothing is dropped — but the code gets smaller than
+# a room can read, and no renderer can fix that. It is a slide that wants splitting, so say so.
+_CODE_MAX_LINES = 28
 
 # The labeled set's `format` (schemas/slide-model.md). An unrecognized value renders as `grid`,
 # which looks like a deliberate card set rather than a typo — the same reason `layout` warns.
@@ -145,7 +149,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
     unknown, bad_layouts, dense = [], [], []
-    bad_formats, crowded = [], []
+    bad_formats, crowded, longcode = [], [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
         # `design` divides the canvas, so every design but `full` needs media to put in the part
@@ -178,6 +182,12 @@ def render(model: dict, talk_root: Path, out_dir: Path):
                 elif longest > cap:
                     crowded.append((name, len(items), longest,
                                     f"longest body {longest} chars, ~{cap} fits at that width"))
+        # A code panel keeps every line and shrinks to fit (fitCode). That is the right failure
+        # mode — better small than truncated — but it is still a failure past a point.
+        for code in (s.get("code"), (media or {}).get("code") if isinstance(media, dict) else None):
+            nlines = len(str(code).splitlines()) if code else 0
+            if nlines > _CODE_MAX_LINES:
+                longcode.append((name, nlines))
         if t == "value-columns" and media:
             cols = s.get("columns") or []
             rows = max((len(c.get("cells") or []) for c in cols), default=0)
@@ -212,6 +222,11 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         print(f"[html] warning: editorial grid of {n} concepts — {why}; the fit pass would "
               f"shrink the slide rather than fix it. Shorten the bodies, drop to fewer concepts, "
               f"or split the slide  ({slide_title})", file=sys.stderr)
+    for slide_title, nlines in longcode:
+        print(f"[html] warning: {nlines}-line code panel (~{_CODE_MAX_LINES} fit at the panel's "
+              f"type size) — every line is shown, but the panel shrinks the type to fit and the "
+              f"room stops being able to read it; split the snippet across slides or cut it down "
+              f"to what you will actually talk through  ({slide_title})", file=sys.stderr)
     for slide_title, ncols, nrows in dense:
         print(f"[html] warning: value-columns grid {ncols}×{nrows} beside an image "
               f"(max {_VC_MAX_COLS}×{_VC_MAX_ROWS} at half width) — cells will crowd; "

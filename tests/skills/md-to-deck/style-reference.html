@@ -570,6 +570,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    body-plus-media pair, so it is a template shape rather than a design. */
 .split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
+/* The body panel is **bounded**, and that bound is what makes the type fit work: `fitCode`
+   (the deck script) shrinks the code until it fits this box, so a long snippet reads smaller
+   instead of being cut at some line count the renderer picked. In `cqw` — a share of the
+   slide — on purpose: the fit pass lays `.cfit` out wider and scales it back, and a cap that
+   inflated along with it would leave the panel unbounded again. */
+.split .codebox{max-height:40cqw}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 /* ── the code surface (`.codebox`) ────────────────────────────────────────────────────────
    Code is not prose on a card, and the panel stops pretending otherwise: it is a small **editor
@@ -603,8 +609,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;overflow:hidden;flex:1 1 auto}
 /* inside the panel `<code>` *is* the panel — none of the inline-chip styling applies to it */
 .cbcode code,.cbcode code.hljs{display:block;background:none;border:0;padding:0;border-radius:0;font-family:inherit;font-size:inherit;color:var(--cb-fg)}
-/* what the line cap dropped, said out loud instead of cut away silently */
-.cbmore{flex:none;padding:0 2.4cqw 1.3cqw;font-family:var(--mono);font-size:1.6cqw;color:var(--cb-dim)}
 /* highlight.js token vocabulary → VS Code Dark+ */
 .hljs-comment,.hljs-quote{color:var(--t-com);font-style:italic}
 .hljs-keyword,.hljs-literal,.hljs-symbol,.hljs-selector-tag,.hljs-name{color:var(--t-kw)}
@@ -1609,7 +1613,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div></div>
 </div>
 </section><section class="slide" data-kind="code-example"><div class="stage d-full">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: code alone, another grammar, and a capped snippet</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">TypeScript</span></div><pre class="cbcode"><code class="language-typescript">type Cache = { key: string; ttl: number };
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: code alone, another grammar, a long snippet</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">TypeScript</span></div><pre class="cbcode"><code class="language-typescript">type Cache = { key: string; ttl: number };
 
 export async function ask(
   prompt: string,
@@ -1628,7 +1632,10 @@ export async function ask(
       log.info(&#34;ask&#34;, { ms: performance.now() - t0 });
       return res.content[0].text;
     }
-    await sleep(250 * (i + 1));</code></pre><div class="cbmore">⋯ +3</div></div></div>
+    await sleep(250 * (i + 1));
+  }
+  throw new Error(&#34;overloaded&#34;);
+}</code></pre></div></div>
 </div></div>
 </div>
 </section><section class="slide" data-kind="content-text"><div class="stage d-full">
@@ -3231,6 +3238,44 @@ function fitContent(cb){
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
+// A code panel carries the **whole** snippet, so the snippet is what has to give: shrink the
+// panel's type until the code fits the box CSS bounds it to (`.split .codebox` / `.smedia>.mcode`).
+// Like fitContent, this is a reflow measurement CSS can't express — font size changes the wrapping
+// that decides the height, so it iterates. The alternative was a line cap, which let the renderer
+// decide which of the author's lines the audience gets to see. Only ever shrinks: it resets to the
+// stylesheet's size first, so a re-fit after a resize can grow back to it but never past it.
+function fitCode(cb){
+  var pre=cb.querySelector('.cbcode'); if(!pre) return;
+  pre.style.fontSize='';                                  // the stylesheet's size is the ceiling
+  // A body panel's CSS cap is a share of the *slide* (theme.css), which is a guess: the real room
+  // it has is whatever the header left, and a two-line title leaves less than a one-line one. Ask
+  // the layout instead. Without this the panel fits itself to the guess and fitContent then scales
+  // the whole body down to the truth — the code shrinking twice, for one overflow.
+  cb.style.maxHeight='';
+  var cbody=cb.closest?cb.closest('.cbody'):null, cf=cb.closest?cb.closest('.cfit'):null;
+  if(cbody&&cf){
+    var bs=getComputedStyle(cbody),
+        avail=cbody.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom);
+    // whatever else shares `.cfit` (a top highlight band, the stat band) is owed its own room
+    var others=0;
+    [].forEach.call(cf.children, function(ch){ if(!ch.contains(cb)){ others++; avail-=ch.offsetHeight; } });
+    avail-=others*(parseFloat(getComputedStyle(cf).gap)||0);   // the gaps those siblings introduce
+    if(avail>60) cb.style.maxHeight=avail+'px';
+  }
+  var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
+  if(pre.scrollHeight-pre.clientHeight<=1) return;         // fits as authored (the common case)
+  // Binary search rather than a shrink ratio: height is monotone in font size but *not* linear —
+  // a smaller type also unwraps long lines — so a ratio estimate lands well under the size that
+  // would have fitted, and the code ends up smaller than it needed to be. Sixteen halvings settle
+  // on the largest size that fits — fewer left visible slack under the last line — and cost
+  // sixteen reflows of one element.
+  var lo=base*0.2, hi=base, fit=lo;
+  for(var k=0;k<16;k++){
+    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px';
+    if(pre.scrollHeight-pre.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
+  }
+  pre.style.fontSize=fit+'px';
+}
 function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
   cf.style.transform='none';
@@ -3239,6 +3284,13 @@ function fitCover(st){                       // full-bleed text slides (quote/st
   if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
 }
 function fitAll(scope){ var r=(scope||document);
+  // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
+  // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
+  // the slide no longer has. Natural layout first, then code type, then the body scale — each
+  // step measured against the one before it.
+  r.querySelectorAll('.reveal .slides section .cfit').forEach(function(cf){
+    cf.style.transform='none'; cf.style.width=''; cf.style.marginTop=''; });
+  r.querySelectorAll('.reveal .slides section .codebox').forEach(fitCode);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
 // PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into

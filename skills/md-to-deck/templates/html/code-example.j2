@@ -4,5 +4,5 @@
    column collapses the split to one full-width track rather than leaving half the slide blank. #}
 <div class="split">{% if s.explanation %}<div class="explain">
 {% for e in s.explanation[:3] %}<p>{{ e }}</p>{% endfor %}
-</div>{% endif %}{% if s.code %}{{ m.codepanel(s.code, s.language, 20) }}{% endif %}</div>
+</div>{% endif %}{% if s.code %}{{ m.codepanel(s.code, s.language) }}{% endif %}</div>
 {% endcall %}

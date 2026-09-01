@@ -436,9 +436,11 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   has one (`python`, `ts`, `bash`, `sql`, `json`, `yaml`, `diff`, … or any alias of the ~37
   grammars the renderer bundles). It picks the grammar the HTML deck's code panel is coloured
   with and names the panel's badge; omitted, the panel auto-detects and stays unlabelled. Use
-  `text` for output logs and pseudo-code, which colour as nothing on purpose. **Never reflow or
-  re-indent the snippet** to make it fit — the panel dedents it and states what a long snippet
-  cost (`⋯ +N`); a snippet that needs more than ~20 lines is a slide that needs splitting.
+  `text` for output logs and pseudo-code, which colour as nothing on purpose. **Never trim,
+  reflow or re-indent the snippet to make it fit** — the panel takes it whole: it dedents the
+  block and shrinks its type until every line is on the slide. Past ~28 lines the render warns,
+  because code that fits by shrinking is still code the room can't read — that is a snippet to
+  split across slides at the source, not one for the model to cut.
 - **`design` — the picture's place is chosen after the template, never instead of it.** Set
   `"design":"split-left"` whenever the media should lead the eye (a diagram the prose then walks
   through, or to break up a run of split-right slides), `"banded"` when the text is too short to

@@ -525,6 +525,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    body-plus-media pair, so it is a template shape rather than a design. */
 .split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
+/* The body panel is **bounded**, and that bound is what makes the type fit work: `fitCode`
+   (the deck script) shrinks the code until it fits this box, so a long snippet reads smaller
+   instead of being cut at some line count the renderer picked. In `cqw` — a share of the
+   slide — on purpose: the fit pass lays `.cfit` out wider and scales it back, and a cap that
+   inflated along with it would leave the panel unbounded again. */
+.split .codebox{max-height:40cqw}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
 /* ── the code surface (`.codebox`) ────────────────────────────────────────────────────────
    Code is not prose on a card, and the panel stops pretending otherwise: it is a small **editor
@@ -558,8 +564,6 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;overflow:hidden;flex:1 1 auto}
 /* inside the panel `<code>` *is* the panel — none of the inline-chip styling applies to it */
 .cbcode code,.cbcode code.hljs{display:block;background:none;border:0;padding:0;border-radius:0;font-family:inherit;font-size:inherit;color:var(--cb-fg)}
-/* what the line cap dropped, said out loud instead of cut away silently */
-.cbmore{flex:none;padding:0 2.4cqw 1.3cqw;font-family:var(--mono);font-size:1.6cqw;color:var(--cb-dim)}
 /* highlight.js token vocabulary → VS Code Dark+ */
 .hljs-comment,.hljs-quote{color:var(--t-com);font-style:italic}
 .hljs-keyword,.hljs-literal,.hljs-symbol,.hljs-selector-tag,.hljs-name{color:var(--t-kw)}
