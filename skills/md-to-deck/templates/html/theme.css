@@ -351,40 +351,56 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    split design it is a *column*, where that `auto` fights the grid's own centring. The rule is
    conditioned in the DESIGN block, not dropped. */
 /* ── concept-columns — N terms explained side by side ─────────────────────────────────────────
-   Not a table: the columns share no row structure, so they are **top-aligned** and never
-   stretched to a common height — forcing a shared baseline would invent an alignment the content
-   does not have (which is exactly what `.compare` below *does* have, and why it is a grid).
-   The column count drives the density, in CSS via `:has()` — nothing upstream computes a class. */
+   Not a table: the columns share no row structure, so their **content** is top-aligned and never
+   distributed to a shared baseline — forcing one would invent an alignment the content does not
+   have (which is exactly what `.compare` below *does* have, and why it is a grid). The *panels*
+   do share a height: that is a surface matching its neighbours, not a row aligning to one.
+   Each column is a panel — card fill, accent rule on top, its own icon — for the same reason
+   every other labeled set in this deck is: three columns of bare prose read as one wall of text,
+   and nothing on the canvas says the three are parallel things rather than one argument in three
+   paragraphs. The column count drives the density, in CSS via `:has()` — nothing upstream
+   computes a class. */
 /* the block title — a second-level heading that names what the columns are (`IA Tradicional vs.
    Foundation Models`), distinct from the slide's own H2 above it and from the `lead`, which is a
    framing sentence rather than a name. Sized between the two so the order reads: slide title →
    block title → column term. */
 .ccsub{margin:0 0 1.8cqw;font-size:3cqw;font-weight:800;color:var(--ink);line-height:1.15}
-.conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.4cqw;align-items:start;margin-top:auto}
+.conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.2cqw;align-items:stretch;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
-.conccol{display:flex;flex-direction:column;gap:1.1cqw;min-width:0;padding:.4cqw 0}
+.conccol{display:flex;flex-direction:column;gap:1cqw;min-width:0;justify-content:flex-start;
+  background:var(--card);border-radius:1.8cqw;padding:2.1cqw 2cqw;border-top:.5cqw solid var(--red)}
+.conccol>.ic{width:4.2cqw;height:4.2cqw;margin-bottom:.2cqw}
 .conccol h3{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink);line-height:1.15;text-wrap:balance}
 .ccdef{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.35}
-.ccflab{margin:.4cqw 0 0;font-size:2.1cqw;font-weight:800;color:var(--ink)}
+/* `text_label` names the sub-section that follows it (`Mitigación`, `En producción`) — an
+   eyebrow, not a sentence: set small, uppercase and in the accent, it reads as a label instead of
+   competing with the term above it. Its colon is dropped in the template, the way every other
+   label in the deck drops it. */
+.ccflab{margin:.5cqw 0 -.3cqw;font-size:1.75cqw;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--red)}
 .ccfeat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.7cqw}
 .ccfeat li{position:relative;padding-left:2cqw;font-size:2cqw;color:var(--body);line-height:1.3}
 .ccfeat li::before{content:"";position:absolute;left:0;top:.75cqw;width:.8cqw;height:.8cqw;border-radius:50%;background:var(--red)}
 .ccfree{margin:0;font-size:2cqw;color:var(--body);line-height:1.35}
 .ccex{margin:auto 0 0;padding-top:.6cqw;font-size:2cqw;font-weight:800;color:var(--ink);line-height:1.3}
-/* the emphasised column is the one the slide is *about* — the subject the others define by
-   contrast, not a verdict. It takes the accent panel and inverts wholesale, so nothing inside it
-   has to know it is emphasised (the bullet marker included, which flips to the panel's own ink). */
-.conccol.em{background:var(--red);border-radius:1.6cqw;padding:2.2cqw 2cqw;color:#fff}
-.conccol.em h3,.conccol.em .ccflab,.conccol.em .ccex,.conccol.em .ccdef,.conccol.em .ccfeat li{color:#fff}
-.conccol.em .ccfeat li::before{background:#fff}
-.conccol.em .ccfree{color:#fff}
-.conccol.em b{color:#fff}
+/* The emphasised column is the one the slide is *about* — the subject the others define by
+   contrast, **not a verdict**. It used to take the full accent panel and invert to white ink,
+   and against a plain neighbour that reads as a scorecard: the red one is the wrong answer and
+   the pale one is the right one (or the other way round — the point is the reader is being told
+   a result that isn't there). Two columns of the same slide are not an A/B test.
+   So emphasis is now *weight*, not colour reversal: the same card, tinted a little toward the
+   deck's accent and given a heavier rule and an accent heading. Nothing inside inverts, which is
+   also what keeps an inline `code` chip legible in there. */
+.conccol.em{background:color-mix(in srgb, var(--red) 12%, var(--card));border-top-width:1cqw}
+.conccol.em h3{color:var(--red)}
 /* four across is the tight case — one step down keeps the measure readable rather than leaving it
    to the fit pass, which shrinks the whole slide */
+.conccols:has(>.conccol:nth-child(4)) .conccol{padding:1.7cqw 1.5cqw;gap:.8cqw}
+.conccols:has(>.conccol:nth-child(4)) .conccol>.ic{width:3.4cqw;height:3.4cqw}
+.conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.6cqw}
 .conccols:has(>.conccol:nth-child(4)) .conccol h3{font-size:2.3cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccdef{font-size:1.85cqw}
-.conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.85cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccfeat li{font-size:1.8cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccex,
 .conccols:has(>.conccol:nth-child(4)) .ccfree{font-size:1.8cqw}
@@ -551,12 +567,18 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
      nearly its own colour and the shadow under it is invisible. On a light deck it reads as the
      window's own edge. */
   border:.12cqw solid var(--cb-hair)}
-/* the title bar — window dots + the language: an editor's own way of saying "this is code" */
-.cbbar{display:flex;align-items:center;gap:.8cqw;padding:1cqw 1.6cqw;background:var(--cb-bar);
+/* The title bar — window dots + the language: an editor's own way of saying "this is code". It
+   is **chrome, not content**, so it is sized off `--cb-fs`, the size the code itself ended up at
+   (set by `fitCode` after it fits the snippet; the fallback is the authored size, for a page with
+   no script). Everything here is then in `em` of that. Fixed `cqw` was the first spelling and it
+   inverted the hierarchy: a long snippet shrank to 8px while the bar kept its full height, so the
+   loudest thing on the panel was the part that says nothing. */
+.cbbar{font-size:calc(var(--cb-fs, 2.05cqw)*.6);
+  display:flex;align-items:center;gap:.6em;padding:.5em 1em;background:var(--cb-bar);
   border-bottom:.12cqw solid var(--cb-hair);flex:none}
-.cbdot{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#4D4D55}
+.cbdot{width:.62em;height:.62em;border-radius:50%;background:#4D4D55}
 .cbdot:first-child{background:#FF5F57}.cbdot:nth-child(2){background:#FEBC2E}.cbdot:nth-child(3){background:#28C840}
-.cblang{margin-left:auto;font-family:var(--mono);font-size:1.5cqw;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
+.cblang{margin-left:auto;font-family:var(--mono);font-size:.92em;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
 /* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
    and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
    (a URL, a long identifier), so ordinary code breaks at its spaces. */
@@ -569,8 +591,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .hljs-keyword,.hljs-literal,.hljs-symbol,.hljs-selector-tag,.hljs-name{color:var(--t-kw)}
 .hljs-built_in,.hljs-type,.hljs-class,.hljs-title.class_,.hljs-title.class_.inherited__{color:var(--t-typ)}
 .hljs-title,.hljs-title.function_,.hljs-section,.hljs-meta{color:var(--t-fn)}
-.hljs-string,.hljs-regexp,.hljs-char.escape_,.hljs-link,.hljs-bullet,.hljs-template-tag{color:var(--t-str)}
+.hljs-string,.hljs-regexp,.hljs-char.escape_,.hljs-link,.hljs-template-tag{color:var(--t-str)}
 .hljs-number{color:var(--t-num)}
+/* Markdown is a first-class grammar here, because a **prompt** is markdown: shown in a panel its
+   `#`, its numbered steps and its `**` are the artifact, not formatting to be applied. So the
+   pieces that carry a prompt's structure each get their own ink — the list markers apart from the
+   code spans they sit next to, so a step reads as a step and a `field` reads as a value. */
+.hljs-bullet{color:var(--t-var)}
+.hljs-code{color:var(--t-str)}
+.hljs-strong{color:#fff}
 .hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable,.hljs-property,.hljs-params,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:var(--t-var)}
 .hljs-tag{color:var(--cb-dim)}
 .hljs-deletion{color:var(--t-del)}.hljs-addition{color:var(--t-com)}

@@ -35,8 +35,20 @@ _DEFAULT_ICON = "bolt"
 # All must be in the bundled set (see `icons/`), or an offline deck loses them. `circle` and
 # `adjust` used to be here and were dropped on purpose: both draw a plain disc, which is exactly
 # the meaningless bullet this fallback chain exists to avoid.
-_FALLBACK_ICONS = ["check_circle", "chevron_right", "star", "flag", "label",
-                   "done", "arrow_forward", "info"]
+# **Nothing here may carry a verdict.** A fallback fires when we could not tell what the concept
+# is, so the glyph has to say only "an item": `check_circle`, `done`, `star` and `flag` were in
+# this list and each of them *asserts* something — a tick landed on "Sesgo de recencia" in a
+# slide of model limitations and read as "this one is fine". Approval is not a neutral shape.
+# How much agreement a *content* match needs before it beats the neutral fallbacks below. One
+# point is a single body-word coincidence with nothing in the label behind it — noise, which
+# the renderer then draws with full confidence: "Qué hacer con eso" scored 1 on `delete`
+# because its body says "escribe" (→ edit), and a slide about what to do next got a trash can.
+# Three is one label token (weighted 3×) or three body words agreeing — a signal, not a
+# collision. Below it, a neutral marker says "an item", which is all we actually know.
+_MIN_ICON_SCORE = 3
+
+_FALLBACK_ICONS = ["chevron_right", "label", "arrow_forward", "info", "sticky_note_2",
+                   "bolt", "link", "description"]
 
 # The icon *choice* comes from the live Material Symbols catalog (fetch_catalog) — not a hardcoded
 # icon map. This is only a thin **Spanish → English** bridge so a Spanish concept word can match
@@ -139,10 +151,15 @@ def load_catalog(cache) -> None:
 
 
 def _expand(toks: set[str]) -> set[str]:
+    """Tokens plus their English bridge terms. Spanish plurals are folded back to the singular
+    the bridge is keyed on — the table lists `alucinacion`, slides say "Alucinaciones", and a
+    label that misses the bridge now falls to a neutral marker instead of a wrong glyph, so the
+    plural quietly cost the concept its icon."""
     out = set(toks)
     for w in toks:
-        if w in _ES_EN:
-            out |= _tokens(_ES_EN[w])
+        for key in (w, w[:-2] if w.endswith("es") else "", w[:-1] if w.endswith("s") else ""):
+            if key and key in _ES_EN:
+                out |= _tokens(_ES_EN[key])
     return out
 
 
@@ -174,7 +191,7 @@ def icon_for(label: str, body: str = "") -> str:
         score = 3 * len(ltoks & tset) + len(btoks & tset)   # label weighted 3×, body 1×
         if name in ltoks:
             score += 6                     # exact name hit in the label is decisive
-        if score > 0:
+        if score >= _MIN_ICON_SCORE:
             scored.append((score, pop, name))
     scored.sort(key=lambda x: (-x[0], -x[1]))
     for _, _, name in scored:              # highest score first, skipping icons already on this slide
@@ -693,6 +710,7 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
 # Templates whose markup places a matched icon next to each item → the slide field holding them.
 _ICON_LISTS = {
     "concept-breakdown": ("cards",), "content+cards+image": ("cards",), "closing-cta": ("items",),
+    "concept-columns": ("columns",),
 }
 
 
@@ -1022,15 +1040,28 @@ function fitContent(cb){
   var rw=cb.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),
       rh=cb.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
   if(rh<20||rw<20) return;
-  var s=1;                                   // solve: laid out at width rw/s, visual height (h*s) must fit rh
+  cf.style.transform='none';
+  // Laid out at width rw/s and scaled by s, does the body fit the room?  Effective height is
+  // **monotone** in s — a bigger s is both a narrower layout (taller content) and a bigger scale —
+  // so the largest s that fits can be found by halving, and that is the one we want.
+  //
+  // The old loop iterated s <- rh/h instead, and that recurrence has fixed points nobody wants: on
+  // a crowded slide one bad step (h far over rh) threw s down to ~0.4, where the body lays out at
+  // 2.3x the canvas width, reflows to a handful of lines and is then drawn at 40% — a slide of six
+  // small cards floating in white space, "fitted" with a third of the room used. It could not climb
+  // back either: from a too-small s the next iterate overshoots to 1 and it oscillates until the
+  // iteration cap stops it wherever it happens to be. Halving cannot do that; it is also the same
+  // search as fitCode's, one level up.
+  //
   // NB: an image's height cap (theme.css) is deliberately left in plain cqw — a share of the
   // *slide*, which does not grow when .cfit is laid out wider here. That is what lets a picture
-  // give up height on a crowded slide, and it is the only term this loop can move besides text
-  // reflow; scaling the caps with the inflation makes the content scale-invariant and the loop
+  // give up height on a crowded slide, and it is the only term this search can move besides text
+  // reflow; scaling the caps with the inflation makes the content scale-invariant and the search
   // unsolvable (it runs to the floor and the content clips).
-  for(var k=0;k<5;k++){ cf.style.transform='none'; cf.style.width=(rw/s)+'px';
-    var h=cf.scrollHeight; var ns=Math.max(0.35, Math.min(1, rh/h));
-    if(Math.abs(ns-s)<0.005){ s=ns; break; } s=ns; }
+  var fits=function(s){ cf.style.width=(rw/s)+'px'; return cf.scrollHeight*s<=rh+1; };
+  var s=1;
+  if(!fits(1)){ var lo=0.35, hi=1; s=lo;
+    for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ s=mid; lo=mid; } else { hi=mid; } } }
   cf.style.width=(rw/s)+'px';
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
@@ -1060,6 +1091,10 @@ function fitCode(cb){
     if(avail>60) cb.style.maxHeight=avail+'px';
   }
   var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
+  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so publish the
+  // size the code actually ends up at — including the case where nothing had to shrink.
+  var say=function(px){ cb.style.setProperty('--cb-fs', px+'px'); };
+  say(base);
   if(pre.scrollHeight-pre.clientHeight<=1) return;         // fits as authored (the common case)
   // Binary search rather than a shrink ratio: height is monotone in font size but *not* linear —
   // a smaller type also unwraps long lines — so a ratio estimate lands well under the size that
@@ -1068,10 +1103,11 @@ function fitCode(cb){
   // sixteen reflows of one element.
   var lo=base*0.2, hi=base, fit=lo;
   for(var k=0;k<16;k++){
-    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px';
+    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px'; say(mid);   // the bar rides along, so the
+    // room the code is measured against is the room it will actually have
     if(pre.scrollHeight-pre.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
   }
-  pre.style.fontSize=fit+'px';
+  pre.style.fontSize=fit+'px'; say(fit);
 }
 function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;

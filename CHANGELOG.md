@@ -13,6 +13,49 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.97.0] — 2026-09-01
+
+### Fixed
+
+- **Slides that were mostly white space.** The HTML render's body fit solved `s ← room / height`
+  by iteration, and that recurrence has fixed points nobody wants: one bad step on a crowded slide
+  threw the scale down to ~0.4, where the body is laid out at 2.3× the canvas width, reflows to a
+  handful of lines and is then drawn at 40% — five cards floating in an empty slide, "fitted" with
+  a third of the room used. It could not climb back out either, and the iteration cap stopped it
+  wherever it happened to be. The fit now **searches for the largest scale that fits** (effective
+  height is monotone in the scale, so it halves), which is what it always meant to do. Crowded
+  slides get their room back; slides that already fitted are unchanged.
+
+- **Icons that asserted things the deck never said.** A content match needed a single point to
+  win — one body-word coincidence with nothing in the label behind it. "Qué hacer con eso" scored
+  1 on `delete` because its body says *escribe* (→ edit), so a slide about what to do next got a
+  trash can. A match now needs real agreement (one label token, or three body words); below that
+  an item gets a neutral marker, which is all we actually know. The neutral fallbacks were
+  themselves cleaned of verdicts — `check_circle`, `done`, `star` and `flag` are out, after a tick
+  landed on "Sesgo de recencia" in a slide of model limitations and read as *this one is fine*.
+  Spanish plurals now fold to the singular the icon bridge is keyed on, so "Alucinaciones" keeps
+  its icon instead of falling to a marker.
+
+### Changed
+
+- **`concept-columns` columns are panels now**, like every other labeled set in the deck: card
+  fill, an accent rule on top, the column's own icon, and the `text_label` set as a small accent
+  eyebrow rather than a bold sentence competing with the term above it. Three columns of bare
+  prose read as one wall of text with nothing saying the three were parallel.
+
+- **An emphasised column no longer reads as a verdict.** `emphasis` marks the column the slide is
+  *about*; drawn as a full accent panel with inverted ink next to a plain neighbour, it read as a
+  scorecard — this one is the wrong answer, that one is right. It is now the same card tinted
+  toward the accent with a heavier rule and an accent heading: weight, not colour reversal. Inline
+  `code` inside it stays legible, which the inversion had also broken.
+
+- **The code panel's title bar is chrome again.** It was sized in fixed slide units, so a long
+  snippet shrank to fit while the bar kept its full height — the loudest thing on the panel was
+  the part that says nothing. Bar, dots and language badge now scale with the code's own type
+  size. **Markdown is a first-class grammar** in that panel: a prompt shown as an artifact is
+  `markdown`, not `text` — the bytes stay literal (that is the point of showing a prompt) and the
+  headings, numbered steps, emphasis and code spans are coloured so its structure is visible.
+
 ## [0.96.1] — 2026-09-01
 
 ### Changed

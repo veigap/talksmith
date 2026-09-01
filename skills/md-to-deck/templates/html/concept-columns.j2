@@ -6,17 +6,20 @@
    not have — which is the same mistake as reading these columns as a table.
    The columns deliberately share no row structure; that is what separates this from
    `value-columns`, where the cells align row by row over a shared factor.
-   `emphasis` marks the column the slide is *about* (not the winner); CSS gives it the accent
-   panel and inverts it. How many columns there are, and how they tighten as that count grows, is
+   Each column is a **panel with a content-matched icon**, like every other labeled set in the
+   deck — three columns of naked prose read as one wall of text, with nothing saying the three
+   are parallel. `emphasis` marks the column the slide is *about* (not the winner); CSS swaps its
+   panel for the accent one and inverts it. How many columns there are, and how they tighten as that count grows, is
    count-driven CSS — nothing here branches on it. #}
 {% call m.stage(s) %}
 {% if s.subtitle %}<p class="ccsub">{{ s.subtitle }}</p>{% endif %}
 <div class="conccols">
 {% for c in s.columns %}
 <div class="conccol{{ ' em' if c.emphasis else '' }}{{ m.frag(s) }}">
+{% if c.icon %}{{ icon(c.icon) }}{% endif %}
 <h3>{{ c.label | nocolon }}</h3>
 {% if c.body %}<p class="ccdef">{{ c.body }}</p>{% endif %}
-{% if c.text_label %}<p class="ccflab">{{ c.text_label }}</p>{% endif %}
+{% if c.text_label %}<p class="ccflab">{{ c.text_label | nocolon }}</p>{% endif %}
 {% if c.text is string %}
 {% for para in c.text.split("\n") if para.strip() %}<p class="ccfree">{{ para }}</p>{% endfor %}
 {% elif c.text %}

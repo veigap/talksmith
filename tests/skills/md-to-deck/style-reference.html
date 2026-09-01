@@ -396,40 +396,56 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    split design it is a *column*, where that `auto` fights the grid's own centring. The rule is
    conditioned in the DESIGN block, not dropped. */
 /* ── concept-columns — N terms explained side by side ─────────────────────────────────────────
-   Not a table: the columns share no row structure, so they are **top-aligned** and never
-   stretched to a common height — forcing a shared baseline would invent an alignment the content
-   does not have (which is exactly what `.compare` below *does* have, and why it is a grid).
-   The column count drives the density, in CSS via `:has()` — nothing upstream computes a class. */
+   Not a table: the columns share no row structure, so their **content** is top-aligned and never
+   distributed to a shared baseline — forcing one would invent an alignment the content does not
+   have (which is exactly what `.compare` below *does* have, and why it is a grid). The *panels*
+   do share a height: that is a surface matching its neighbours, not a row aligning to one.
+   Each column is a panel — card fill, accent rule on top, its own icon — for the same reason
+   every other labeled set in this deck is: three columns of bare prose read as one wall of text,
+   and nothing on the canvas says the three are parallel things rather than one argument in three
+   paragraphs. The column count drives the density, in CSS via `:has()` — nothing upstream
+   computes a class. */
 /* the block title — a second-level heading that names what the columns are (`IA Tradicional vs.
    Foundation Models`), distinct from the slide's own H2 above it and from the `lead`, which is a
    framing sentence rather than a name. Sized between the two so the order reads: slide title →
    block title → column term. */
 .ccsub{margin:0 0 1.8cqw;font-size:3cqw;font-weight:800;color:var(--ink);line-height:1.15}
-.conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.4cqw;align-items:start;margin-top:auto}
+.conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.2cqw;align-items:stretch;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
-.conccol{display:flex;flex-direction:column;gap:1.1cqw;min-width:0;padding:.4cqw 0}
+.conccol{display:flex;flex-direction:column;gap:1cqw;min-width:0;justify-content:flex-start;
+  background:var(--card);border-radius:1.8cqw;padding:2.1cqw 2cqw;border-top:.5cqw solid var(--red)}
+.conccol>.ic{width:4.2cqw;height:4.2cqw;margin-bottom:.2cqw}
 .conccol h3{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink);line-height:1.15;text-wrap:balance}
 .ccdef{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.35}
-.ccflab{margin:.4cqw 0 0;font-size:2.1cqw;font-weight:800;color:var(--ink)}
+/* `text_label` names the sub-section that follows it (`Mitigación`, `En producción`) — an
+   eyebrow, not a sentence: set small, uppercase and in the accent, it reads as a label instead of
+   competing with the term above it. Its colon is dropped in the template, the way every other
+   label in the deck drops it. */
+.ccflab{margin:.5cqw 0 -.3cqw;font-size:1.75cqw;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--red)}
 .ccfeat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.7cqw}
 .ccfeat li{position:relative;padding-left:2cqw;font-size:2cqw;color:var(--body);line-height:1.3}
 .ccfeat li::before{content:"";position:absolute;left:0;top:.75cqw;width:.8cqw;height:.8cqw;border-radius:50%;background:var(--red)}
 .ccfree{margin:0;font-size:2cqw;color:var(--body);line-height:1.35}
 .ccex{margin:auto 0 0;padding-top:.6cqw;font-size:2cqw;font-weight:800;color:var(--ink);line-height:1.3}
-/* the emphasised column is the one the slide is *about* — the subject the others define by
-   contrast, not a verdict. It takes the accent panel and inverts wholesale, so nothing inside it
-   has to know it is emphasised (the bullet marker included, which flips to the panel's own ink). */
-.conccol.em{background:var(--red);border-radius:1.6cqw;padding:2.2cqw 2cqw;color:#fff}
-.conccol.em h3,.conccol.em .ccflab,.conccol.em .ccex,.conccol.em .ccdef,.conccol.em .ccfeat li{color:#fff}
-.conccol.em .ccfeat li::before{background:#fff}
-.conccol.em .ccfree{color:#fff}
-.conccol.em b{color:#fff}
+/* The emphasised column is the one the slide is *about* — the subject the others define by
+   contrast, **not a verdict**. It used to take the full accent panel and invert to white ink,
+   and against a plain neighbour that reads as a scorecard: the red one is the wrong answer and
+   the pale one is the right one (or the other way round — the point is the reader is being told
+   a result that isn't there). Two columns of the same slide are not an A/B test.
+   So emphasis is now *weight*, not colour reversal: the same card, tinted a little toward the
+   deck's accent and given a heavier rule and an accent heading. Nothing inside inverts, which is
+   also what keeps an inline `code` chip legible in there. */
+.conccol.em{background:color-mix(in srgb, var(--red) 12%, var(--card));border-top-width:1cqw}
+.conccol.em h3{color:var(--red)}
 /* four across is the tight case — one step down keeps the measure readable rather than leaving it
    to the fit pass, which shrinks the whole slide */
+.conccols:has(>.conccol:nth-child(4)) .conccol{padding:1.7cqw 1.5cqw;gap:.8cqw}
+.conccols:has(>.conccol:nth-child(4)) .conccol>.ic{width:3.4cqw;height:3.4cqw}
+.conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.6cqw}
 .conccols:has(>.conccol:nth-child(4)) .conccol h3{font-size:2.3cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccdef{font-size:1.85cqw}
-.conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.85cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccfeat li{font-size:1.8cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccex,
 .conccols:has(>.conccol:nth-child(4)) .ccfree{font-size:1.8cqw}
@@ -596,12 +612,18 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
      nearly its own colour and the shadow under it is invisible. On a light deck it reads as the
      window's own edge. */
   border:.12cqw solid var(--cb-hair)}
-/* the title bar — window dots + the language: an editor's own way of saying "this is code" */
-.cbbar{display:flex;align-items:center;gap:.8cqw;padding:1cqw 1.6cqw;background:var(--cb-bar);
+/* The title bar — window dots + the language: an editor's own way of saying "this is code". It
+   is **chrome, not content**, so it is sized off `--cb-fs`, the size the code itself ended up at
+   (set by `fitCode` after it fits the snippet; the fallback is the authored size, for a page with
+   no script). Everything here is then in `em` of that. Fixed `cqw` was the first spelling and it
+   inverted the hierarchy: a long snippet shrank to 8px while the bar kept its full height, so the
+   loudest thing on the panel was the part that says nothing. */
+.cbbar{font-size:calc(var(--cb-fs, 2.05cqw)*.6);
+  display:flex;align-items:center;gap:.6em;padding:.5em 1em;background:var(--cb-bar);
   border-bottom:.12cqw solid var(--cb-hair);flex:none}
-.cbdot{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#4D4D55}
+.cbdot{width:.62em;height:.62em;border-radius:50%;background:#4D4D55}
 .cbdot:first-child{background:#FF5F57}.cbdot:nth-child(2){background:#FEBC2E}.cbdot:nth-child(3){background:#28C840}
-.cblang{margin-left:auto;font-family:var(--mono);font-size:1.5cqw;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
+.cblang{margin-left:auto;font-family:var(--mono);font-size:.92em;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
 /* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
    and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
    (a URL, a long identifier), so ordinary code breaks at its spaces. */
@@ -614,8 +636,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .hljs-keyword,.hljs-literal,.hljs-symbol,.hljs-selector-tag,.hljs-name{color:var(--t-kw)}
 .hljs-built_in,.hljs-type,.hljs-class,.hljs-title.class_,.hljs-title.class_.inherited__{color:var(--t-typ)}
 .hljs-title,.hljs-title.function_,.hljs-section,.hljs-meta{color:var(--t-fn)}
-.hljs-string,.hljs-regexp,.hljs-char.escape_,.hljs-link,.hljs-bullet,.hljs-template-tag{color:var(--t-str)}
+.hljs-string,.hljs-regexp,.hljs-char.escape_,.hljs-link,.hljs-template-tag{color:var(--t-str)}
 .hljs-number{color:var(--t-num)}
+/* Markdown is a first-class grammar here, because a **prompt** is markdown: shown in a panel its
+   `#`, its numbered steps and its `**` are the artifact, not formatting to be applied. So the
+   pieces that carry a prompt's structure each get their own ink — the list markers apart from the
+   code spans they sit next to, so a step reads as a step and a `field` reads as a value. */
+.hljs-bullet{color:var(--t-var)}
+.hljs-code{color:var(--t-str)}
+.hljs-strong{color:#fff}
 .hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable,.hljs-property,.hljs-params,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:var(--t-var)}
 .hljs-tag{color:var(--cb-dim)}
 .hljs-deletion{color:var(--t-del)}.hljs-addition{color:var(--t-com)}
@@ -923,7 +952,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-180h150v-250h220v250h150v-390L480-765 220-570v390Zm-60 60v-480l320-240 320 240v480H530v-250H430v250H160Zm320-353Z"/></svg></span><h3>Default home</h3><p>The general case for any labeled set of two or more.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M510-570v-270h330v270H510ZM120-450v-390h330v390H120Zm390 330v-390h330v390H510Zm-390 0v-270h330v270H120Zm60-390h210v-270H180v270Zm390 330h210v-270H570v270Zm0-450h210v-150H570v150ZM180-180h210v-150H180v150Zm210-330Zm180-120Zm0 180ZM390-330Z"/></svg></span><h3>Grid</h3><p>Six cards lay out as a 3×2 grid with uniform gutters.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M140-120q-24 0-42-18t-18-42v-480q0-24 18-42t42-18h180v-100q0-24 18-42t42-18h200q24 0 42 18t18 42v100h180q24 0 42 18t18 42v480q0 24-18 42t-42 18H140Zm240-600h200v-100H380v100Zm440 349H571v60H391v-60H140v191h680v-191Zm-369 0h60v-60h-60v60Zm-311-60h251v-60h180v60h249v-229H140v229Zm340 30Z"/></svg></span><h3>Icon each</h3><p>Six distinct icons, one anchoring every concept.</p></div>
-<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M440.5-500Q378-500 334-544.06 290-588.13 290-650q0-63 44.06-106.5Q378.13-800 440-800q63 0 106.5 43.5t43.5 106q0 62.5-43.5 106.5t-106 44Zm-.5-60q38 0 64-26.44T530-650q0-38-26-64t-63.5-26q-37.5 0-64 26T350-650.5q0 37.5 26.44 64T440-560ZM898-20 758-160q-23 17-47.5 23.5t-50.07 6.5q-71.01 0-120.72-49.62Q490-229.24 490-300.12t49.62-120.38q49.62-49.5 120.5-49.5t120.38 49.71Q830-370.58 830-299.57q0 25.57-6.5 50.07T800-202L940-62l-42 42ZM738.5-221.5Q770-253 770-300t-31.5-78.5Q707-410 660-410t-78.5 31.5Q550-347 550-300t31.5 78.5Q613-190 660-190t78.5-31.5ZM120-160v-94q0-37 17.5-63t50.5-43q47-23 122.5-43.5T464-419q-8 13-15 28.5T438-360q-78-1-136 18.5T212-306q-14 8-23 21.5t-9 30.5v34h258q11 17 20 31.5t20 28.5H120Zm320-490Zm-2 430Z"/></svg></span><h3>Terse</h3><p>At six cards, keep every body to a single short line.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>Terse</h3><p>At six cards, keep every body to a single short line.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M676-400h40v-63h64v-33h-64v-64h-40v64h-63v33h63v63Zm-210 40h50v-90l84 90h66L554-480l112-120h-66l-84 90v-90h-50v240Zm-233 0h133q14.45 0 24.23-9.49Q400-378.98 400-393v-70q0-14.02-9.77-23.51Q380.45-496 366-496h-83v-54h117v-50H233v137h117v53H233v50Zm-53 240q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm0-600v600-600Z"/></svg></span><h3>Split point</h3><p>Need more than six? Split the set across two slides.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Still cards</h3><p>Even this dense, it is cards — never a bullet list.</p></div>
 </div>
@@ -1197,20 +1226,20 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </section><section class="slide" data-kind="concept-columns"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">concept-columns: four terms, the third emphasised</h2><p class="lead">Each column explains its own term; reading across a row says nothing.</p></div><div class="cbody"><div class="cfit"><div class="conccols">
 <div class="conccol fragment fade-up">
-<h3>Language Model</h3>
-<p class="ccdef">Asigna probabilidades a secuencias de palabras: dado un contexto, predice qué sigue.</p><p class="ccflab">Características:</p><ul class="ccfeat"><li>Existen desde los años 1950</li><li>Basados en P(palabra | contexto)</li><li>Primero estadísticos, luego neuronales</li></ul>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M323-111.5Q250-143 196-197t-85-127.5Q80-398 80-482t31-156.5Q142-711 196-765t127-84.5Q396-880 480-880t157 30.5Q710-819 764-765t85 126.5Q880-566 880-482t-31 157.5Q818-251 764-197t-127 85.5Q564-80 480-80t-157-31.5ZM480-138q35-36 58.5-82.5T577-331H384q14 60 37.5 108t58.5 85Zm-85-12q-25-38-43-82t-30-99H172q38 71 88 111.5T395-150Zm171-1q72-23 129.5-69T788-331H639q-13 54-30.5 98T566-151ZM152-391h159q-3-27-3.5-48.5T307-482q0-25 1-44.5t4-43.5H152q-7 24-9.5 43t-2.5 45q0 26 2.5 46.5T152-391Zm221 0h215q4-31 5-50.5t1-40.5q0-20-1-38.5t-5-49.5H373q-4 31-5 49.5t-1 38.5q0 21 1 40.5t5 50.5Zm275 0h160q7-24 9.5-44.5T820-482q0-26-2.5-45t-9.5-43H649q3 35 4 53.5t1 34.5q0 22-1.5 41.5T648-391Zm-10-239h150q-33-69-90.5-115T565-810q25 37 42.5 80T638-630Zm-254 0h194q-11-53-37-102.5T480-820q-32 27-54 71t-42 119Zm-212 0h151q11-54 28-96.5t43-82.5q-75 19-131 64t-91 115Z"/></svg></span><h3>Language Model</h3>
+<p class="ccdef">Asigna probabilidades a secuencias de palabras: dado un contexto, predice qué sigue.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Existen desde los años 1950</li><li>Basados en P(palabra | contexto)</li><li>Primero estadísticos, luego neuronales</li></ul>
 <p class="ccex">Ejemplos: N-gramas · Shannon (1948) · RNNs</p></div>
 <div class="conccol fragment fade-up">
-<h3>Foundation Model</h3>
-<p class="ccdef">Entrenado a escala masiva sobre datos generales, adaptable a múltiples tareas.</p><p class="ccflab">Características:</p><ul class="ccfeat"><li>Entrenado con billones de tokens</li><li>Generalista por naturaleza</li><li>Base para aplicaciones específicas</li></ul>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M201-120v-166h-83v-60h83v-206L76-457l-36-47 440-336 440 336-37 47-125-96v207h83v60h-83v166h-60v-166H510v166h-60v-166H261v166h-60Zm60-226h189v-396L261-598v252Zm249 0h188v-252L510-742v396Z"/></svg></span><h3>Foundation Model</h3>
+<p class="ccdef">Entrenado a escala masiva sobre datos generales, adaptable a múltiples tareas.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Entrenado con billones de tokens</li><li>Generalista por naturaleza</li><li>Base para aplicaciones específicas</li></ul>
 <p class="ccex">Ejemplos: GPT-4, Gemini, Claude, LLaMA</p></div>
 <div class="conccol em fragment fade-up">
-<h3>LLM</h3>
-<p class="ccdef">Un Foundation Model especializado en texto: aprende la distribución del lenguaje natural.</p><p class="ccflab">Características:</p><ul class="ccfeat"><li>Sólo procesa y genera tokens</li><li>Arquitectura Transformer</li><li>Desde 7B hasta +1T parámetros</li></ul>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>LLM</h3>
+<p class="ccdef">Un Foundation Model especializado en texto: aprende la distribución del lenguaje natural.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Sólo procesa y genera tokens</li><li>Arquitectura Transformer</li><li>Desde 7B hasta +1T parámetros</li></ul>
 <p class="ccex">Ejemplos: GPT-4, Claude 3, Mistral</p></div>
 <div class="conccol fragment fade-up">
-<h3>Modelo Multimodal</h3>
-<p class="ccdef">Un Foundation Model que procesa y genera varios tipos de dato a la vez.</p><p class="ccflab">Características:</p><ul class="ccfeat"><li>Combina encoders de varias modalidades</li><li>Un solo modelo para ver, oír y hablar</li><li>Razonamiento cruzado entre modalidades</li></ul>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M206-206q-41-48-63.5-107.5T120-440q0-150 105-254.5T480-799q10 0 20.5.5T519-797l-81-81 42-42 160 160-160 160-43-43 92-92q-11-2-26-3t-23-1q-125 0-212.5 87T180-440q0 51 17 102t52 89l-43 43Zm236-4q0-21-15-43t-32.5-45Q377-321 362-346.5T347-400q0-55 39-94t94-39q55 0 94 39t39 94q0 28-15 53.5T565.5-298Q548-275 533-253t-15 43h-76Zm-2 90v-50h80v50h-80Zm314-86-42-42q30-36 49-85t19-107q0-66-27.5-125.5T670-670l44-44q58 50 92 120.5T840-440q0 67-22.5 126.5T754-206Z"/></svg></span><h3>Modelo Multimodal</h3>
+<p class="ccdef">Un Foundation Model que procesa y genera varios tipos de dato a la vez.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Combina encoders de varias modalidades</li><li>Un solo modelo para ver, oír y hablar</li><li>Razonamiento cruzado entre modalidades</li></ul>
 <p class="ccex">Ejemplos: GPT-4o, Gemini 1.5 Pro, LLaVA</p></div>
 </div>
 </div></div>
@@ -1218,11 +1247,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <aside class="notes"><p>Four terms explained side by side. The columns deliberately share no row structure — that is the whole discriminator against value-columns, which is a table wearing columns and whose cells align row by row against a shared factor. Here reading across a row says nothing: each column is read top to bottom on its own, and one column may carry four bullets where its neighbour carries a paragraph. The emphasised column marks the term the slide is about, the one the others define by contrast; it is not a verdict, so the older or worse option may carry it just as well.</p></aside></section><section class="slide" data-kind="concept-columns"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">concept-columns: two terms, no shared factors</h2><p class="lead">It looks adversarial, but there is no row to read across — so it is not a comparison grid.</p></div><div class="cbody"><div class="cfit"><p class="ccsub">IA Tradicional vs. Foundation Models</p><div class="conccols">
 <div class="conccol em fragment fade-up">
-<h3>IA Tradicional</h3>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>IA Tradicional</h3>
 <p class="ccdef">Un modelo por tarea específica, entrenado en casa.</p><ul class="ccfeat"><li>Requiere datos etiquetados abundantes para cada caso de uso</li><li>Difícil de reutilizar entre dominios distintos</li></ul>
 <p class="ccex">Ejemplo: un detector de fallos en autopartes sólo detecta eso.</p></div>
 <div class="conccol fragment fade-up">
-<h3>Foundation Models</h3>
+<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M201-120v-166h-83v-60h83v-206L76-457l-36-47 440-336 440 336-37 47-125-96v207h83v60h-83v166h-60v-166H510v166h-60v-166H261v166h-60Zm60-226h189v-396L261-598v252Zm249 0h188v-252L510-742v396Z"/></svg></span><h3>Foundation Models</h3>
 <p class="ccdef">Modelos entrenados con datos a gran escala que adquieren una comprensión general y se adaptan después.</p><p class="ccfree">Se exponen como SaaS o se pueden correr localmente.</p><p class="ccfree">No hace falta un equipo de data science para empezar a usarlos.</p></div>
 </div>
 </div></div>
@@ -1778,7 +1807,7 @@ export async function ask(
 </svg></div></div></div>
 <aside class="notes"><p>Design and style are separate decisions, so they are separate fields. The stage places <code>media</code> per <code>design</code>; the template emits content and nothing else. That is why every content template accepts every design — the old <code>layout</code> field existed on five templates only, and <code>aside</code> was a second vocabulary for the same decision, so a template on neither list could not be composed at all. This slide is a <code>concept-breakdown</code>, a template that could never carry a composed image before.</p></aside></section><section class="slide" data-kind="concept-breakdown"><div class="stage d-split side-right">
 <div class="shead"><h2 class="stitle">video: a clip is media — split-right, contained</h2></div><div class="cbody"><div class="cfit"><div class="cards">
-<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m629-419-44-44q26-71-27-118t-115-24l-44-44q17-11 38-16t43-5q71 0 120.5 49.5T650-500q0 22-5.5 43.5T629-419Zm129 129-40-40q49-36 85.5-80.5T857-500q-50-111-150-175.5T490-740q-42 0-86 8t-69 19l-46-47q35-16 89.5-28T485-800q143 0 261.5 81.5T920-500q-26 64-67 117t-95 93Zm58 226L648-229q-35 14-79 21.5t-89 7.5q-146 0-265-81.5T40-500q20-52 55.5-101.5T182-696L56-822l42-43 757 757-39 44ZM223-654q-37 27-71.5 71T102-500q51 111 153.5 175.5T488-260q33 0 65-4t48-12l-64-64q-11 5-27 7.5t-30 2.5q-70 0-120-49t-50-121q0-15 2.5-30t7.5-27l-97-97Zm305 142Zm-116 58Z"/></svg></span><h3>Autoplays</h3><p>Reveal starts it when the slide comes up and pauses it on the way out.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>Autoplays</h3><p>Reveal starts it when the slide comes up and pauses it on the way out.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm0-60h680v-436H140v436Z"/></svg></span><h3>Same frame</h3><p>A video takes the box an image would, in every design.</p></div>
 </div>
 </div></div>
@@ -1953,7 +1982,7 @@ X_test = scaler.transform(X_test)</code></pre></div></div></div>
 <div class="smedia"><div class="imgph"><span>The pipeline</span></div></div></div>
 <aside class="notes"><p>The catalog always described a stat pair as the lower band of a content slide, but only the stat template had a stats field — so a slide with this hook had to become a stat and demote its cards. The band is now universal; stat is for when the numbers are the whole slide.</p></aside></section><section class="slide" data-kind="closing-hero"><div class="stage cover"><div class="hero"><p class="steyebrow">Closing</p><span class="qa">Questions?</span><span class="qc">Thanks for flipping through the Talksmith template catalog.</span></div></div></section><section class="slide" data-kind="closing-cta"><div class="stage d-full">
 <div class="shead"><span class="pill">Closing</span><h2 class="stitle">Where to go next</h2></div><div class="cbody"><div class="cfit"><div class="ctagrid">
-<div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M160-40v-220h100v-110H160v-220h100v-110H160v-220h260v220H320v110h100v80h160v-80h260v220H580v-80H420v80H320v110h100v220H160Zm60-60h140v-100H220v100Zm0-330h140v-100H220v100Zm420 0h140v-100H640v100ZM220-760h140v-100H220v100Zm70-50Zm0 330Zm420 0ZM290-150Z"/></svg></span><h4>Schema</h4><p>schemas/slide-model.md</p></div><div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M290-620v-60h550v60H290Zm0 170v-60h550v60H290Zm0 170v-60h550v60H290ZM150-620q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Zm0 170q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Zm0 170q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Z"/></svg></span><h4>Catalog</h4><p>config/pptx-styles/slide-templates.md</p></div><div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m421-298 283-283-46-45-237 237-120-120-45 45 165 166Zm59 218q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"/></svg></span><h4>Repo</h4><p><a class="mdlink" href="https://github.com/austral/talksmith" target="_blank" rel="noopener">github.com/austral/talksmith</a></p></div></div>
+<div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M160-40v-220h100v-110H160v-220h100v-110H160v-220h260v220H320v110h100v80h160v-80h260v220H580v-80H420v80H320v110h100v220H160Zm60-60h140v-100H220v100Zm0-330h140v-100H220v100Zm420 0h140v-100H640v100ZM220-760h140v-100H220v100Zm70-50Zm0 330Zm420 0ZM290-150Z"/></svg></span><h4>Schema</h4><p>schemas/slide-model.md</p></div><div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M290-620v-60h550v60H290Zm0 170v-60h550v60H290Zm0 170v-60h550v60H290ZM150-620q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Zm0 170q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Zm0 170q-12 0-21-9t-9-21.5q0-12.5 9-21t21.5-8.5q12.5 0 21 8.62 8.5 8.63 8.5 21.38 0 12-8.62 21-8.63 9-21.38 9Z"/></svg></span><h4>Catalog</h4><p>config/pptx-styles/slide-templates.md</p></div><div class="ctacard"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h4>Repo</h4><p><a class="mdlink" href="https://github.com/austral/talksmith" target="_blank" rel="noopener">github.com/austral/talksmith</a></p></div></div>
 </div></div>
 </div>
 </section></div></div>
@@ -3225,15 +3254,28 @@ function fitContent(cb){
   var rw=cb.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),
       rh=cb.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
   if(rh<20||rw<20) return;
-  var s=1;                                   // solve: laid out at width rw/s, visual height (h*s) must fit rh
+  cf.style.transform='none';
+  // Laid out at width rw/s and scaled by s, does the body fit the room?  Effective height is
+  // **monotone** in s — a bigger s is both a narrower layout (taller content) and a bigger scale —
+  // so the largest s that fits can be found by halving, and that is the one we want.
+  //
+  // The old loop iterated s <- rh/h instead, and that recurrence has fixed points nobody wants: on
+  // a crowded slide one bad step (h far over rh) threw s down to ~0.4, where the body lays out at
+  // 2.3x the canvas width, reflows to a handful of lines and is then drawn at 40% — a slide of six
+  // small cards floating in white space, "fitted" with a third of the room used. It could not climb
+  // back either: from a too-small s the next iterate overshoots to 1 and it oscillates until the
+  // iteration cap stops it wherever it happens to be. Halving cannot do that; it is also the same
+  // search as fitCode's, one level up.
+  //
   // NB: an image's height cap (theme.css) is deliberately left in plain cqw — a share of the
   // *slide*, which does not grow when .cfit is laid out wider here. That is what lets a picture
-  // give up height on a crowded slide, and it is the only term this loop can move besides text
-  // reflow; scaling the caps with the inflation makes the content scale-invariant and the loop
+  // give up height on a crowded slide, and it is the only term this search can move besides text
+  // reflow; scaling the caps with the inflation makes the content scale-invariant and the search
   // unsolvable (it runs to the floor and the content clips).
-  for(var k=0;k<5;k++){ cf.style.transform='none'; cf.style.width=(rw/s)+'px';
-    var h=cf.scrollHeight; var ns=Math.max(0.35, Math.min(1, rh/h));
-    if(Math.abs(ns-s)<0.005){ s=ns; break; } s=ns; }
+  var fits=function(s){ cf.style.width=(rw/s)+'px'; return cf.scrollHeight*s<=rh+1; };
+  var s=1;
+  if(!fits(1)){ var lo=0.35, hi=1; s=lo;
+    for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ s=mid; lo=mid; } else { hi=mid; } } }
   cf.style.width=(rw/s)+'px';
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
@@ -3263,6 +3305,10 @@ function fitCode(cb){
     if(avail>60) cb.style.maxHeight=avail+'px';
   }
   var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
+  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so publish the
+  // size the code actually ends up at — including the case where nothing had to shrink.
+  var say=function(px){ cb.style.setProperty('--cb-fs', px+'px'); };
+  say(base);
   if(pre.scrollHeight-pre.clientHeight<=1) return;         // fits as authored (the common case)
   // Binary search rather than a shrink ratio: height is monotone in font size but *not* linear —
   // a smaller type also unwraps long lines — so a ratio estimate lands well under the size that
@@ -3271,10 +3317,11 @@ function fitCode(cb){
   // sixteen reflows of one element.
   var lo=base*0.2, hi=base, fit=lo;
   for(var k=0;k<16;k++){
-    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px';
+    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px'; say(mid);   // the bar rides along, so the
+    // room the code is measured against is the room it will actually have
     if(pre.scrollHeight-pre.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
   }
-  pre.style.fontSize=fit+'px';
+  pre.style.fontSize=fit+'px'; say(fit);
 }
 function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;

@@ -436,7 +436,10 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   has one (`python`, `ts`, `bash`, `sql`, `json`, `yaml`, `diff`, … or any alias of the ~37
   grammars the renderer bundles). It picks the grammar the HTML deck's code panel is coloured
   with and names the panel's badge; omitted, the panel auto-detects and stays unlabelled. Use
-  `text` for output logs and pseudo-code, which colour as nothing on purpose. **Never trim,
+  `text` for output logs, where colour would be noise. **A prompt is `markdown`** — its `#`
+  headings, numbered steps and `**emphasis**` are the prompt's own structure, and the panel shows
+  those bytes literally *and* colours them, so the slide shows exactly what the model receives
+  with its shape visible. Declaring a prompt `text` (the old habit) throws that away for nothing. **Never trim,
   reflow or re-indent the snippet to make it fit** — the panel takes it whole: it dedents the
   block and shrinks its type until every line is on the slide. Past ~28 lines the render warns,
   because code that fits by shrinking is still code the room can't read — that is a snippet to
