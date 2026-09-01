@@ -372,9 +372,18 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.2cqw;align-items:stretch;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
-.conccol{display:flex;flex-direction:column;gap:1cqw;min-width:0;justify-content:flex-start;
+/* The icon rides **with the term**, not on a line of its own above it: stacked, it read as a
+   third element in the column and pushed the title down; beside the title it does what an icon is
+   for, which is to label the thing it sits next to. Same relationship the cards have. Everything
+   after the title spans both tracks, so the prose keeps the full width of the panel. */
+.conccol{display:grid;grid-template-columns:auto 1fr;column-gap:1.1cqw;row-gap:1cqw;
+  align-content:start;min-width:0;
   background:var(--card);border-radius:1.8cqw;padding:2.1cqw 2cqw;border-top:.5cqw solid var(--red)}
-.conccol>.ic{width:4.2cqw;height:4.2cqw;margin-bottom:.2cqw}
+.conccol>.ic{grid-column:1;grid-row:1;align-self:center;width:3.6cqw;height:3.6cqw}
+.conccol>h3{grid-column:2;grid-row:1}
+.conccol>:not(.ic):not(h3){grid-column:1/-1}
+/* a column whose concept matched no icon keeps the full width for its title */
+.conccol:not(:has(>.ic))>h3{grid-column:1/-1}
 .conccol h3{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink);line-height:1.15;text-wrap:balance}
 .ccdef{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.35}
 /* `text_label` names the sub-section that follows it (`Mitigación`, `En producción`) — an
@@ -401,17 +410,22 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 /* four across is the tight case — one step down keeps the measure readable rather than leaving it
    to the fit pass, which shrinks the whole slide */
 .conccols:has(>.conccol:nth-child(4)) .conccol{padding:1.7cqw 1.5cqw;gap:.8cqw}
-.conccols:has(>.conccol:nth-child(4)) .conccol>.ic{width:3.4cqw;height:3.4cqw}
+.conccols:has(>.conccol:nth-child(4)) .conccol>.ic{width:3cqw;height:3cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccflab{font-size:1.6cqw}
 .conccols:has(>.conccol:nth-child(4)) .conccol h3{font-size:2.3cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccdef{font-size:1.85cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccfeat li{font-size:1.8cqw}
 .conccols:has(>.conccol:nth-child(4)) .ccex,
 .conccols:has(>.conccol:nth-child(4)) .ccfree{font-size:1.8cqw}
-.compare{margin-top:auto;display:flex;flex-direction:column;gap:1.2cqw}
-.chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:1.6cqw;align-items:center}
-.chead{font-weight:800;color:var(--ink);font-size:2.5cqw;padding-bottom:.6cqw;border-bottom:.4cqw solid var(--card)}
-.crow{font-size:2.3cqw;color:var(--body)}.crow>span{background:var(--card);padding:1.4cqw 1.8cqw;border-radius:1.2cqw}.crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
+/* One token sizes the whole strip — head, rows and the padding inside each cell — so a place
+   that needs it smaller (beside content, or a table with more rows than the room holds) sets
+   `--cmp-fs` once instead of restating three font sizes and a padding, and `fitTable` in the deck
+   script can shrink it the same way `fitCode` shrinks a code panel. Everything below is in `em`
+   of that token for exactly that reason. */
+.compare{--cmp-fs:2.5cqw;margin-top:auto;display:flex;flex-direction:column;gap:.48em;font-size:var(--cmp-fs)}
+.chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:.64em;align-items:center}
+.chead{font-weight:800;color:var(--ink);font-size:1em;padding-bottom:.24em;border-bottom:.16em solid var(--card)}
+.crow{font-size:.92em;color:var(--body)}.crow>span{background:var(--card);padding:.61em .78em;border-radius:.52em}.crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
 /* stat count drives the grid, capped at 4 across (5+ wrap into rows of 4) */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2.4cqw;margin-top:auto}
 .stats:has(>.stat:only-child){grid-template-columns:1fr}
@@ -534,9 +548,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ccicards{display:flex;flex-direction:column;gap:1.8cqw}
 /* the comparison strip stays a grid at half width — columns must still read as columns, so
    collapsing to one row per cell would undo the point. It gives up type size and cell padding. */
-.stage.d-split .compare{margin-top:0}
-.stage.d-split .chead{font-size:2.2cqw}
-.stage.d-split .crow{font-size:2.05cqw}.stage.d-split .crow>span{padding:1.1cqw 1.3cqw}
+.stage.d-split .compare{margin-top:0;--cmp-fs:2.2cqw}
 /* the numbered list and the step rows tighten beside a diagram, like they do past 6 items */
 .stage.d-split .steprow p{font-size:2.25cqw}
 .stage.d-split .steprow p b{font-weight:800;color:var(--ink)}
@@ -728,10 +740,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .smedia>.mcode .cbcode{font-size:1.85cqw;padding:1.8cqw 2cqw}
 .smedia>.mcode .cbbar{padding:.8cqw 1.4cqw}
 .stage.d-banded>.smedia>:is(.mcode,.mtable){max-height:32cqw;overflow:hidden}
-.smedia>.mtable{align-self:center}
-.smedia>.mtable .chead{font-size:2.1cqw}
-.smedia>.mtable .crow{font-size:2cqw}
-.smedia>.mtable .crow>span{padding:1cqw 1.3cqw}
+/* Bounded for the same reason the code panel is: a supporting table with more rows than the
+   column holds used to lay itself out at full height and simply run off the bottom of the slide,
+   over the footer and past the frame — the rows below the fold were gone and nothing said so.
+   The cap gives `fitTable` a box to solve against; it shrinks the strip's type until every row is
+   inside it. `overflow` is the backstop for the case even the floor cannot fit. */
+.smedia>.mtable{align-self:center;max-height:100%;overflow:hidden}
+.smedia>.mtable{--cmp-fs:2.1cqw}
 /* A stat band under the body — the composition the catalog describes as "a stat pair as the lower
    band of a content-image slide". It is the same `.stat` card as the `stat` template's, one size
    down, because here it comments on a body rather than being the whole slide. Inside `.cfit`, so

@@ -1111,24 +1111,38 @@ function fitCode(cb){
     avail-=others*(parseFloat(getComputedStyle(cf).gap)||0);   // the gaps those siblings introduce
     if(avail>60) cb.style.maxHeight=avail+'px';
   }
-  var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
-  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so publish the
-  // size the code actually ends up at — including the case where nothing had to shrink.
-  var say=function(px){ cb.style.setProperty('--cb-fs', px+'px'); };
-  say(base);
-  if(pre.scrollHeight-pre.clientHeight<=1) return;         // fits as authored (the common case)
-  // Binary search rather than a shrink ratio: height is monotone in font size but *not* linear —
-  // a smaller type also unwraps long lines — so a ratio estimate lands well under the size that
-  // would have fitted, and the code ends up smaller than it needed to be. Sixteen halvings settle
-  // on the largest size that fits — fewer left visible slack under the last line — and cost
-  // sixteen reflows of one element.
+  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so every
+  // trial publishes the size it is trying: the room the code is measured against is then the room
+  // it will actually have.
+  fitType(pre, function(px){ pre.style.fontSize=(px==null?'':px+'px');
+                             if(px!=null) cb.style.setProperty('--cb-fs', px+'px'); });
+}
+// A supporting table in a media column has the same problem and the same answer: `--cmp-fs`
+// (theme.css) sizes the whole strip, so shrinking that one token shrinks head, rows and cell
+// padding together. Without it a table with more rows than the column holds laid itself out at
+// full height and ran off the bottom of the slide, with the rows past the fold simply gone.
+function fitTable(t){
+  fitType(t, function(px){ if(px==null) t.style.removeProperty('--cmp-fs');
+                           else t.style.setProperty('--cmp-fs', px+'px'); });
+}
+// Shrink `box`'s type until its content fits the height CSS bounds it to. `apply(null)` restores
+// the stylesheet's size, which is the ceiling — this only ever shrinks.
+//
+// Binary search rather than a shrink ratio: height is monotone in font size but *not* linear — a
+// smaller type also unwraps long lines — so a ratio estimate lands well under the size that would
+// have fitted and the panel ends up smaller than it needed to be. Sixteen halvings settle on the
+// largest size that fits and cost sixteen reflows of one element.
+function fitType(box, apply){
+  apply(null);
+  var base=parseFloat(getComputedStyle(box).fontSize); if(!(base>0)) return;
+  apply(base);
+  if(box.scrollHeight-box.clientHeight<=1) return;          // fits as authored (the common case)
   var lo=base*0.2, hi=base, fit=lo;
   for(var k=0;k<16;k++){
-    var mid=(lo+hi)/2; pre.style.fontSize=mid+'px'; say(mid);   // the bar rides along, so the
-    // room the code is measured against is the room it will actually have
-    if(pre.scrollHeight-pre.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
+    var mid=(lo+hi)/2; apply(mid);
+    if(box.scrollHeight-box.clientHeight<=1){ fit=mid; lo=mid; } else { hi=mid; }
   }
-  pre.style.fontSize=fit+'px'; say(fit);
+  apply(fit);
 }
 function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
@@ -1145,6 +1159,7 @@ function fitAll(scope){ var r=(scope||document);
   r.querySelectorAll('.reveal .slides section .cfit').forEach(function(cf){
     cf.style.transform='none'; cf.style.width=''; cf.style.marginTop=''; });
   r.querySelectorAll('.reveal .slides section .codebox').forEach(fitCode);
+  r.querySelectorAll('.reveal .slides section .smedia>.mtable').forEach(fitTable);
   r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
   r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
 // PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into

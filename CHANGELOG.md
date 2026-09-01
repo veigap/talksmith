@@ -13,6 +13,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.98.1] — 2026-09-01
+
+### Fixed
+
+- **A supporting table ran off the bottom of the slide.** A `columns` grid placed as `media` had
+  no height bound and no fit: a five-row table beside a card set laid itself out at full height,
+  crossed the footer and left its last rows outside the frame — gone, with nothing said. The strip
+  is now sized by a single token (`--cmp-fs`, with head, rows and cell padding in `em` of it), the
+  media column bounds it, and `fitTable` shrinks that one token until every row is inside the box
+  — the same search the code panel already used, now shared between them.
+
+- **A `concept-columns` icon sat above its term instead of beside it**, reading as a third element
+  in the column and pushing the title down. It now shares the title's line, the way the cards'
+  icons do; the prose below still spans the panel's full width.
+
 ## [0.98.0] — 2026-09-01
 
 Four defects reported from a subject repo's `talksmith_bugs.md`, fixed at the source.
