@@ -145,12 +145,35 @@ def rasterize(svg: Path, out: Path, width: int, tolerance: float = 0.02) -> int:
     return 0
 
 
+def check() -> int:
+    """Preflight: can this interpreter rasterize at all?
+
+    Step 6 renders a batch, and cairosvg is only reached *after* the first SVG is written — so a
+    machine without libcairo used to discover the problem halfway through, with SVGs on disk and
+    no PNG beside any of them. One cheap question, asked before the batch starts, turns that into
+    a message you act on before anything is written. Exit 0 = ready, 2 = install cairo first.
+    """
+    mod = _load_cairosvg()
+    if mod is None:
+        print(f"failed: cairosvg unavailable — this interpreter cannot rasterize\n{_INSTALL_HINT}",
+              file=sys.stderr)
+        return 2
+    print(f"ok: cairosvg available ({sys.executable})", file=sys.stderr)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("svg", type=Path)
-    p.add_argument("-o", "--out", type=Path, required=True, help="output PNG path")
-    p.add_argument("--width", type=int, required=True, help="output width in px; height follows the viewBox")
+    p.add_argument("svg", type=Path, nargs="?", help="the SVG to rasterize (omit with --check)")
+    p.add_argument("-o", "--out", type=Path, help="output PNG path")
+    p.add_argument("--width", type=int, help="output width in px; height follows the viewBox")
+    p.add_argument("--check", action="store_true",
+                   help="preflight only: verify cairosvg + libcairo are usable, then exit")
     a = p.parse_args(argv)
+    if a.check:
+        return check()
+    if a.svg is None or a.out is None or a.width is None:
+        p.error("svg, --out and --width are required (or pass --check on its own)")
     if not a.svg.exists():
         print(f"failed: no such SVG: {a.svg}", file=sys.stderr)
         return 2

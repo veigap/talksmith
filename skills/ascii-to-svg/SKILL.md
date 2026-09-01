@@ -166,6 +166,14 @@ apt install libcairo2 && pip install cairosvg     # Linux
 
 If `rasterize.py` reports `cairosvg unavailable`, that is the real message and its hint text says exactly this — do **not** work around it with another tool.
 
+**Ask before the batch, not during it.** `rasterize.py --check` answers "can this interpreter rasterize?" on its own — exit 0 ready, exit 2 with the install hint above:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py --check
+```
+
+Rasterizing is the *last* step of a render, so without this the answer arrived halfway through a batch, with SVGs already on disk and no PNG beside any of them — and the interpreter that matters is the one actually running the step, which on a machine with several is not always the one where `cairosvg` was installed (`--check` prints which one it used). The diagram-illustrator runs it once before dispatching.
+
 ## You cannot ask questions
 
 This skill cannot ask follow-ups. If the standing rules + slide context + `style_directives` together don't disambiguate a critical choice, return `failed: ambiguous · <what's unresolved>`. The diagram-illustrator role surfaces the ambiguity to the orchestrator, which asks the presenter and re-invokes this skill with the disambiguation baked in.

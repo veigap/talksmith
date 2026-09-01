@@ -13,6 +13,51 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.98.0] — 2026-09-01
+
+Four defects reported from a subject repo's `talksmith_bugs.md`, fixed at the source.
+
+### Fixed
+
+- **A slide with no body drew an empty box in every design but one.** The stage marks a
+  media-only slide `bodyless`, but the rule that collapses the empty container was written as
+  `.stage.d-split.bodyless` — so a `banded`, `bleed` or `column` slide still emitted
+  `<div class="cbody"><div class="cfit"></div></div>` and showed a blank panel the presenter reads
+  as a note nobody can explain. The collapse is now on `.stage.bodyless`; only the two rules that
+  re-flow the split *grid* stay split-specific.
+
+- **The institution logo silently became the plugin's placeholder** when the deck was rendered
+  from inside the Talk folder (`--talk .`). The repo root was "two levels up from `talk_root`",
+  which is true of `talks/<Talk>` and false of `.` — so `config/logo.*` was never looked for and
+  the deck went out with the bundled stand-in, detectable only by comparing the md5 of the
+  embedded base64 against another Talk's. The root is now found by walking up to the directory
+  that actually holds `config/` or `talks/`, and **falling back to the placeholder warns**: it is
+  never what a subject repo means to hand an audience.
+
+- **Three concepts, one generic icon.** `generating_tokens`, `report_problem` and
+  `remove_red_eye` are Material *Icons* spellings the catalog still lists and the Symbols package
+  dropped; the matcher proposes them at render time (so no model file can correct it), the fetch
+  404s, and all three fell to the same `info`. They are now aliased to `token`, `warning` and
+  `visibility` — measured against the CDN — and `token` joins the bundled set so an offline render
+  keeps it too.
+
+- **`polish-ascii scan` now reports the diagrams a previous pass already rendered.** A slide
+  imported from another Talk arrives as an `<!-- ascii-source: … -->` echo with its picture
+  beside it, and the scan — which enumerates fences — listed it nowhere: nobody could see the
+  diagram existed, whether its SVG was still on disk, or whether it was stamped. A new `rendered`
+  list carries them, with `svg_present` / `stamped` per entry and a line in the human output. They
+  stay out of `blocks` (they are inventory, not work), and none is called *stale*: the rewrite
+  drops the `ascii-note` the stamp was taken over, so a recomputed digest would flag every
+  once-annotated diagram on every pass.
+
+### Added
+
+- **`rasterize.py --check`** — a rasterizer preflight: can this interpreter produce a PNG at all?
+  Exit 0 ready, exit 2 with the install hint and the path of the interpreter it tried.
+  Rasterizing is the last step of a render, so a machine without libcairo used to find out
+  halfway through a batch, with SVGs already written and no PNG beside any of them. The
+  diagram-illustrator now runs it once before dispatching.
+
 ## [0.97.0] — 2026-09-01
 
 ### Fixed

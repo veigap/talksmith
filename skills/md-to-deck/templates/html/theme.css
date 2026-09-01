@@ -163,8 +163,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    macro, which renders the body and knows whether anything came out; the CSS-only spelling of the
    same question — `:has(.cfit:not(:has(*)))` — is invalid (`:has()` cannot nest inside `:has()`),
    so it was silently dropped and every media-only split kept a dead half. */
+/* Removing the empty box is true of **every** design — a banded or bleed slide with no body
+   emitted `<div class="cbody"><div class="cfit"></div></div>` all the same, and it reads on the
+   canvas as a blank note nobody can explain. Only the two rules that re-flow the *split* grid are
+   split-specific; the collapse itself is not, and writing it that way left the other designs out. */
+.stage.bodyless>.cbody{display:none}
 .stage.d-split.bodyless{grid-template-columns:1fr}
-.stage.d-split.bodyless>.cbody{display:none}
 .stage.d-split.bodyless>.smedia{grid-column:1/-1}
 /* ── banded: media across the top, the content as a band under it */
 .stage.d-banded{display:flex;flex-direction:column}

@@ -131,12 +131,18 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
 
 ### `scan` — JSON (default)
 
-Exactly the plan shape shown under *Inputs* above, with `render: null` on every block (the diagram-illustrator's `annotate-renders` fills it later).
+Exactly the plan shape shown under *Inputs* above, with `render: null` on every block (the diagram-illustrator's `annotate-renders` fills it later), plus a **`rendered`** list: the diagrams an earlier pass already rendered, recognised by the `<!-- ascii-source: … -->` echo the fence rewrite leaves behind. Each entry carries `start_line` / `end_line`, the `image_ref` the slide points at, `svg_present`, `stamped`, and the recovered `payload`.
+
+They are **inventory, not work** — no fence to rewrite, no sidecar to extract — so nothing downstream iterates them and they stay out of `blocks`. They are reported because leaving them out of the report as well made them invisible: a slide imported from another Talk arrives already rendered, and no listing showed that the diagram existed, that its SVG was still on disk, or that it was stamped. An unstamped one is the case that costs something later — its ASCII can be edited and no pass will notice.
+
+`scan` deliberately does **not** call one stale. The rewrite drops the `ascii-note` from `final.md` and the stamp was taken over payload **+** note, so a digest recomputed from what remains would report every once-annotated diagram as changed on every pass. Presence and stamping are what the file can establish; re-rendering one is the illustrator's call.
 
 ### `scan` — human
 
 ```
 found 22 ASCII block(s) in talks/senales-1d-biomedicina/final.md:
+  ℹ  12 block(s) already rendered (`ascii-source` echo) — not re-rendered by this pass
+     ⚠  line 1315: s4-1-1-tres-niveles-razonamiento.png — SVG missing from images/
 
   s1-2-1   lines 84–101 (18 ASCII lines)   note: yes (lines 102–106)
   s1-3-1   lines 147–151 (5 ASCII lines)   note: yes (lines 152–155)

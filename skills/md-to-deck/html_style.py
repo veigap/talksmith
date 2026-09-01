@@ -219,6 +219,11 @@ _ICON_ALIAS = {
     "place": "location_on", "tip": "emoji_objects", "people": "groups", "team": "groups",
     "emoji_emotions": "mood", "emoji_people": "groups", "sentiment": "sentiment_satisfied",
     "trending": "trending_up", "source": "description", "question_answer": "forum",
+    # Material *Icons* spellings the catalog still lists and the Symbols package dropped. Measured
+    # against the CDN: these three 404, their right-hand sides resolve. Without the aliases three
+    # different concepts on one deck all landed on the same generic glyph, which reads worse than
+    # no icon at all — the matcher proposes these at render time, so a model file cannot fix it.
+    "generating_tokens": "token", "report_problem": "warning", "remove_red_eye": "visibility",
 }
 # Last resort when a name resolves to nothing at all: a real, meaningful glyph — never a shape.
 _GENERIC_ICON = "info"
@@ -625,9 +630,15 @@ def _cover_logo(fm: dict, talk_root) -> str:
         for stem in ("logo", "cover-logo"):
             for ext in (".svg", ".png", ".jpg", ".jpeg"):
                 cands.append(Path(talk_root) / "images" / f"{stem}{ext}")
-        # Repo-level institution logo, shared by every Talk in the subject repo
-        # (talk_root is `talks/<Talk>`, so the repo root is two levels up).
-        repo_root = Path(talk_root).parent.parent
+        # Repo-level institution logo, shared by every Talk in the subject repo. The repo root
+        # used to be "two levels up from `talk_root`", which is true of the string `talks/<Talk>`
+        # and false of the string `.` — and rendering from inside the Talk with `--talk .` is a
+        # normal thing to do. `Path('.').parent.parent` is still `.`, so the repo logo was never
+        # looked for and the deck went out with the plugin's placeholder, silently. Ask the
+        # filesystem where the repo starts instead of counting path segments.
+        here = Path(talk_root).resolve()
+        repo_root = next((a for a in (here, *here.parents)
+                          if (a / "config").is_dir() or (a / "talks").is_dir()), here)
         for ext in (".svg", ".png", ".jpg", ".jpeg"):
             cands.append(repo_root / "config" / f"logo{ext}")
     cands.append(_BUNDLED_LOGO)
@@ -635,6 +646,16 @@ def _cover_logo(fm: dict, talk_root) -> str:
         try:
             if not c.is_file():
                 continue
+            # The bundled placeholder is never what a subject repo means to hand an audience, so
+            # reaching it is a finding, not a default. It stays the fallback — a deck still
+            # renders — but it says so, because the only other way to notice was to compare the
+            # md5 of the embedded base64 against another Talk's.
+            if c == _BUNDLED_LOGO and "logo" not in _WARNED_ICONS:
+                _WARNED_ICONS.add("logo")
+                print(f"[logo] no institution logo found for {talk_root} — embedding the bundled "
+                      f"placeholder. Put one at config/logo.png in the working directory (or "
+                      f"images/logo.png in the Talk, or name it in the frontmatter `logo:`).",
+                      file=sys.stderr)
             if c.suffix.lower() == ".svg":
                 svg = re.sub(r"<\?xml.*?\?>", "", c.read_text(encoding="utf-8"), flags=re.DOTALL).strip()
                 return f'<span class="covlogoimg">{_ns_svg_ids(svg, "logo-")}</span>'

@@ -83,6 +83,52 @@ def _render_hint_above(lines: list[str], fence_open_line: int) -> str | None:
     return None
 
 
+_SOURCE_OPEN = "<!-- ascii-source:"
+
+
+def _rendered_inventory(lines: list[str], images_dir: Path) -> list[dict[str, Any]]:
+    """The diagrams a **previous** pass already rendered — the `<!-- ascii-source: … -->` echo the
+    fence rewrite leaves behind, with the image ref above it.
+
+    These are not work: they have no fence to rewrite and no sidecar to extract, which is why
+    `scan`'s `blocks` list does not carry them. Leaving them out of the *report* as well is what
+    made them invisible — a slide imported from another Talk arrives already rendered, and it was
+    then absent from every inventory: nobody could see that the diagram existed, whether its SVG
+    was still on disk, or whether it was stamped. This says so.
+
+    It deliberately stops short of judging staleness. The rewrite drops the `ascii-note` from
+    `final.md`, and the stamp was taken over payload **+ note**, so recomputing the digest from
+    what is left would report a diagram as changed on every pass that ever had a note. Presence
+    and stamping are what can be established from the file; the rest is the illustrator's call.
+    """
+    out: list[dict[str, Any]] = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip().startswith(_SOURCE_OPEN):
+            start = i
+            payload: list[str] = []
+            i += 1
+            while i < len(lines) and lines[i].strip() != "-->":
+                payload.append(lines[i].replace("--&gt;", "-->"))
+                i += 1
+            end = i                                  # the closing `-->`, or the last line seen
+            ref = IMG_REF_RE.search(lines[start - 1]) if start else None
+            stem = Path(ref.group(1)).name if ref else ""      # group 1 = the path under images/
+            # The ref may point at either half of the pair — the `.svg` the HTML deck inlines or
+            # the `.png` deliverable the PPTX path needs — and the stamp only ever lives in the
+            # SVG. Ask for the SVG by stem, whichever one the slide happens to reference.
+            svg = images_dir / (Path(stem).stem + ".svg") if stem else None
+            out.append({
+                "start_line": start + 1, "end_line": end + 1,
+                "image_ref": stem,
+                "svg_present": bool(svg and svg.is_file()),
+                "stamped": bool(svg and svg.is_file() and read_svg_digest(svg)),
+                "payload": "\n".join(payload),
+            })
+        i += 1
+    return out
+
+
 def scan(final_path: Path, presentation_language: str | None = None) -> dict[str, Any]:
     text = final_path.read_text()
     lines = text.splitlines()
@@ -185,7 +231,8 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
             ctx["presentation_language"] = presentation_language
         b["context"] = ctx
 
-    return {"final_path": str(final_path), "blocks": blocks, "skipped_non_slide": skipped_non_slide}
+    return {"final_path": str(final_path), "blocks": blocks, "skipped_non_slide": skipped_non_slide,
+            "rendered": _rendered_inventory(lines, final_path.parent / "images")}
 
 
 def _annotate_documentation_only(lines: list[str], blocks: list[dict[str, Any]], fence_mask: list[bool] | None = None) -> None:
@@ -269,6 +316,17 @@ def cmd_scan(args: argparse.Namespace) -> int:
             print(f"  ℹ  {doc_only_count} block(s) marked documentation-only (slide has Markdown image ref) — pipeline will skip them")
         if result.get("skipped_non_slide"):
             print(f"  ℹ  {result['skipped_non_slide']} block(s) skipped — under a heading that carries no slides (Thesis / Open questions / Cut material)")
+        # Already-rendered diagrams are not work, but they are inventory: a slide imported from
+        # another Talk arrives rendered, and used to appear in no listing at all.
+        rendered = result.get("rendered") or []
+        if rendered:
+            missing = [r for r in rendered if not r["svg_present"]]
+            unstamped = [r for r in rendered if r["svg_present"] and not r["stamped"]]
+            print(f"  ℹ  {len(rendered)} block(s) already rendered (`ascii-source` echo) — not re-rendered by this pass")
+            for r in missing:
+                print(f"     ⚠  line {r['start_line']}: {r['image_ref'] or '(no image ref)'} — SVG missing from images/")
+            for r in unstamped:
+                print(f"     ⚠  line {r['start_line']}: {r['image_ref']} — SVG carries no digest stamp; edits to its ASCII will not be noticed")
         if result["blocks"]:
             print()
         for b in result["blocks"]:
