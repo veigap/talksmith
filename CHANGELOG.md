@@ -13,6 +13,32 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.96.0] — 2026-09-01
+
+### Changed
+
+- **Code on a slide now looks like code.** The HTML deck's code surface was a grey box of
+  monospace text: no syntax colours, and — because the lines were joined with `<br>` in normal
+  HTML whitespace — **every snippet lost its indentation**, which for Python is losing the
+  program's structure. It is now a small **editor window**: dark ground, title bar, language
+  badge, and VS Code Dark+ syntax colours, in **both** deck themes and every deck style. Dark
+  everywhere is deliberate — code is read on a dark editor, and a black-on-white block reads as a
+  *quotation* of code rather than as code. Colouring is **highlight.js**, vendored and inlined
+  like Reveal and the fonts (37 grammars, offline, ~127KB — carried only by decks that actually
+  contain a code panel), so a fence with no language is auto-detected rather than left flat.
+
+  Along with it: the snippet is dedented and its tabs expanded (a method lifted out of a class no
+  longer spends a quarter of the panel on indentation), a long line **wraps** instead of being
+  clipped at the panel edge, and a snippet longer than the panel holds says what it dropped
+  (`⋯ +N`) instead of being cut silently. A code panel standing **beside** content now takes the
+  height its code needs instead of the whole column — a four-line snippet used to draw a
+  half-empty slab down the side of the slide. Inline `` `code` `` in a sentence gained a hairline,
+  which is what marks it as code on cards whose own fill is close to its tint.
+
+  Carry the fence's `language` into the model (`code-example.language`, `media.language`): it
+  picks the grammar and names the badge. **The `.pptx` render is unchanged** — it has no browser
+  to tokenize in and keeps the light mono surface its style spec describes.
+
 ## [0.95.0] — 2026-08-28
 
 ### Fixed

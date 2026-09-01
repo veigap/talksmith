@@ -1356,9 +1356,9 @@
     {
       "template": "code-example",
       "section": "Visual & data",
-      "title": "code-example: code alone takes the full width",
-      "language": "python",
-      "code": "client.messages.create(\n  model=\"claude-opus-4-8\",\n  system=[{\n    \"type\": \"text\",\n    \"text\": SYSTEM_PROMPT,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n  }],\n  messages=msgs,\n)"
+      "title": "code-example: code alone, another grammar, and a capped snippet",
+      "language": "typescript",
+      "code": "type Cache = { key: string; ttl: number };\n\nexport async function ask(\n  prompt: string,\n  opts: Partial<Cache> = {},\n): Promise<string> {\n  const t0 = performance.now();\n  // one retry: a 529 is the API saying \"later\", not \"no\"\n  for (let i = 0; i < 2; i++) {\n    const res = await client.messages.create({\n      model: \"claude-opus-4-8\",\n      max_tokens: 1024,\n      system: [{ type: \"text\", text: SYSTEM }],\n      messages: [{ role: \"user\", content: prompt }],\n    });\n    if (res.stop_reason !== \"overloaded\") {\n      log.info(\"ask\", { ms: performance.now() - t0 });\n      return res.content[0].text;\n    }\n    await sleep(250 * (i + 1));\n  }\n  throw new Error(\"overloaded\");\n}"
     },
     {
       "template": "content-text",

@@ -132,7 +132,7 @@ deliverable; `draft.md` → live in-progress view).
   | shape | is | notes |
   |---|---|---|
   | `{src, alt}` | an image or a clip | the original, and still the common case |
-  | `{code, language?}` | a code / worked-example panel | rendered in the same code surface `code-example` uses |
+  | `{code, language?}` | a code / worked-example panel | rendered in the same code surface `code-example` uses (a few lines fewer — it stands beside content) |
   | `{columns: [{header, cells}]}` | a small aligned grid | the same compare-strip `value-columns` uses |
 
   The two non-picture shapes close a gap this schema created: the catalog's `content+cards+image`
@@ -432,7 +432,13 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   markup, and swapping it for the `.png` companion silently downgrades a crisp diagram to a raster.
   (`.svg` is forbidden only on the `.pptx` path, whose prerequisite check owns that rewrite — it is
   not a rule about filling the model.) A fenced code block fills `code-example.code`
-  (+ `explanation`).
+  (+ `explanation`), and its **fence language fills `language`** — always carry it when the fence
+  has one (`python`, `ts`, `bash`, `sql`, `json`, `yaml`, `diff`, … or any alias of the ~37
+  grammars the renderer bundles). It picks the grammar the HTML deck's code panel is coloured
+  with and names the panel's badge; omitted, the panel auto-detects and stays unlabelled. Use
+  `text` for output logs and pseudo-code, which colour as nothing on purpose. **Never reflow or
+  re-indent the snippet** to make it fit — the panel dedents it and states what a long snippet
+  cost (`⋯ +N`); a snippet that needs more than ~20 lines is a slide that needs splitting.
 - **`design` — the picture's place is chosen after the template, never instead of it.** Set
   `"design":"split-left"` whenever the media should lead the eye (a diagram the prose then walks
   through, or to break up a run of split-right slides), `"banded"` when the text is too short to

@@ -262,7 +262,9 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   the only destination that honours the deck's `@page` size — a printer destination substitutes its
   own paper and shrink-to-fits the slide onto it). The only custom code is
   a per-slide content-fit. A discreet Light/Dark toggle (moon/sun) is top-right. Fonts are IBM Plex
-  Sans/Mono (vendored, inlined).
+  Sans/Mono (vendored, inlined). **Code panels** are drawn as a dark editor window (title bar,
+  language badge) and syntax-coloured by **highlight.js** — vendored and inlined like the rest,
+  but only into decks that actually carry a code panel.
 - **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
   fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a
   render error, report the live view is unavailable — never fatal.

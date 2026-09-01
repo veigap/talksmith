@@ -464,6 +464,87 @@ def _embed_img(image) -> Markup:
     return Markup(_embed(alt, path))
 
 
+# ── code panels ──────────────────────────────────────────────────────────────────────────────
+# Syntax colouring is **highlight.js** (vendored under `vendor/highlight/`, BSD-3, inlined into
+# the deck like Reveal and the fonts), run over `pre.cbcode > code` when the page loads. A
+# hand-written tokenizer was the alternative and it loses on every axis that matters here: the
+# library carries 37 maintained grammars, auto-detects a snippet whose fence had no language, and
+# costs one more vendored script in a document that already ships Reveal — so the deck stays
+# self-contained and offline. The `.pptx` path is untouched; it has no browser to run this in and
+# keeps the flat mono surface its style spec describes.
+#
+# Python does only the two things the library can't be handed: normalize the model's `language`
+# to a grammar the bundle actually registers, and prepare the text — tabs expanded, the snippet's
+# common indentation removed, capped at what the panel can hold. **Colours are CSS**
+# (`theme.css`, the `.hljs-*` block); nothing here decides how a token looks.
+
+# alias → the bundle's grammar id. An unlisted language yields no `language-*` class at all,
+# which is deliberate: hljs then auto-detects, and a wrong-but-plausible guess from the library
+# reads better than every snippet falling to unstyled plaintext.
+_CODE_LANGS = {
+    "bash": "bash", "sh": "bash", "zsh": "bash", "shell": "bash", "console": "bash",
+    "terminal": "bash", "c": "c", "h": "c", "cpp": "cpp", "c++": "cpp", "cc": "cpp",
+    "hpp": "cpp", "cxx": "cpp", "csharp": "csharp", "cs": "csharp", "c#": "csharp",
+    "css": "css", "diff": "diff", "patch": "diff", "go": "go", "golang": "go",
+    "graphql": "graphql", "gql": "graphql", "ini": "ini", "toml": "ini", "cfg": "ini",
+    "java": "java", "javascript": "javascript", "js": "javascript", "mjs": "javascript",
+    "jsx": "javascript", "node": "javascript", "json": "json", "jsonc": "json",
+    "kotlin": "kotlin", "kt": "kotlin", "less": "less", "lua": "lua",
+    "makefile": "makefile", "make": "makefile", "markdown": "markdown", "md": "markdown",
+    "objectivec": "objectivec", "objc": "objectivec", "perl": "perl", "pl": "perl",
+    "php": "php", "python": "python", "py": "python", "python-repl": "python-repl",
+    "r": "r", "ruby": "ruby", "rb": "ruby", "rust": "rust", "rs": "rust",
+    "scss": "scss", "sass": "scss", "sql": "sql", "swift": "swift",
+    "typescript": "typescript", "ts": "typescript", "tsx": "typescript",
+    "vbnet": "vbnet", "vb": "vbnet", "wasm": "wasm", "xml": "xml", "html": "xml",
+    "svg": "xml", "xhtml": "xml", "yaml": "yaml", "yml": "yaml",
+    # not a grammar — an explicit "colour nothing", for output logs and pseudo-code
+    "text": "plaintext", "txt": "plaintext", "plaintext": "plaintext", "output": "plaintext",
+    "log": "plaintext", "pseudo": "plaintext", "pseudocode": "plaintext",
+}
+# what the panel's badge says — the language as a reader names it, not as a fence spells it
+_CODE_NAMES = {
+    "bash": "Bash", "c": "C", "cpp": "C++", "csharp": "C#", "css": "CSS", "diff": "Diff",
+    "go": "Go", "graphql": "GraphQL", "ini": "INI", "java": "Java",
+    "javascript": "JavaScript", "json": "JSON", "kotlin": "Kotlin", "less": "Less",
+    "lua": "Lua", "makefile": "Makefile", "markdown": "Markdown", "objectivec": "Objective-C",
+    "perl": "Perl", "php": "PHP", "python": "Python", "python-repl": "Python",
+    "r": "R", "ruby": "Ruby", "rust": "Rust", "scss": "SCSS", "sql": "SQL", "swift": "Swift",
+    "typescript": "TypeScript", "vbnet": "VB.NET", "wasm": "WebAssembly", "xml": "HTML",
+    "yaml": "YAML",
+}
+
+
+def _codeprep(code, language=None, limit: int = 20) -> dict:
+    """One code panel's render inputs: `{text, lang, label, more}`.
+
+    `text` is the snippet as it should be *read*: tabs expanded (a tab is 8 columns in a `<pre>`
+    and 4 in every editor the code was written in), blank top/bottom lines dropped, and the
+    common indentation removed — a method lifted out of a class arrives indented four columns,
+    which on a slide is a quarter of the panel spent on nothing.
+
+    `more` is how many lines the cap dropped. The panel is a fixed box on a fixed canvas, so a
+    long snippet has to end somewhere; ending it *visibly* is the difference between a cut and a
+    silent truncation. The badge (`label`) is only set when the model named the language — hljs
+    auto-detects the rest, and labelling a guess states as fact something we don't know."""
+    if not isinstance(code, str):
+        code = "\n".join(code or [])
+    lines = code.expandtabs(4).splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    pad = min((len(ln) - len(ln.lstrip()) for ln in lines if ln.strip()), default=0)
+    lines = [ln[pad:].rstrip() for ln in lines]
+    more = max(0, len(lines) - limit) if limit else 0
+    if more:
+        lines = lines[:limit]
+    key = re.sub(r"[^a-z+#-]", "", str(language or "").strip().lower())
+    lang = _CODE_LANGS.get(key, "")
+    return {"text": "\n".join(lines), "lang": lang, "more": more,
+            "label": _CODE_NAMES.get(lang, "") if lang and lang != "plaintext" else ""}
+
+
 _ENV.globals.update(
     icon=lambda name: Markup(icon(name, _CUR_CACHE)),
     chip=lambda name: Markup(chip(name, _CUR_CACHE)),
@@ -471,7 +552,7 @@ _ENV.globals.update(
     labeled=lambda items: _labeled(items),
     pivot=lambda columns: _pivot(columns),
     correct_index=lambda options, correct: _correct_index(options, correct),
-    lines=lambda code: code.splitlines() if isinstance(code, str) else (code or []),
+    codeprep=_codeprep,
 )
 # `nocolon` runs on labels, which are rich text by the time a template sees them — so it has to
 # hand the Markup back as Markup, or autoescape would re-escape the tags it just passed through.
@@ -1009,6 +1090,13 @@ if(!canHash){document.addEventListener('click',function(ev){
 // inside a 720px `@page`, so each exported page ends in a 1px band of the deck's `--page` colour
 // under the slide. The -1 exists for CLI printers that round the last device pixel onto a blank
 // page; Chrome's `@page`-sized export doesn't, and this deck exports through Chrome.
+// Code panels: highlight.js colours every `pre.cbcode > code` once, here — a panel whose
+// `language-*` class names a grammar is tokenized by it, one with no class is auto-detected.
+// Wrapped in try/catch per panel: an exotic snippet that trips a grammar must lose its colours,
+// never the deck. Runs before the fit pass, though colour changes no metrics.
+if(window.hljs){try{hljs.configure({ignoreUnescapedHTML:true});
+  document.querySelectorAll('pre.cbcode > code').forEach(function(el){try{hljs.highlightElement(el);}catch(e){}});
+}catch(e){}}
 Reveal.initialize({
   width:1280, height:720, margin:0, minScale:0.2, maxScale:2.0,
   controls:true, progress:true, slideNumber:'c/t',
@@ -1023,9 +1111,10 @@ Reveal.initialize({
 });"""
 
 
-def _vendor(name: str) -> str:
-    """Read a vendored Reveal.js asset (inlined so the deck is self-contained + offline)."""
-    return (_HERE / "vendor" / "reveal" / name).read_text(encoding="utf-8")
+def _vendor(name: str, pkg: str = "reveal") -> str:
+    """Read a vendored asset (inlined so the deck is self-contained + offline): Reveal.js by
+    default, `pkg="highlight"` for the highlight.js bundle the code panels are coloured by."""
+    return (_HERE / "vendor" / pkg / name).read_text(encoding="utf-8")
 
 
 # IBM Plex Sans/Mono — vendored woff2, inlined as @font-face data-URIs (the Artifact CSP blocks
@@ -1198,6 +1287,10 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
     """
     reveal_css = _vendor("reset.css") + "\n" + _vendor("reveal.css")
     reveal_js = _vendor("reveal.js")
+    # The highlighter rides along only in decks that actually have a code panel: 127KB is a
+    # real share of a deck with no code in it. Detected off the rendered body rather than
+    # threaded through every caller as a flag — the markup already knows the answer.
+    hljs_js = _vendor("highlight.min.js", "highlight") if 'class="cbcode"' in body_html else ""
     notes_js = _vendor("notes.js")
     return (
         '<!doctype html>\n'
@@ -1227,7 +1320,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<button class="deckthemes" data-deck-toggle type="button" '
         f'aria-label="Alternar tema claro / oscuro" title="Tema claro / oscuro">{_THEME_ICONS}</button>\n'
         f'<script>{reveal_js}</script>\n'
-        f'<script>{notes_js}</script>\n'
+        + (f'<script>{hljs_js}</script>\n' if hljs_js else '')
+        + f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
         f'<script>{_URL_SYNC}</script>\n'
         f'<script>{_THEME_SWITCH}</script>\n'

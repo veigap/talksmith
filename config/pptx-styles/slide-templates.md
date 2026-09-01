@@ -769,7 +769,10 @@ precise rules.
   config, before/after diff) meant to be read.
 - **Format:** a **monospace (Courier New) code surface** on ~45% (fill `#F2F2F2`, syntax
   colors keyword `#D73A49` / string `#005CC5` / comment `#6A737D`) + a 2–3-sentence
-  explanation column on the other ~45%. Optional pink outer frame marks before/after.
+  explanation column on the other ~45%. *(That is the `.pptx` surface. The HTML render draws the
+  same slide as a **dark editor panel** — VS Code Dark+ colours, a language badge — which is what
+  a live-tokenizing browser can do and a static shape spec can't; carry the fence's `language`
+  either way.)* Optional pink outer frame marks before/after.
   Code as an un-read cited artifact → screenshot or notes, not this template.
 - **Strict recipe:** §9. **Provenance:** ref S13/14/24/43, final code slides.
 

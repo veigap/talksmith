@@ -24,8 +24,12 @@
 .slide i,.slide em{font-style:italic}
 /* struck text is a *superseded* value, not a deleted one — it stays legible, just demoted */
 .slide del,.slide s{text-decoration:line-through;opacity:.55}
+/* inline code is a *chip*, not a panel: it stays in the flow of the sentence and takes the ink
+   of whatever component it sits in. The hairline is what marks it as code on a card whose own
+   fill is already close to `--code-bg`, where the tint alone disappeared. The block panel
+   (`.codebox` below) is the other half of this: same idea, editor-sized. */
 .slide code{font-family:var(--mono);font-size:.92em;background:var(--code-bg);
-  border-radius:.4cqw;padding:0 .3em;color:inherit}
+  border:.08cqw solid rgba(128,128,128,.28);border-radius:.4cqw;padding:0 .3em;color:inherit}
 .slide a.mdlink{color:var(--red);font-weight:700;text-decoration:underline;text-underline-offset:.18em}
 /* ---- Reveal theme — aligned with Talksmith strict tokens (fonts, palette) ---- */
 .reveal{font-family:var(--sans);color:var(--fi);-webkit-font-smoothing:antialiased}
@@ -522,7 +526,51 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .split:not(:has(.explain)),.split:not(:has(.codebox)){grid-template-columns:1fr}
 .split{display:grid;grid-template-columns:1fr 1.05fr;gap:3cqw;margin-top:auto;align-items:center}
 .explain p{margin:0 0 1.4cqw;font-size:2.5cqw;color:var(--body);line-height:1.35}
-.codebox{background:var(--code-bg);border-radius:2cqw;padding:2.6cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.55;color:var(--ink);overflow:hidden}
+/* ── the code surface (`.codebox`) ────────────────────────────────────────────────────────
+   Code is not prose on a card, and the panel stops pretending otherwise: it is a small **editor
+   window** — dark ground, title bar, language badge — in both deck themes and every deck style.
+   That it does not follow the theme is the point. Code is read on a dark editor; black on white
+   reads as a *quotation* of code rather than as code, and the token palette below (VS Code's
+   Dark+) only carries its meaning against a dark ground. `--code-bg` keeps its own job, which is
+   the tint behind *inline* `code` inside a sentence — a different thing at a different size.
+   Everything is still a token, so a deck style can repaint the panel without touching markup.
+   The `.hljs-*` classes are highlight.js's output vocabulary (vendored, inlined, run in the
+   page — see html_style.py "code panels"); this block is the only place their look is decided. */
+.codebox{--cb-bg:#1E1E1E;--cb-bar:#252526;--cb-fg:#D4D4D4;--cb-hair:#3C3C41;--cb-dim:#8A8A94;
+  --t-com:#6A9955;--t-str:#CE9178;--t-num:#B5CEA8;--t-kw:#569CD6;--t-typ:#4EC9B0;
+  --t-fn:#DCDCAA;--t-var:#9CDCFE;--t-del:#F14C4C;
+  background:var(--cb-bg);color:var(--cb-fg);border-radius:1.6cqw;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 .5cqw 2cqw rgba(0,0,0,.22);
+  /* the hairline is what separates the panel from a *dark* deck, where the ground it sits on is
+     nearly its own colour and the shadow under it is invisible. On a light deck it reads as the
+     window's own edge. */
+  border:.12cqw solid var(--cb-hair)}
+/* the title bar — window dots + the language: an editor's own way of saying "this is code" */
+.cbbar{display:flex;align-items:center;gap:.8cqw;padding:1cqw 1.6cqw;background:var(--cb-bar);
+  border-bottom:.12cqw solid var(--cb-hair);flex:none}
+.cbdot{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#4D4D55}
+.cbdot:first-child{background:#FF5F57}.cbdot:nth-child(2){background:#FEBC2E}.cbdot:nth-child(3){background:#28C840}
+.cblang{margin-left:auto;font-family:var(--mono);font-size:1.5cqw;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
+/* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
+   and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
+   (a URL, a long identifier), so ordinary code breaks at its spaces. */
+.cbcode{margin:0;padding:2.2cqw 2.4cqw;font-family:var(--mono);font-size:2.05cqw;line-height:1.5;
+  white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;overflow:hidden;flex:1 1 auto}
+/* inside the panel `<code>` *is* the panel — none of the inline-chip styling applies to it */
+.cbcode code,.cbcode code.hljs{display:block;background:none;border:0;padding:0;border-radius:0;font-family:inherit;font-size:inherit;color:var(--cb-fg)}
+/* what the line cap dropped, said out loud instead of cut away silently */
+.cbmore{flex:none;padding:0 2.4cqw 1.3cqw;font-family:var(--mono);font-size:1.6cqw;color:var(--cb-dim)}
+/* highlight.js token vocabulary → VS Code Dark+ */
+.hljs-comment,.hljs-quote{color:var(--t-com);font-style:italic}
+.hljs-keyword,.hljs-literal,.hljs-symbol,.hljs-selector-tag,.hljs-name{color:var(--t-kw)}
+.hljs-built_in,.hljs-type,.hljs-class,.hljs-title.class_,.hljs-title.class_.inherited__{color:var(--t-typ)}
+.hljs-title,.hljs-title.function_,.hljs-section,.hljs-meta{color:var(--t-fn)}
+.hljs-string,.hljs-regexp,.hljs-char.escape_,.hljs-link,.hljs-bullet,.hljs-template-tag{color:var(--t-str)}
+.hljs-number{color:var(--t-num)}
+.hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable,.hljs-property,.hljs-params,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:var(--t-var)}
+.hljs-tag{color:var(--cb-dim)}
+.hljs-deletion{color:var(--t-del)}.hljs-addition{color:var(--t-com)}
+.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:700}
 .ctext{margin:auto 0}.big2{font-size:4cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;text-wrap:balance}
 /* fallback / lead+points — a lead statement + accented point panels (never plain paragraphs) */
 .leadpoints{display:flex;flex-direction:column;gap:2.6cqw}
@@ -632,10 +680,16 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    they already have — `.codebox`, `.compare` — so a supporting panel and a slide that *is* that
    panel read as one piece. Only the two body-level assumptions have to be undone here: those
    classes push themselves to the bottom of a full-width body (`margin-top:auto`), which in a
-   media column would strand them under the fold, and the code panel needs the column's height
-   rather than its own so a long snippet scrolls its own box instead of the slide. */
+   media column would strand them under the fold, and the code panel is capped at the column's
+   height so a long snippet is bounded by its own box rather than by the slide. It is a *cap*,
+   not a height: given the column outright, a four-line snippet drew a half-empty dark slab down
+   the side of the slide. It takes the height its code needs and centres in the column. */
 .smedia>.mcode,.smedia>.mtable{margin-top:0;width:100%}
-.smedia>.mcode{height:100%;overflow:hidden;font-size:1.95cqw}
+.smedia>.mcode{max-height:100%;align-self:center;overflow:hidden}
+/* a panel standing beside content is a supporting exhibit, not the slide: it gives up type
+   size and chrome padding so the content it supports keeps its own. */
+.smedia>.mcode .cbcode{font-size:1.85cqw;padding:1.8cqw 2cqw}
+.smedia>.mcode .cbbar{padding:.8cqw 1.4cqw}
 .stage.d-banded>.smedia>:is(.mcode,.mtable){max-height:32cqw;overflow:hidden}
 .smedia>.mtable{align-self:center}
 .smedia>.mtable .chead{font-size:2.1cqw}
