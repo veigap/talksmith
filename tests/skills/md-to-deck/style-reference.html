@@ -3587,16 +3587,25 @@ Reveal.initialize({
   }
 
   /* ---- text ---------------------------------------------------------------------------- */
-  var INLINE = {B:1,I:1,EM:1,STRONG:1,CODE:1,A:1,SPAN:1,BR:1,S:1,DEL:1,STRIKE:1,SUP:1,SUB:1,
-                SMALL:1,U:1,MARK:1,ABBR:1,TIME:1,VAR:1,KBD:1,SAMP:1,Q:1,CITE:1,DFN:1,INS:1};
-
+  /* Is everything inside this element part of one text flow, rather than a box of its own?
+   * Decided from computed `display`, never from the tag name.
+   *
+   * A tag whitelist got this catastrophically wrong. The section roadmap's rows are `<a>`
+   * elements and `<a>` is nominally inline, so an entire roadmap collapsed into a single text
+   * node and exported as one heap of overlapping words. The deck styles many of its `<a>`s and
+   * `<span>`s as `flex` or `block`, and only computed style knows which.
+   *
+   * An inline child that paints is a box in its own right too — a `code` chip has a background
+   * and a border, and flattening it into a run would drop both. */
   function inlineOnly(el) {
     for (var i = 0; i < el.children.length; i++) {
       var c = el.children[i];
-      if (!INLINE[c.tagName]) return false;
+      if (c.tagName === 'BR') continue;
       var ccs = getComputedStyle(c);
-      // An inline tag that paints (a `code` chip has a background) is a box in its own right.
+      if (ccs.display === 'none') continue;
+      if (ccs.display.indexOf('inline') !== 0 && ccs.display !== 'contents') return false;
       if (opaque(color(ccs.backgroundColor)) || parseFloat(ccs.borderLeftWidth)) return false;
+      if (!inlineOnly(c)) return false;
     }
     return true;
   }
