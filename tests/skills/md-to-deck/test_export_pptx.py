@@ -99,6 +99,16 @@ def check_package(pptx: Path) -> list[str]:
                 if cand not in names:
                     bad.append(f"{n}: relationship points at a missing part {cand}")
         pres = z.read("ppt/presentation.xml").decode("utf-8", "replace")
+        # Speaker notes brought down an entire 86-slide deck in Keynote: python-pptx creates the
+        # notes master part and relates the presentation to it, but never declares it in
+        # presentation.xml. PowerPoint shrugs; Keynote refuses the file. Invisible from this side
+        # — the package is well-formed and macOS's own Office preview renders it — so it is
+        # asserted here explicitly.
+        if any(n.startswith("ppt/notesMasters/") for n in names):
+            if "notesMasterIdLst" not in pres:
+                bad.append("presentation.xml never declares the notes master it carries")
+            elif re.search(r"<p:sldIdLst.*<p:notesMasterIdLst", pres, re.S):
+                bad.append("notesMasterIdLst comes after sldIdLst — wrong schema order")
         m = re.search(r'<p:sldSz[^>]*cx="(\d+)"[^>]*cy="(\d+)"[^>]*/>', pres)
         if not m or (m.group(1), m.group(2)) != ("12192000", "6858000"):
             bad.append("presentation.xml does not declare a 16:9 slide")

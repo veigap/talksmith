@@ -312,6 +312,43 @@ def _slide_jump(run, index: int) -> None:
 _PENDING: list = []
 
 
+_NOTES_MASTER_RT = ("http://schemas.openxmlformats.org/officeDocument/2006/"
+                    "relationships/notesMaster")
+
+
+def _declare_notes_master(prs) -> bool:
+    """Declare the notes master in `presentation.xml`, which python-pptx does not.
+
+    Asking for a slide's `notes_slide` makes python-pptx create the notesMaster part and relate
+    the presentation to it — but it never adds the matching `<p:notesMasterIdLst>` to
+    `presentation.xml`. The part is present, the relationship is present, and the presentation
+    never says the master exists.
+
+    PowerPoint shrugs at that. **Keynote refuses the file outright** — and refuses the whole deck,
+    not the notes: a 86-slide export died on it, and the failure was invisible from this side
+    because the package is well-formed, python-pptx reads it back happily, and macOS's own Office
+    preview renders it. It reproduced only as "the file format is invalid", and only in Keynote.
+
+    Speaker notes are load-bearing here, so dropping them was never the fix.
+    """
+    el = prs._element
+    if el.find(qn("p:notesMasterIdLst")) is not None:
+        return False
+    rid = next((r_id for r_id, rel in prs.part.rels.items()
+                if rel.reltype == _NOTES_MASTER_RT), None)
+    if rid is None:
+        return False
+    lst = el.makeelement(qn("p:notesMasterIdLst"), {})
+    lst.append(el.makeelement(qn("p:notesMasterId"), {qn("r:id"): rid}))
+    # Schema order: sldMasterIdLst, notesMasterIdLst, handoutMasterIdLst, sldIdLst, sldSz, …
+    masters = el.find(qn("p:sldMasterIdLst"))
+    if masters is not None:
+        masters.addnext(lst)
+    else:
+        el.insert(0, lst)
+    return True
+
+
 def _wire_jumps(prs) -> int:
     slides = list(prs.slides)
     wired = 0
@@ -521,6 +558,9 @@ def build(data: dict, workdir: Path, out: Path) -> tuple[int, list[str]]:
         for w in s.get("warnings") or []:
             warnings.append("slide %d: %s" % (s["i"] + 1, w))
 
+    if _declare_notes_master(prs):
+        sys.stderr.write("[pptx] declared the notes master in the presentation\n")
+
     jumps = _wire_jumps(prs)
     if jumps:
         sys.stderr.write("[pptx] %d roadmap links wired as slide jumps\n" % jumps)
@@ -540,6 +580,12 @@ def _verify_package(path: Path) -> None:
     """
     import zipfile
     with zipfile.ZipFile(path) as z:
+        pres = z.read("ppt/presentation.xml").decode("utf-8", "replace")
+        has_part = any(n.startswith("ppt/notesMasters/") for n in z.namelist())
+        if has_part and "notesMasterIdLst" not in pres:
+            raise RuntimeError(
+                "the package carries a notes master that presentation.xml never declares — "
+                "Keynote refuses the whole file for this. (See _declare_notes_master.)")
         for name in z.namelist():
             if not name.endswith(".rels"):
                 continue
