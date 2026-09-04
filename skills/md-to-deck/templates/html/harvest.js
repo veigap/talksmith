@@ -193,22 +193,72 @@
     return out;
   }
 
-  // Visual line count, from the real line boxes. A block that renders on ONE line cannot
-  // re-break in PowerPoint, so the emitter turns wrapping off for it — which is most of the
-  // tightly-fitted type in the deck (titles, pills, stat numbers) and exactly where a re-wrap
-  // would do visible damage. Multi-line prose keeps wrapping, and stays natural to edit.
-  function lineCount(el) {
+  /* Where the text actually is, and how many lines it occupies — measured from the real line
+   * boxes rather than from the element that contains them.
+   *
+   * The element's border box is not the text's position. A quiz option is a flex row whose first
+   * item is a `::before` disc carrying the option letter; the `<li>`'s box starts at that disc,
+   * so placing the text at the element's left edge printed every option's words on top of its
+   * own A/B/C/D. The line boxes know where the text really starts.
+   *
+   * The line count matters for a different reason: a block that renders on ONE line cannot
+   * re-break in PowerPoint, so the emitter turns wrapping off for it — which covers most of the
+   * tightly-fitted type in the deck (titles, pills, stat numbers), exactly where a re-wrap would
+   * do visible damage. Multi-line prose keeps wrapping and stays natural to edit. */
+  function inkOf(el) {
     try {
       var rg = document.createRange();
       rg.selectNodeContents(el);
-      var rs = rg.getClientRects(), tops = {}, n = 0;
+      var rs = rg.getClientRects();
+      var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity, tops = {}, n = 0;
       for (var i = 0; i < rs.length; i++) {
-        if (rs[i].width < 0.5 && rs[i].height < 0.5) continue;
-        var k = Math.round(rs[i].top);
+        var q = rs[i];
+        if (q.width < 0.5 && q.height < 0.5) continue;
+        if (q.left < l) l = q.left;
+        if (q.top < t) t = q.top;
+        if (q.right > r) r = q.right;
+        if (q.bottom > b) b = q.bottom;
+        var k = Math.round(q.top);
         if (!tops[k]) { tops[k] = 1; n++; }
       }
-      return n || 1;
-    } catch (e) { return 1; }
+      if (!n) return null;
+      return {l: l, t: t, r: r, b: b, lines: n};
+    } catch (e) { return null; }
+  }
+
+  /* A bare text node sitting among element siblings. It carries no box of its own, so both its
+   * geometry and its styling come from the parent: the range gives the ink, the parent's
+   * computed style gives the marks. */
+  function loose(node, pcs, ox, oy, clip, out) {
+    var rg, rs;
+    try {
+      rg = document.createRange();
+      rg.selectNode(node);
+      rs = rg.getClientRects();
+    } catch (e) { return; }
+    var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity, n = 0;
+    for (var i = 0; i < rs.length; i++) {
+      var q = rs[i];
+      if (q.width < 0.5 && q.height < 0.5) continue;
+      if (q.left < l) l = q.left;
+      if (q.top < t) t = q.top;
+      if (q.right > r) r = q.right;
+      if (q.bottom > b) b = q.bottom;
+      n++;
+    }
+    if (!n) return;
+    var rc = intersect({x: px(l - ox), y: px(t - oy), w: px(r - l), h: px(b - t)}, clip);
+    if (rc.w < 0.5 || rc.h < 0.5) return;
+    var m = marks(pcs, null);
+    out.push({
+      k: 'text', tag: '#text', cls: '',
+      x: rc.x, y: rc.y, w: rc.w, h: rc.h, pad: [0, 0, 0, 0],
+      fs: px(parseFloat(pcs.fontSize) || 0),
+      lh: pcs.lineHeight === 'normal' ? null : px(parseFloat(pcs.lineHeight) || 0),
+      align: pcs.textAlign, pre: false, vertical: false,
+      lines: 1, wrap: false, slack: 0, sc: 1,
+      paras: [[{s: transform(node.nodeValue.replace(/\s+/g, ' ').trim(), pcs.textTransform), m: m}]]
+    });
   }
 
   /* ---- pseudo-elements ------------------------------------------------------------------ */
@@ -218,7 +268,7 @@
    * model rather than a selector table, so a new pseudo in theme.css is picked up for free;
    * anything whose geometry can't be derived is reported in the slide's warnings instead of
    * silently vanishing. */
-  function pseudo(el, which, ox, oy, clip, out) {
+  function pseudo(el, which, ox, oy, clip, out, ink) {
     var cs;
     try { cs = getComputedStyle(el, which); } catch (e) { return; }
     if (!cs) return;
@@ -259,11 +309,25 @@
       x = pr.x + (parseFloat(pcs.paddingLeft) || 0) + (parseFloat(cs.marginLeft) || 0);
       y = pr.bottom - (parseFloat(pcs.paddingBottom) || 0) - h - (parseFloat(cs.marginBottom) || 0);
     } else if (which === '::before') {
+      // A leading marker: the quiz option's A/B/C/D disc, drawn as a flex item before the text.
+      // Its computed `width` is not reliably its used width — container units resolve against a
+      // different box for generated content — so the honest measure is the space the text left
+      // for it: from the element's content edge to where its first glyph actually starts. Fit
+      // the marker inside exactly that, and it cannot land on top of the words.
       x = pr.x + (parseFloat(pcs.paddingLeft) || 0);
+      var room = ink ? (ink.l - x) : 0;
+      if (room > 1) {
+        var d = Math.min(w, Math.max(h, 1), room);
+        // Circles must stay circles; the CSS says so with `border-radius:50%`.
+        if (Math.abs(w - h) < 0.5) { w = d; h = d; }
+        else { w = Math.min(w, room); }
+        x += Math.max(0, (room - w) / 2);
+      }
       y = pr.y + (pr.height - h) / 2;
     } else {
       // `margin-left:auto` pushes a trailing flex item to the far edge (the quiz tick).
       x = pr.right - (parseFloat(pcs.paddingRight) || 0) - w;
+      if (ink && x < ink.r) x = ink.r + 2;
       y = pr.y + (pr.height - h) / 2;
     }
 
@@ -340,11 +404,17 @@
   // Inline SVG covers the whole icon set and every ASCII diagram (`_embed` inlines SVG as markup
   // so it inherits `currentColor`). Deduped by source: a deck repeats icons heavily, and the
   // payload travels through a DOM dump.
-  var svgs = {}, svgN = 0;
-  function svgId(src) {
-    for (var k in svgs) if (svgs[k] === src) return k;
+  var svgs = {}, svgN = 0, svgSeen = {};
+  function svgId(src, col) {
+    // Keyed by source AND colour: the icons inherit `currentColor`, so the same glyph is a red
+    // accent on one slide and body ink on another. Deduping on source alone rasterized whichever
+    // one came first and painted every other instance in the wrong colour — the icons came out
+    // black where the deck draws them red.
+    var key = col + '\u0000' + src;
+    if (svgSeen[key] !== undefined) return svgSeen[key];
     var id = 's' + (svgN++);
-    svgs[id] = src;
+    svgs[id] = {svg: src, color: col};
+    svgSeen[key] = id;
     return id;
   }
 
@@ -385,7 +455,8 @@
       if (bimg) warn.push('approximated background-image on .' + (el.getAttribute('class') || el.tagName));
     }
 
-    pseudo(el, '::before', ox, oy, clip, out);
+    var elInk = inkOf(el);
+    pseudo(el, '::before', ox, oy, clip, out, elInk);
 
     if (el.tagName === 'IMG') {
       var f = fitted(el, br, cs);
@@ -398,7 +469,7 @@
     if (el.tagName === 'svg' || el.tagName === 'SVG') {
       out.push({k: 'svg', x: r.x, y: r.y, w: r.w, h: r.h,
                 cls: String(el.getAttribute('class') || ''), col: color(cs.color),
-                id: svgId(el.outerHTML)});
+                id: svgId(el.outerHTML, cs.color)});
       return;
     }
     if (el.tagName === 'VIDEO' || el.tagName === 'IFRAME' || el.tagName === 'CANVAS') {
@@ -424,20 +495,33 @@
           if (parts[j] !== '') paras[paras.length - 1].push({s: parts[j], m: run.m});
         }
       }
-      var lines = pre ? paras.length : lineCount(el);
+      var ink = elInk;
+      var lines = pre ? paras.length : (ink ? ink.lines : 1);
+      // Place the box on the text, not on its container — but keep the container's right edge so
+      // a wrapped block still has the width it wrapped inside.
+      var tx = br.x, ty = br.y, tw = br.width, th = br.height;
+      if (ink) {
+        var padR = parseFloat(cs.paddingRight) || 0;
+        tx = ink.l;
+        ty = ink.t;
+        tw = Math.max(ink.r - ink.l, (br.right - padR) - ink.l);
+        th = ink.b - ink.t;
+      }
+      var tr = intersect(rect({x: tx, y: ty, width: tw, height: th}, ox, oy), clip);
+      if (tr.w < 0.5 || tr.h < 0.5) { pseudo(el, '::after', ox, oy, clip, out, ink); return; }
       // Free vertical space below: the emitter grows a wrapped textbox into it so one extra
       // line lands in whitespace rather than on the next card.
       var slack = 0;
       if (el.parentElement) {
         var pcs = getComputedStyle(el.parentElement);
         var pb = el.parentElement.getBoundingClientRect().bottom - (parseFloat(pcs.paddingBottom) || 0);
-        slack = Math.max(0, px(pb - br.bottom));
+        slack = Math.max(0, px(pb - (ink ? ink.b : br.bottom)));
       }
       out.push({
         k: 'text', tag: el.tagName.toLowerCase(), cls: el.getAttribute('class') || '',
-        x: r.x, y: r.y, w: r.w, h: r.h,
-        pad: [parseFloat(cs.paddingTop) || 0, parseFloat(cs.paddingRight) || 0,
-              parseFloat(cs.paddingBottom) || 0, parseFloat(cs.paddingLeft) || 0],
+        x: tr.x, y: tr.y, w: tr.w, h: tr.h,
+        // The rect is the text's own ink box, so the element's padding is already outside it.
+        pad: [0, 0, 0, 0],
         fs: px(parseFloat(cs.fontSize) || 0),
         lh: cs.lineHeight === 'normal' ? null : px(parseFloat(cs.lineHeight) || 0),
         align: cs.textAlign, pre: pre,
@@ -445,7 +529,7 @@
         lines: lines, wrap: lines > 1, slack: slack,
         sc: px(accScale(el)), paras: paras
       });
-      pseudo(el, '::after', ox, oy, clip, out);
+      pseudo(el, '::after', ox, oy, clip, out, ink);
       return;
     }
 
@@ -455,8 +539,18 @@
     if (cs.overflow === 'hidden' || cs.overflowX === 'hidden' || cs.overflowY === 'hidden') {
       sub = intersect(rect(br, ox, oy), clip);
     }
-    for (var c = 0; c < el.children.length; c++) walk(el.children[c], ox, oy, sub, out, warn);
-    pseudo(el, '::after', ox, oy, clip, out);
+    /* Walk child NODES, not just child elements. An element can mix the two — the quiz answer's
+     * label is an icon followed by the bare word "ANSWER" — and recursing only into elements
+     * drops that text silently: it is not inline-only (the icon is a box), so it never becomes a
+     * text node, and it is not an element, so the recursion never sees it. The label simply
+     * vanished from the export with nothing to show for it. */
+    for (var c = 0; c < el.childNodes.length; c++) {
+      var kid = el.childNodes[c];
+      if (kid.nodeType === 1) { walk(kid, ox, oy, sub, out, warn); continue; }
+      if (kid.nodeType !== 3 || !kid.nodeValue || !kid.nodeValue.trim()) continue;
+      loose(kid, cs, ox, oy, sub, out);
+    }
+    pseudo(el, '::after', ox, oy, clip, out, elInk);
   }
 
   /* ---- speaker notes ---------------------------------------------------------------------- */

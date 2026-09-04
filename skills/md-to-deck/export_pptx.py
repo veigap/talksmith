@@ -195,10 +195,13 @@ def rasterize_svgs(svgs: dict[str, str], sizes: dict[str, tuple[float, float]],
         pw = max(x + w for _, x, _, w, _ in page)
         ph = max(y + h for _, _, y, _, h in page)
         cells = "".join(
-            '<div style="position:absolute;left:%dpx;top:%dpx;width:%dpx;height:%dpx">%s</div>'
-            % (x, y, w, h, svgs[k]) for k, x, y, w, h in page)
-        # `svg{width:100%;height:100%}` is the point of the wrapper: `_svg()` strips width/height
-        # and keeps the viBox, so each glyph scales to whatever cell it is given.
+            '<div style="position:absolute;left:%dpx;top:%dpx;width:%dpx;height:%dpx;color:%s">%s</div>'
+            % (x, y, w, h, svgs[k].get("color") or "#000", svgs[k]["svg"])
+            for k, x, y, w, h in page)
+        # Two things the wrapper carries. `svg{width:100%;height:100%}` lets each glyph scale to
+        # its cell — `_svg()` strips width/height and keeps the viewBox precisely so it can. And
+        # `color` is not decoration: the icons are inlined with `fill="currentColor"`, so a cell
+        # without it rasterizes the whole icon set black where the deck draws it red.
         html = ('<!doctype html><meta charset="utf-8">'
                 '<style>html,body{margin:0;background:transparent}'
                 'div>svg{width:100%;height:100%;display:block}</style>' + cells)
@@ -456,7 +459,16 @@ def add_text(slide, n: dict) -> None:
     tf = tb.text_frame
     tf.word_wrap = wrap
     tf.auto_size = MSO_AUTO_SIZE.NONE
-    tf.vertical_anchor = MSO_ANCHOR.TOP
+    # Anchor the text block in the MIDDLE of its box, not at the top.
+    #
+    # The box is the text's own measured ink, so middle and top describe the same place when the
+    # two engines agree. They do not: PowerPoint places its first baseline from the box top using
+    # the font's own ascent and the paragraph's leading, and CSS centres the line box on the
+    # content area with half-leading. Top-anchoring exports that difference as a systematic
+    # upward drift — most visible on a single glyph centred in a circle, where the option letters
+    # rode high in their discs. Centring cancels it, because the block and the box are the same
+    # height by construction.
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
     tf.margin_left, tf.margin_top = E(pad[3]), E(pad[0])
     tf.margin_right, tf.margin_bottom = E(pad[1]), E(pad[2])
     if n.get("vertical"):
