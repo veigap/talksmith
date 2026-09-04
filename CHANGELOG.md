@@ -13,6 +13,34 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.100.0] — 2026-09-04
+
+> **Re-run `/talksmith:init`** in each working directory to pick this one up — the session-start
+> stub changed. Everything else arrives on the next session with no re-init.
+
+### Fixed
+
+- **The diagram-illustrator closed its turn before its renders came back.** Reported seven times
+  across more than one Talk, always at the same point: it extracts the sidecars, launches its five
+  background renders, writes "the renders are running in parallel" and stops. One pass left twelve
+  sidecars and no SVGs; another left four SVGs drawn but neither stamped nor referenced, and every
+  time the deterministic tail had to be re-driven by hand. A retry then overwrote a render that a
+  previous dispatch had already finished and validated. The role now carries a completion contract:
+  never close the turn while a dispatch is outstanding, write each block's log the moment it
+  returns, build the report by listing `images/` rather than from memory (a block that is not on
+  disk is `failed`, not `rendered`), and never overwrite a destination whose stamp already matches
+  its sidecar. A pass that has already been resumed once drops the parallel window to one and goes
+  block by block — measured, not cautious: a twenty-diagram pass truncated twice under the window
+  finished in a single turn when re-run that way.
+
+### Changed
+
+- **The session-start stub names where the spec actually lives.** `${CLAUDE_PLUGIN_ROOT}` is empty
+  in some environments, the VS Code extension among them, and the fallback said only "find it under
+  the plugins directory" — so every session start paid for a `find`. It now names the two canonical
+  paths and says to note the root once and reuse it, since every script the workflow calls by path
+  hangs off the same root.
+
 ## [0.99.0] — 2026-09-03
 
 Three defects reported from a subject repo's `talksmith_bugs.md`, fixed at the source.

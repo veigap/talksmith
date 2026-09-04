@@ -60,6 +60,15 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 
    `documentation_only: true` blocks don't consume slots because they were never sidecared in step 6 and have no args file. **Never ask the presenter to confirm the window, to pick a size, or to authorize parallel dispatch.** The rule is fixed at five and applied silently every Step 6 run — the dispatch pattern is **invisible to the presenter** (per the orchestrator's *Interaction defaults* → *Speak human, not internal*); only the final report surfaces. The size (5) balances render throughput against API rate limits and orchestrator context-window pressure; do not deviate without amending this spec. Note each block's sub-loop nests one more level (diagram-illustrator → block subagent → critic), which is well inside Claude Code's depth limit of 5.
 
+   **The turn ends when the last SVG is on disk, and not before.** This is the rule the window keeps breaking. Dispatching five background agents and then writing *"the renders are running in parallel"* ends the turn with nothing rendered. It has happened seven times, in more than one Talk, always at the same point: one pass left 12 sidecars and 0 SVGs, another left 4 SVGs drawn but neither stamped nor referenced, and each time the deterministic tail (stamp, cleanup, report) had to be re-driven by hand from the orchestrator. A render takes six to eight minutes. Announcing that one started is not the same as it finishing, and an announcement is not a report. So:
+
+   - **Never close the turn while a dispatch is outstanding.** Wait for every agent to return. There is no partial hand-off worth making: an unstamped SVG re-renders on every future pass, and an unreferenced one is invisible to `final.md`.
+   - **Write per block, the moment it returns.** Persist that block's critique log as its sub-loop ends rather than accumulating results in context and writing them all at the end. A turn that does get cut then leaves consistent partial state on disk instead of nothing.
+   - **Build the report from disk, never from memory.** Before reporting, list `talks/<Talk>/images/` and confirm every basename the annotated plan declares has both its `.svg` and its `.png`. A block you remember dispatching and cannot see on disk is `failed`, not `rendered` — re-dispatch it or report it as failed. This one check is what turns a silent truncation into a visible one.
+   - **Never overwrite a destination that already carries a valid stamp.** On a resumed pass a previous dispatch may have finished and validated the same block while you were away. Check for `<basename>.svg` and its `<!-- talksmith-ascii-sha256: … -->` before writing; a stamped file whose digest matches the current sidecar is done, and rewriting it discards work that already passed critique.
+
+   **If this pass has already been resumed once, drop the window to 1 and go block by block.** This is the one place the fixed size of five gives way, and it is measured, not cautious: a twenty-diagram pass that had been truncated twice under the window completed in a single turn when it was re-run sequentially, one whole block at a time, verifying on disk before answering. Sequential costs wall-clock and buys completion, and after a truncation completion is the scarce thing.
+
    **Presenter-facing narration during dispatch — don't / do.** The presenter is non-technical and should never see internal dispatch mechanics. Concrete examples:
 
    - **Don't:** *"21 args files ready. Now dispatching the Diagram-Illustrator — batch 1 of 5 (s1-2-1, s1-3-1, s1-4-1, s2-5-1, s2-6-1) in parallel:"*
@@ -189,6 +198,8 @@ The same basename rule applies to sidecars: `<slide-id>-<n>-<short-description>.
 Create `images/` if it doesn't exist.
 
 ## Report
+
+Every line below must be checkable against `talks/<Talk>/images/` on disk. Report what is there, not what was dispatched.
 
 - **Rendered**: count + list of new SVGs. Annotate each with the iteration count: `s1-2-1 (clean on first pass)`, `s2-7-1 (clean after 1 revision)`, etc.
 - **Unchanged**: count + list of skipped SVGs (matched byte-for-byte).
