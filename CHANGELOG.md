@@ -13,6 +13,65 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.0.0] — 2026-09-04
+
+**The HTML deck is now the single source of truth, and the other formats are measured from it.**
+No re-init needed — the session-start stub is unchanged.
+
+### Changed
+
+- **`.pptx` and PDF are derived from the rendered HTML deck, not authored separately.** A headless
+  browser lays the finished deck out; the PDF is that print view (one page per slide, vector,
+  selectable text), and the `.pptx` is the laid-out page measured and rebuilt as native
+  PowerPoint shapes — real editable text boxes, not pictures of slides. The coordinate mapping is
+  exact (one CSS pixel is 9525 EMU on both axes), so nothing drifts.
+
+  What this buys beyond consistency: the code panel now exports with its dark ground and its
+  per-token syntax colours, the section roadmap's links become real slide jumps, and speaker
+  notes and diagrams arrive intact. Adding a slide type no longer means writing its recipe a
+  second time — it exports the moment it renders.
+
+- **Render options are two independent choices instead of one blocking one.** `formats:` picks
+  what to produce (`html` always, plus `pdf` and `pptx`); `style:` picks the look (`default` plus
+  the six skins, read from disk); `theme:` picks light or dark. Both have defaults and neither
+  blocks. `style: html-strict` still works as an alias for `default`; `pptx-strict` and
+  `pptx-free-form` fail loudly, naming the replacement.
+
+- **Nothing needs Cowork any more.** The deck is code; the exports need a Chrome/Chromium, plus
+  `python-pptx` and Pillow for the `.pptx`.
+
+- **One deck, one filename.** `output/html/index.html`, `output/final.pdf`, `output/final.pptx`.
+  The style-suffixed `final.<style>.pptx` scheme existed to compare two `.pptx` renderers and has
+  nothing left to compare.
+
+### Removed
+
+Roughly 7,400 lines and 11 MB of assets, all of it a second description of things the deck
+already defines:
+
+- The two `.pptx` style specs (a 1143-line strict one, a 93-line free-form one), their base
+  templates, the 53-slide reference deck, the template previews and the conformance patterns.
+  These existed because the `.pptx` was authored by an LLM following prose, so every geometry
+  rule, colour and classification criterion was written a second time in EMU units.
+- The five OOXML audits that checked the LLM had obeyed (`layout_fit`, `palette_fonts`,
+  `cover_fidelity`, `icon_coverage`, `aspect_ratios`), and the deck-reading halves of
+  `block_coverage` and `notes_coverage`. Their source-reading halves stay: whether FILL kept what
+  the author wrote was always the real risk. Non-uniform image scaling, which `aspect_ratios`
+  guarded, is now unrepresentable — the exporter places each picture at the rect the browser
+  painted.
+- The reverse pipeline (`pptx-extract`, `pptx-diff`, `pptx-merge`, `pptx-learn`) and the strict
+  conformance-learning loop at Step 8.
+- The per-format effort matrix, which had one row left.
+
+### Fixed
+
+- The exported `.pptx` was rejected outright as an invalid file format. The section roadmap's
+  in-deck anchors were emitted as external hyperlink relationships, and a fragment is not a URI,
+  so seven slides of navigation took all 86 slides down. The exporter now scans the saved package
+  and refuses to hand over a file with a non-URI target, and the tests assert package validity on
+  the bytes that ship.
+- The package declared a 4:3 slide size while measuring 16:9.
+
 ## [0.100.0] — 2026-09-04
 
 > **Re-run `/talksmith:init`** in each working directory to pick this one up — the session-start

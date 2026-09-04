@@ -1,61 +1,25 @@
-"""Audit that a slide's load-bearing blocks survive the two steps that can drop them:
-`final.md` → `slide-model.json` (FILL) and `slide-model.json` → `final.pptx` (RENDER).
+"""Load-bearing blocks survive the FILL step.
 
-Why this exists:
-    Renderers that lay out content top-to-bottom can run out of vertical room on a busy slide and
-    silently skip the trailing block (e.g. a callout whose preceding table consumed the body area).
-    The visual-review rubric in `${CLAUDE_PLUGIN_ROOT}/orchestrator.md` → Step 8 does not ask "is
-    every source block present in the render," so a silent drop produces no rubric hit — the slide
-    ships missing content. This audit is the deterministic catch, a build-time gate that fails the
-    render before any human or LLM visual review begins.
+Run:  python3 audits/block_coverage.py <slide-model.json> --source final.md
 
-    The same drop happens one step earlier, in FILL, and used to be invisible here: this audit
-    required a `.pptx`, so an `html-strict` deck — which never produces one — ran it never. Hence
-    the two modes below; the source-stage one is format-independent and guards every mode.
+A busy slide is where content quietly goes missing: six cards become four, a callout beside an
+image is dropped, a figure loses its caption. None of that looks broken afterwards — the slide
+just says less than the author wrote. So this walks `final.md` for the structured blocks each
+slide authored (callouts, images, labeled sets) and asserts they reached the model.
 
-Two modes:
+`--source` is auto-resolved from the model's `_source` stamp (written by `model_freshness.py
+stamp` after FILL); with neither a stamp nor an explicit `--source` there is nothing to compare
+against and the audit exits 2.
 
-  **Source stage** (`--source final.md`, no `.pptx` needed) — every callout block authored in
-  `final.md` must land somewhere in that slide's model entry: a `callout`-template slide, a
-  `callout` field, or a `highlights` entry (the schema's *Never drop content* rule). Runs on the
-  model alone, so it guards `html-strict` too. Prose coverage is `audits/text_coverage.py`'s
-  question and image refs are `audits/image_coverage.py`'s; this one owns callouts.
+> This used to have a second stage that re-read a rendered `.pptx` and matched its slides back to
+> the model by title, fill colour and font, to check the blocks had survived the *render* too.
+> That stage existed because the deck was authored by an LLM following a prose spec, so the deck
+> could disagree with the model and something had to notice. The `.pptx` is now measured from the
+> rendered HTML, which emits what the template is given, so there is no longer an interpreting
+> step between model and deck for a block to fall out of. What remains — did FILL keep what the
+> author wrote — is the half that was always the real risk.
 
-  **Render stage** (`<final.pptx>`) — every block the model carries reached the deck. Counted:
-
-      callout — in the model, a `callout`-template slide. In the render, a <p:sp> with solidFill
-                #F7BBC1 (pink, §8.1) or #B8E6F5 (blue, §8.2).
-      image   — in the model, `image` + `images[]` + each `figures[].image`. In the render, a
-                <p:pic> shape, excluding well-known icon paths (cover logo image-1-*.png,
-                section-pill icons) — heuristic count.
-
-    Not counted: paragraph, bullet_list, numbered_list, table, code, blockquote. Tables and code
-    surfaces are bulky enough that silent drop is implausible; paragraphs and lists are hard to
-    differentiate reliably in OOXML without false positives.
-
-  Both modes report as `[block-drop] slide N "<title>" — source has X <type>, render has Y` and
-  exit non-zero.
-
-Slide matching:
-    Normalize title text (strip a leading `3.` locator, lowercase, strip punctuation, collapse
-    whitespace) and compare on the first 40 chars. Unmatched = `[unmatched]` warning. Cover
-    (slide 1) and agenda re-emits (slides with >=4 small ellipses on the agenda spine) are excluded
-    from matching since they have no source title.
-
-Usage:
-    python3 audits/block_coverage.py <slide-model.json> [final.pptx] [--source final.md]
-                                     [--json] [--warn-only]
-
-    With neither a `.pptx` nor a resolvable `--source`, there is nothing to compare the model
-    against and the audit exits 2. `--source` is auto-resolved from the model's `_source` stamp
-    (written by `model_freshness.py stamp`) when the file sits beside the Talk root.
-
-Exit codes:
-    0  no drops detected
-    1  one or more drops; build should stop and re-render
-    2  audit could not run (file missing, malformed, nothing to compare against)
-
-CLI-safe; standard library only.
+CLI-safe; standard library only. `notes_coverage.py` imports its source-parsing machinery.
 """
 
 from __future__ import annotations
@@ -65,11 +29,10 @@ import json
 import re
 import sys
 import xml.etree.ElementTree as ET
-import zipfile
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _ooxml import NS, slide_rels, model_strings  # noqa: E402  (shared audit plumbing)
+from _model import model_strings  # noqa: E402  (shared audit plumbing)
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -129,6 +92,16 @@ def parse_model(path: str) -> list[SourceSlide]:
 
 # --------------------------------------------------------------------------- #
 # final.md parsing — the source stage (no .pptx needed)
+def _normalize_title(s: str) -> str:
+    # Source headings carry a locator (`## 3. Título`); model titles do not. The number is
+    # addressing, not content — strip it on both sides or every numbered slide reads unmatched.
+    s = _HEADING_NUM.sub("", s.strip())
+    s = s.lower()
+    s = re.sub(r"[^\w\s]+", " ", s, flags=re.UNICODE)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s[:40]
+
+
 # --------------------------------------------------------------------------- #
 
 @dataclass
@@ -315,139 +288,6 @@ def reconcile_source(md: list[MdSlide], slots: list[ModelSlot],
 
 
 # --------------------------------------------------------------------------- #
-# final.pptx parsing
-# --------------------------------------------------------------------------- #
-
-@dataclass
-class RenderSlide:
-    slide_num: int               # ordinal in deck (1-based)
-    is_chrome: bool              # cover / agenda / divider — excluded from matching
-    title_text: str              # extracted from the title shape (empty if chrome)
-    pink_callouts: int = 0
-    blue_callouts: int = 0
-    pics: int = 0
-    pic_paths: list[str] = field(default_factory=list)
-
-
-def _slide_paths(zf: zipfile.ZipFile) -> list[str]:
-    return sorted(
-        (n for n in zf.namelist()
-         if n.startswith("ppt/slides/slide") and n.endswith(".xml")),
-        key=lambda n: int(re.search(r"slide(\d+)\.xml", n).group(1)),
-    )
-
-
-def _normalize_title(s: str) -> str:
-    # Source headings carry a locator (`## 3. Título`); model titles do not. The number is
-    # addressing, not content — strip it on both sides or every numbered slide reads unmatched.
-    s = _HEADING_NUM.sub("", s.strip())
-    s = s.lower()
-    s = re.sub(r"[^\w\s]+", " ", s, flags=re.UNICODE)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s[:40]
-
-
-def _looks_like_agenda(root: ET.Element) -> bool:
-    """Cover (slide 1) and agenda re-emits both feature ≥4 small ellipse
-    shapes (the agenda dots). The cover does not; only the agenda chrome
-    does. Slide 1 is handled by ordinal."""
-    ellipses = 0
-    for sp in root.iter(f"{{{NS['p']}}}sp"):
-        prst = sp.find(f"{{{NS['p']}}}spPr/{{{NS['a']}}}prstGeom")
-        if prst is not None and prst.get("prst") == "ellipse":
-            ellipses += 1
-    return ellipses >= 4
-
-
-# Fonts a title run may use. Historically the reference deck used Roboto Mono
-# Medium; since the Roboto→Helvetica migration (0.10.3) generated decks title in
-# Helvetica/Arial Bold. Accept any of them so title extraction (and thus the
-# title-matched block/notes audits) works across both eras. The sz ≥ 1700 floor
-# already excludes section pills (≤900) and card headings (~1350).
-TITLE_FONTS = ("Roboto Mono", "Helvetica", "Arial")
-
-
-def _extract_title(root: ET.Element) -> str:
-    """Pick the largest text shape (sz ≥ 1700) whose run uses a title font,
-    excluding the section pill (≤ 900). Empty string if none found."""
-    candidates: list[tuple[int, str]] = []  # (sz, text)
-    for sp in root.iter(f"{{{NS['p']}}}sp"):
-        txbody = sp.find(f"{{{NS['p']}}}txBody")
-        if txbody is None:
-            continue
-        first_run = next(txbody.iter(f"{{{NS['a']}}}r"), None)
-        if first_run is None:
-            continue
-        rpr = first_run.find(f"{{{NS['a']}}}rPr")
-        sz = int(rpr.get("sz", "0")) if rpr is not None and rpr.get("sz") else 0
-        latin = rpr.find(f"{{{NS['a']}}}latin") if rpr is not None else None
-        font = latin.get("typeface", "") if latin is not None else ""
-        if sz < 1700 or not any(tf in font for tf in TITLE_FONTS):
-            continue
-        # Concatenate text runs in this shape
-        text = "".join(
-            t.text or "" for t in txbody.iter(f"{{{NS['a']}}}t")
-        ).strip()
-        if text:
-            candidates.append((sz, text))
-    if not candidates:
-        return ""
-    # Largest sz wins (titles are bigger than headings)
-    candidates.sort(reverse=True)
-    return candidates[0][1]
-
-
-def _shape_solid_fill(sp: ET.Element) -> str | None:
-    """Return uppercase 6-char hex of the shape's solid fill, or None."""
-    sf = sp.find(f"{{{NS['p']}}}spPr/{{{NS['a']}}}solidFill")
-    if sf is None:
-        return None
-    clr = sf.find(f"{{{NS['a']}}}srgbClr")
-    if clr is None:
-        return None
-    v = clr.get("val", "")
-    return v.upper() if len(v) == 6 else None
-
-
-def parse_pptx(path: str) -> list[RenderSlide]:
-    out: list[RenderSlide] = []
-    with zipfile.ZipFile(path) as zf:
-        slide_paths = _slide_paths(zf)
-        for idx, sp_path in enumerate(slide_paths, start=1):
-            try:
-                root = ET.fromstring(zf.read(sp_path))
-            except (ET.ParseError, KeyError):
-                continue
-            is_cover = (idx == 1)
-            is_agenda = _looks_like_agenda(root)
-            chrome = is_cover or is_agenda
-            title = "" if chrome else _extract_title(root)
-            slide = RenderSlide(slide_num=idx, is_chrome=chrome, title_text=title)
-            if not chrome:
-                # Count callouts by fill color
-                for sp_el in root.iter(f"{{{NS['p']}}}sp"):
-                    fill = _shape_solid_fill(sp_el)
-                    if fill == "F7BBC1":
-                        slide.pink_callouts += 1
-                    elif fill == "B8E6F5":
-                        slide.blue_callouts += 1
-                # Count pics, excluding icon library
-                rels = slide_rels(zf, sp_path)
-                for pic in root.iter(f"{{{NS['p']}}}pic"):
-                    blip = pic.find(
-                        f"{{{NS['p']}}}blipFill/{{{NS['a']}}}blip"
-                    )
-                    rid = blip.get(f"{{{NS['r']}}}embed") if blip is not None else None
-                    target = rels.get(rid, "") if rid else ""
-                    if ICON_PATH_RE.search(target):
-                        continue  # icon — not content
-                    slide.pics += 1
-                    slide.pic_paths.append(target)
-            out.append(slide)
-    return out
-
-
-# --------------------------------------------------------------------------- #
 # reconciliation
 # --------------------------------------------------------------------------- #
 
@@ -479,66 +319,6 @@ class Unmatched:
         return f"[unmatched] line {self.h2_line} \"{self.h2_title}\" — no rendered slide with matching title"
 
 
-def reconcile(
-    sources: list[SourceSlide], renders: list[RenderSlide]
-) -> tuple[list[Drop], list[Unmatched]]:
-    # Build index of render content slides by normalized title prefix.
-    by_title: dict[str, RenderSlide] = {}
-    for r in renders:
-        if r.is_chrome or not r.title_text:
-            continue
-        key = _normalize_title(r.title_text)
-        if key and key not in by_title:
-            by_title[key] = r
-
-    drops: list[Drop] = []
-    unmatched: list[Unmatched] = []
-    for s in sources:
-        if not s.callouts and not s.images:
-            # Nothing to look for, so nothing to report — and no reason to demand a title match.
-            # Templates the schema gives no `title` (quote, big-number, image-grid, quiz, callout)
-            # can never match one, and reporting them as `[unmatched]` teaches the reader to skip
-            # the very line where a genuinely lost slide would appear.
-            continue
-        key = _normalize_title(s.h2_title)
-        match = by_title.get(key)
-        if match is None:
-            # Try a looser fallback: any render whose title starts with key,
-            # or key starts with render title (handles truncation either side)
-            cands = [
-                r for r in by_title.values()
-                if r.title_text and (
-                    _normalize_title(r.title_text).startswith(key[:20])
-                    or key.startswith(_normalize_title(r.title_text)[:20])
-                )
-            ]
-            if len(cands) == 1:
-                match = cands[0]
-        if match is None:
-            unmatched.append(Unmatched(h2_line=s.h2_line, h2_title=s.h2_title))
-            continue
-        rendered_callouts = match.pink_callouts + match.blue_callouts
-        if s.callouts > rendered_callouts:
-            drops.append(Drop(
-                slide_num=match.slide_num,
-                h2_title=s.h2_title,
-                block_type="callout(s)",
-                source_count=s.callouts,
-                render_count=rendered_callouts,
-                note=f"source lines {s.callout_lines}",
-            ))
-        if s.images > match.pics:
-            drops.append(Drop(
-                slide_num=match.slide_num,
-                h2_title=s.h2_title,
-                block_type="image(s)",
-                source_count=s.images,
-                render_count=match.pics,
-                note=f"source lines {s.image_lines}; rendered pics: {match.pic_paths}",
-            ))
-    return drops, unmatched
-
-
 # --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
@@ -566,8 +346,6 @@ def resolve_source(model_json: str, given: str | None) -> str | None:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("model_json", help="slide-model.json (the model under audit)")
-    p.add_argument("final_pptx", nargs="?", default=None,
-                   help="rendered deck — omit for an HTML-only render (source stage only)")
     p.add_argument("--source", default=None,
                    help="final.md; enables the source stage. Auto-resolved from the model's "
                         "_source stamp when omitted")
@@ -581,11 +359,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.source and source_md is None:
         print(f"audit_block_coverage: cannot read source {args.source}", file=sys.stderr)
         return 2
-    if not args.final_pptx and not source_md:
-        print("audit_block_coverage: nothing to compare the model against — pass a rendered "
-              "final.pptx, or `--source final.md` for the source stage (an unstamped model "
-              "cannot resolve its own source; run `model_freshness.py stamp` after FILL).",
-              file=sys.stderr)
+    if not source_md:
+        print("audit_block_coverage: nothing to compare the model against — pass "
+              "`--source final.md` (an unstamped model cannot resolve its own source; run "
+              "`model_freshness.py stamp` after FILL).", file=sys.stderr)
         return 2
 
     drops: list[Drop] = []
@@ -606,29 +383,9 @@ def main(argv: list[str] | None = None) -> int:
         stages.append(f"source({Path(source_md).name})")
         m_blocks += sum(x.callouts for x in md)   # authored blocks, before template classification
 
-    if args.final_pptx:
-        try:
-            sources = parse_model(args.model_json)
-        except (FileNotFoundError, OSError, ValueError) as e:
-            print(f"audit_block_coverage: cannot read {args.model_json}: {e}", file=sys.stderr)
-            return 2
-        try:
-            renders = parse_pptx(args.final_pptx)
-        except (FileNotFoundError, zipfile.BadZipFile, OSError) as e:
-            print(f"audit_block_coverage: cannot read {args.final_pptx}: {e}", file=sys.stderr)
-            return 2
-        d, u = reconcile(sources, renders)
-        drops += d
-        unmatched += u
-        stages.append("render(final.pptx)")
-        n_sources = len(sources)
-        n_content = sum(1 for r in renders if not r.is_chrome)
-        m_blocks += sum(x.callouts + x.images for x in sources)
-
     if args.json:
         print(json.dumps({
             "model_json": args.model_json,
-            "final_pptx": args.final_pptx,
             "source_md": source_md,
             "stages": stages,
             "summary": {

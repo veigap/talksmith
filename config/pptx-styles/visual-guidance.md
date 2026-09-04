@@ -2,7 +2,7 @@
 
 The **medium-agnostic foundation of good information design**: the universal principles a
 well-made slide obeys, and the **hard defects that must never ship** in any generated deck.
-Referenced by **every** render mode (`pptx-strict`, `pptx-free-form`, `html-strict`) at GENERATE (the
+Referenced by the render at GENERATE (the
 renderer honors it) and at FEEDBACK (the critique enforces it).
 
 This is the **most generic layer** — it sits *beneath* the more specific shared docs and
@@ -13,7 +13,6 @@ they must never contradict it:
   (category-tagged, checkable practices). It **implements** the principles below as concrete
   checks; where it is silent, this page still governs. slide-design must never conflict with
   a rule here.
-- [`render-modes.md`](render-modes.md) — per-mode config (which audits/critique run when).
 
 Think of it as the constitution: broad, stable, rarely edited. The other docs are the
 statutes that apply it.
@@ -34,7 +33,7 @@ otherwise the FEEDBACK critique flags it as **blocking**, not editorial.
    content; z-order never hides information.
 5. **No image distortion.** Images scale uniformly — the rendered aspect ratio equals the
    source's. No stretching, squishing, or anamorphic "fit to box". (Deterministic:
-   `audits/aspect_ratios.py`.)
+   the export's own aspect check.)
 6. **Legible contrast, always.** Sufficient figure-ground contrast; no low-contrast text
    (light-on-light, dark-on-dark, or text lost in an image).
 7. **Above the legibility floor.** Body text is readable from the back of the room — treat
@@ -76,7 +75,7 @@ them rather than rediscovering them.
 ## How the modes use this
 
 - **GENERATE (all modes).** The renderer designs *from* Part B and must not emit any Part-A
-  violation. Strict/free-form realize it in native `pptx`; html-strict realizes it
+  violation. The deck realizes it
   deterministically in styled HTML.
 - **CONTROL (pptx modes).** The deterministic subset of Part A is audited (aspect, block,
   notes); a violation fails the build.

@@ -54,7 +54,7 @@ look; the HTML deliverable keeps both toggles live regardless of what was chosen
 An unknown `style:` fails render-blocking, naming the value and listing what is on disk — a
 silent fallback to `default` would ship the wrong-looking deck without saying so.
 
-> **Migrating from the old `style:` enum.** `style: html-strict` is accepted as a deprecated
+> **Migrating from the old `style:` enum.** `style: the render` is accepted as a deprecated
 > alias for `default` (one warning line). `style: pptx-strict` / `pptx-free-form` **fail
 > loudly**, naming the replacement (`formats: html,pptx`) — those two named a whole different
 > renderer, and quietly remapping them would hand back a deck that looks nothing like what was
@@ -67,13 +67,13 @@ ever modifies `draft.md` or `final.md`; all transformation happens in memory or 
 
 ## When to use
 
-After Step 6 (Polish) completes and the presenter picks **Render** from the terminal branch, then chooses a mode. Optional — many presenters stop at the outline. (`html-strict` also auto-runs earlier, from `draft.md`, as the Step-5.5 live view.)
+After Step 6 (Polish) completes and the presenter picks **Render** from the terminal branch. Optional — many presenters stop at the outline. (The same render also auto-runs earlier, from `draft.md`, as the Step-5.5 live view.)
 
 ---
 
 ## RENDER — the HTML deck (code render)
 
-`html-strict` runs in **two steps: FILL, then RENDER.** The semantics live in the fill step (an
+The render runs in **two steps: FILL, then RENDER.** The semantics live in the fill step (an
 LLM decomposition); the render is a mechanical, committed script. **Never hand-roll a renderer, and
 keep the renderer mechanical** — it maps model fields to templates and must not classify or parse
 markdown.
@@ -142,7 +142,7 @@ render and surface the failure — do not fall back to an existing model.**
 
 **Step 1.5 — CHECK the model (deterministic floor, before RENDER).** The FILL judgment is the
 LLM's, so it can slip; this is the mechanical catch, run on the model alone (no `.pptx` needed —
-it guards every mode, including html-strict, which otherwise runs no deck-parsing audit):
+it is the only thing standing between a bad FILL and a shipped deck):
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/degenerate_enum.py output/slide-model.json
@@ -152,7 +152,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py out
 
 `degenerate_enum` and the two coverage preflights below all check the **internal consistency of a
 choice already made**. `template_diversity` asks the other question — *was a richer template
-available and passed over?* — which nothing used to ask, and which matters most in `html-strict`
+available and passed over?* — which nothing used to ask, and which matters most here
 (CONTROL is `audit-none`, FEEDBACK is `no-critique`, so an unexamined model shipped straight to the
 deck). It **fails** on any `fallback` slide (the catalog defines it as "nothing matched": either the
 walk missed a signal or the catalog needs an entry — resolve which). Its other findings are
@@ -174,7 +174,7 @@ the goal** — a deck genuinely made of labeled sets *is* mostly `concept-breakd
 variety classifies slides into templates their content can't support. The finding says *re-examine
 this*, and Step 1.6 is what re-examines it. Pass `--warn-only` for the `--draft` live view.
 
-Alongside it, four **coverage preflights** catch content that would silently vanish. None needs a rendered deck, so they guard every mode — `html-strict` included (advisory by default, `--strict` to fail):
+Alongside it, four **coverage preflights** catch content that would silently vanish. None needs a rendered deck, so they guard every mode — `the render` included (advisory by default, `--strict` to fail):
 
 ```bash
 # fields the chosen template will ignore (e.g. an image on a `divider`, a second image on `content-image`)
@@ -316,10 +316,10 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   against the markdown as it stands now. It exists because a live-view refresh is a full FILL pass
   and therefore gets skipped: without this, a stale deck is indistinguishable from a current one.
   A stale deck is also badged **out of date** on the working-directory landing page.
-- **No critique loop.** `html-strict` is a single-pass GENERATE — no automated FEEDBACK/critique
+- **No critique loop.** `the render` is a single-pass GENERATE — no automated FEEDBACK/critique
   cycles. The presenter reviews the deck and resolves anything by editing the source (which re-fills
   the model) and re-rendering.
-- **Landing page.** Every `html-strict` render (deliverable *and* Step-5.5 live view) also rewrites
+- **Landing page.** Every `the render` render (deliverable *and* Step-5.5 live view) also rewrites
   `index.html` **at the working-directory root** — a card per rendered Talk, linking to its deck
   ([`build_index.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_index.py)). A deck buried at
   `talks/<Talk>/output/html/index.html` is unfindable and unshareable; the root page is the one link
@@ -331,7 +331,7 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   instead. Failure here is logged, never fatal — the deck is still delivered. Regenerate on demand
   with `python3 build_index.py --root .`.
 
-The rest of this file (Path A) does not apply to `html-strict`.
+The rest of this file (Path A) does not apply to `the render`.
 
 ---
 
@@ -400,19 +400,22 @@ with it. The HTML deliverable carries every skin at once anyway, on a button.
 
 ## Progress reporting (log-only)
 
-Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one bracketed stage line per phase**; the orchestrator drives a live stage rail from them and **never relays the raw tags to chat** (per [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Suppression rule*). Tag namespaces the skill owns: `[pptx`, `[cycle`, `[html`, `[classify`, `[block-drop`, `[off-palette`, `[off-font]`, `[unmatched]`, `[skipped]`, `[fallback]`, `[dominance]`, `[composition]`, `[run]`, `[format-flat]`, `[no-alternative]`, `[degenerate-enum]`. Any of these reaching chat verbatim is a leak.
+Rendering runs 30 s – 3 min; silence reads as a hang. The skill emits **one bracketed stage line per phase**; the orchestrator drives a live stage rail from them and **never relays the raw tags to chat** (per [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Suppression rule*). Tag namespaces the skill owns: `[html`, `[pdf`, `[pptx`, `[classify`, `[block-drop`, `[unmatched]`, `[skipped]`, `[fallback]`, `[dominance]`, `[composition]`, `[run]`, `[format-flat]`, `[no-alternative]`, `[degenerate-enum]`. Any of these reaching chat verbatim is a leak.
 
-**Rules:** emit a line at every phase boundary (after pre-process, deck built, CONTROL, each FEEDBACK batch, each REGENERATE); chunk slow phases and report between chunks (*"Reviewing slides 10 of 29…"*, *"Built 12 of 29…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect. Strict cycles 2+ prefix every line `[cycle N/3] <PHASE>`; `html-strict` uses `[html]` (single pass, no cycles).
+**Rules:** emit a line at every phase boundary (after FILL, after the model audits, after the classification critique, after the render, after each export); chunk slow phases and report between chunks (*"Double-checking layouts, 18 of 34…"*); **any phase quiet > 30 s emits a heartbeat**, and > 60 s of total silence is a defect.
 
-**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/palette_fonts.py`, `audits/block_coverage.py`, `audits/aspect_ratios.py`, `audits/cover_fidelity.py`, `audits/layout_fit.py`, `audits/degenerate_enum.py`, `audits/template_diversity.py`, `audits/field_coverage.py`, `audits/text_coverage.py`), the internal vocabulary of classification (template ids like `concept-breakdown` / `content+cards+image`, `slide-model.json`, `_choice`, `slide-classifier-critic`, the verdicts `confirm`/`reclassify`/`weak-trace`), library/tool names (`python-pptx`, `cairosvg`, `qlmanage`, `pandoc`, Marp, libreoffice, pdftoppm), XML internals (`<p:style>`, `<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), slide-XML coordinates (EMU values), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Three issues were caught and fixed during CONTROL: a palette false-positive from python-pptx's `<p:style>` boilerplate (stripped), the cover logo relationship (corrected to embed image-1-1.png directly), and 4 slides with missing callout shapes (slides 9, 12, 24, 27 — callouts added)."* **Do:** *"Checked the deck and applied 3 small automatic fixes (a palette check, the cover image, and 4 slides where a block needed re-adding — 9, 12, 24, 27). Done."*
+**Suppression vocabulary — what must never reach chat verbatim.** Beyond the bracketed tags: phase names (CONTROL / FEEDBACK / REGENERATE / GENERATE), audit/script names (`audits/block_coverage.py`, `audits/notes_coverage.py`, `audits/degenerate_enum.py`, `audits/template_diversity.py`, `audits/field_coverage.py`, `audits/text_coverage.py`, `export_pptx.py`, `harvest.js`), the internal vocabulary of classification (template ids like `concept-breakdown` / `content+cards+image`, `slide-model.json`, `_choice`, `slide-classifier-critic`, the verdicts `confirm`/`reclassify`/`weak-trace`), library/tool names (`python-pptx`, Pillow, Chrome/Chromium, headless, `cairosvg`, libreoffice, pdftoppm), XML internals (`<p:bg>`, `<a:srgbClr>`, `<p:pic>`, OOXML, `ppt/media/…`, `[Content_Types].xml`), EMU coordinates, and the mechanics of the export itself (display list, harvest, `--dump-dom`), rubric-row format (`slide N · <catalog-id> · …`), and the phrases *"final.md frontmatter"* / *"draft.md frontmatter"*. Translation pattern: name the *outcome* (what got fixed, how many, which slides — slide numbers are presenter-actionable and stay); strip the *mechanism* (which audit, XML element, library, phase tag). **Don't:** *"Harvested the display list via --dump-dom and rebuilt 1,283 nodes as OOXML shapes; two slides carry a `<p:pic>` poster because a `<video>` has no PowerPoint equivalent."* **Do:** *"The PowerPoint file is ready. Two slides have a video that only the HTML deck can play — they show a still instead (slides 71 and 72)."*
 
-**Stage rails** — the orchestrator renders these as a one-line rail and edits it in place; glyphs and rules are its own (`orchestrator.md` → *Interaction defaults* → *stage rail*). This skill owns only the stage names per mode:
+**Stage rails** — the orchestrator renders these as a one-line rail and edits it in place; glyphs and rules are its own (`orchestrator.md` → *Interaction defaults* → *stage rail*). This skill owns only the stage names:
 
 ```
-pptx-strict:      Formatting source → Choosing slide layouts → Double-checking layouts → Building draft slides → Reviewing slides (N/3) → Applying fixes → Final check
-pptx-free-form:   Formatting source → Choosing slide layouts → Double-checking layouts → Building slides → Sanity check
-html-strict:      Formatting source → Choosing slide layouts → Double-checking layouts → Rendering the deck → Ready to view
+render:            Formatting source → Choosing slide layouts → Double-checking layouts → Rendering the deck → Ready to view
++ pdf:             … → Printing the PDF
++ pptx:            … → Measuring the deck → Building the PowerPoint
 ```
+
+The export stages append to the render's rail rather than replacing it — the deck is finished and
+viewable before either export starts, so a slow export never reads as a stalled render.
 
 *Choosing slide layouts* is FILL + the model audits; *Double-checking layouts* is the per-slide
 classification critique (Step 1.6), which is the slow one on a long deck — chunk it
@@ -420,11 +423,11 @@ classification critique (Step 1.6), which is the slow one on a long deck — chu
 the original three-stage rail. Report the outcome in presenter language: **"adjusted the layout on
 4 slides (7, 12, 20, 28)"**, never the verdict vocabulary or a template id.
 
-`html-strict` "Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF — pick `Save as PDF` as the print destination, or the paper size overrides the deck's 16:9 page).
+"Ready to view" = `index.html` on disk under `output/html/`; open it (Reveal deck: → / ← advance, `Esc` overview, `F` full screen, `s` speaker notes, `?print-pdf` to export PDF — pick `Save as PDF` as the print destination, or the paper size overrides the deck's 16:9 page).
 
 ## Rules
 
-- **Never modify `final.md`/`draft.md`.** All work is in memory or `output/…`. `html-strict --draft` reads `draft.md` read-only.
+- **Never modify `final.md`/`draft.md`.** All work is in memory or `output/…`. `the render --draft` reads `draft.md` read-only.
 - **Never re-render SVGs.** A missing SVG ref → stop, the orchestrator dispatches the Diagram-Illustrator.
 - **Speaker notes** go into the Reveal `<aside class="notes">` (Path B) / the notes pane (Path A), never on the slide body.
 
@@ -437,6 +440,6 @@ Path A adds four more (base template, system fonts, spec-as-contract) — in [`p
 - **`final.md` not produced / still has `Presenter feedback` or raw ASCII fences**, or the path points at `draft.md` → stop; return to Step 6 / ask.
 - **Stale / unstamped `slide-model.json`** → the render is refusing an outdated model (Path B exit 2; Path A `check` exit 3). This is the freshness guard working — **re-run FILL + `model_freshness.py stamp` from the current source**, then re-render. Never bypass with `--allow-stale` to ship a deck (it exists only for deliberate ad-hoc renders).
 - **FILL failed / produced no model** → stop the render and surface it; do **not** fall back to a pre-existing `slide-model.json`.
-- **html-strict render error** (Path B) → report the deck/live view is unavailable (never fatal).
+- **the render render error** (Path B) → report the deck/live view is unavailable (never fatal).
 
 The `.pptx`-only failure modes (pptx skill unavailable, base template, CONTROL audits, OOXML, agenda capacity) are in [`pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Failure modes to surface (Path A)*.

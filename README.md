@@ -80,7 +80,7 @@ Each presenter installs the plugin once; the **subject repo** — a Git reposito
    ```
 2. **Install the plugin** *(each presenter, once)*:
    - **CLI** — `npm install -g @anthropic-ai/claude-code`, then in a session run `/plugin marketplace add veigap/talksmith` and `/plugin install talksmith@talksmith`. Update later with `/plugin update talksmith`.
-   - **Cowork (desktop)** — install from [claude.com/download](https://claude.com/download), open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. Desktop and CLI share the install. **Rendering a `.pptx` (Step 7) works only in Cowork** — it needs Anthropic's native `pptx` skill.
+   - **Cowork (desktop)** — install from [claude.com/download](https://claude.com/download), open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. Desktop and CLI share the install. Everything Talksmith does runs in either one, including the PDF and `.pptx` exports — those need a Chrome/Chromium on the machine, plus `python-pptx` and Pillow for the `.pptx`.
 3. **Initialize the repo** *(once, by the first presenter)* — run `/talksmith:init`. It writes one file: a thin `CLAUDE.md` stub. Commit and push it; everyone who clones the repo afterward is set up automatically. Plugin updates flow through without re-running init.
 4. **Start** — CLI: `claude --model opus` in the repo; Cowork: open the workspace. Say *"Hi Talksmith"*.
 
@@ -117,7 +117,7 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 │       ├── memory.md         # progress log / restore point — used to resume
 │       ├── research/         # articles/, llm-chats/, web/ (inputs) + corpus/ (Step 3)
 │       ├── images/           # rendered diagrams + consolidated images (Step 6)
-│       └── output/           # rendered final.pptx (Step 7, optional, Cowork only)
+│       └── output/           # html/ deck, plus final.pdf / final.pptx when asked for (Step 7, optional)
 └── knowledge-library/        # team's curated cross-Talk index (Step 8)
 ```
 
@@ -127,7 +127,6 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 
 - **[docs/methodology.md](docs/methodology.md)** — the four-phase method and the "LLM wiki" knowledge-base philosophy behind it.
 - **[docs/roles.md](docs/roles.md)** — the subagents, the skills, and the render pipeline.
-- **[docs/reverse-pipeline.md](docs/reverse-pipeline.md)** — reconcile a `.pptx` you edited in Keynote/PowerPoint back into `draft.md`.
 
 ### Key conventions
 

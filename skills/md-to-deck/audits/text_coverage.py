@@ -88,7 +88,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _ooxml import model_strings  # noqa: E402  (shared audit plumbing)
+from _model import model_strings  # noqa: E402  (shared audit plumbing)
 
 _FENCE = re.compile(r"^\s*(?:```|~~~)")
 _IMG = re.compile(r"!\[[^\]]*\]\([^)]*\)")

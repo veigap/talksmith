@@ -35,8 +35,6 @@ Skills live under [`skills/`](../skills/) and are invoked by name (namespaced `t
 - **`ascii-to-svg`, `polish-ascii`** — render and clean ASCII diagrams into styled SVGs.
 - **`md-to-deck`** — decompose `final.md` into a structured `slide-model.json` and render it to an HTML (Reveal.js) deck or a `.pptx`.
 - **`feedback-cycle`** — Step-5/Step-6 mechanical bookkeeping (stamp / close / mirror / rescue feedback).
-- **Reverse pipeline** (`pptx-extract`, `pptx-diff`, `pptx-merge`) — reconcile an externally-edited `.pptx` back into `draft.md`. See [reverse-pipeline.md](reverse-pipeline.md).
-- **`pptx-learn`** — diff a hand-corrected deck against the generated baseline to surface recurring conformance patterns.
 
 ## The render pipeline
 

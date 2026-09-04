@@ -18,7 +18,23 @@ Keep this file short. One rule per bullet, in plain language. If a rule is genui
 
 - **Never draw a connector out of a run of hyphens.** In a face that really is monospaced — which, once the rule above is followed, is every face — consecutive `-` glyphs touch, so `-->` and `-----` fuse into one unbroken bar with no gaps and no arrowhead. It reads as a rule, not as a connection. Draw the shaft as a `<line>` or `<path>` with a marker, per the arrows rule above. The same applies to `===` and `___`.
 
-- **Palette discipline — neutral by default, deck-palette accents only.** Default element fills are light-grey or white; default text is `#3B3535`; the focal element (one per diagram) is accented with `#DA1B2E`. Per-element categorical color — a different tint per signal, per pipeline stage, per actor, per state — is reserved for diagrams where the categorical distinction is the *point* (e.g. a legend-driven comparison), and even then accent colors must be drawn from the deck's existing palette in [`pptx-prompt.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md) §2 (text inks + fills), never arbitrary pastels. Categorical pastels clash with the deck's tightly restrained palette and read as out-of-system; a single red accent + grey neutrals is the in-system idiom and is almost always sufficient.
+- **Palette discipline — neutral by default, deck-palette accents only.** Default element fills are light-grey or white; default text is `#3B3535`; the focal element (one per diagram) is accented with `#DA1B2E`. Per-element categorical color — a different tint per signal, per pipeline stage, per actor, per state — is reserved for diagrams where the categorical distinction is the *point* (e.g. a legend-driven comparison), and even then accent colors must be drawn from the deck palette below, never arbitrary pastels. Categorical pastels clash with the deck's tightly restrained palette and read as out-of-system; a single red accent + grey neutrals is the in-system idiom and is almost always sufficient.
+
+- **The deck palette a diagram may draw from.** These are the light-theme values of the design tokens in [`theme.css`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/templates/html/theme.css), which is where the deck's colour actually lives; they are repeated here because an SVG has no access to CSS custom properties and must carry literal hex. A diagram is a picture *inside* a slide, so it has to sit in the same colour system the slide is built from.
+
+  | Hex | Role in the deck |
+  |---|---|
+  | `#DA1B2E` | The accent red. One focal element per diagram, never more. |
+  | `#1F1E1E` | Titles and dark labels. |
+  | `#3B3535` | Body text — the default ink for diagram labels. |
+  | `#F2EEEE` | Card fill — the default fill for a neutral box. |
+  | `#F9D2D6` | The section pill's pink. Use only for a genuine label chip. |
+  | `#F7BBC1` / `#B8E6F5` | Callout pink / callout blue. |
+  | `#F2F2F2` | Code surface. |
+  | `#D8D2CE` | Hairline rules and borders. |
+  | `#FFFFFF` | Slide ground, and inverted text on the accent red. |
+
+  If a token's light value changes in `theme.css`, change it here too — a diagram drawn in the old red is the one thing in a slide that cannot re-theme itself, and it will be visibly out of system next to everything that can. **A deck skin overrides these tokens, so a diagram will not follow a skin change**; that is a known and accepted limit, and the reason to keep diagrams mostly neutral with a single accent.
 
 - **No Unicode symbol glyphs in text nodes — not just arrows.** The arrows rule above covers `←→↑↓⇒`; the same tofu trap applies to check/cross/bullet/star symbols (`✓ ✔ ✗ ✘ ☑ ★ ● •` and similar). cairosvg's fonts don't carry them, so they rasterize as empty boxes while the XML looks perfect. Draw a check or cross as `<path>` geometry, or use a plain word (`sí` / `no`, `ok`). Accented Latin, `—`, curly quotes and `·` remain safe.
 

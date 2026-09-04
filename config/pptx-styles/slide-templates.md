@@ -10,20 +10,19 @@ exist, the **prescriptive rule for matching each** to a slide's content, and the
   and reviews the slide **against that template's *Format* here**, not against a generic
   notion of "looks good."
 
-All three render formats — `pptx-strict`, `pptx-free-form`, `html-strict` — use it. When nothing
-matches, they fall back (`fallback` below).
+The render uses it, and so does every export measured from that render. When nothing matches,
+they fall back (`fallback` below).
 
-> **This is the single home — do not duplicate.** The design-level template guidance that
-> used to live in strict §7/§8/§13/§15.5, free-form's prose, and `slide-design.md`
-> (when-to-pick rules, capacity thresholds, format-at-the-design-level, the
-> card-not-bullet invariant) lives **here now**. Each spec keeps only what is genuinely
-> substrate-specific: **strict** keeps its exact EMU measurements (base-template
-> pixel-equivalence) and the `audits/layout_fit.py` gate, *realizing* the *Format* below;
-> the **html-strict** render uses its Jinja templates (`templates/html/*.j2`). Everything else references this file.
+> **This is the single home — do not duplicate.** When-to-pick rules, capacity thresholds,
+> format at the design level and the card-not-bullet invariant live **here**, and nothing else
+> restates them. The one thing that is *not* here is the realization: each template's markup is
+> its own Jinja file under `templates/html/`, and its look is `theme.css`. There used to be a
+> second realization in EMU units for a `.pptx` renderer, with its own deterministic gate; the
+> `.pptx` is now measured from the rendered deck, so that copy is gone and cannot drift.
 
-Evidence base: three real hand-built decks — the 53-slide `pptx-strict/template.pptx`
-reference (`ref`), a 21-slide presenter-corrected deck (`final`), and a 57-slide
-governance deck (`gov`). **0 plain bullet lists across all 131 slides.**
+Evidence base: three real hand-built decks — a 53-slide reference, a 21-slide
+presenter-corrected deck (`final`), and a 57-slide governance deck (`gov`).
+**0 plain bullet lists across all 131 slides.**
 
 ## Speaker notes are template-independent
 
@@ -192,11 +191,13 @@ Decide the template **from the content**, as a discriminator walk — not first-
 
 See **Matching examples** below for worked classifications, including the tricky ties.
 
-Strict additionally runs a **deterministic post-emit gate**
-([`audits/layout_fit.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/layout_fit.py)):
-emitted layout must equal the predicted template or the build fails. Free-form and
-html-strict uses the same classification judgment **without** the hard gate (free-form logs
-its pick to `.layout-log.md`; html-strict selects the matching template).
+There used to be a deterministic post-emit gate that re-derived the layout from the markdown and
+failed the build when the emitted deck disagreed. It was needed because the deck was authored by
+an LLM that could pick something other than what the model said. The render now emits the
+template the model names, so the check has nothing left to disagree with; what remains worth
+watching is whether the *classification* was any good, which is
+[`template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py)
+and the [`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md).
 
 ---
 
@@ -205,7 +206,7 @@ its pick to `.layout-log.md`; html-strict selects the matching template).
 Each entry gives **Match** (precise fire conditions + disambiguators), **Format** (the
 prescriptive layout — regions, counts, sizing, spacing, and what is forbidden), the
 **Strict recipe** it binds to, and **Provenance**. Sizes are the shared design ladder
-(strict encodes them as `sz="pt*100"`; html-strict scales them to its 1280×720 canvas).
+(the render scales them to its 1280×720 canvas; the exports inherit that scale).
 Content-area width ≈ 8.9 in; canvas 10×5.63 in (16:9).
 
 ### Concept families — the two-level view
