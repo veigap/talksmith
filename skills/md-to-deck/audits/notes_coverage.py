@@ -26,13 +26,11 @@ import argparse
 import json
 import re
 import sys
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, asdict, field as dc_field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from block_coverage import (  # noqa: E402  (shared source-parsing machinery)
-    _normalize_title,
     _HEADING_NUM,
     _NONSLIDE_HEADING,
     _SKIP_H3,

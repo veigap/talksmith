@@ -17,7 +17,6 @@ tested any other way.
 """
 from __future__ import annotations
 
-import json
 import re
 import sys
 import tempfile

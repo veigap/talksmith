@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -44,50 +45,67 @@ _UNIVERSAL = {
     "stats",
 }
 
-# Per-template consumed fields = the schema contract (required ∪ optional). Source of truth:
-# schemas/slide-model.md → *Per-template field contract*. Keep in sync when a template gains or
-# loses a field — and when the two disagree, the schema is what needs fixing, not this map: the
-# schema is what the FILL step reads, so a field only this map knows about is one the model will
-# never be told to produce.
+# Per-template consumed fields, **derived from the templates rather than restated**.
 #
-# `build_html` is the finer-grained authority — it also validates field *values* and warns when a
-# design rides a slide with no media (or media rides a slide with no design), which this set-based
-# audit can't express.
-_CONSUMES = {
-    "section-agenda": {"title"},
-    "divider": {"title", "number"},
-    "statement": {"title", "sub"},
-    # one labeled set; `format` is the arrangement that used to be three separate template ids.
-    "concept-breakdown": {"title", "cards", "lead", "format"},
-    "process": {"title", "steps"},
-    "figures": {"title", "figures", "lead"},
-    "image-grid": {"images", "title"},
-    "image-full": {"title", "image", "lead"},
-    "content-image": {"title", "facts"},
-    "content+cards+image": {"title", "cards"},
-    "value-columns": {"title", "columns"},
-    # a column here is a whole explanation, not a cell: label + body + its own feature list,
-    # its label, a closing example line, and the emphasis flag on at most one of them
-    "concept-columns": {"title", "columns", "subtitle"},
-    "stat": {"title", "stats", "lead"},
-    "big-number": {"number", "caption", "title"},
-    "quote": {"quote", "attribution"},
-    "timeline": {"title", "milestones", "lead"},
-    # `pro_label`/`con_label` override the localized column headers (pros-cons.j2 reads
-    # `s.pro_label or L.pros`), so a deck can name the two sides itself.
-    "pros-cons": {"title", "pros", "cons", "pro_label", "con_label"},
-    # a cross-tab: the axis names and tick labels are content, not chrome to drop
-    "matrix": {"title", "columns", "rows", "cells", "x_label", "y_label"},
-    "quiz": {"question", "answer", "title", "options", "correct", "explanation", "answer_label"},
-    "single-point": {"title", "point"},
-    "callout": {"callout", "tone", "title"},
-    "code-example": {"title", "code", "language", "explanation"},
-    "content-text": {"title", "big", "panels"},
-    "closing-hero": {"title", "body"},
-    "closing-cta": {"title", "items"},
-    # `fallback` renders whatever it can — never audited (a fallback slide is already a flagged
-    # classification miss elsewhere).
-}
+# This used to be a hand-maintained map of template id -> field set, kept in sync with
+# `schemas/slide-model.md` by discipline. It drifted, as that arrangement always does: five of the
+# twenty-five entries were wrong by the time anyone measured — `closing-cta` declared an `items`
+# field its template never reads, and `callout`, `quote`, `fallback` and `single-point` were each
+# missing fields their templates do read. An audit whose job is to spot unconsumed fields was
+# itself reporting the wrong answer for a fifth of the deck.
+#
+# A template's consumed set is not a fact that needs stating: it is *visible in the template*.
+# Every one reads its schema fields directly off the slide as `s.<field>`, so scanning the file
+# for that pattern is the answer, and it cannot be stale. The shared `_macros.j2` is folded into
+# every content template because `stage()` reads a handful of fields on every slide.
+#
+# Read as text, not imported: this audit is stdlib-only and CLI-safe, and importing `html_style`
+# to reach `_TMPL` would drag `jinja2` in as a hard dependency of a preflight check.
+_HTML = Path(__file__).resolve().parent.parent
+_TPL_DIR = _HTML / "templates" / "html"
+# Both access forms, because both are load-bearing. A template normally reads `s.field`, but
+# a field whose name collides with a dict method — `items`, `keys`, `values`, `get` — must be
+# read as `s['field']` or Jinja hands back the bound method instead of the content. Matching
+# only the dotted form reported `closing-cta`'s `items` as an ignored field, which is exactly
+# the false alarm this audit exists to not raise.
+_FIELD_RE = re.compile(r"""\bs(?:\.([a-z_][a-z0-9_]*)|\[['"]([a-z_][a-z0-9_]*)['"]\])""")
+
+
+def _fields(text: str) -> set[str]:
+    return {a or b for a, b in _FIELD_RE.findall(text)}
+
+
+def _template_map() -> dict[str, str]:
+    """`html_style._TMPL` — template id -> `.j2` filename — read out of the source."""
+    try:
+        src = (_HTML / "html_style.py").read_text(encoding="utf-8")
+        body = re.search(r"_TMPL\s*=\s*\{(.*?)\n\}", src, re.S)
+        return dict(re.findall(r'"([^"]+)"\s*:\s*"([^"]+)"', body.group(1))) if body else {}
+    except (OSError, AttributeError):
+        return {}
+
+
+def _consumed() -> dict[str, set[str]]:
+    tmpl = _template_map()
+    if not tmpl:
+        return {}
+    try:
+        shared = _fields((_TPL_DIR / "_macros.j2").read_text(encoding="utf-8"))
+    except OSError:
+        shared = set()
+    out: dict[str, set[str]] = {}
+    for tid, fname in tmpl.items():
+        if tid == "fallback":
+            continue          # renders whatever it can; a fallback slide is already flagged
+        try:
+            body = (_TPL_DIR / fname).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        out[tid] = _fields(body) | shared
+    return out
+
+
+_CONSUMES = _consumed()
 
 
 # The **required** half of the same contract (`schemas/slide-model.md` -> *Per-template field

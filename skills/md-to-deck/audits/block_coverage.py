@@ -28,7 +28,6 @@ import argparse
 import json
 import re
 import sys
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -45,7 +44,6 @@ EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
 # Known non-content image paths to exclude from the per-slide <p:pic> count:
 # - cover logo ppt/media/image-1-*.png (institution mark, slide 1 only)
 # - section-pill icons (small icon-*.png/svg in branded library)
-ICON_PATH_RE = re.compile(r"(/icon-[\w-]+\.(?:png|svg)|image-1-\d+\.png)$", re.I)
 
 _HEADING_NUM = re.compile(r"^\s*\d+[.)]\s*")
 

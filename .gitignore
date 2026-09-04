@@ -24,11 +24,11 @@ config/profile.md
 config/learnings.md
 config/feedback-backlog.md
 config/feedback-processed.md
-config/strict-learnings.md
 talksmith-bugs.md
 knowledge-library/
 
 .icons/
+talks/*/output/.export/
 talks/*/images/.critique/
 tests/skills/*/images/.critique/
 __pycache__/

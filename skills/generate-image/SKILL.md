@@ -30,7 +30,7 @@ The generation backend the [`image-illustrator`](${CLAUDE_PLUGIN_ROOT}/agents/im
 
 ## When no capability is present — `unavailable`, never a failure
 
-If step 1 finds **no** image-generation tool, do **not** fabricate, download a stock image, or draw a substitute. Return `unavailable` to the image-illustrator, which records the directive `unresolved: no_image_capability`, **leaves the slide's text intact** (the aside simply doesn't appear), and continues. This mirrors how the `.pptx` render modes are Cowork-only: the feature degrades, it never blocks Polish. The presenter is told at the end that an aside was requested but couldn't be generated here — so re-running Step 6 in a session that *does* have image generation will produce it (the directive is still in `final.md` until `cleanup`, and the `draft.md` source always is).
+If step 1 finds **no** image-generation tool, do **not** fabricate, download a stock image, or draw a substitute. Return `unavailable` to the image-illustrator, which records the directive `unresolved: no_image_capability`, **leaves the slide's text intact** (the aside simply doesn't appear), and continues. The rule is that a capability the session lacks degrades the feature and never blocks Polish. The presenter is told at the end that an aside was requested but couldn't be generated here — so re-running Step 6 in a session that *does* have image generation will produce it (the directive is still in `final.md` until `cleanup`, and the `draft.md` source always is).
 
 ## Boundaries
 

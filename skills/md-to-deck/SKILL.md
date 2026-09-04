@@ -1,6 +1,6 @@
 ---
 name: talksmith:md-to-deck
-description: Render a Talk's `final.md` to a presentation. One render path — a code-rendered HTML/Reveal.js deck — plus optional PDF and editable `.pptx` exports measured from it. Optional Step 7 of the workflow; also the Step-5.5 live view from `draft.md` via `--draft`. No Cowork dependency.
+description: Render a Talk's `final.md` to a presentation. One render path — a code-rendered HTML/Reveal.js deck — plus optional PDF and editable `.pptx` exports measured from it. Optional Step 7 of the workflow; also the Step-5.5 live view from `draft.md` via `--draft`. Needs only Python; the exports additionally need a Chrome/Chromium.
 ---
 
 # md-to-deck — render `final.md` to a presentation
@@ -300,7 +300,7 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   **shrinks to fit — it is never truncated**; past ~28 lines the render warns that the slide
   wants splitting.
 - **Prerequisites.** Python 3 + `jinja2`; network on the first run (Material Symbols catalog + icon
-  fetch, then cached). **No Cowork, no native skill, no base template.** Degrades gracefully: on a
+  fetch, then cached). **No native skill and no base template** — it is committed code, end to end. Degrades gracefully: on a
   render error, report the live view is unavailable — never fatal.
   **`jinja2` is the only non-stdlib dependency, and the commands here say bare `python3`** — on a
   machine with more than one interpreter (a Homebrew python and the system one, a venv that isn't

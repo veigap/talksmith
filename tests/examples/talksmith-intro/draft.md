@@ -298,7 +298,7 @@ The whole arc in one picture — reuse the plugin's own diagram.
 ### Content
 
 - You talk to Talksmith in chat; it does the work and keeps `draft.md` / `final.md` as the single source of truth.
-- The live HTML preview (as you review) and the final `.pptx` render are optional, Cowork-only extras.
+- The live HTML preview (as you review) is optional; so are the PDF and `.pptx` you can export from the finished deck.
 
 ![Talksmith workflow](images/workflow.png)
 

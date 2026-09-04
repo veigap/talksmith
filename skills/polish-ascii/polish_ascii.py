@@ -42,7 +42,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
     extract_block_context as _extract_block_context,
 )
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
-    IMG_REF_RE, IMG_EXT_RE,
+    IMG_REF_RE,
     add_plan_args, load_plan, read_json_arg, referenced_stems,
 )
 

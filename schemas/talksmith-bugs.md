@@ -43,7 +43,7 @@ The reader of an entry is someone who was not in the session and cannot ask you 
 - **Presenter feedback about the talk** — content, wording, ordering, tone. That is `Presenter feedback` in `draft.md` → [`config/feedback-backlog.md`](config/feedback-backlog.md).
 - **Editorial preferences** worth making durable → [`config/learnings.md`](config/learnings.md) via Step 8.
 - **Missing or ambiguous presenter input.** Ask, don't log.
-- **Degradations a spec explicitly declares**: no image capability (`unavailable`), no Cowork for `.pptx`, an empty corpus, an optional step skipped. These are designed outcomes — log them only when they *misbehave* (e.g. the declared fallback itself fails).
+- **Degradations a spec explicitly declares**: no image capability (`unavailable`), no browser for the PDF and `.pptx` exports, an empty corpus, an optional step skipped. These are designed outcomes — log them only when they *misbehave* (e.g. the declared fallback itself fails).
 - Anything already surfaced and resolved inside the same step with no lasting effect on the deliverable.
 
 ## Loading semantics
