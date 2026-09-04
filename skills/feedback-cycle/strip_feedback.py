@@ -38,6 +38,37 @@ _HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
 _HR = re.compile(r"^\s{0,3}-{3,}\s*$")
 _BULLET = re.compile(r"^(\s*)[-*+]\s")
 _BLANK = re.compile(r"^\s*$")
+_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
+
+
+def _fenced(lines: list[str]) -> list[bool]:
+    """Mark every line that belongs to a fenced block, its two delimiters included.
+
+    Every pattern above means something *else* inside a fence. A `---` drawn in ASCII art is a
+    rule the author drew, not a slide boundary. A `#` starting a code comment is not a heading.
+    And the blank lines an ASCII diagram puts between its bands are load-bearing art, not stray
+    whitespace — collapsing a pair of them closed the gap between two bands of a rendered
+    diagram, silently, and the `---` case would have cut a diagram in half by inserting a blank
+    line through the middle of it. So the stripper reads a fence as one opaque unit and never
+    touches what is inside it.
+
+    CommonMark's rule, minus what a Talk cannot produce: a fence opens on three or more backticks
+    or tildes and closes on the same character, at least as long, with nothing after it. A fence
+    left open at EOF protects the rest of the file, which is also how a Markdown parser reads it.
+    """
+    mask = [False] * len(lines)
+    char, length = "", 0
+    for i, ln in enumerate(lines):
+        m = _FENCE.match(ln)
+        if not char:
+            if m:
+                char, length = m.group(1)[0], len(m.group(1))
+                mask[i] = True
+            continue
+        mask[i] = True
+        if m and m.group(1)[0] == char and len(m.group(1)) >= length and not m.group(2).strip():
+            char, length = "", 0
+    return mask
 
 
 def _indent(line: str) -> int:
@@ -57,13 +88,30 @@ def _in_block(line: str) -> bool:
     return bool(_BULLET.match(line)) or _indent(line) > 0
 
 
+def _ends_block(lines: list[str], fence: list[bool], j: int) -> bool:
+    """Does line `j` close the feedback block being swept?
+
+    A fenced block ends it, whichever line of the fence we are looking at. A diagram or a code
+    listing is never part of a feedback field, and stopping at the fence is the safe direction to
+    be wrong in: the worst case is a few surviving feedback bullets, where reading *into* the
+    fence would eat the diagram. Outside a fence, the old boundaries stand."""
+    if fence[j]:
+        return True
+    return bool(_HEADING.match(lines[j]) or _HR.match(lines[j]))
+
+
 def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
     """Drop every feedback block from a body (frontmatter already removed). Returns (kept, stats)."""
     drop = [False] * len(lines)
+    fence = _fenced(lines)
     stats = {"h3": 0, "paragraph": 0}
     i = 0
     while i < len(lines):
         ln = lines[i]
+
+        if fence[i]:                       # inside a fence nothing is a field label
+            i += 1
+            continue
 
         if _H3_FEEDBACK.match(ln):
             # A slide-level H3 field: runs until the next heading (any level), `---`, a dedent, or
@@ -75,8 +123,7 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
             base = _indent(ln)
             j = i + 1
             while j < len(lines) and not (
-                _HEADING.match(lines[j])
-                or _HR.match(lines[j])
+                _ends_block(lines, fence, j)
                 or (_BULLET.match(lines[j]) and _indent(lines[j]) < base)
             ):
                 j += 1
@@ -92,11 +139,13 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
             # column 0 that is not a bullet — a heading, `---`, or prose.
             j = i + 1
             while j < len(lines):
+                if fence[j]:
+                    break
                 if _BLANK.match(lines[j]):
                     k = j
                     while k < len(lines) and _BLANK.match(lines[k]):
                         k += 1
-                    if k < len(lines) and _in_block(lines[k]):
+                    if k < len(lines) and not fence[k] and _in_block(lines[k]):
                         j = k
                         continue
                     break
@@ -117,28 +166,44 @@ def _strip_body(lines: list[str]) -> tuple[list[str], dict]:
 
 
 def _normalize(lines: list[str]) -> list[str]:
-    """Collapse blank runs to one, guarantee a blank line before every `---`, trim edge blanks."""
+    """Collapse blank runs to one, guarantee a blank line before every `---`, trim edge blanks.
+
+    Every rule here applies **outside fences only** (`_fenced`). Inside one the bytes are art or
+    source and pass through untouched, blank runs and dash rules included."""
+    fence = _fenced(lines)
     collapsed: list[str] = []
-    for ln in lines:
-        if _BLANK.match(ln):
-            if collapsed and _BLANK.match(collapsed[-1]):
+    cfence: list[bool] = []
+    for i, ln in enumerate(lines):
+        if fence[i]:
+            collapsed.append(ln)
+            cfence.append(True)
+        elif _BLANK.match(ln):
+            if collapsed and not cfence[-1] and _BLANK.match(collapsed[-1]):
                 continue
             collapsed.append("")            # normalize any whitespace-only line to empty
+            cfence.append(False)
         else:
             collapsed.append(ln)
+            cfence.append(False)
 
     # THE guard: a `---` thematic break must never sit directly under a non-blank line, or Markdown
-    # reads the pair as a setext H2 and the slide boundary is lost.
+    # reads the pair as a setext H2 and the slide boundary is lost. A closing fence counts as that
+    # non-blank line — a boundary right under one still needs its blank.
     guarded: list[str] = []
-    for ln in collapsed:
-        if _HR.match(ln) and guarded and not _BLANK.match(guarded[-1]):
+    gfence: list[bool] = []
+    for i, ln in enumerate(collapsed):
+        if not cfence[i] and _HR.match(ln) and guarded and not _BLANK.match(guarded[-1]):
             guarded.append("")
+            gfence.append(False)
         guarded.append(ln)
+        gfence.append(cfence[i])
 
-    while guarded and _BLANK.match(guarded[0]):
+    while guarded and not gfence[0] and _BLANK.match(guarded[0]):
         guarded.pop(0)
-    while guarded and _BLANK.match(guarded[-1]):
+        gfence.pop(0)
+    while guarded and not gfence[-1] and _BLANK.match(guarded[-1]):
         guarded.pop()
+        gfence.pop()
     return guarded
 
 

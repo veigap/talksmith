@@ -13,6 +13,42 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [0.99.0] — 2026-09-03
+
+Three defects reported from a subject repo's `talksmith_bugs.md`, fixed at the source.
+
+### Fixed
+
+- **The feedback stripper rewrote the inside of fenced blocks.** Deriving `final.md` collapsed
+  blank runs across the whole document, so the blank lines an ASCII diagram uses to separate its
+  bands — load-bearing art — were quietly closed up, and a dash rule drawn inside a drawing
+  matched the thematic-break guard and got a blank line inserted through the middle of it. The
+  same blindness read a `#` code comment as a heading. The stripper now treats a fence as one
+  opaque unit: nothing between an opening ``` or `~~~` and its close is touched, and no field
+  label, boundary or heading is recognised inside one.
+
+- **A monospace font that isn't installed drew every diagram proportionally, silently.** cairo
+  does not walk a CSS font stack — given `'DejaVu Sans Mono', monospace` on a machine without
+  DejaVu it takes the first name literally and falls back to its own default *sans*, so code
+  blocks, tables and token traces lose their alignment while the SVG stays valid, the PNG gets
+  written and every audit passes. It cost a deck of 28 diagrams, found by measuring glyph widths
+  by hand. The style rule no longer prescribes a family: `rasterize.py --check` now measures which
+  candidate actually draws monospaced on this machine and prints it as `mono-family:` for the
+  illustrator to use, refusing to start a batch when none does, and every rasterize re-checks the
+  families the SVG declared and warns by name when one is drawing proportional. A companion rule
+  covers the consequence of finally getting real monospace: hyphen runs touch, so `-->` and `---`
+  fuse into an unbroken bar and must be drawn as arrow geometry.
+
+### Changed
+
+- **A code panel now grows into the height the slide has spare.** The stylesheet's size was a hard
+  ceiling, so a slide carrying six lines of code projected them at the size chosen for one
+  carrying thirty — a screen of unused air and an example the back row cannot read. The fit is now
+  bidirectional against the room the layout actually left, bounded by a new `--cb-grow` token
+  (theme.css) that says how far past the authored size a panel may go: 1.5x for a panel that is
+  the slide, 1.25x for one supporting content beside it. Lower it to `1` to pin a deck's panels to
+  the sheet.
+
 ## [0.98.1] — 2026-09-01
 
 ### Fixed

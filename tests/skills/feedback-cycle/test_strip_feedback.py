@@ -36,8 +36,20 @@ def _check(name: str, src: str, want_contains: list[str], want_absent: list[str]
             if lines[j].strip() == "---":
                 scan_from = j + 1
                 break
+    # …and skip fenced blocks, where a `---` is a rule the author drew inside a diagram, not a
+    # slide boundary. The stripper is required to leave those alone, so the invariant must not
+    # demand a blank line above them.
+    infence = ""
     for i in range(scan_from, len(lines)):
-        if lines[i].strip() == "---" and i > 0 and lines[i - 1].strip() != "":
+        bare = lines[i].strip()
+        if infence:
+            if bare.startswith(infence) and set(bare) <= set(infence[0]):
+                infence = ""
+            continue
+        if bare.startswith("```") or bare.startswith("~~~"):
+            infence = bare[0] * 3
+            continue
+        if bare == "---" and i > 0 and lines[i - 1].strip() != "":
             ok = False
     print(f"{'PASS' if ok else 'FAIL'}  {name}")
     if not ok:
@@ -146,16 +158,82 @@ CASES.append((
     ["Presenter feedback", "drop this"],
 ))
 
+# ── fences are opaque ─────────────────────────────────────────────────────────────────────
+# The stripper's every pattern means something else inside a fence, and it used to apply them
+# anyway: blank runs inside an ```ascii block were collapsed (closing the gap between two bands of
+# a diagram) and a dash rule drawn in ASCII art matched `_HR`, so a blank line was inserted through
+# the middle of the drawing. Both were silent — `final.md` built, nothing errored, and the damage
+# only showed in the rendered picture.
+
+_ART = (
+    "## 1. Slide\n\n"
+    "```ascii\n"
+    "+--------+      +--------+\n"
+    "| PROMPT |      | MODEL  |\n"
+    "+--------+      +--------+\n"
+    "\n"
+    "\n"
+    "-----------------------------\n"
+    "\n"
+    "\n"
+    "   # not a heading\n"
+    "   ## Presenter feedback\n"
+    "```\n\n"
+    "### Presenter feedback\n"
+    "- [open] 2026-01-01 — \"tighten this\"\n"
+    "---\n"
+    "## 2. Next\n"
+)
+
+
+def _check_art() -> bool:
+    """The fenced block must survive byte for byte, and the field after it must still be swept."""
+    out = strip_feedback(_ART)
+    src_body = _ART.split("```ascii\n", 1)[1].split("\n```", 1)[0]
+    ok = True
+    if "```ascii\n" + src_body + "\n```" not in out:
+        ok = False
+    if "Presenter feedback\n- [open]" in out or "tighten this" in out:
+        ok = False
+    if "## 2. Next" not in out:
+        ok = False
+    print(f"{'PASS' if ok else 'FAIL'}  fenced_art_survives_verbatim")
+    if not ok:
+        print("  --- output ---")
+        print("  " + out.replace("\n", "\n  "))
+    return ok
+
+
+# The same block with nothing after it: the trailing-blank trim and the `---` guard both used to
+# reach inside the fence when it was the last thing in the file.
+CASES.append((
+    "fenced_dash_rule_is_not_a_slide_boundary",
+    "## 1. Slide\n\ntext\n\n```ascii\nA\n---\nB\n```\n",
+    ["```ascii\nA\n---\nB\n```"],
+    [],
+))
+
+# A `~~~` fence is a fence too, and a `#` inside one is a code comment, not a heading that could
+# end a sweep early.
+CASES.append((
+    "tilde_fence_is_opaque_too",
+    "## 1. Slide\n\n~~~python\n# step one\n\n\n# step two\n~~~\n\n"
+    "### Presenter feedback\n- [open] 2026-01-01 — \"note\"\n\n---\n## 2. Next\n",
+    ["~~~python\n# step one\n\n\n# step two\n~~~", "## 2. Next"],
+    ["Presenter feedback", "note"],
+))
+
 
 def main() -> int:
     failures = 0
     for name, src, want_contains, want_absent in CASES:
         failures += not _check(name, src, want_contains, want_absent)
+    failures += not _check_art()
     print()
     if failures:
         print(f"{failures} test(s) FAILED.")
         return 1
-    print(f"all {len(CASES)} strip-feedback tests pass.")
+    print(f"all {len(CASES) + 1} strip-feedback tests pass.")
     return 0
 
 

@@ -59,6 +59,89 @@ _INSTALL_HINT = (
 )
 
 _VIEWBOX_RE = re.compile(r'viewBox\s*=\s*"([^"]+)"')
+_FONT_RE = re.compile(r'font-family\s*=\s*"([^"]*)"')
+
+# Monospace families worth asking for, best first. There is no family present on every machine:
+# DejaVu ships with most Linux distributions and with **no** stock macOS, Andale and Courier New
+# ship with macOS and not with a bare Linux container. So the family is resolved per machine
+# rather than prescribed — see `resolve_mono_family`.
+#
+# `Menlo` is deliberately absent even though every macOS has it: it resolves, so nothing errors,
+# but its hyphen draws at near-full-em width, so `a-b` renders as `a–b` and a YAML `---` fuses
+# into a single rule. A diagram whose whole job is to quote a literal file then lies quietly.
+_MONO_CANDIDATES = (
+    "DejaVu Sans Mono",
+    "Liberation Mono",
+    "Noto Sans Mono",
+    "Andale Mono",
+    "Courier New",
+    "Nimbus Mono PS",
+)
+
+_PROBE_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="80" viewBox="0 0 1200 80">'
+    '<rect width="1200" height="80" fill="#ffffff"/>'
+    '<text x="4" y="56" font-family="{fam}" font-size="40" fill="#000000">{txt}</text></svg>'
+)
+
+
+def _ink_width(mod, family: str, text: str) -> float | None:
+    """How wide `text` actually draws in `family`, in pixels, as cairo draws it."""
+    import io
+    try:
+        png = mod.svg2png(bytestring=_PROBE_SVG.format(fam=family, txt=text).encode(),
+                          output_width=1200)
+        from PIL import Image
+        im = Image.open(io.BytesIO(png)).convert("L")
+        box = Image.eval(im, lambda v: 255 - v).getbbox()   # ink = anything darker than the page
+    except Exception:
+        return None
+    return None if box is None else float(box[2] - box[0])
+
+
+def renders_monospaced(mod, family: str) -> bool | None:
+    """Does `family` actually draw monospaced *here*? None when the question can't be answered.
+
+    cairo does not walk a CSS font stack the way a browser does: given
+    `font-family="'DejaVu Sans Mono', monospace"` on a machine without DejaVu it takes the first
+    name literally, fails to find it, and falls back to its own default sans — silently. Every
+    code block, table and token trace in the diagram then draws proportional, the columns stop
+    aligning, and nothing anywhere reports a problem. The SVG is valid, the PNG is written, the
+    aspect audit passes, and the defect is visible only to someone looking at the picture who
+    knows monospace was intended. That is the worst shape a bug can take, so this asks the
+    renderer directly instead of trusting the name.
+
+    The measurement is the definition: draw a run of the narrowest glyph and a run of the widest,
+    and compare how far each run spans. A monospaced face gives both runs the same advance, so
+    they differ only by one glyph's ink (a few percent). A proportional face draws the `M` run
+    three to four times wider than the `i` run.
+    """
+    thin = _ink_width(mod, family, "i" * 24)
+    wide = _ink_width(mod, family, "M" * 24)
+    if not thin or not wide:
+        return None
+    return (wide / thin) < 1.35
+
+
+def resolve_mono_family(mod) -> str | None:
+    """The first of `_MONO_CANDIDATES` that this machine actually draws monospaced."""
+    for fam in _MONO_CANDIDATES:
+        if renders_monospaced(mod, fam):
+            return fam
+    return None
+
+
+def _declared_mono_stacks(svg_text: str) -> list[str]:
+    """Every distinct `font-family` in the SVG that asks for monospace, in document order."""
+    seen, out = set(), []
+    for raw in _FONT_RE.findall(svg_text):
+        parts = [p.strip().strip("'\"") for p in raw.split(",") if p.strip()]
+        if not parts or parts[-1].lower() != "monospace" or len(parts) < 2:
+            continue                       # bare `monospace` is generic and always resolves
+        if parts[0] not in seen:
+            seen.add(parts[0])
+            out.append(parts[0])
+    return out
 
 
 def viewbox_ratio(svg_path: Path) -> float:
@@ -141,8 +224,34 @@ def rasterize(svg: Path, out: Path, width: int, tolerance: float = 0.02) -> int:
         out.unlink(missing_ok=True)
         return 2
 
+    warn_unresolved_mono(mod, svg)
     print(f"rasterized: {out} · {w}x{h} ({w/h:.2f}:1)")
     return 0
+
+
+def warn_unresolved_mono(mod, svg: Path) -> list[str]:
+    """Say so, loudly, when a monospace family the SVG asks for isn't drawing monospaced.
+
+    A warning and not a failure: the PNG on disk is the best this machine can draw, and refusing
+    to write it would leave the operator with nothing. But it must be *said* — this was found by
+    an illustrator measuring glyph widths by hand after 28 diagrams had already shipped with
+    every code block, table and token trace set in proportional type."""
+    try:
+        families = _declared_mono_stacks(svg.read_text(errors="replace"))
+    except Exception:
+        return []
+    bad = [f for f in families if renders_monospaced(mod, f) is False]
+    if not bad:
+        return []
+    have = resolve_mono_family(mod)
+    fix = (f"Use '{have}' instead — it draws monospaced here."
+           if have else "No candidate monospace family resolves on this machine; install one "
+                        "(e.g. `brew install --cask font-dejavu`).")
+    print(f"warning: {svg.name} asks for {', '.join(repr(f) for f in bad)} but cairo draws "
+          f"{'them' if len(bad) > 1 else 'it'} PROPORTIONALLY — the family isn't installed and "
+          f"cairo does not walk the rest of the stack. Every column in this diagram is misaligned. "
+          f"{fix}", file=sys.stderr)
+    return bad
 
 
 def check() -> int:
@@ -158,7 +267,15 @@ def check() -> int:
         print(f"failed: cairosvg unavailable — this interpreter cannot rasterize\n{_INSTALL_HINT}",
               file=sys.stderr)
         return 2
+    fam = resolve_mono_family(mod)
+    if fam is None:
+        print("failed: no monospace font resolves for cairo on this machine — every code block, "
+              "table and token trace would draw proportionally, silently. Install one first "
+              "(macOS: Andale Mono ships with the system; Linux: `apt install fonts-dejavu`).",
+              file=sys.stderr)
+        return 2
     print(f"ok: cairosvg available ({sys.executable})", file=sys.stderr)
+    print(f"mono-family: {fam}", file=sys.stderr)
     return 0
 
 

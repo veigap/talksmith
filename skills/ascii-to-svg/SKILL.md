@@ -77,7 +77,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    **Hoist inheritable attributes to the root — this step is output-token-bound.** Emitting the XML is the whole cost of the render; every byte you don't emit is time you don't spend. Declare `font-family` **once on the root `<svg>`** and never repeat it on each `<text>` — SVG inherits it down the tree, so the render is pixel-identical while the file gets meaningfully smaller. The same applies to any presentation attribute most children share (`font-size` when one size dominates, `fill` for the default ink): declare high, override only the exception.
 
-   - **Inheritance is by tree, not by document order** — the part that bites. An attribute may only be omitted when the element's nearest declaring *ancestor* supplies the same value. A `<tspan font-family="'DejaVu Sans Mono', monospace">` inside a `<text font-family="Helvetica, …">` **must keep its declaration** even when the root declares monospace — the tspan inherits from its parent `<text>`, not the root; dropping it silently reverts an inline code span to Helvetica, invisible in the XML.
+   - **Inheritance is by tree, not by document order** — the part that bites. An attribute may only be omitted when the element's nearest declaring *ancestor* supplies the same value. A `<tspan font-family="'<mono-family>', monospace">` inside a `<text font-family="Helvetica, …">` **must keep its declaration** even when the root declares monospace — the tspan inherits from its parent `<text>`, not the root; dropping it silently reverts an inline code span to Helvetica, invisible in the XML.
    - This is an authoring rule, not a cleanup — a post-processing pass cannot recover the seconds already spent emitting the redundant bytes.
 
    - Do **not** set `width="…"` / `height="…"` attributes on the root `<svg>` at values that disagree with the viewBox ratio. Either omit them entirely (consumers honor viewBox alone — preferred) or set them to the same numbers as the viewBox so there is one source of truth.
@@ -173,6 +173,17 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py --check
 ```
 
 Rasterizing is the *last* step of a render, so without this the answer arrived halfway through a batch, with SVGs already on disk and no PNG beside any of them — and the interpreter that matters is the one actually running the step, which on a machine with several is not always the one where `cairosvg` was installed (`--check` prints which one it used). The diagram-illustrator runs it once before dispatching.
+
+**`--check` also prints the monospace family to use, and that line is not optional.** cairo does not walk a CSS font stack: given `font-family="'DejaVu Sans Mono', monospace"` on a machine without DejaVu it takes the first name literally, fails, and falls back to its own default **sans** — so every code block, table and token trace in the diagram draws proportional, the columns stop aligning, and nothing reports a thing. The SVG is valid, the PNG is written, the aspect audit passes. It cost 28 diagrams once, found only by measuring glyph widths by hand.
+
+So `--check` measures instead of assuming — it draws a run of `i` and a run of `M` in each candidate and compares how far each run spans — and reports the first family that really is monospaced *here*:
+
+```
+ok: cairosvg available (/…/bin/python3)
+mono-family: Andale Mono
+```
+
+**Put that family first in every monospace stack you emit**, keeping the `, monospace` generic behind it. `--check` exits 2 when none resolves, and every ordinary rasterize re-checks the families the SVG actually declared and warns by name when one of them is drawing proportional.
 
 ## You cannot ask questions
 

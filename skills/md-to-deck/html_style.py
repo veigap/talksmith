@@ -1087,35 +1087,61 @@ function fitContent(cb){
   var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
-// A code panel carries the **whole** snippet, so the snippet is what has to give: shrink the
-// panel's type until the code fits the box CSS bounds it to (`.split .codebox` / `.smedia>.mcode`).
-// Like fitContent, this is a reflow measurement CSS can't express — font size changes the wrapping
-// that decides the height, so it iterates. The alternative was a line cap, which let the renderer
-// decide which of the author's lines the audience gets to see. Only ever shrinks: it resets to the
-// stylesheet's size first, so a re-fit after a resize can grow back to it but never past it.
+// A code panel carries the **whole** snippet, so the panel's type is what gives: it is sized to
+// the room the slide actually has, in **both** directions. Like fitContent, this is a reflow
+// measurement CSS can't express — font size changes the wrapping that decides the height, so it
+// iterates. The alternative was a line cap, which let the renderer decide which of the author's
+// lines the audience gets to see.
+//
+// Growth is the half that was missing. The stylesheet's size used to be a hard ceiling, so a slide
+// with six lines of code and no lead projected them at the size chosen for a slide with thirty —
+// a screen of unused air, and an example nobody in the back row can read. The size in the sheet is
+// a *starting point*, not a maximum: `--cb-grow` (theme.css) says how far past it this panel may
+// go, as a multiple, and the room the layout actually left decides where between the two it lands.
 function fitCode(cb){
   var pre=cb.querySelector('.cbcode'); if(!pre) return;
-  pre.style.fontSize='';                                  // the stylesheet's size is the ceiling
+  pre.style.fontSize=''; cb.style.maxHeight='';           // measure from the authored size
+  var base=parseFloat(getComputedStyle(pre).fontSize); if(!(base>0)) return;
+  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so every
+  // trial publishes the size it is trying: the room the code is measured against is then the room
+  // it will actually have.
+  var apply=function(px){ pre.style.fontSize=(px==null?'':px+'px');
+                          if(px==null) cb.style.removeProperty('--cb-fs');
+                          else cb.style.setProperty('--cb-fs', px+'px'); };
   // A body panel's CSS cap is a share of the *slide* (theme.css), which is a guess: the real room
   // it has is whatever the header left, and a two-line title leaves less than a one-line one. Ask
   // the layout instead. Without this the panel fits itself to the guess and fitContent then scales
   // the whole body down to the truth — the code shrinking twice, for one overflow.
-  cb.style.maxHeight='';
-  var cbody=cb.closest?cb.closest('.cbody'):null, cf=cb.closest?cb.closest('.cfit'):null;
+  var cbody=cb.closest?cb.closest('.cbody'):null, cf=cb.closest?cb.closest('.cfit'):null, avail=0;
   if(cbody&&cf){
-    var bs=getComputedStyle(cbody),
-        avail=cbody.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom);
+    var bs=getComputedStyle(cbody);
+    avail=cbody.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom);
     // whatever else shares `.cfit` (a top highlight band, the stat band) is owed its own room
     var others=0;
     [].forEach.call(cf.children, function(ch){ if(!ch.contains(cb)){ others++; avail-=ch.offsetHeight; } });
     avail-=others*(parseFloat(getComputedStyle(cf).gap)||0);   // the gaps those siblings introduce
-    if(avail>60) cb.style.maxHeight=avail+'px';
   }
-  // The title bar is chrome and sizes itself off the code (`--cb-fs` in theme.css), so every
-  // trial publishes the size it is trying: the room the code is measured against is then the room
-  // it will actually have.
-  fitType(pre, function(px){ pre.style.fontSize=(px==null?'':px+'px');
-                             if(px!=null) cb.style.setProperty('--cb-fs', px+'px'); });
+  if(!(avail>60)){                    // no measurable room (a panel outside the stage): shrink only
+    fitType(pre, apply);
+    return;
+  }
+  // Measure the panel's **natural** height against that room, which means lifting every max-height
+  // over it first — the sheet's own cap included. Asking `pre` whether it overflows can't answer
+  // the growth question: with the panel unbounded the code always fits itself, at any size.
+  var grow=parseFloat(getComputedStyle(cb).getPropertyValue('--cb-grow'));
+  cb.style.maxHeight='none';
+  var fits=function(px){ apply(px); return cb.offsetHeight<=avail+1; };
+  var lo=base*0.2, hi=base*(grow>1?grow:1), fit;
+  if(fits(hi)) fit=hi;                                    // the whole allowance fits: take it
+  else {
+    fit=lo;
+    // Binary search rather than a ratio: height is monotone in font size but *not* linear — a
+    // smaller type also unwraps long lines — so a ratio estimate lands well under the size that
+    // would have fitted. Sixteen halvings settle on the largest size that fits.
+    for(var k=0;k<16;k++){ var mid=(lo+hi)/2; if(fits(mid)){ fit=mid; lo=mid; } else hi=mid; }
+  }
+  apply(fit);
+  cb.style.maxHeight=avail+'px';      // the floor still clips rather than running off the slide
 }
 // A supporting table in a media column has the same problem and the same answer: `--cmp-fs`
 // (theme.css) sizes the whole strip, so shrinking that one token shrinks head, rows and cell

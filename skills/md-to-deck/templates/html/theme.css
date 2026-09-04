@@ -574,7 +574,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    Everything is still a token, so a deck style can repaint the panel without touching markup.
    The `.hljs-*` classes are highlight.js's output vocabulary (vendored, inlined, run in the
    page — see html_style.py "code panels"); this block is the only place their look is decided. */
-.codebox{--cb-bg:#1E1E1E;--cb-bar:#252526;--cb-fg:#D4D4D4;--cb-hair:#3C3C41;--cb-dim:#8A8A94;
+/* `--cb-grow` is how far past the authored size `fitCode` may take this panel when the slide has
+   room to spare, as a multiple of it. The size below is the size a *full* snippet wants; a short
+   one used to be projected at it anyway, leaving a screen of air and an example the back row
+   can't read. Raise it for a deck of small snippets, lower it to 1 to pin the panel to the sheet. */
+.codebox{--cb-grow:1.5;
+  --cb-bg:#1E1E1E;--cb-bar:#252526;--cb-fg:#D4D4D4;--cb-hair:#3C3C41;--cb-dim:#8A8A94;
   --t-com:#6A9955;--t-str:#CE9178;--t-num:#B5CEA8;--t-kw:#569CD6;--t-typ:#4EC9B0;
   --t-fn:#DCDCAA;--t-var:#9CDCFE;--t-del:#F14C4C;
   background:var(--cb-bg);color:var(--cb-fg);border-radius:1.6cqw;overflow:hidden;
@@ -734,9 +739,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    not a height: given the column outright, a four-line snippet drew a half-empty dark slab down
    the side of the slide. It takes the height its code needs and centres in the column. */
 .smedia>.mcode,.smedia>.mtable{margin-top:0;width:100%}
-.smedia>.mcode{max-height:100%;align-self:center;overflow:hidden}
 /* a panel standing beside content is a supporting exhibit, not the slide: it gives up type
-   size and chrome padding so the content it supports keeps its own. */
+   size and chrome padding so the content it supports keeps its own, and it is allowed less of
+   `--cb-grow`'s headroom for the same reason — an exhibit that outgrows the point it illustrates
+   has stopped supporting it. */
+.smedia>.mcode{max-height:100%;align-self:center;overflow:hidden;--cb-grow:1.25}
 .smedia>.mcode .cbcode{font-size:1.85cqw;padding:1.8cqw 2cqw}
 .smedia>.mcode .cbbar{padding:.8cqw 1.4cqw}
 .stage.d-banded>.smedia>:is(.mcode,.mtable){max-height:32cqw;overflow:hidden}
