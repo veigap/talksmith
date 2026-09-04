@@ -67,6 +67,47 @@ def check_harvest_source() -> list[str]:
     return bad
 
 
+def check_package(pptx: Path) -> list[str]:
+    """Package-level validity, checked on the saved file.
+
+    This is the gap that actually bit: a deck whose XML is well-formed, that python-pptx reads
+    back without complaint, and that PowerPoint still refuses with "the file format is invalid".
+    The cause was the section-agenda roadmap rows — in-deck anchors (`#sec-N`) emitted as
+    external hyperlink relationships, whose targets are not URIs. Seven slides' worth of dead
+    links took the entire 86-slide deck down with them, and nothing upstream of PowerPoint said
+    a word. So the invariants are asserted here, on the bytes that ship.
+    """
+    import posixpath
+    import zipfile
+
+    bad = []
+    with zipfile.ZipFile(pptx) as z:
+        names = set(z.namelist())
+        if z.testzip() is not None:
+            bad.append("the package is a corrupt zip")
+        for n in z.namelist():
+            if not n.endswith(".rels"):
+                continue
+            base = n[:n.rindex("/_rels/")] if "/_rels/" in n else ""
+            body = z.read(n).decode("utf-8", "replace")
+            for m in re.finditer(r'Target="([^"]+)"(\s+TargetMode="External")?', body):
+                target, external = m.group(1), bool(m.group(2))
+                if external:
+                    if not re.match(r"^(https?|mailto|ftp|file):", target, re.I):
+                        bad.append(f"{n}: external target {target!r} is not a URI")
+                    continue
+                cand = posixpath.normpath(posixpath.join(base, target)).lstrip("/")
+                if cand not in names:
+                    bad.append(f"{n}: relationship points at a missing part {cand}")
+        pres = z.read("ppt/presentation.xml").decode("utf-8", "replace")
+        m = re.search(r'<p:sldSz[^>]*cx="(\d+)"[^>]*cy="(\d+)"[^>]*/>', pres)
+        if not m or (m.group(1), m.group(2)) != ("12192000", "6858000"):
+            bad.append("presentation.xml does not declare a 16:9 slide")
+        elif 'type="screen16x9"' not in m.group(0):
+            bad.append("the slide size measures 16:9 but declares another aspect")
+    return bad
+
+
 def check_emitted_deck(pptx: Path, geom: dict) -> list[str]:
     """Structural parity between the display list and the emitted file."""
     from pptx import Presentation
@@ -134,6 +175,7 @@ def main() -> int:
             try:
                 geom = export_pptx.harvest(deck)
                 export_pptx.build(geom, Path(td), out)
+                failures += check_package(out)
                 failures += check_emitted_deck(out, geom)
             except Exception as e:
                 failures.append(f"the export failed: {e}")

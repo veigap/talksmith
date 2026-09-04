@@ -1,37 +1,69 @@
 ---
 name: talksmith:md-to-deck
-description: Render a Talk's `final.md` to a presentation — a native `.pptx` (styles `pptx-strict` / `pptx-free-form`, Cowork-only) or a code-rendered HTML/Reveal.js deck (`html-strict`, Cowork-independent; also the Step-5.5 live view from `draft.md` via `--draft`). Optional Step 7 of the workflow. The `style:` invocation parameter is mandatory — the skill fails render-blocking without it.
+description: Render a Talk's `final.md` to a presentation. One render path — a code-rendered HTML/Reveal.js deck — plus optional PDF and editable `.pptx` exports measured from it. Optional Step 7 of the workflow; also the Step-5.5 live view from `draft.md` via `--draft`. No Cowork dependency.
 ---
 
-# md-to-deck — render `final.md` to a presentation (`.pptx` or HTML)
+# md-to-deck — render `final.md` to a presentation
 
-This skill turns a Talk's cleaned `final.md` into a presentation. It has **two render paths**, chosen by the mandatory `style:` invocation parameter:
+This skill turns a Talk's cleaned `final.md` into a presentation. There is **one render** and
+**two exports measured from it**:
 
-- **Path A — native `.pptx`** (`pptx-strict`, `pptx-free-form`). Authored through Anthropic's official `pptx` skill (registered in the session as `pptx`). **Cowork-only** (that skill must be in the session registry). Starts from a style `base-template.pptx`, runs a build → audit → (strict) critique loop.
-- **Path B — `html-strict`.** A styled **HTML / Reveal.js** deck rendered by code ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)). **Cowork-independent** — needs only Python + `jinja2`. No base template, no native skill, no deck-parsing audits. Also the **live in-progress view** (from `draft.md`, `--draft`) the orchestrator auto-fires at Step 5.5.
+- **RENDER — the HTML deck.** A styled **HTML / Reveal.js** deck built by code
+  ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)) from the structured
+  `slide-model.json`. Needs only Python + `jinja2`. This is also the **live in-progress view**
+  (from `draft.md`, `--draft`) the orchestrator auto-fires at Step 5.5. **It is the deliverable
+  and the source of truth for how a slide looks.**
+- **EXPORT — PDF and `.pptx`, on request.** Both are *derived from the rendered deck*, not
+  re-specified: a headless browser lays the deck out and
+  [`export_pdf.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pdf.py) prints it, while
+  [`export_pptx.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pptx.py) measures the
+  laid-out page and rebuilds it as native PowerPoint shapes — real, editable text, not pictures
+  of slides. Needs Chrome (or any Chromium); the `.pptx` also needs `python-pptx` and Pillow.
 
-All three modes classify each slide against the shared catalog [`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) and render the matched template; the universal invariant (labeled enumerations → cards, never plain bullets) holds in every mode. Per-mode phase config is the matrix in [`render-modes.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/render-modes.md) — the single source of truth; this file describes the *mechanics*, not that config.
+> **Why "measured" and not "rendered again".** The `.pptx` used to be authored by an LLM
+> following a 1143-line prose spec that restated every geometry rule in EMU, checked by five
+> OOXML audits. A card's corner radius had to be changed twice, in two languages, and verified
+> by a third. Now there is one layout engine and the exports cannot disagree with it.
 
-## Style resolution — mandatory, no default
+Every slide is classified against the shared catalog
+[`slide-templates.md`](${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/slide-templates.md) and rendered
+as the matched template; the universal invariant (labeled enumerations → cards, never plain
+bullets) always holds.
 
-Every render begins by reading the `style:` parameter the orchestrator passed in (it asks the presenter at every Step 7 entry — see [`orchestrator.md`](${CLAUDE_PLUGIN_ROOT}/orchestrator.md) → *Step 7 step 1*). Allowed values: `pptx-strict`, `pptx-free-form`, `html-strict`. `final.md`/`draft.md` carry no `style:` field — the same content can be rendered in any mode at any time.
+## What a render is asked for — two independent parameters
 
-The resolved style names a self-contained spec (and, for Path A, a base template):
+Neither is mandatory, and neither is written into `draft.md` or `final.md`: the same content can
+be rendered any way at any time.
 
-```
-<spec_path>          = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/pptx-prompt.md   # all modes
-<base_template_path> = ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/<style>/base-template.pptx # Path A only
-```
+| Parameter | Values | Default |
+|---|---|---|
+| `formats:` | `html` (always produced) plus any of `pdf`, `pptx` | `html` |
+| `style:` | the deck's visual skin: `default`, or any file under [`templates/html/styles/`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/templates/html/styles/) — currently `business`, `editorial`, `forest`, `ocean`, `sunset`, `terminal` | `default` |
+| `theme:` | `light`, `dark` | `light` |
 
-**If `style:` is absent or empty, fail render-blocking** — do not guess or default:
+**The skin list is read from disk, never hardcoded** — `html_style.py` discovers `styles/*.css`
+at import and the deck's own style button is built from the same list, so adding a file adds a
+value here, in the browser, and in both exports at once. A skin overrides design *tokens* only
+(colour, type, background); the layout is identical in all of them, which is why the choice is
+cheap and reversible.
 
-```
-[pptx 0/8] FAILED: style: invocation parameter missing — the orchestrator must ask the presenter and pass the answer (see ${CLAUDE_PLUGIN_ROOT}/orchestrator.md Step 7 step 1).
-```
+**`style:` and `theme:` are also runtime toggles in the HTML deck** (the style and theme
+buttons). A render pins them for the *exports*, which are static files and must commit to one
+look; the HTML deliverable keeps both toggles live regardless of what was chosen here.
 
-If the value is present but is not a directory under `config/pptx-styles/`, or a required path is missing, fail render-blocking naming the offending value/path (the enum drifted from disk). Silent fallback to a default was the bug; the loud failure is the fix.
+An unknown `style:` fails render-blocking, naming the value and listing what is on disk — a
+silent fallback to `default` would ship the wrong-looking deck without saying so.
 
-**Reads `final.md`, never `draft.md` — one exception.** `final.md` is the cleaned source (image refs inlined, `Presenter feedback` stripped by Polish). The **only** file-source exception is `html-strict --draft` (the Step-5.5 live view), which reads the in-progress `draft.md` *by design*. No mode ever modifies `draft.md` or `final.md`; all transformation happens in memory or in `output/…` artifacts.
+> **Migrating from the old `style:` enum.** `style: html-strict` is accepted as a deprecated
+> alias for `default` (one warning line). `style: pptx-strict` / `pptx-free-form` **fail
+> loudly**, naming the replacement (`formats: html,pptx`) — those two named a whole different
+> renderer, and quietly remapping them would hand back a deck that looks nothing like what was
+> asked for.
+
+**Reads `final.md`, never `draft.md` — one exception.** `final.md` is the cleaned source (image
+refs inlined, `Presenter feedback` stripped by Polish). The **only** file-source exception is
+`--draft` (the Step-5.5 live view), which reads the in-progress `draft.md` by design. No render
+ever modifies `draft.md` or `final.md`; all transformation happens in memory or under `output/`.
 
 ## When to use
 

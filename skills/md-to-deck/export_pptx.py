@@ -285,6 +285,50 @@ def decode_img(node: dict) -> bytes | None:
 _ALIGN = {"left": PP_ALIGN.LEFT, "start": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER,
           "right": PP_ALIGN.RIGHT, "end": PP_ALIGN.RIGHT, "justify": PP_ALIGN.JUSTIFY}
 
+# What may legally become an external hyperlink relationship.
+_EXTERNAL = re.compile(r"^(https?|mailto|ftp|file):", re.I)
+
+_JUMP = "ppaction://hlinksldjump"
+_SLIDE_RT = ("http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide")
+
+
+def _slide_jump(run, index: int) -> None:
+    """Turn an in-deck anchor into a real "go to slide" click.
+
+    The section-agenda's roadmap rows are the deck's one piece of genuine navigation, and they
+    are anchors (`#sec-N`) that a `.pptx` cannot follow as URLs. PowerPoint's own equivalent is a
+    slide-jump action, which needs an *internal* relationship to the target slide part — so the
+    link keeps working instead of being dropped.
+
+    Deferred: the target slide may not exist yet when the run is written, so the jump is recorded
+    and wired up once every slide is in the deck (`_wire_jumps`).
+    """
+    _PENDING.append((run, index))
+
+
+_PENDING: list = []
+
+
+def _wire_jumps(prs) -> int:
+    slides = list(prs.slides)
+    wired = 0
+    for run, index in _PENDING:
+        if not 0 <= index < len(slides):
+            continue
+        try:
+            part = run.part
+            rid = part.relate_to(slides[index].part, _SLIDE_RT)
+            rPr = run.font._rPr
+            link = rPr.makeelement(qn("a:hlinkClick"),
+                                   {qn("r:id"): rid, "action": _JUMP})
+            # `a:hlinkClick` is the last child of `a:rPr` in the schema sequence.
+            rPr.append(link)
+            wired += 1
+        except Exception:
+            continue
+    _PENDING.clear()
+    return wired
+
 
 def add_box(slide, n: dict) -> None:
     w, h = n["w"], n["h"]
@@ -409,11 +453,18 @@ def add_text(slide, n: dict) -> None:
                 f._rPr.set("strike", "sngStrike")
             if m.get("spc"):
                 f._rPr.set("spc", str(int(round(m["spc"] * sc * 100 * PT_PX))))
-            if m.get("href"):
+            # Only a real external scheme may become a hyperlink relationship. A fragment or a
+            # bare path produces a relationship with a non-URI target, and PowerPoint rejects
+            # the whole package as "file format is invalid" — one dead link on one slide taking
+            # the entire deck down with it.
+            href = m.get("href") or ""
+            if href and _EXTERNAL.match(href):
                 try:
-                    run.hyperlink.address = m["href"]
+                    run.hyperlink.address = href
                 except Exception:
                     pass
+            elif m.get("jump") is not None:
+                _slide_jump(run, int(m["jump"]))
 
 
 def add_picture(slide, n: dict, blob: bytes) -> None:
@@ -428,6 +479,9 @@ def add_picture(slide, n: dict, blob: bytes) -> None:
 def build(data: dict, workdir: Path, out: Path) -> tuple[int, list[str]]:
     prs = Presentation()
     prs.slide_width, prs.slide_height = Emu(SLIDE_W), Emu(SLIDE_H)
+    # python-pptx's default template declares `type="screen4x3"`, and setting the dimensions
+    # does not update it — leaving the package claiming one aspect while measuring another.
+    prs._element.find(qn("p:sldSz")).set("type", "screen16x9")
     blank = prs.slide_layouts[6]
 
     # Every SVG is rasterized at the largest size any slide paints it, so a diagram reused small
@@ -464,9 +518,35 @@ def build(data: dict, workdir: Path, out: Path) -> tuple[int, list[str]]:
         for w in s.get("warnings") or []:
             warnings.append("slide %d: %s" % (s["i"] + 1, w))
 
+    jumps = _wire_jumps(prs)
+    if jumps:
+        sys.stderr.write("[pptx] %d roadmap links wired as slide jumps\n" % jumps)
+
     out.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(out))
+    _verify_package(out)
     return len(data["slides"]), warnings
+
+
+def _verify_package(path: Path) -> None:
+    """Refuse to hand over a file PowerPoint will not open.
+
+    Everything here is well-formed XML that python-pptx accepts and that opens fine when read
+    back with python-pptx — and still gets rejected at the package level. That gap is exactly
+    where a broken export hides, so the check runs on the saved file rather than on the model.
+    """
+    import zipfile
+    with zipfile.ZipFile(path) as z:
+        for name in z.namelist():
+            if not name.endswith(".rels"):
+                continue
+            body = z.read(name).decode("utf-8", "replace")
+            for m in re.finditer(r'Target="([^"]+)"\s+TargetMode="External"', body):
+                if not _EXTERNAL.match(m.group(1)):
+                    raise RuntimeError(
+                        "%s links to %r as an external target, which is not a URI — PowerPoint "
+                        "refuses the whole package for this. (Fix the hyperlink handling in "
+                        "add_text.)" % (name, m.group(1)))
 
 
 # ---------------------------------------------------------------------------------------------

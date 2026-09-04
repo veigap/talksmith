@@ -59,6 +59,17 @@
   /* ---- geometry ---------------------------------------------------------------------- */
   function px(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
 
+  // Slide index of an in-deck anchor target, or null. Reveal's own `#sec-N` deep links point at
+  // the section-agenda sections, which are ordinary slides in the deck order.
+  var _secs = null;
+  function slideIndexOf(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    if (!_secs) _secs = [].slice.call(document.querySelectorAll('.reveal .slides section.slide'));
+    var i = _secs.indexOf(el);
+    return i < 0 ? null : i;
+  }
+
   // `getBoundingClientRect` is post-transform, so rects need no correction. `getComputedStyle`
   // font-size is NOT: a 24px font inside a 0.62 scale paints at 14.9px. Accumulate the ancestor
   // scale so the emitter can multiply. (The reference deck scales down to 0.62 in the wild.)
@@ -131,7 +142,8 @@
       col: color(cs.color),
       op: parseFloat(cs.opacity),
       tt: cs.textTransform,
-      href: (inherited && inherited.href) || null
+      href: (inherited && inherited.href) || null,
+      jump: (inherited && inherited.jump) || null
     };
   }
 
@@ -150,8 +162,21 @@
       var cs = getComputedStyle(n);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       var m = marks(cs, inh);
-      if (n.tagName === 'A' && n.getAttribute('href')) m.href = n.getAttribute('href');
-      else m.href = inh.href;
+      if (n.tagName === 'A' && n.getAttribute('href')) {
+        var href = n.getAttribute('href');
+        if (href.charAt(0) === '#') {
+          // An in-deck anchor: the section-agenda's roadmap rows link to `#sec-N`. A `.pptx`
+          // cannot follow a URL fragment, but it can jump to a slide — so resolve the anchor to
+          // its slide index here and let the exporter emit a real jump. Emitting the fragment as
+          // an external link instead produces a relationship with a non-URI target, which is a
+          // package PowerPoint refuses to open at all.
+          m.href = null;
+          m.jump = slideIndexOf(href.slice(1));
+        } else {
+          m.href = href;
+          m.jump = null;
+        }
+      } else { m.href = inh.href; m.jump = inh.jump || null; }
       // Marks are inherited, not reset: <b><i>x</i></b> must keep both.
       m.b = m.b || inh.b; m.i = m.i || inh.i; m.u = m.u || inh.u; m.s = m.s || inh.s;
       runsOf(n, m, out);
