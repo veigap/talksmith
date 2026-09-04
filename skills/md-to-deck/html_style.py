@@ -1051,6 +1051,35 @@ CSS = (_HERE / "templates" / "html" / "theme.css").read_text(encoding="utf-8")
 # the tokens, the fonts and the light/dark button are shared with the deck rather than restated.
 INDEX_CSS = (_HERE / "templates" / "html" / "index.css").read_text(encoding="utf-8")
 
+# ---- export path (`?export=…`) -------------------------------------------------------------
+# The geometry harvester: under `?export=…` it walks the laid-out print view and parks a JSON
+# display list in the DOM for `export_pptx.py` to read back through `chrome --dump-dom`. Its own
+# file, read at import like the theme — see templates/html/harvest.js for the contract.
+# `.replace` is a hard requirement, not caution: an inline <script> block ends at the first
+# closing script tag *anywhere* in its text, comments included, and the browser then reports a
+# syntax error on the leftover markup while the harvester silently never registers.
+HARVEST_JS = ((_HERE / "templates" / "html" / "harvest.js")
+              .read_text(encoding="utf-8").replace("</scr" + "ipt", "<\\/scr" + "ipt"))
+
+# A `.pptx` cannot portably embed a font, so the exported deck names fonts every machine has.
+# Naming a font other than the one the geometry was MEASURED with is the bug this avoids: the
+# fit pass binary-searches type size, and Arial's metrics are not IBM Plex's, so a block measured
+# in Plex and re-wrapped by PowerPoint in Arial breaks in the wrong place or overflows. So the
+# substitution happens *in the browser, before layout* — the harvest measures Arial geometry and
+# PowerPoint reproduces it with no drift. Overriding the two tokens reaches every text surface:
+# nothing in theme.css names a family directly, and this rule matches the deck-style skins'
+# specificity while coming later in source order, so it wins over their overrides too.
+# ONE family per token, never a stack. A stack would let Chrome fall through to face #2 while
+# the exporter writes face #1 into the file — reintroducing exactly the measure/emit divergence
+# this whole mechanism exists to remove. With a single family the harvest reports the family that
+# was actually used, and the exporter writes back what the harvest reported.
+_EXPORT_FONT_CSS = (':root[data-export-fonts]{--sans:Arial;--mono:"Courier New";}')
+# Set as an attribute from an early script (not a media query) so it lands before Reveal lays
+# out and before fitAll() measures. `export=pptx-fonts` is the opt-out for a raw-metric harvest.
+_EXPORT_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('export');"
+                 "if(q&&q!=='raw')document.documentElement.setAttribute('data-export-fonts','1');"
+                 "}catch(e){}})();")
+
 # Reveal.js configuration — navigation, scaling, transitions, PDF export, speaker notes all
 # handled by Reveal. The ONLY custom code is fitContent(): a per-slide content-fit (scale .cfit
 # to fill width + fit height), which Reveal has no equivalent for and CSS can't do (reflow).
@@ -1347,7 +1376,10 @@ _PDF_SWITCH = ("(function(){var btn=document.querySelector('[data-deck-pdf]');"
                "var s=document.documentElement.getAttribute('data-deck-style');"
                "var u=location.pathname+'?print-pdf&deck-theme='+t+(s?'&deck-style='+s:'');"
                "var w=window.open(u,'_blank');if(!w)location.href=u;});})();")
+# The geometry harvest rides `?print-pdf` (it needs the print view's all-slides-laid-out
+# geometry), so it must not also trip the print dialog — stand down whenever `?export=` is set.
 _PDF_AUTOPRINT = ("(function(){if(!/print-pdf/.test(location.search))return;"
+                  "if(/[?&]export=/.test(location.search))return;"
                   "if(window.Reveal&&Reveal.on)Reveal.on('pdf-ready',function(){"
                   "setTimeout(function(){window.print();},200);});})();")
 # a document sheet with a down arrow.
@@ -1446,9 +1478,11 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<style>{reveal_css}</style>\n'
         f'<style>{CSS}</style>\n'
         f'<style>{STYLE_CSS}</style>\n'
+        f'<style>{_EXPORT_FONT_CSS}</style>\n'
         f'<script>{_THEME_EARLY}</script>\n'
         f'<script>{_ANIM_EARLY}</script>\n'
         f'<script>{_STYLE_EARLY}</script>\n'
+        f'<script>{_EXPORT_EARLY}</script>\n'
         '</head>\n'
         '<body>\n'
         f'<div class="reveal"><div class="slides">{body_html}</div></div>\n'
@@ -1474,6 +1508,10 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{_FULL_SWITCH}</script>\n'
         f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
+        # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what
+        # re-runs the fit pass for the print view. Measuring before that reports pre-fit
+        # geometry — wrong on exactly the slides that needed fitting.
+        f'<script>{HARVEST_JS}</script>\n'
         '</body>\n'
         '</html>\n'
     )
