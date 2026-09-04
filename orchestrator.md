@@ -336,20 +336,25 @@ Proceed to Step 7 automatically.
 
 The deck is polished — offer to render it now, or skip to wrap-up (**Step 8, Learnings**). Skipping is fine: the source is style-agnostic, so the presenter can come back and render any style later. Whether they render or skip, proceed to Step 8 afterward.
 
-**Prerequisite:** the `pptx-strict` and `pptx-free-form` styles need Claude Cowork (native `pptx` skill in registry); if it's missing, those two can't run (no CLI fallback) — but the **`html-strict`** style is Cowork-independent (code-rendered), so still offer it. If Cowork is missing, tell the presenter the `.pptx` styles are unavailable here and offer `html-strict`.
+**No prerequisite for the deck itself** — the HTML render is code and runs anywhere Python does. Only the two *exports* need a browser (Chrome or any Chromium), and the `.pptx` also needs `python-pptx`. If a browser is missing, say so when offering the exports and render the deck anyway; the deck is the deliverable and the exports are derived from it.
 
-1. **Ask the style — mandatory once the presenter chooses to render, no default, no exceptions** (the only intervention; render runs end-to-end after):
+1. **Ask what to produce.** Two short questions, both with a default, both skippable. This is the only intervention; the render runs end to end afterward.
 
-   > Render this Talk as which format? *(or say "skip" to go straight to wrap-up)*
-   > 1. **pptx-strict — Style Guided** — spec-driven PowerPoint, critiqued for content, look, arrangement, and template conformance (up to 3 review passes). Predictable, polished. *(Cowork)*
-   > 2. **pptx-free-form — Free with minimal guidance** — the renderer designs its own PowerPoint layout in a single pass; you review the deck afterward. Not bound to a template. *(Cowork)*
-   > 3. **html-strict — Static site** — a shareable, presentable **Reveal.js deck** in the strict style (full styling — cards, icons, callouts — a cover slide, full-screen present mode, speaker notes with `s`, and PDF export via `?print-pdf`). No `.pptx`. Deterministic and **Cowork-independent**.
+   > The deck's ready. What should I produce? *(or say "skip" to go straight to wrap-up)*
+   > 1. **The HTML deck** — shareable, presentable, full-screen present mode, speaker notes with `s`, light/dark and seven looks on a button. *(default)*
+   > 2. **HTML + PDF** — the same deck plus a printable PDF for handouts. One page per slide, vector, selectable text.
+   > 3. **HTML + PowerPoint** — plus an editable `.pptx`: real text boxes you can retype, not pictures of slides.
+   > 4. **All three.**
 
-   **The presenter picks a style, or skips.** If they render, do not default, do not assume the prior render's style, do not skip the ask. If the presenter equivocates ("either", "you choose"), re-ask with a one-line framing of what each implies for *this* Talk — the skill will refuse to run without an explicit style and the orchestrator does not get to guess. (The in-progress **live view** is the same `html-strict` renderer reading `draft.md` — auto-fired at Step 5.5, not chosen here.)
+   Then, only if they render and only if they have not already named a look:
 
-   **The style is a render-time parameter, not a content attribute** — it lives only in the Step-7 invocation. Never write it to `draft.md` or `final.md` frontmatter; those files are style-agnostic so the same content can be rendered in any style at any time. A second Step-7 run on the same Talk can pick a different style with no migration.
+   > And which look? *(enter for the default)* — **default** · **business** · **editorial** · **forest** · **ocean** · **sunset** · **terminal**. Colour and type only; the layout is the same in all seven, and the HTML deck keeps all of them on a button. The PDF and `.pptx` are static, so they get whichever one you pick here.
 
-2. **Dispatch** [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) on `final.md` **with `style: <answer>` as an invocation parameter** (mandatory — the skill fails render-blocking without it). The skill owns everything else: pre-processing, the render flow (per-mode cycle counts are its concern), build-time audits, internal critique iterations, and the stage events that drive the stage rail.
+   **Both questions have a default and neither blocks.** If the presenter equivocates ("you choose"), take the default and say which you took — unlike the old three-way style question, nothing here changes the machinery, so there is no wrong answer to protect them from. What is *not* guessed is an unrecognized skin name: the skill fails loudly and lists what is on disk rather than quietly rendering the default look.
+
+   **These are render-time parameters, not content attributes** — they live only in the Step-7 invocation. Never write them to `draft.md` or `final.md`; those files are look-agnostic, so the same content can be rendered any way at any time, and a second Step-7 run can pick differently with no migration. (The in-progress **live view** is the same renderer reading `draft.md` — auto-fired at Step 5.5, not chosen here.)
+
+2. **Dispatch** [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) on `final.md` with `formats:` and `style:` as invocation parameters (both optional — `formats: html`, `style: default`). The skill owns everything else: the FILL step and its model audits, the render, the exports, and the stage events that drive the stage rail.
 
    **The `.pptx` half of that skill is a separate file and stays unread on an HTML render.** `SKILL.md` resolves the style first and loads [`pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) — base templates, Keynote font rules, the strict critique loop — only on `pptx-strict` / `pptx-free-form`. Never pre-load it "in case": `html-strict` is the style that fires most (every Step-5.5 live view), and it has no use for any of it.
 
