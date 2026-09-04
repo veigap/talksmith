@@ -222,23 +222,26 @@ def _encode(im) -> bytes:
     """Encode one rasterized graphic, choosing the format from what the graphic actually is.
 
     Both branches earn their place. Icons and ASCII diagrams are flat line art whose only extra
-    shades are anti-aliasing, and a 256-colour palette PNG is faithful for those and ~20x
-    smaller. But an atmospheric aside is a smooth gradient, and quantizing one bands it visibly
-    — so anything with real tonal range keeps its full colour and, when it carries no
-    transparency, goes to JPEG, which is what smooth gradients compress well as. Guessing one
-    format for both turned a 9.3MB export into either a 5MB one or a banded one.
+    shades are anti-aliasing, so reducing them to 256 colours makes the PNG compress ~20x better
+    at no visible cost. But an atmospheric aside is a smooth gradient, and quantizing one bands
+    it visibly, so anything with real tonal range keeps its full colour and, when it carries no
+    transparency, goes to JPEG — which is what gradients compress well as.
+
+    **Reduced-colour art is still written as RGBA, never as a palette PNG.** A palette image
+    stores transparency as a `tRNS` table rather than a real alpha channel, which is the kind of
+    PNG variant that trips importers; and for the icons that dominate this deck the RGBA file is
+    actually the *smaller* of the two anyway. Likewise the JPEGs are baseline, not progressive:
+    the saving is negligible and the compatibility is not.
     """
     buf = io.BytesIO()
     try:
         rgba = im.convert("RGBA")
-        flat = rgba.getcolors(4096) is not None
-        if flat:
-            rgba.quantize(colors=256, method=Image.Quantize.FASTOCTREE).save(
+        if rgba.getcolors(4096) is not None:                     # flat line art
+            rgba.quantize(colors=256, method=Image.Quantize.FASTOCTREE).convert("RGBA").save(
                 buf, "PNG", optimize=True)
             return buf.getvalue()
-        alpha = rgba.getchannel("A")
-        if alpha.getextrema()[0] >= 250:          # fully opaque: no alpha channel to preserve
-            rgba.convert("RGB").save(buf, "JPEG", quality=82, optimize=True, progressive=True)
+        if rgba.getchannel("A").getextrema()[0] >= 250:          # opaque tonal image
+            rgba.convert("RGB").save(buf, "JPEG", quality=82, optimize=True, progressive=False)
             return buf.getvalue()
     except Exception:
         pass
