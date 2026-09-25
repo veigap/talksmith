@@ -1076,8 +1076,17 @@ HARVEST_JS = ((_HERE / "templates" / "html" / "harvest.js")
 _EXPORT_FONT_CSS = (':root[data-export-fonts]{--sans:Arial;--mono:"Courier New";}')
 # Set as an attribute from an early script (not a media query) so it lands before Reveal lays
 # out and before fitAll() measures. `export=pptx-fonts` is the opt-out for a raw-metric harvest.
-_EXPORT_EARLY = ("(function(){try{var q=new URLSearchParams(location.search).get('export');"
+#
+# The same early script also drives `requestAnimationFrame` off timers in the print view. Reveal
+# builds that view by moving every slide into detached page wrappers and awaiting a frame before
+# putting them back — and headless Chrome under `--virtual-time-budget` (both exports) advances
+# timers without painting, so on a big deck the frame never came: the PDF printed one page and the
+# harvest found zero slides, intermittently and without an error. A print view animates nothing,
+# so a timer-driven frame costs nothing there and makes the build deterministic.
+_EXPORT_EARLY = ("(function(){try{var p=new URLSearchParams(location.search),q=p.get('export');"
                  "if(q&&q!=='raw')document.documentElement.setAttribute('data-export-fonts','1');"
+                 "if(p.has('print-pdf'))window.requestAnimationFrame=function(cb){"
+                 "return setTimeout(function(){cb(performance.now());},16);};"
                  "}catch(e){}})();")
 
 # Reveal.js configuration — navigation, scaling, transitions, PDF export, speaker notes all
@@ -1113,7 +1122,8 @@ function fitContent(cb){
   if(!fits(1)){ var lo=0.35, hi=1; s=lo;
     for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ s=mid; lo=mid; } else { hi=mid; } } }
   cf.style.width=(rw/s)+'px';
-  var vh=cf.scrollHeight*s; cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
+  var vh=cf.scrollHeight*s;
+  if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
 // A code panel carries the **whole** snippet, so the panel's type is what gives: it is sized to
@@ -1170,6 +1180,7 @@ function fitCode(cb){
     for(var k=0;k<16;k++){ var mid=(lo+hi)/2; if(fits(mid)){ fit=mid; lo=mid; } else hi=mid; }
   }
   apply(fit);
+  if(cb.offsetHeight>avail+1) flagOverflow(cb, 'code');
   cb.style.maxHeight=avail+'px';      // the floor still clips rather than running off the slide
 }
 // A supporting table in a media column has the same problem and the same answer: `--cmp-fs`
@@ -1206,7 +1217,19 @@ function fitCover(st){                       // full-bleed text slides (quote/st
   var h=cf.scrollHeight;
   if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
 }
+// Every fit above has a floor, and past it content is clipped — rows, lines, whole bullets gone
+// from the projected slide. That must never be silent: the slide is marked `data-overflow` (and
+// logged), and the exports read the mark off the measured page and name the slide. The cure is
+// editorial — split the slide in `final.md` — so the render reports it rather than guessing a cut.
+function flagOverflow(el, what){
+  var sec=el.closest?el.closest('section.slide'):null; if(!sec) return;
+  var had=sec.getAttribute('data-overflow');
+  sec.setAttribute('data-overflow', had&&had.indexOf(what)<0?had+' '+what:(had||what));
+  if(window.console&&console.warn) console.warn('[deck] content clipped ('+what+') on slide:',
+    (sec.querySelector('.stitle')||sec).textContent.trim().slice(0,80));
+}
 function fitAll(scope){ var r=(scope||document);
+  r.querySelectorAll('.reveal .slides section[data-overflow]').forEach(function(s){ s.removeAttribute('data-overflow'); });
   // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
   // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
   // the slide no longer has. Natural layout first, then code type, then the body scale — each

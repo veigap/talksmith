@@ -194,7 +194,7 @@
           "body": "You talk to Talksmith in chat; it keeps draft.md / final.md as the single source of truth."
         },
         {
-          "body": "The live HTML preview and the final render are optional extras."
+          "body": "The live HTML preview is optional; so are the PDF and .pptx you can export from the finished deck."
         }
       ],
       "notes": "The shape of the workflow: setup happens once per talk (profile the audience, frame the thesis, collect and compile sources into the corpus); the middle is a loop (draft, review with inline feedback, repeat until right); rendering comes last and is optional. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.",

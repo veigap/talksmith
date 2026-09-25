@@ -586,6 +586,10 @@
         var cs = getComputedStyle(sec);
         var br = sec.getBoundingClientRect();
         var nodes = [], warn = [];
+        // fitAll marks a slide whose content still overflows at the floor scale (html_style.py
+        // → flagOverflow): what the exports draw is then missing content, so say which slide.
+        var over = sec.getAttribute('data-overflow');
+        if (over) warn.push('content clipped (' + over + ') — does not fit even at the minimum scale; split the slide in final.md');
         var clip = {x: 0, y: 0, w: px(br.width), h: px(br.height)};
         for (var c = 0; c < sec.children.length; c++) {
           walk(sec.children[c], br.x, br.y, clip, nodes, warn);
@@ -625,5 +629,20 @@
   document.addEventListener('pdf-ready', function () { setTimeout(harvest, 300); });
   // Backstop: if the print view never signals, harvest anyway rather than hand the exporter an
   // empty dump with nothing to explain it.
-  setTimeout(harvest, 15000);
+  //
+  // But not while the print view is still being built. Reveal moves every slide out of `.slides`
+  // into detached page wrappers, then awaits an animation frame before putting them back; under
+  // headless Chrome's virtual time that frame can arrive after 15 virtual seconds on a big deck,
+  // and a harvest in that window found zero slides and shipped an empty .pptx without a word.
+  // `loading-scroll-mode` is cleared on the viewport only once the pages are back.
+  var waits = 0;
+  function backstop() {
+    var vp = document.querySelector('.reveal-viewport');
+    if (vp && vp.classList.contains('loading-scroll-mode') && waits++ < 60) {
+      setTimeout(backstop, 1000);
+      return;
+    }
+    harvest();
+  }
+  setTimeout(backstop, 15000);
 })();

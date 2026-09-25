@@ -13,6 +13,22 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.0.1] — 2026-09-25
+
+No re-init needed.
+
+### Fixed
+
+- **Exports no longer come out empty on large decks.** The PDF could print a single page and the
+  `.pptx` could carry zero slides — intermittently, with no error — because Reveal's print view
+  waits on an animation frame that headless Chrome never painted in time. The print view now
+  drives those frames off timers, so both exports are deterministic.
+- **Clipped content is reported instead of vanishing.** When a slide holds more than fits even at
+  the minimum scale (a long table plus bullets, a code panel past its floor), the rows or lines
+  past the edge used to disappear silently. The slide is now marked, the browser console names it,
+  and the `.pptx` export lists it — "content clipped … split the slide in `final.md`" — so the
+  fix happens in the source instead of by hand in `slide-model.json`.
+
 ## [1.0.0] — 2026-09-04
 
 **The HTML deck is now the single source of truth, and the other formats are measured from it.**
