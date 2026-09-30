@@ -13,6 +13,21 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.1.0] — 2026-09-30
+
+No re-init needed.
+
+### Added
+
+- **`talksmith:corregir-tp`, a toolbox skill for grading coursework.** It grades each submission
+  against two concrete references, the assignment brief and the content taught in class, never
+  against abstract rubric descriptors. Using a technique more primitive than what the course taught
+  counts against the grade, and calling it by the taught technique's name makes it worse. One
+  subagent per team extracts a `ficha-<equipo>.md` with cited evidence and no grade. A regenerable
+  Excel builds the grade from those fichas in two blocks, submission and presentation, with
+  editable weights. The student-facing `devolucion-<equipo>.md` never reveals the numeric method.
+  It only runs when someone asks to grade or build a rubric, and it is not part of the Talk workflow.
+
 ## [1.0.3] — 2026-09-27
 
 No re-init needed.
