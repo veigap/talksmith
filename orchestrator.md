@@ -282,7 +282,7 @@ A live HTML render of the slides straight from the in-progress `draft.md`, so th
 **How it fires — two moments:**
 
 1. **Auto-fire on first complete draft (background, parallel).** When Step 4 hands to Step 5, kick the live render in the background and tell the presenter in one plain line — e.g. *"I'm putting together a live view of the slides in the background — go ahead and start reviewing, it'll be ready when you are."* **This must not block Review.**
-2. **Refresh on change — and know what it costs.** A refresh is **not** a script. RENDER refuses to run against a stale model, so re-firing means a full **FILL** pass first: every slide classified against the template catalog, one classifier-critic per slide. That is LLM work measured in minutes, which is exactly why "re-fire silently after every round" quietly turns into *not re-firing at all* — and leaves the presenter reading a deck two rounds behind without a hint that it is. So:
+2. **Refresh on change — and know what it costs.** A refresh is **not** a script. RENDER refuses to run against a stale model, so re-firing means a full **FILL** pass first: every slide classified against the template catalog (no classifier critique — the `--draft` view skips it, per the SKILL.md pointer above). That is LLM work measured in minutes, which is exactly why "re-fire silently after every round" quietly turns into *not re-firing at all* — and leaves the presenter reading a deck two rounds behind without a hint that it is. So:
    - **Re-fire after a round that materially reshapes the deck** — slides added or cut, sections reordered or rewritten. Not after a wording fix.
    - **Never leave a stale view standing silently.** After each round, ask the cheap question — one hash, no FILL, no LLM:
      ```
@@ -377,7 +377,7 @@ Promote recurring feedback patterns into durable session-load defaults so future
 1. **Scan** [`feedback-backlog.md`](config/feedback-backlog.md) — group entries (this Talk + prior) by tag and resolution shape.
 2. **For any pattern recurring ≥3× across all Talks**, ask the presenter (multi-select): "Recurred N times — promote?" Options: *Promote* / *Skip* / *Promote with edits*.
 3. **Promote** — for each accepted pattern, dispatch Editor to append an entry to `learnings.md` (format: rule / why / where / evidence / date). Capture the new id.
-4. **Move** — dispatch Editor to relocate contributing rows from `feedback-backlog.md` → [`feedback-processed.md`](config/feedback-processed.md) with `promoted_to: <id>` + `promoted_at: <date>`.
+4. **Move** — dispatch Editor to relocate contributing rows from `feedback-backlog.md` → [`feedback-processed.md`](config/feedback-processed.md) with `promoted_to: <id>` + `promoted_at: <date>`, via the `feedback-cycle` skill's `move` (never a hand edit — see [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 8*).
 
 
 5. **Promotion to the shared knowledge library.** Ask: *Promote this Talk to the shared knowledge library* / *Skip*. If promoted, perform the **Global-Librarian** role ([`global-librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/global-librarian.md)) to curate `research/corpus/`, `final.md`, and `images/` into topic folders under `knowledge-library/<topic-slug>/{index.md, images/}` — creating new topics or extending existing on overlap. Curation, not 1-to-1 copy. The Talk folder is read-only during this step.
@@ -388,7 +388,7 @@ This is the final step — after Learnings, the workflow is complete.
 
 ## Defect log — `talksmith-bugs.md`
 
-**Mandatory, every step, no exceptions.** Every inconsistency or malfunction *in Talksmith itself* gets documented in `talksmith-bugs.md` at the **root of the working directory** (sibling of `CLAUDE.md`, `config/`, `talks/`) — so it can be reported upstream and fixed. Full spec, entry fields and canonical empty form: [`${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md`](${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md). Create the file from that schema's empty form the first time you need it; never scaffold it empty.
+**Mandatory, every step, no exceptions.** Every inconsistency or malfunction *in Talksmith itself* gets documented in `talksmith-bugs.md` at the **root of the working directory** (sibling of `CLAUDE.md`, `config/`, `talks/`) — so it can be reported upstream and fixed. Full spec, entry fields and canonical empty form: [`${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md`](${CLAUDE_PLUGIN_ROOT}/schemas/talksmith-bugs.md). Create the file from that schema's empty form the first time you need it; never scaffold it empty. Keys and enum values (`status: open`, not `ABIERTO`) are written exactly as the schema spells them, never translated into the Talk's language — the prose fields follow the presenter's language, the structure doesn't.
 
 - **You are the sole writer**, append-only. Roles surface anomalies in their reports; you decide what is a defect and log it. One writer, so parallel subagents can't race on the file.
 - **What counts:** a skill or script that errors or emits malformed output; a contract violation (a promised file/field/path missing, a writer outside its ownership, a precondition unmet); two specs that contradict each other; a subagent report that can't be consumed as specified; structurally broken output; a pattern that recurs and points at the tool rather than the talk.

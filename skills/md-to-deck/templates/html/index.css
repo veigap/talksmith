@@ -24,6 +24,10 @@ body.tsindex{font-family:var(--sans);color:var(--fi);
   box-shadow:0 6px 22px rgba(0,0,0,.09)}
 .tsindex .deck:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 
+/* the talk's delivery date heads the card: the list is in delivery order, so this is what the
+   eye scans down. The render date stays in the meta line, dimmed — it is housekeeping. */
+.tsindex .ddate{margin:0;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;
+  color:var(--red)}
 .tsindex .dt{font-size:19px;font-weight:700;line-height:1.25;letter-spacing:-.01em;margin:0}
 .tsindex .dsub{margin:0;color:var(--fm);font-size:13.5px;line-height:1.45}
 /* meta pushes to the card's foot so cards with a 1-line and a 3-line subtitle still align */
@@ -31,6 +35,7 @@ body.tsindex{font-family:var(--sans);color:var(--fi);
   padding-top:12px;border-top:1px solid var(--hair);
   font-family:var(--mono);font-size:11.5px;color:var(--fm)}
 .tsindex .dmeta .sep{opacity:.45}
+.tsindex .dmeta .drender{opacity:.7}
 
 /* a live view is a moving target, not a deliverable — say so on the card itself */
 .tsindex .badge{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.04em;

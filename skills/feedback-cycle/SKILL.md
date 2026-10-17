@@ -1,6 +1,6 @@
 ---
 name: talksmith:feedback-cycle
-description: Mechanical bookkeeping for the Step 5 (Review) feedback loop on `draft.md` — detect, stamp, close, and mirror Presenter-feedback bullets — plus the `rescue-open` pass Step 6 runs against `final.md`. The Editor authors only wording; every line edit goes through this CLI. CLI-safe, stdlib-only Python.
+description: Mechanical bookkeeping for the Step 5 (Review) feedback loop on `draft.md` — detect, stamp, close, and mirror Presenter-feedback bullets — plus the `rescue-open` pass Step 6 runs against `final.md` and the Step-8 `move` of promoted backlog rows into `feedback-processed.md`. The Editor authors only wording; every line edit goes through this CLI. CLI-safe, stdlib-only Python.
 ---
 
 # talksmith:feedback-cycle — Step 5 (Review) iteration helper
@@ -22,11 +22,16 @@ Plus two Step-6 helpers:
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md [--dry-run]
    ```
 
+And one Step-8 helper:
+
+8. **Move** promoted rows from `config/feedback-backlog.md` to `config/feedback-processed.md` — `move`.
+
 The LLM Editor calls these as CLI subcommands and **only authors three things per bullet**: the per-slide content fix, the one-sentence resolution, and the tag list. Every line edit on `draft.md` and every row appended to `feedback-backlog.md` goes through this skill — the Editor does not read `draft.md` end-to-end during a normal Review round.
 
 ## When to use
 
 - **Every Step 5 (Review) round.** Start with `find-open` to get the precise bullet list, then `stamp` / *apply fix* / `close` / `mirror-row` per bullet, then `find-closed-unmirrored` as a sanity check.
+- **Step 8 Move.** Run `move` once per promoted learning.
 - **Step 6 (c) Polish.** Run `rescue-open` once against `final.md` to copy any surviving `[open]` bullets into `# Open questions` before Step 6 (d) strips Presenter-feedback fields.
 - **Spot-check** after applying feedback — re-run `find-open` to confirm nothing was missed.
 
@@ -76,10 +81,12 @@ Flips the bullet to `[closed]` (keeping the original date **and the origin quali
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
   --draft talks/<Talk>/draft.md --backlog config/feedback-backlog.md \
-  --line N [--tags "tag1,tag2"]
+  --line N --expect-text "<verbatim>" [--tags "tag1,tag2"]
 ```
 
 Writes one fully-formed row to `feedback-backlog.md` with talk folder, date, location (nearest H1/H2 above the bullet), verbatim feedback, the resolution text, and the tag list. Location is auto-derived; tags are passed in.
+
+**`--expect-text` is required** — the bullet's verbatim feedback (surrounding quotes optional), as `find-open` / `find-closed-unmirrored --format json` reported it. If `--line` holds any other bullet the call is refused with **exit 5**, nothing written, and the error names the line the expected bullet sits on now. Line numbers go stale inside a round — every `close` inserts a `Resolution:` line and shifts every bullet below it — and a stale `--line` used to mirror the *neighbouring* bullet with the tags meant for this one. A bullet that already has its backlog row is refused with **exit 6** (same talk, date and verbatim, plus the same location *or* resolution — so a note pasted on two slides still mirrors twice).
 
 **Presenter-origin only.** An `(editor)`-qualified bullet is refused with exit 4 — the backlog is cross-Talk, and one Talk's internal change log does not belong in it. `--allow-editor-origin` overrides, for the rare case where an editor-authored observation really does generalize.
 
@@ -106,6 +113,20 @@ Walks `final.md`, finds every still-`[open]` bullet, and appends it to the `# Op
 
 This subcommand runs against `final.md`, not `draft.md` — the `--final` flag is deliberate so the call site is unambiguous.
 
+### `move` — *(Step 8, Move pass)*
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py move \
+  --backlog config/feedback-backlog.md --processed config/feedback-processed.md \
+  --rows <selectors.json | -> --promoted-to <learning id> [--promoted-at YYYY-MM-DD] [--dry-run]
+```
+
+Relocates the rows that evidence one learning: appends each to `feedback-processed.md` verbatim plus `promoted_to:` / `promoted_at:` (default today), deletes it from `feedback-backlog.md`, then re-reads both files and fails (exit 1) unless every moved row is archived and **no row of `feedback-processed.md` remains in the backlog**. Both writes are atomic, processed first — a crash between them leaves a row in both files, which the next `move` repairs.
+
+`--rows` is a JSON object or list of **selectors** — `{"talk": …, "feedback": "<verbatim>"}`, plus `"date"` and/or `"location"` when the same note was pasted on two slides. Every selector must match exactly one backlog row, or the whole call is refused (exit 2) with nothing written. A selector whose row already sits in processed under the same `--promoted-to` is a no-op, so a re-run is safe.
+
+Every run also **sweeps**: a backlog row already present in processed (left behind by an earlier copy-only Move) is deleted without a second append. `move` with no `--rows` does only that repair. `--dry-run` lists what would move and what would be swept.
+
 ## Inputs by subcommand
 
 | Subcommand | Required | Optional |
@@ -113,9 +134,10 @@ This subcommand runs against `final.md`, not `draft.md` — the `--final` flag i
 | `find-open` *(separate script)* | `draft_path` | `--format human\|tsv` |
 | `stamp` | `--draft`, `--line` | `--date` (default: today) |
 | `close` | `--draft`, `--line`, `--resolution` | — |
-| `mirror-row` | `--draft`, `--backlog`, `--line` | `--tags`, `--allow-empty-tags` (silence the "no tags provided" warning when a row is intentionally untagged) |
+| `mirror-row` | `--draft`, `--backlog`, `--line`, `--expect-text` | `--tags`, `--allow-empty-tags` (silence the "no tags provided" warning when a row is intentionally untagged) |
 | `find-closed-unmirrored` | `--draft`, `--backlog` | `--format json\|human` |
 | `rescue-open` | `--final` | `--dry-run` |
+| `move` | `--backlog`, `--processed` | `--rows` + `--promoted-to` (together), `--promoted-at`, `--dry-run` |
 
 ## What this skill does NOT author
 
@@ -127,5 +149,5 @@ Everything else — line edits to `draft.md`, the `[open]`/`[closed]` format, th
 
 ## Companion to other roles
 
-- **Editor** ([`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 5 — apply feedback*) is the sole caller for the Step-5 subcommands and the Step-6 (c) `rescue-open` pass.
+- **Editor** ([`${CLAUDE_PLUGIN_ROOT}/agents/editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *Step 5 — apply feedback*) is the sole caller for the Step-5 subcommands, the Step-6 (c) `rescue-open` pass and the Step-8 `move`.
 - **Step 6 (d)** strips `Presenter feedback` fields from `final.md` *after* `rescue-open` has saved any `[open]` survivors — that ordering is enforced by Step 6's recipe in editor.md.

@@ -325,11 +325,11 @@ def _vector_twin(p: Path) -> Path | None:
     """The `.svg` companion of a raster, when that pair is a **generated diagram** — i.e. the
     `.ascii` sidecar or the `talksmith-ascii-sha256` stamp proves `polish-ascii` produced it.
 
-    Why: `final.md` carries `.svg` refs, but the `.pptx` prerequisite check rewrites them to the
-    `.png` companion (Keynote drops SVG on import), and that rewrite is not undone. A deck rendered
-    to `.pptx` and then to HTML would silently ship rasterized diagrams — blurry, unreadable at the
-    small type a diagram uses — even though the vector original sits right beside them. This render
-    inlines SVG as vector markup, so it upgrades back.
+    Why: a ref can name the `.png` companion of a generated diagram rather than its `.svg` — a
+    source written against the raster, or a fill that swapped the extension. Rendered as written,
+    the deck would ship a rasterized diagram — blurry, unreadable at the small type a diagram uses
+    — while the vector original sits right beside it. This render inlines SVG as vector markup,
+    so it upgrades back. (The `.pptx` export needs no raster ref either: it rasterizes SVG itself.)
 
     The provenance test is the same one `polish-ascii gc` uses, and it is what keeps this safe: a
     presenter's own `chart.png` is never swapped for an unrelated `chart.svg` that happens to share
@@ -737,9 +737,10 @@ def cover_from_deck(deck: dict, talk_root=None, author_label: str = None,
 
 
 # Templates whose markup places a matched icon next to each item → the slide field holding them.
+# Not `concept-columns`: a definition column is anchored by its term, not a glyph (catalog), so it
+# gets no inferred icon — only one its author named (`columns[].icon`) is drawn.
 _ICON_LISTS = {
     "concept-breakdown": ("cards",), "content+cards+image": ("cards",), "closing-cta": ("items",),
-    "concept-columns": ("columns",),
 }
 
 
@@ -853,6 +854,9 @@ def _design(slide: dict, t: str) -> tuple:
 # around the schema. Escaping runs first, so authored HTML is still inert text.
 # one or two backticks — the doubled form is how an author shows a literal backtick inside code
 _MD_CODE = re.compile(r"(`{1,2})(?!`)([^\n]+?)(?<!`)\1(?!`)")
+# A backslash escape (`\*`, `\_`, `` \` ``, `\[`, `\]`, `\~`, `\\`) or a code span, in ONE scan: whichever
+# starts first wins, so `` \` `` never opens a span and a `\*` inside a span stays as written.
+_MD_ESC_OR_CODE = re.compile(r"\\([*_~`\[\]\\])|" + _MD_CODE.pattern.replace(r"\1", r"\2"))
 _MD_BOLD = re.compile(r"\*\*(?=\S)(.+?)(?<=\S)\*\*", re.S)
 # `*` only pairs at a word boundary, so `a*b` and `2 * 3` stay literal (and `snake_case` is safe
 # because `_` is not an italic mark here — it appears in identifiers far more often than in prose)
@@ -939,23 +943,29 @@ def _inline_md(text: str) -> str:
     must stay literal (a body that shows `**kwargs` as code means it), but emphasis *around* one
     must still pair — `**a `file.md` inside the repo**` is one bold span, and naming a file inside
     a bolded phrase is how authors write. Cutting the line at each code span instead left the
-    opening `**` in one fragment and the closing `**` in the next, so neither ever matched."""
+    opening `**` in one fragment and the closing `**` in the next, so neither ever matched.
+
+    A backslash escape rides the same slot, as Markdown has it: `P\\*` is a literal `P*`, never the
+    start of an italic span, and the backslash itself is not shown."""
     # most leaves carry no mark at all — skip the passes. A `/` is the cheapest URL tell that
     # covers all three link shapes (`https://`, `www.x/…`, `host.tld/…`); prose rarely has one.
-    if not (set("`*[~/") & set(text)):
+    if not (set("`*[~/\\") & set(text)):
         return text
     # the two slot markers — never authored content
     text = text.replace("\x00", "").replace("\x01", "")
     held = []
 
     def stash(m):
-        span = m.group(2)
+        if m.group(1):                                     # `\*` → a literal `*`
+            held.append(m.group(1))
+            return f"\x01{len(held) - 1}\x01"
+        span = m.group(3)
         if span.startswith(" ") and span.endswith(" "):   # ``  `x`  `` — one pad space each side
             span = span[1:-1]
         held.append(f"<code>{span}</code>")
         return f"\x01{len(held) - 1}\x01"
 
-    marked = _marks(_MD_CODE.sub(stash, text))
+    marked = _marks(_MD_ESC_OR_CODE.sub(stash, text))
     return _CODE_SLOT.sub(lambda m: held[int(m.group(1))], marked) if held else marked
 
 
@@ -1136,7 +1146,8 @@ function fitContent(cb){
     for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ s=mid; lo=mid; } else { hi=mid; } } }
   cf.style.width=(rw/s)+'px';
   var vh=cf.scrollHeight*s;
-  if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
+  if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped
+  cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
 // A code panel carries the **whole** snippet, so the panel's type is what gives: it is sized to
@@ -1223,12 +1234,21 @@ function fitType(box, apply){
   }
   apply(fit);
 }
-function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
+// Full-bleed text slides (quote / statement / closing-hero) have no `.cfit`, so fitContent never
+// sees them. What gives here is the **type**, not the block: `--fit` (theme.css) multiplies the
+// display line's font-size, so a long quote re-wraps across the full measure at a smaller size.
+// Scaling the whole block with a transform — what this used to do — shrank the wrap width with
+// the glyphs and left a long quote as a narrow column in the middle of an empty slide. Same
+// halving search as fitType; past the floor the slide is flagged, never clipped in silence.
+function fitCover(st){
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
-  cf.style.transform='none';
+  cf.style.removeProperty('--fit');
   var cs=getComputedStyle(st), availH=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-  var h=cf.scrollHeight;
-  if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
+  var fits=function(f){ cf.style.setProperty('--fit', f); return cf.scrollHeight<=availH+1; };
+  if(fits(1)){ cf.style.removeProperty('--fit'); return; }  // fits as authored (the common case)
+  var lo=0.4, hi=1, fit=lo;
+  for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ fit=mid; lo=mid; } else { hi=mid; } }
+  if(!fits(fit)) flagOverflow(cf, 'body');                // even the floor size doesn't fit
 }
 // Every fit above has a floor, and past it content is clipped — rows, lines, whole bullets gone
 // from the projected slide. That must never be silent: the slide is marked `data-overflow` (and
@@ -1443,6 +1463,45 @@ _FULL_ICONS = (
     'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>')
 
+# Code-panel fullscreen — the `.cbfull` button in a panel's title bar (markup in `_macros.j2`
+# `codepanel`, look in theme.css) puts that one panel on the whole screen. On screen the code is
+# re-fitted to the screen, not the slide: the largest size at which every line still shows, capped
+# so a five-line snippet doesn't turn into a billboard. Reveal's keyboard is off meanwhile — an
+# arrow key would otherwise change the slide underneath the panel. `Esc` (the browser's) or the
+# same button leaves, and `fitCode` puts the panel back to its slide size. Inlined only into decks
+# with a code panel, beside highlight.js.
+_CODE_FULL = """(function(){
+var d=document, open=null;
+if(!d.fullscreenEnabled) return;
+d.documentElement.setAttribute('data-cb-full','');
+function fitScreen(cb){
+  var pre=cb.querySelector('.cbcode'); if(!pre) return;
+  var apply=function(px){ pre.style.fontSize=px+'px'; cb.style.setProperty('--cb-fs', px+'px'); };
+  var lo=8, hi=Math.max(lo, Math.min(innerWidth/40, innerHeight/16)), fit=lo;
+  apply(hi); if(pre.scrollHeight<=pre.clientHeight+1){ return; }
+  for(var k=0;k<16;k++){ var mid=(lo+hi)/2; apply(mid);
+    if(pre.scrollHeight<=pre.clientHeight+1){ fit=mid; lo=mid; } else hi=mid; }
+  apply(fit);
+}
+d.addEventListener('click', function(e){
+  var b=e.target.closest && e.target.closest('.cbfull'); if(!b) return;
+  var cb=b.closest('.codebox'); if(!cb) return;
+  e.stopPropagation();
+  if(d.fullscreenElement===cb) d.exitFullscreen(); else cb.requestFullscreen();
+});
+d.addEventListener('fullscreenchange', function(){
+  var el=d.fullscreenElement;
+  if(el && el.classList.contains('codebox')){
+    open=el; if(window.Reveal) Reveal.configure({keyboard:false});
+    requestAnimationFrame(function(){ fitScreen(el); });
+  } else if(open){
+    var cb=open; open=null; if(window.Reveal) Reveal.configure({keyboard:true});
+    requestAnimationFrame(function(){ fitCode(cb); });
+  }
+});
+window.addEventListener('resize', function(){ if(open && d.fullscreenElement===open) fitScreen(open); });
+})();"""
+
 # Runtime style cycler — deck-wide font/color/background skins. Each style is its own CSS file
 # under templates/html/styles/<name>.css (a `:root[data-deck-style=…]` token-override block plus
 # its dark variant), discovered here and inlined by page() — add a style by adding a file.
@@ -1545,7 +1604,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{_PDF_SWITCH}</script>\n'
         f'<script>{_PDF_AUTOPRINT}</script>\n'
         f'<script>{_FULL_SWITCH}</script>\n'
-        f'<script>{_STYLE_SWITCH}</script>\n'
+        + (f'<script>{_CODE_FULL}</script>\n' if hljs_js else '')
+        + f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
         # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what
         # re-runs the fit pass for the print view. Measuring before that reports pre-fit

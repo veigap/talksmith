@@ -100,6 +100,36 @@ MODEL_PLAIN = {
 }
 
 
+# A section opener and the first slide inside it share a name (`# 7. Cómo fallan` →
+# `## Cómo fallan`). Indexed by title, the opener won the match and the content slide's aside
+# and notes were reported dropped — the opener carries neither by design.
+SHARED_TITLE = """
+# 7. Cómo fallan
+
+## Cómo fallan
+
+### Content
+
+Los sistemas multiagente fallan por coordinación antes que por capacidad individual.
+
+> **Ojo:** la mayoría de los fallos son de especificación.
+
+### Speaker notes
+
+Notas de la lámina, que el modelo sí lleva.
+
+---
+"""
+MODEL_OPENER = {"template": "divider", "title": "Cómo fallan"}
+MODEL_SHARED = {"template": "statement", "section": "Cómo fallan", "title": "Cómo fallan",
+                "sub": "Los sistemas multiagente fallan por coordinación antes que por capacidad "
+                       "individual.",
+                "highlights": [{"kind": "important",
+                                "body": "Ojo: la mayoría de los fallos son de especificación."}],
+                "notes": "Notas de la lámina, que el modelo sí lleva."}
+NOTES_AUDIT = ROOT / "skills" / "md-to-deck" / "audits" / "notes_coverage.py"
+
+
 def _model(*slides):
     return {"deck": {"title": "Prueba", "sections": ["Sección"]}, "slides": list(slides)}
 
@@ -136,14 +166,23 @@ CASES = [
      0, "the agenda block and a section goal live under an `#` heading and are working meta; "
         "the deck builds its agenda from its section list",
      "block-drop"),
+    ("opener-never-claims-a-slide",
+     HEAD + SHARED_TITLE, _model(MODEL_OPENER, MODEL_SHARED),
+     0, "a divider that shares its section's name with the content slide inside it must not be "
+        "matched in that slide's place",
+     "block-drop"),
+    ("opener-never-claims-notes",
+     HEAD + SHARED_TITLE, _model(MODEL_OPENER, MODEL_SHARED),
+     0, "same pairing, notes audit: the opener has no notes by design, the slide does",
+     "notes-drop", NOTES_AUDIT),
 ]
 
 
-def run(source: str, model: dict, tmp: Path) -> tuple[int, str]:
+def run(source: str, model: dict, tmp: Path, audit: Path = AUDIT) -> tuple[int, str]:
     (tmp / "final.md").write_text(source, encoding="utf-8")
     (tmp / "slide-model.json").write_text(json.dumps(model, ensure_ascii=False), encoding="utf-8")
     r = subprocess.run(
-        [sys.executable, str(AUDIT), str(tmp / "slide-model.json"),
+        [sys.executable, str(audit), str(tmp / "slide-model.json"),
          "--source", str(tmp / "final.md")],
         capture_output=True, text=True)
     return r.returncode, (r.stdout + r.stderr).strip()
@@ -153,8 +192,8 @@ def main() -> int:
     failures = 0
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
-        for name, source, model, want, why, not_says in CASES:
-            got, out = run(source, model, tmp)
+        for name, source, model, want, why, not_says, *audit in CASES:
+            got, out = run(source, model, tmp, *audit)
             ok = got == want
             if ok and not_says and not_says in out:
                 ok, why = False, f"{why} — report must NOT mention {not_says!r}"

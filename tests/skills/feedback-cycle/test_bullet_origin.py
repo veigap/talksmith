@@ -90,12 +90,14 @@ def main() -> int:
                 "found 1 closed bullet(s)" in r.stdout and "faltaba la fuente" in r.stdout, r.stdout)
 
         print("mirror-row:")
-        r = _run(tmp, "mirror-row", "--draft", draft, "--backlog", backlog, "--line", "13", "--tags", "x")
+        r = _run(tmp, "mirror-row", "--draft", draft, "--backlog", backlog, "--line", "13",
+                 "--expect-text", "faltaba la fuente del dato", "--tags", "x")
         _record("mirror_row_refuses_editor_origin", r.returncode == 4, f"rc={r.returncode} {r.stderr}")
         r = _run(tmp, "mirror-row", "--draft", draft, "--backlog", backlog, "--line", "13",
-                 "--tags", "x", "--allow-editor-origin")
+                 "--expect-text", "faltaba la fuente del dato", "--tags", "x", "--allow-editor-origin")
         _record("mirror_row_override_works", r.returncode == 0, f"rc={r.returncode} {r.stderr}")
-        r = _run(tmp, "mirror-row", "--draft", draft, "--backlog", backlog, "--line", "11", "--tags", "y")
+        r = _run(tmp, "mirror-row", "--draft", draft, "--backlog", backlog, "--line", "11",
+                 "--expect-text", "el título es largo", "--tags", "y")
         _record("mirror_row_accepts_presenter_origin", r.returncode == 0, f"rc={r.returncode} {r.stderr}")
 
         print("stamp / close:")

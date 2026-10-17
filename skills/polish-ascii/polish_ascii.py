@@ -7,6 +7,8 @@ Subcommands:
   annotate-renders  --plan <plan.json|-> --renders <renders.json|-> [-o <out.json|->]
   prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>]
   extract           --final <final.md> --plan <plan.json|-> [--dry-run]
+  stamp-renders     --final <final.md> --plan <plan.json|-> [--only <ids>] [--dry-run]
+  gc                --final <final.md> [--apply]
   cleanup           --final <final.md> --plan <plan.json|-> [--dry-run]
   apply             --final <final.md> --plan <plan.json|-> [--dry-run]   # extract + cleanup in one pass
 
@@ -23,7 +25,9 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +47,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
 )
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
     IMG_REF_RE,
-    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems,
+    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, run_gc,
     scan_final_path, write_json,
 )
 
@@ -400,6 +404,61 @@ def stamp_svg_digest(svg_path: Path, digest: str) -> None:
     svg_path.write_text(text)
 
 
+def _companions(images_dir: Path, stem: str) -> tuple[Path, ...]:
+    """Every file one rendered diagram owns, as `gc` and render reuse must both see it."""
+    crit = images_dir / ".critique"
+    return (images_dir / f"{stem}.svg", images_dir / f"{stem}.png", images_dir / f"{stem}.ascii",
+            crit / f"{stem}.png", crit / f"{stem}.md")
+
+
+def _stamped_svg_index(images_dir: Path) -> dict[str, list[Path]]:
+    """digest → every stamped `images/*.svg` carrying it (sorted, so the pick is deterministic).
+
+    This is what makes "filenames never decide" true in both directions. Checking only the planned
+    `output_path` let a renumbering hide a valid render: the slide moved, its basename changed, and
+    the SVG stamped with the very same digest sat under the old name while a fresh render was
+    ordered for the new one.
+    """
+    index: dict[str, list[Path]] = {}
+    for p in sorted(images_dir.glob("*.svg")):
+        d = read_svg_digest(p)
+        if d:
+            index.setdefault(d, []).append(p)
+    return index
+
+
+_CRITIQUE_H1 = re.compile(r"^# Critique log — .*$", re.MULTILINE)
+
+
+def _relocate_render(src_svg: Path, dst_svg: Path) -> list[str]:
+    """Copy a reusable render (svg, png, critique png + log) from `src_svg`'s stem to `dst_svg`'s.
+
+    A copy, not a move: the old name may still be referenced until `cleanup` rewrites final.md,
+    and `gc` retires it afterwards. The critique log's H1 names its stem, so it is rewritten, and a
+    `## Reused` section records where the render came from. Returns the companions that were
+    absent at the source (a missing deliverable PNG is worth a warning; the rest are optional).
+    """
+    images_dir = dst_svg.parent
+    src_stem, dst_stem = src_svg.stem, dst_svg.stem
+    missing: list[str] = []
+    for src, dst in zip(_companions(images_dir, src_stem), _companions(images_dir, dst_stem)):
+        if src.suffix == ".ascii":
+            continue                       # `extract` already wrote the new sidecar
+        if not src.exists():
+            missing.append(str(src.relative_to(images_dir)))
+            continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.suffix == ".md":
+            log = _CRITIQUE_H1.sub(f"# Critique log — {dst_stem}", src.read_text(), count=1)
+            log = log.rstrip("\n") + (f"\n\n## Reused — {date.today().isoformat()}\n"
+                                       f"Copied from `{src_stem}` by `prepare-render-args`: same ASCII "
+                                       f"digest, so not re-rendered or re-critiqued.\n")
+            dst.write_text(log)
+        else:
+            shutil.copy2(src, dst)
+    return missing
+
+
 def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
     """Write .ascii sidecars. Returns (written, unchanged, skipped_no_render, sidecar_records)."""
     blocks = plan.get("blocks") or []
@@ -702,6 +761,8 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
 
     written = 0
     reused = 0
+    relocated: list[tuple[str, Path, Path]] = []
+    index = _stamped_svg_index(images_dir)
     for b in renderables:
         sid = b.get("slide_id", "")
         basename = b["render"]["svg_basename"]
@@ -714,6 +775,18 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         svg_path = images_dir / basename
         digest = ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload"))
         if svg_path.exists() and read_svg_digest(svg_path) == digest:
+            reused += 1
+            continue
+        # Same digest under another name (the slide was renumbered): copy it across instead of
+        # ordering a render of a drawing that already exists and already passed critique.
+        donors = [p for p in index.get(digest, []) if p != svg_path]
+        if donors:
+            donor = next((p for p in donors if p.with_suffix(".png").exists()), donors[0])
+            for m in _relocate_render(donor, svg_path):
+                if m.endswith(".png") and "/" not in m:
+                    print(f"  ⚠  {sid}: reused {donor.name} has no deliverable {m} — rasterize "
+                          f"{basename} before the deck build", file=sys.stderr)
+            relocated.append((sid, donor, svg_path))
             reused += 1
             continue
         ctx = b.get("context") or {}
@@ -741,37 +814,68 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
     print(f"wrote args for {written} block(s) to {out_dir}", file=sys.stderr)
     if reused:
         print(f"  reused {reused} block(s) (SVG stamped with the same ASCII digest — no re-render)", file=sys.stderr)
+    for sid, donor, dst in relocated:
+        print(f"     {sid}: copied {donor.name} → {dst.name} (with its PNG and critique log)", file=sys.stderr)
     if skipped:
         print(f"  skipped {skipped} block(s) (documentation-only or no render mapping)", file=sys.stderr)
     return 0
+
+
+def _stale_render(svg_path: Path, digest: str) -> bool:
+    """True when the SVG at a planned basename is an *old* drawing, not this pass's render.
+
+    `extract` rewrites a sidecar only when its bytes changed, so a sidecar newer than the SVG means
+    the ASCII changed after that SVG was drawn. If the SVG also carries a different digest, it was
+    drawn from something else — a render still pending, or one that failed, under a basename a
+    previous pass used. Stamping it would mark the old picture current and it would never re-render.
+    An unstamped SVG is left to the normal path (stamping a hand render after `apply` is legitimate).
+    """
+    current = read_svg_digest(svg_path)
+    sidecar = svg_path.with_suffix(".ascii")
+    if current is None or current == digest or not sidecar.exists():
+        return False
+    return svg_path.stat().st_mtime < sidecar.stat().st_mtime
 
 
 def cmd_stamp_renders(args: argparse.Namespace) -> int:
     """Stamp each freshly rendered SVG with the digest of the ASCII it was drawn from.
 
     Must run after the renders and before the next pass — an unstamped SVG simply re-renders
-    (the safe direction), so a missed stamp costs work, never correctness.
+    (the safe direction), so a missed stamp costs work, never correctness. A stale SVG (see
+    `_stale_render`) is skipped and reported rather than stamped; `--only` limits the pass to the
+    named slide ids.
     """
     loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
     images_dir = final_path.parent / "images"
+    only = {i for v in (args.only or []) for i in v.split(",") if i}
 
     stamped = 0
     missing: list[tuple[str, Path]] = []
+    stale: list[tuple[str, Path]] = []
+    seen: set[str] = set()
     for b in plan.get("blocks") or []:
         if b.get("documentation_only") or not b.get("render"):
             continue
+        sid = b.get("slide_id", "")
+        if only and sid not in only:
+            continue
+        seen.add(sid)
         basename = b["render"]["svg_basename"]
         if not basename.endswith(".svg"):
             basename = f"{basename}.svg"
         svg_path = images_dir / basename
         if not svg_path.exists():
-            missing.append((b.get("slide_id", ""), svg_path))
+            missing.append((sid, svg_path))
+            continue
+        digest = ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload"))
+        if _stale_render(svg_path, digest):
+            stale.append((sid, svg_path))
             continue
         if not args.dry_run:
-            stamp_svg_digest(svg_path, ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload")))
+            stamp_svg_digest(svg_path, digest)
         stamped += 1
 
     tag = "  [dry-run]" if args.dry_run else ""
@@ -780,6 +884,16 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
         print(f"  ⚠  {len(missing)} render(s) produced no SVG — they will re-render next pass:", file=sys.stderr)
         for sid, p in missing:
             print(f"     {sid} → {p}", file=sys.stderr)
+    if stale:
+        print(f"  ⚠  {len(stale)} SVG(s) NOT stamped — older than their .ascii sidecar and stamped from "
+              f"other ASCII, so they predate this pass's render (still pending, or failed). Render "
+              f"them, then `stamp-renders --only <ids>`:", file=sys.stderr)
+        for sid, p in stale:
+            print(f"     {sid} → {p}", file=sys.stderr)
+    unknown = sorted(only - seen)
+    if unknown:
+        print(f"  ⚠  --only named {len(unknown)} id(s) with no renderable block in the plan: "
+              f"{', '.join(unknown)}", file=sys.stderr)
     return 0
 
 
@@ -799,12 +913,14 @@ def _generated_diagram_stems(images_dir: Path) -> set[str]:
 
 
 def cmd_gc(args: argparse.Namespace) -> int:
-    """List (and, with --apply, delete) generated diagram triplets no longer referenced by final.md.
+    """List (and, with --apply, move to `images/.trash/<timestamp>/`) generated diagram sets no
+    longer referenced by final.md.
 
-    Non-destructive by default. Only assets *proven generated* (stamped `.svg` or `.ascii` sidecar)
-    are ever considered — orphaned `<stem>.svg` / `<stem>.png` / `<stem>.ascii` plus the
-    `.critique/<stem>.png` companion. Presenter-owned images (a plain screenshot with no sidecar or
-    stamp) are never candidates, so a missing reference can never delete a source asset.
+    Non-destructive by default, and recoverable even with --apply. Only assets *proven generated*
+    (stamped `.svg` or `.ascii` sidecar) are ever considered — orphaned `<stem>.svg` / `<stem>.png` /
+    `<stem>.ascii` plus the `.critique/<stem>.png` and `.critique/<stem>.md` companions.
+    Presenter-owned images (a plain screenshot with no sidecar or stamp) are never candidates, so a
+    missing reference can never touch a source asset.
     """
     final_path = Path(args.final).resolve()
     if not final_path.exists():
@@ -818,7 +934,7 @@ def cmd_gc(args: argparse.Namespace) -> int:
     # `gc` reads "referenced" out of final.md, so it is only meaningful AFTER `cleanup` has
     # rewritten the ASCII fences into image refs. Run before that, final.md still holds the fences
     # and carries *no* image references at all — so every live diagram looks orphaned and `--apply`
-    # deletes the whole set. The ordering (cleanup → gc) was operator discipline only; nothing enforced it.
+    # sweeps the whole set away. The ordering (cleanup → gc) was operator discipline only; nothing enforced it.
     # A live renderable fence is proof cleanup has not run, which makes the reference count
     # untrustworthy, so refuse rather than report a wrong answer. Reusing `scan()` rather than a
     # private regex keeps this from drifting away from what the rest of the pipeline calls a block.
@@ -840,32 +956,8 @@ def cmd_gc(args: argparse.Namespace) -> int:
     referenced = referenced_stems(final_path.read_text())
     orphans = sorted(s for s in _generated_diagram_stems(images_dir) if s not in referenced)
 
-    targets: list[Path] = []
-    for s in orphans:
-        for cand in (images_dir / f"{s}.svg", images_dir / f"{s}.png",
-                     images_dir / f"{s}.ascii", images_dir / ".critique" / f"{s}.png"):
-            if cand.exists():
-                targets.append(cand)
-
-    if not orphans:
-        print("gc: no orphaned generated diagram assets — images/ is clean")
-        return 0
-
-    print(f"gc: {len(orphans)} orphaned generated diagram(s), {len(targets)} file(s):")
-    for f in targets:
-        print(f"  {f.relative_to(final_path.parent)}")
-    if args.apply:
-        removed = 0
-        for f in targets:
-            try:
-                f.unlink()
-                removed += 1
-            except OSError as e:
-                print(f"  ⚠  could not remove {f}: {e}", file=sys.stderr)
-        print(f"gc: removed {removed} file(s)")
-    else:
-        print("gc: dry-run — pass --apply to delete")
-    return 0
+    targets = [cand for s in orphans for cand in _companions(images_dir, s) if cand.exists()]
+    return run_gc(final_path.parent, images_dir, orphans, targets, args.apply, "diagram")
 
 
 def cmd_apply(args: argparse.Namespace) -> int:
@@ -921,6 +1013,7 @@ def main(argv: list[str]) -> int:
 
     p_stamp = sub.add_parser("stamp-renders", help="stamp each rendered SVG with the digest of the ASCII it was drawn from — the sole re-render signal for the next pass")
     add_plan_args(p_stamp)
+    p_stamp.add_argument("--only", nargs="+", metavar="SLIDE_ID", help="stamp only these slide ids (space- or comma-separated)")
     p_stamp.set_defaults(func=cmd_stamp_renders)
 
     p_cleanup = sub.add_parser("cleanup", help="rewrite final.md fences to image refs from an annotated scan plan (no sidecar writing)")
@@ -931,9 +1024,9 @@ def main(argv: list[str]) -> int:
     add_plan_args(p_apply)
     p_apply.set_defaults(func=cmd_apply)
 
-    p_gc = sub.add_parser("gc", help="list (or --apply delete) generated diagram triplets (.svg/.png/.ascii + .critique png) no longer referenced by final.md; presenter-owned images are never touched")
+    p_gc = sub.add_parser("gc", help="list (or --apply move to images/.trash/) generated diagram sets (.svg/.png/.ascii + .critique png/log) no longer referenced by final.md; presenter-owned images are never touched")
     p_gc.add_argument("--final", required=True, help="path to the Talk's final.md")
-    p_gc.add_argument("--apply", action="store_true", help="delete the orphaned files (default: dry-run list only)")
+    p_gc.add_argument("--apply", action="store_true", help="move the orphaned files to images/.trash/<timestamp>/ (default: dry-run list only)")
     p_gc.add_argument("--dry-run", action="store_true", help="explicit no-op; gc is dry by default (kept for symmetry)")
     p_gc.set_defaults(func=cmd_gc)
 

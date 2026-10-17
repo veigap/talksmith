@@ -1,4 +1,5 @@
-{# Working-directory landing page body — one card per rendered deck (build_index.py). #}
+{# Working-directory landing page body — one card per rendered deck, in delivery order
+   (build_index.py `collect`). The talk's own date heads the card; the render date is secondary. #}
 <div class="wrap">
   <header class="mast">
     <h1>{{ L.heading }}</h1>
@@ -8,6 +9,7 @@
     {% for e in entries %}
     <li>
       <a class="deck{% if e.draft %} draft{% endif %}" href="{{ e.href }}">
+        {% if e.date %}<p class="ddate">{{ e.date }}</p>{% endif %}
         <p class="dt">{{ e.title }}</p>
         {% if e.institution %}<p class="dsub">{{ e.institution }}</p>{% endif %}
         {% if e.cls %}<p class="dsub">{{ e.cls }}</p>{% endif %}
@@ -16,7 +18,7 @@
           {% if e.stale %}<span class="badge stale" title="{{ L.stale_hint }}">{{ L.stale }}</span>{% endif %}
           {% if e.slides %}<span>{{ e.slides }} {{ L.slides }}</span><span class="sep">·</span>{% endif %}
           {% if e.presenter %}<span>{{ e.presenter }}</span><span class="sep">·</span>{% endif %}
-          <span>{{ L.rendered }} {{ e.rendered }}</span>
+          <span class="drender">{{ L.rendered }} {{ e.rendered }}</span>
         </p>
       </a>
     </li>

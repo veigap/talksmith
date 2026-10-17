@@ -33,7 +33,7 @@ Same per-entry shape as `feedback-backlog.md`, with two added fields linking to 
 
 ## Audit-trail invariant
 
-Every row in this file corresponds to a `learnings.md` entry referenced by `promoted_to:`. **Read-only audit trail** — do not edit by hand. The Editor role moves entries here from `feedback-backlog.md` during the Step 8 Move pass. The original verbatim wording, location, and tags are preserved so the evidence chain in `learnings.md` remains traceable.
+Every row in this file corresponds to a `learnings.md` entry referenced by `promoted_to:`. **Read-only audit trail** — do not edit by hand. The Editor role moves entries here from `feedback-backlog.md` during the Step 8 Move pass, with `feedback_cycle.py move`. **A row here never also stays in `feedback-backlog.md`** — a copy left behind is counted again by every later recurrence scan; `move` enforces this after every run and sweeps any such leftover. The original verbatim wording, location, and tags are preserved so the evidence chain in `learnings.md` remains traceable.
 
 ## Canonical empty form
 

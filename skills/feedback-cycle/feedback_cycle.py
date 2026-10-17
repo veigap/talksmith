@@ -5,8 +5,11 @@ Subcommands:
   find-closed-unmirrored  --draft <path> --backlog <path> [--format json|human]   # Step 5
   stamp                   --draft <path> --line N [--date YYYY-MM-DD]              # Step 5
   close                   --draft <path> --line N --resolution "<text>"            # Step 5
-  mirror-row              --draft <path> --backlog <path> --line N [--tags "a,b"]  # Step 5
+  mirror-row              --draft <path> --backlog <path> --line N --expect-text "<verbatim>"
+                          [--tags "a,b"]                                           # Step 5
   rescue-open             --final <path> [--dry-run]                               # Step 6 (c)
+  move                    --backlog <path> --processed <path> [--rows <json|->
+                          --promoted-to <id> [--promoted-at YYYY-MM-DD]] [--dry-run] # Step 8
 
 `--draft` targets the Talk's working file (`talks/<Talk>/draft.md`), edited by the
 presenter during Step 5. `--final` targets the Step-6 derived file
@@ -21,7 +24,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -171,24 +173,72 @@ def _all_closed_bullets(md_path: Path) -> list[dict[str, Any]]:
     return results
 
 
-def _existing_backlog_keys(backlog_path: Path, talk: str) -> set[tuple[str, str]]:
-    """Return set of (talk, verbatim-text) already present in backlog."""
-    if not backlog_path.exists():
-        return set()
-    text = backlog_path.read_text(encoding="utf-8")
-    keys: set[tuple[str, str]] = set()
-    current_talk: str | None = None
-    feedback_re = re.compile(r'^\s*feedback:\s*"(.*)"\s*$')
-    talk_re = re.compile(r"^- talk:\s*(\S+)\s*$")
-    for raw in text.splitlines():
-        tm = talk_re.match(raw)
-        if tm:
-            current_talk = tm.group(1).strip()
+# ─── backlog / processed rows ─────────────────────────────────────────────────
+# Both files hold the same row shape (schemas/feedback-backlog.md → *Entry format*): a `- talk:`
+# line followed by two-space-indented `key: value` lines. A row runs until the next unindented or
+# blank line. Parsing keeps each row's line span so `move` can delete exactly what it archived.
+
+ROW_START = re.compile(r"^- talk:")
+ROW_FIELD = re.compile(r"^(?:- |  )(\w+):\s?(.*?)\s*$")
+
+
+def _parse_rows(lines: list[str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    i = 0
+    while i < len(lines):
+        if not ROW_START.match(lines[i]):
+            i += 1
             continue
-        fm = feedback_re.match(raw)
-        if fm and current_talk is not None:
-            keys.add((current_talk, fm.group(1)))
-    return keys
+        start = i
+        i += 1
+        while i < len(lines) and lines[i].strip() and lines[i][:1].isspace():
+            i += 1
+        fields: dict[str, str] = {}
+        for raw in lines[start:i]:
+            m = ROW_FIELD.match(raw)
+            if m and m.group(1) not in fields:
+                fields[m.group(1)] = m.group(2)
+        rows.append({"start": start, "end": i, "fields": fields})
+    return rows
+
+
+def _read_rows(path: Path) -> list[dict[str, Any]]:
+    return _parse_rows(path.read_text(encoding="utf-8").splitlines()) if path.exists() else []
+
+
+def _row_text(fields: dict[str, str]) -> str:
+    return _strip_quotes(fields.get("feedback", ""))
+
+
+def _same_row(a: dict[str, str], b: dict[str, str]) -> bool:
+    """Are two rows (field dicts) the same feedback bullet?
+
+    Same talk, date and verbatim — and then the same location **or** the same resolution. Location
+    alone is not stable: a slide renamed after the row was written changes it, and a copy-only Move
+    left rows whose two copies disagree on it. Verbatim alone is not unique either: the presenter
+    pastes the same note on two slides, and those twins differ in both location and resolution
+    (each slide got its own fix), which is what keeps one from hiding the other.
+    """
+    if (a.get("talk"), a.get("date"), _row_text(a)) != (b.get("talk"), b.get("date"), _row_text(b)):
+        return False
+    if a.get("location") == b.get("location"):
+        return True
+    return bool(a.get("resolution")) and a.get("resolution") == b.get("resolution")
+
+
+def _is_recorded(probe: dict[str, str], rows: list[dict[str, Any]], text_is_unique: bool = False) -> bool:
+    """Does `rows` already hold `probe`? With `text_is_unique` (the verbatim occurs once in its
+    Talk's draft), (talk, verbatim) is enough — the long-standing rule for draft → backlog."""
+    if any(_same_row(probe, r["fields"]) for r in rows):
+        return True
+    return text_is_unique and any(r["fields"].get("talk") == probe.get("talk")
+                                  and _row_text(r["fields"]) == _row_text(probe) for r in rows)
+
+
+def _probe(talk: str, bullet: dict[str, Any]) -> dict[str, str]:
+    """A draft bullet as backlog-row fields, for `_is_recorded`."""
+    return {"talk": talk, "date": bullet["date"], "feedback": bullet["text"],
+            "location": bullet["location"], "resolution": bullet.get("resolution", "")}
 
 
 def cmd_find_closed_unmirrored(args: argparse.Namespace) -> int:
@@ -196,13 +246,15 @@ def cmd_find_closed_unmirrored(args: argparse.Namespace) -> int:
     backlog_path = Path(args.backlog).resolve()
     talk = _talk_folder(draft_path)
     closed = _all_closed_bullets(draft_path)
-    existing = _existing_backlog_keys(backlog_path, talk)
+    rows = _read_rows(backlog_path)
+    texts = [c["text"] for c in closed]
     # Only presenter-origin bullets are candidates for the cross-Talk backlog. Editor-origin bullets
     # are this Talk's internal change log — counting them once reported 52 "pending" rows of which
     # almost none belonged in the backlog, drowning the real ones.
     considered = closed if args.origin == "all" else [c for c in closed if c["origin"] == args.origin]
     excluded = len(closed) - len(considered)
-    unmirrored = [c for c in considered if (talk, c["text"]) not in existing]
+    unmirrored = [c for c in considered
+                  if not _is_recorded(_probe(talk, c), rows, texts.count(c["text"]) == 1)]
     if args.format == "json":
         json.dump(unmirrored, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
@@ -293,6 +345,19 @@ def cmd_mirror_row(args: argparse.Namespace) -> int:
         print(f"error: line {args.line} is not a [closed] bullet: {raw!r}", file=sys.stderr)
         return 2
     date, verbatim, origin = m.group("date"), m.group("text"), _origin_of(m)
+    # The line number is the caller's claim about *which* bullet; the verbatim is the proof. Line
+    # numbers go stale inside a round — every `close` inserts a Resolution line, shifting every
+    # bullet below it — and a stale --line used to land on a neighbouring [closed] bullet and mirror
+    # it with the tags meant for another one. Nothing downstream could tell.
+    expected = _strip_quotes(args.expect_text)
+    if verbatim != expected:
+        where = [c["line"] for c in _all_closed_bullets(draft_path) if c["text"] == expected]
+        hint = (f"that bullet is now at line(s) {', '.join(map(str, where))}" if where
+                else "no [closed] bullet carries that text")
+        print(f"error: line {args.line} holds \"{verbatim}\", not the expected \"{expected}\" — {hint}. "
+              f"Line numbers shift as `close` inserts Resolution lines; re-read them from "
+              f"`find-closed-unmirrored --format json`. Nothing written.", file=sys.stderr)
+        return 5
     if origin != PRESENTER and not args.allow_editor_origin:
         print(f"error: line {args.line} is an {origin}-origin bullet — the cross-Talk backlog mirrors "
               f"presenter feedback only. Pass --allow-editor-origin to override.", file=sys.stderr)
@@ -307,6 +372,12 @@ def cmd_mirror_row(args: argparse.Namespace) -> int:
     resolution = rm.group(1).strip()
     talk = _talk_folder(draft_path)
     location = _location_for_line(lines, idx)
+    texts = [c["text"] for c in _all_closed_bullets(draft_path)]
+    probe = {"talk": talk, "date": date, "feedback": verbatim, "location": location, "resolution": resolution}
+    if _is_recorded(probe, _read_rows(backlog_path), texts.count(verbatim) == 1):
+        print(f"error: line {args.line} (\"{verbatim}\") already has a row in {backlog_path.name} — "
+              f"refusing a duplicate. Nothing written.", file=sys.stderr)
+        return 6
 
     tags = []
     if args.tags:
@@ -322,19 +393,148 @@ def cmd_mirror_row(args: argparse.Namespace) -> int:
         f"  resolution: {resolution}",
         f"  tags: [{', '.join(tags)}]",
     ]
-    if not backlog_path.exists():
-        backlog_path.write_text(
-            "# Feedback backlog\n\n## Entries\n\n<!-- Editor appends entries below this line. -->\n",
-            encoding="utf-8",
-        )
-    existing = backlog_path.read_text(encoding="utf-8")
-    if not existing.endswith("\n"):
-        existing += "\n"
-    existing += "\n".join(row_lines) + "\n"
-    tmp = backlog_path.with_suffix(backlog_path.suffix + ".tmp")
-    tmp.write_text(existing, encoding="utf-8")
-    os.replace(tmp, backlog_path)
+    existing = (backlog_path.read_text(encoding="utf-8").splitlines() if backlog_path.exists()
+                else BACKLOG_EMPTY.splitlines())
+    atomic_write_lines(backlog_path, existing + row_lines)
     print(f"mirrored: {talk} :: {location} :: line {args.line}")
+    return 0
+
+
+# ─── move ─────────────────────────────────────────────────────────────────────
+# Step 8's Move used to be a hand edit, and in practice it only ever copied: rows promoted to L8–L10
+# reached feedback-processed.md and stayed in the backlog too, so every later recurrence scan
+# counted them again. `move` makes it one operation — append to processed, delete from backlog,
+# then prove the invariant held.
+
+# Canonical empty forms — schemas/feedback-backlog.md and schemas/feedback-processed.md own them.
+BACKLOG_EMPTY = (
+    "# Feedback backlog\n\n"
+    "> Format spec, tagging vocabulary, and pattern-detection rules live in "
+    "[`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md).\n\n"
+    "## Entries\n\n<!-- Editor appends entries below this line. -->\n"
+)
+PROCESSED_EMPTY = (
+    "# Feedback — processed\n\n"
+    "> Format spec and audit-trail invariant live in "
+    "[`${CLAUDE_PLUGIN_ROOT}/schemas/feedback-processed.md`](${CLAUDE_PLUGIN_ROOT}/schemas/feedback-processed.md).\n\n"
+    "## Entries\n\n<!-- Editor role appends entries below this line during the Step 8 Move pass. -->\n"
+)
+
+
+def _archived(backlog: list[dict[str, Any]], processed: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Backlog rows that already sit in processed — the rows the invariant says must not exist."""
+    return [r for r in backlog if _is_recorded(r["fields"], processed)]
+
+
+def _select(backlog: list[dict[str, Any]], sel: dict[str, Any]) -> list[dict[str, Any]]:
+    want = {k: (_strip_quotes(str(v)) if k == "feedback" else str(v).strip())
+            for k, v in sel.items() if k in {"talk", "date", "location", "feedback"} and v}
+    out = []
+    for r in backlog:
+        f = r["fields"]
+        if all((_row_text(f) if k == "feedback" else f.get(k, "")) == v for k, v in want.items()):
+            out.append(r)
+    return out
+
+
+def _load_selectors(spec: str) -> list[dict[str, Any]]:
+    raw = sys.stdin.read() if spec == "-" else Path(spec).read_text(encoding="utf-8")
+    data = json.loads(raw)
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list) or not all(isinstance(d, dict) for d in data):
+        raise SystemExit("error: --rows must be a JSON object or a list of objects")
+    return data
+
+
+def cmd_move(args: argparse.Namespace) -> int:
+    backlog_path = Path(args.backlog).resolve()
+    processed_path = Path(args.processed).resolve()
+    b_lines = _read_lines(backlog_path)
+    p_lines = (processed_path.read_text(encoding="utf-8").splitlines() if processed_path.exists()
+               else PROCESSED_EMPTY.splitlines())
+    backlog, processed = _parse_rows(b_lines), _parse_rows(p_lines)
+
+    selectors = _load_selectors(args.rows) if args.rows else []
+    if selectors and not args.promoted_to:
+        print("error: --promoted-to is required when --rows selects rows to move", file=sys.stderr)
+        return 2
+    # Resolve every selector before touching either file: one bad selector aborts the whole move.
+    chosen: list[dict[str, Any]] = []
+    for sel in selectors:
+        if not sel.get("talk") or not sel.get("feedback"):
+            print(f"error: selector needs at least `talk` and `feedback`: {sel}", file=sys.stderr)
+            return 2
+        hits = _select(backlog, sel)
+        if not hits and any(p["fields"].get("promoted_to") == args.promoted_to
+                            for p in _select(processed, sel)):
+            print(f"noop: already moved to {args.promoted_to}: \"{_strip_quotes(sel['feedback'])[:70]}\"")
+            continue  # an idempotent re-run (e.g. after a crash between the two writes)
+        if len(hits) != 1:
+            what = "matches no backlog row" if not hits else (
+                f"matches {len(hits)} backlog rows (lines "
+                f"{', '.join(str(h['start'] + 1) for h in hits)}) — add `date` and/or `location`")
+            print(f"error: selector {json.dumps(sel, ensure_ascii=False)} {what}. Nothing written.",
+                  file=sys.stderr)
+            return 2
+        if hits[0] not in chosen:
+            chosen.append(hits[0])
+
+    date = args.promoted_at or datetime.date.today().isoformat()
+    appended: list[str] = []
+    n_appended = 0
+    same_learning = [p for p in processed if p["fields"].get("promoted_to") == args.promoted_to]
+    for r in chosen:
+        if _is_recorded(r["fields"], same_learning):
+            continue  # re-run after a crash between the two writes — the archive copy is there
+        block = [ln for ln in b_lines[r["start"]:r["end"]]
+                 if not re.match(r"^  promoted_(to|at):", ln)]
+        appended += block + [f"  promoted_to: {args.promoted_to}", f"  promoted_at: {date}"]
+        n_appended += 1
+
+    new_p = list(p_lines)
+    while new_p and not new_p[-1].strip():
+        new_p.pop()
+    new_p += appended
+    # Delete the moved rows *and* any row already archived by an earlier copy-only Move — the
+    # invariant is "nothing in processed is still in the backlog", not "nothing moved today is".
+    gone = {id(r) for r in chosen} | {id(r) for r in _archived(backlog, _parse_rows(new_p))}
+    drop = {i for r in backlog if id(r) in gone for i in range(r["start"], r["end"])}
+    new_b = [ln for i, ln in enumerate(b_lines) if i not in drop]
+    swept = len(gone) - len(chosen)
+
+    if args.dry_run:
+        print(f"[dry-run] would append {n_appended} row(s) to {processed_path.name}"
+              + (f" (promoted_to: {args.promoted_to})" if selectors else "")
+              + f" and remove {len(gone)} row(s) from "
+              f"{backlog_path.name} ({swept} already archived)")
+        for r in backlog:
+            if id(r) in gone:
+                f = r["fields"]
+                print(f"  line {r['start'] + 1:4d}  {f.get('talk')} {f.get('date')}  \"{_row_text(f)[:70]}\"")
+        return 0
+
+    # Processed first: a crash between the two writes leaves a row in both files, which the next
+    # `move` repairs (the sweep above). The reverse order could lose a row.
+    if appended:
+        atomic_write_lines(processed_path, new_p)
+    if drop:
+        atomic_write_lines(backlog_path, new_b)
+
+    # Post-check, from disk: every moved row is archived, and no archived row is still in the backlog.
+    after_b, after_p = _read_rows(backlog_path), _read_rows(processed_path)
+    leftover = _archived(after_b, after_p)
+    missing = [r for r in chosen if not _is_recorded(r["fields"], after_p)]
+    if leftover or missing:
+        for r in leftover:
+            print(f"error: backlog line {r['start'] + 1} is still present after the move: "
+                  f"\"{_row_text(r['fields'])[:70]}\"", file=sys.stderr)
+        for r in missing:
+            print(f"error: moved row \"{_row_text(r['fields'])[:70]}\" is missing from "
+                  f"{processed_path.name}", file=sys.stderr)
+        return 1
+    print(f"moved: {n_appended} row(s) appended to {processed_path.name}, {len(gone)} removed from "
+          f"{backlog_path.name}" + (f" ({swept} already archived by an earlier Move)" if swept else ""))
     return 0
 
 
@@ -494,6 +694,8 @@ def main(argv: list[str]) -> int:
     pm.add_argument("--draft", required=True, help="path to the Talk's draft.md")
     pm.add_argument("--backlog", required=True)
     pm.add_argument("--line", type=int, required=True)
+    pm.add_argument("--expect-text", required=True,
+                    help="the bullet's verbatim feedback; refused (exit 5) if --line holds anything else")
     pm.add_argument("--tags")
     pm.add_argument("--allow-empty-tags", action="store_true")
     pm.add_argument("--allow-editor-origin", action="store_true",
@@ -504,6 +706,16 @@ def main(argv: list[str]) -> int:
     pr.add_argument("--final", required=True, help="path to the Talk's final.md")
     pr.add_argument("--dry-run", action="store_true")
     pr.set_defaults(func=cmd_rescue_open)
+
+    pv = sub.add_parser("move", help="move promoted rows feedback-backlog.md → feedback-processed.md (Step 8)")
+    pv.add_argument("--backlog", required=True, help="path to config/feedback-backlog.md")
+    pv.add_argument("--processed", required=True, help="path to config/feedback-processed.md")
+    pv.add_argument("--rows", help="JSON selector(s) — a file path, or - for stdin: "
+                                   '[{"talk": …, "feedback": …, "date"?: …, "location"?: …}, …]')
+    pv.add_argument("--promoted-to", help="the learnings.md entry id the rows evidence")
+    pv.add_argument("--promoted-at", help="YYYY-MM-DD (default: today)")
+    pv.add_argument("--dry-run", action="store_true")
+    pv.set_defaults(func=cmd_move)
 
     args = p.parse_args(argv)
     return args.func(args)

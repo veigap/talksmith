@@ -37,7 +37,7 @@ This command does **not** scaffold `config/` files, the `talks/` directory, or t
      '' \
      '# --- Talksmith --- (regenerable build artifacts & caches — keep out of Git)' \
      '.DS_Store' '.venv/' '__pycache__/' '*.pyc' \
-     'talks/*/output/' 'talks/*/images/.critique/' '.icons/' \
+     'talks/*/output/' 'talks/*/images/.critique/' 'talks/*/images/.trash/' '.icons/' \
      '/index.html' '/talksmith-index.html' \
      '.claude/settings.local.json' \
      >> ./.gitignore

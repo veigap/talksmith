@@ -56,14 +56,14 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `is_divider` | The heading is an **H1** (`# …`), not an H2 — the canonical signal. **Also** a slide whose title carries an explicit section-break marker (`〔divisor〕`, `〔Backup〕`, or equivalent) even at H2: some authoring conventions mark dividers/backups by marker rather than heading level, and the pipeline must treat these as dividers, not content slides. |
    | `is_terminal` | The unit is the last slide of the deck or of a section. |
    | `n_images` | Count of `![alt](path)` refs in the body. |
-   | `has_code` | A fenced ```` ``` ```` block is present as body content. |
+   | `has_code` | A fenced ```` ``` ```` block is present as body content. **Not** an ```` ```ascii ```` fence in the `--draft` view: there it is a diagram Step 6 has not rendered yet, and it counts toward `n_images` (field mapping: `schemas/slide-model.md` → *Walking the body*). |
    | `has_table` | A Markdown pipe-table (`\| … \| … \|` with a `---` separator row) is present. |
    | `labeled_items` | Count of **labeled** units: a bullet whose lead is bold (`- **Label** body` / `- <emoji> **Label:** body`), an `#### Label` / `### Subhead` immediately followed by a short paragraph, **or** a **numbered-list line** (`1. …`) when there are ≥2 of them (each line is an ordered step item, label optional). A *labeled* item ≠ a plain `- text` bullet. |
    | `is_ordered` | Any labeled item's label matches an ordinal: `1.`/`2.`, `Paso N`, `Step N`, `Fase N`/`Fase I`, `Etapa …`, `Case A`/`Caso A`, `Phase N`, or the items form a numbered list / a stepwise/decision flow. |
    | `body_len` | Per-item body length in characters, post-Markdown-strip. "Short" ≤ ~80 chars; "prose" > ~80. Judge by the **longest** item. |
    | `two_groups` | The body splits into **two symmetric groups** compared against each other (A-vs-B, before/after, myth/reality), or a pipe-table of `factor \| A \| B` rows. |
    | `big_metrics` | 2–4 standalone numbers/metrics with labels (`~750K tokens`, `$2.50/1M`, `Dice 0.95`, `50–90%`). |
-   | `one_claim` | A single dominant assertion (**≤ ~16 words** — past that it is `single-point`, because `statement` is full-bleed and does not shrink to fit) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
+   | `one_claim` | A single dominant assertion (**≤ ~16 words** — past that it is `single-point`, because `statement`'s large type is the point, and a longer claim only fits by giving it up) with no ≥2-item enumeration, no code, no image set — optionally followed by a **short reveal / one counter-point** (e.g. a `Mito → Realidad` myth-buster, a claim + its one-line answer). The claim, not a list, is the slide. |
    | `one_two_words` | The whole slide is 1–2 words (`Q&A`, `Gracias`). |
    | `is_voiced` | The dominant line is **someone else's words**: a `>` blockquote, a line wrapped in quotation marks, and/or an attribution line opening `—`/`–` or naming a source (`Anthropic:`, `— Ana Pérez, CISO`). A claim in the presenter's own voice is not voiced. |
    | `is_question` | The title or the body's dominant line **asks** something the slide then answers — a `¿…?`/`…?` line followed by its resolution, a `Pregunta … Respuesta …` split, or multiple-choice options (A/B/C/D). A rhetorical question with no answer on the slide does **not** count. |
@@ -97,7 +97,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
      different template — demoting it collapses each row into one card body and loses the
      alignment that is the slide. (A pipe-table is never a
      native `<a:tbl>`.) A table that also has **one shared supporting image** is still
-     `value-columns`, with `image` + `layout` — the mirror of the `content+cards+image` rule one
+     `value-columns`, with `media` + a `design` — the mirror of the `content+cards+image` rule one
      step down. The image is not a reason to reclassify, and the table is not a reason to drop the
      image: sending the slide to `content+cards+image` to keep the picture collapses each row into
      a single card body (`"A: … B: …"`) and loses the column alignment that is the whole point.
@@ -113,7 +113,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
      The labeled set stays a card set; the image sits beside it. Do **not** dissolve the labels
      into `content-image` `facts` (they lose their per-concept icon) and do **not** drop the
      image to keep `concept-breakdown` — this hybrid exists precisely for this shape, and
-     wanting the image on the left is a `layout` choice, never a reason to reclassify.
+     wanting the image on the left is a `design` choice (`split-left`), never a reason to reclassify.
    - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `concept-breakdown` (**including a
      2-item set** → two cards). It requires `images == 0` — any source image disqualifies it (its
      per-card icons are renderer-added, not source pictures). Then pick its `format` by count and
@@ -221,7 +221,7 @@ sub-category follows, grouped by family.
 |---|---|---|
 | **Frame** — structure, not content | `cover` · `section-agenda` · `divider` · `closing-cta` · `closing-hero` | position in the deck (slide 1 / section header / final slide) |
 | **One claim / emphasis** — a single message | `statement` · `quote` · `quiz` · `callout` | attributed/voiced → `quote`; question→answer → `quiz`; an aside *inside* another slide → `callout`; else `statement` |
-| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / list / editorial) is then picked by count + body length — `editorial` being the same set composed **flat**, without cards |
+| **Labeled set** — parallel labeled concepts (cards, never bullets) | `single-point` · `concept-breakdown` | **count**: exactly 1 item → `single-point`; any set of 2+ → `concept-breakdown`, whose `format` (grid / row / editorial) is then picked by count + body length — `editorial` being the same set composed **flat**, without cards |
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` · `matrix` | a decision framed upside/downside (colour-coded) → `pros-cons`; **two named axes** (cells indexed by position) → `matrix`; parallel value columns over one shared factor → `value-columns` (which may carry supporting media) |
@@ -355,15 +355,18 @@ precise rules.
 - **Match:** the slide's message is **one bold claim, myth/reality, or short quote** —
   a single dominant line ≤ ~16 words, no enumeration, no code. Recurs as a series
   (e.g. myth-buster sequence).
-- **The ~16-word cap is a rendering constraint, not a matter of taste, and it is load-bearing.**
+- **The ~16-word cap is a design budget, not a matter of taste, and it is load-bearing.**
   This template is full-bleed: it emits its own stage and does **not** go through the per-slide
-  content-fit, so its type does not shrink to fit. A claim past the cap does not render smaller —
-  it renders off the slide. **A single dominant line that runs longer is `single-point`**, whose
-  card is inside the fit pass and has room; a definition of a technical term is the usual case.
+  content-fit. It has a fit of its own: past what the slide holds, the claim's **type steps down
+  and re-wraps** at the full width, to a floor of 40% of its size — past the floor the render
+  flags the slide as clipped. So a claim past the cap renders *smaller*, which defeats the
+  template: its large type is the whole point. **A single dominant line that runs longer is
+  `single-point`**, whose card is inside the fit pass and has room; a definition of a technical
+  term is the usual case.
   Do not dress it as a `quote` to get the large type: `is_voiced` means *someone else's* words,
   and a presenter's own definition wrapped in `>` is a misattribution the audience reads as a
-  citation. (Lifting the cap means teaching the full-bleed templates to fit first — see
-  `closing-hero`, `divider` and `quote`, which share the limitation.)
+  citation. (`closing-hero` and `quote` fit the same way — only the display line shrinks; the
+  eyebrow, sub-line and attribution keep their size. `divider` does not fit at all.)
 - **Format:** the claim set **large (40–52 pt) Helvetica Bold**, occupying the upper-left
   ≈ 60% of the canvas; an optional supporting image at the right/bottom, or an optional
   one-line sub-statement (`#3B3535`, 18–22 pt) beneath. **No bullets, no cards.** The
@@ -402,7 +405,7 @@ precise rules.
   slide's body is not this template at all: it is a `highlights` entry with `kind: quote`,
   `position: top`.)*
 - **Format:** full-bleed, vertically centred: a large accent quotation mark, the quote in
-  large bold (≤~35 words), then a muted `— attribution` line **when there is one** — with no
+  large bold (≤~35 words — a longer one steps its type down to fit, as `statement` does), then a muted `— attribution` line **when there is one** — with no
   attribution the mark and the quote are the whole slide, and nothing takes its place. No cards,
   no header pill body.
 - **Provenance:** gov deck testimonial slides; common in Gamma-style decks.
@@ -593,8 +596,8 @@ precise rules.
   weight/height) or a **compare-strip**: header row (Factor · A · B) + N aligned rows,
   rendered as a **card-per-row grid, never a native table**. Uniform column widths,
   shared gridlines. **Not** bullets.
-- **A supporting image is allowed** (optional `image` + `layout`, `text-left` default /
-  `image-left` mirrored): the grid takes the wider column, the diagram sits beside it.
+- **A supporting image is allowed** (optional `media` + a `design` — usually `split-right`,
+  or `split-left` mirrored): the grid takes the wider column, the diagram sits beside it.
   This is the fifth body-plus-image composition, not a separate template — a table and a diagram
   on the same slide never have to trade against each other. An optional `lead` frames the grid,
   with or without an image. At half width the grid still reads as a grid (columns stay aligned;
@@ -660,7 +663,9 @@ precise rules.
   **The free text really is free.** One column may explain itself in three bullets and its
   neighbour in two paragraphs; the source shapes differ per column, and forcing a list on both
   invents a structure the content does not have — the same mistake, one level down, as reading
-  these columns as a table. Columns are **top-aligned**, never stretched to equal height.
+  these columns as a table. Each column is a panel; the **panels share one height** (a surface
+  matching its neighbours), but their content is **top-aligned** and nothing inside aligns row to
+  row.
 - **One column may be emphasised.** Set `emphasis` on the column the slide is *about* — the one
   the others define by contrast, or the one the talk then goes on to use. It renders as a filled
   `#DA1B2E` rounded panel with the whole column inverted to `#FFFFFF`. At most one per slide: two
@@ -672,7 +677,7 @@ precise rules.
   slide's bottom edge.
 - **Strict recipe:** N §7.2 columns without the card fill, the emphasised one as a §2.2 `#DA1B2E`
   `roundRect` with inverted runs; §17 icons are **not** used — a definition column is anchored by
-  its term, not by a glyph. **Provenance:** `layout.pptx` S31 (four terms, third emphasised) and
+  its term, not by a glyph (the renderer infers none; an icon the author names explicitly is drawn). **Provenance:** `layout.pptx` S31 (four terms, third emphasised) and
   S32 (two terms, first emphasised).
 
 #### `pros-cons` (two colour-coded columns)
@@ -760,7 +765,7 @@ precise rules.
   output samples, before/after across cases, a portfolio. The reader scans the grid as one
   composite.
 - **Format:** a **dense 2×N or 3×N image grid**, uniform cell size and gutters, minimal
-  per-image text. **Not** for a list of items that merely each have an icon (→ `concept-breakdown`, `format: list`).
+  per-image text. **Not** for a list of items that merely each have an icon (→ `concept-breakdown`).
 - **Strict recipe:** §13 image-grid. **Provenance:** ref S10/31/33–38/44, gov S40/43.
 
 ### Verbatim / last-resort
@@ -829,7 +834,7 @@ the `row` format would also fit but with no lead paragraph the default grid is c
 cards. This single signal is the whole difference; never render an ordered set as an
 unordered grid.
 
-**`format: row` vs `format: list`** — lead + 3–5 labeled items, split by body length:
+**`format: row` vs `format: grid`** — lead + 3–5 labeled items, split by body length:
 ```
 ## Tres innovaciones de StyleGAN
 StyleGAN cambió la síntesis de imágenes en tres frentes.
@@ -838,8 +843,8 @@ StyleGAN cambió la síntesis de imágenes en tres frentes.
 - **Mixing regularization** Combina estilos de dos latentes.
 ```
 → `concept-breakdown`, `format: row`. Lead paragraph + `labeled_items=3`, longest body ≤ 80 chars → one horizontal
-row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be `format: list`
-(vertical, prose room). Pick by the **longest** item; never split the group across both.
+row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be the default `grid`
+(cards that wrap to more rows, with prose room). Pick by the **longest** item; never split the group across both.
 
 **`figures` vs `concept-breakdown`** — the per-item image decides:
 ```
@@ -936,7 +941,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | images | 1–3 supporting prose | `content-image` |
 | images | **image only** — no prose, no enumeration | `image-full` (header, then the image edge to edge); **not** `image-grid` |
 | one big claim | ≤16 words, opt. reveal/counter-point | `statement` |
-| one big claim | **longer than ~16 words** (a one-sentence definition) | `single-point` — `statement` is full-bleed and does not shrink to fit |
+| one big claim | **longer than ~16 words** (a one-sentence definition) | `single-point` — `statement` keeps its large type only under the cap |
 | one big claim | it is **someone else's words** (quoted/attributed) | `quote` |
 | a question | the slide answers it (opt. A/B/C/D choices) | `quiz` |
 | section break | H1 **or** `〔divisor〕`/`〔Backup〕` marker | `section-agenda`/`divider` |

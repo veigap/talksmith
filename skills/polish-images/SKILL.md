@@ -38,11 +38,11 @@ Mirrors polish-ascii; the image-illustrator role owns the judgement steps.
    ```
    The render already owns the left/right full-bleed aside column, so the generated PNG at that path *just works*.
 
-A **`gc`** subcommand (sibling of `polish-ascii gc`) prunes **orphaned generated aside triplets** — `<stem>.png` + `.imgprompt` + `.imgstamp` no longer referenced by `final.md` after renumbering. **Non-destructive by default** (lists only); `--apply` deletes. A stem is a candidate **only when proven generated** (a `.imgprompt` sidecar or `.imgstamp` exists), so presenter-owned images are never deletion targets.
+A **`gc`** subcommand (sibling of `polish-ascii gc`) prunes **orphaned generated aside triplets** — `<stem>.png` + `.imgprompt` + `.imgstamp` no longer referenced by `final.md` after renumbering. **Non-destructive by default** (lists only); `--apply` moves them into a recoverable `images/.trash/<YYYYMMDD-HHMMSS>/` (shared with `polish-ascii gc`). A stem is a candidate **only when proven generated** (a `.imgprompt` sidecar or `.imgstamp` exists), so presenter-owned images are never deletion targets.
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final talks/<Talk>/final.md           # list
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final talks/<Talk>/final.md --apply   # delete
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
 ```
 
 ## Idempotency — why a companion `.imgstamp`, not an in-file stamp
@@ -70,7 +70,7 @@ The same shape as [`polish-ascii`](../polish-ascii/SKILL.md), subcommand for sub
 | `--out-dir` | `prepare-render-args` | Where the per-directive `<slide_id>.json` args files land. |
 | `--repo-root` | `prepare-render-args` | Anchors the paths written into the args files when the render runs from a different cwd. Defaults to the plan's own `final.md` root — pass it only when they differ. |
 | `--dry-run` | `extract` · `cleanup` · `gc` | Print the planned change instead of touching disk. |
-| `--apply` | `gc` | Delete the orphans (`gc` lists only by default). |
+| `--apply` | `gc` | Move the orphans to `images/.trash/<timestamp>/` (`gc` lists only by default). |
 
 ## Exit codes
 

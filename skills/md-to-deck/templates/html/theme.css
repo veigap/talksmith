@@ -240,7 +240,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   width:100%;height:100%;max-height:none;object-fit:cover}
 .d-column>.smedia .imgph.svg svg,.d-bleed>.smedia .imgph.svg svg{
   width:100%;height:100%;max-height:none}
-.big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.big{font-size:calc(6.2cqw*var(--fit,1));font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 /* section divider — big red section number + title, with an accent rule */
 .secdiv{display:flex;flex-direction:column;gap:1.4cqw}
 .secnum{font-size:3.4cqw;font-weight:800;color:var(--red);font-family:var(--mono);letter-spacing:.05em;line-height:1}
@@ -370,7 +370,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    distributed to a shared baseline — forcing one would invent an alignment the content does not
    have (which is exactly what `.compare` below *does* have, and why it is a grid). The *panels*
    do share a height: that is a surface matching its neighbours, not a row aligning to one.
-   Each column is a panel — card fill, accent rule on top, its own icon — for the same reason
+   Each column is a panel — card fill, accent rule on top — for the same reason
    every other labeled set in this deck is: three columns of bare prose read as one wall of text,
    and nothing on the canvas says the three are parallel things rather than one argument in three
    paragraphs. The column count drives the density, in CSS via `:has()` — nothing upstream
@@ -383,7 +383,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.2cqw;align-items:stretch;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
-/* The icon rides **with the term**, not on a line of its own above it: stacked, it read as a
+/* An icon (only ever one the author named — none is inferred here) rides **with the term**, not
+   on a line of its own above it: stacked, it read as a
    third element in the column and pushed the title down; beside the title it does what an icon is
    for, which is to label the thing it sits next to. Same relationship the cards have. Everything
    after the title spans both tracks, so the prose keeps the full width of the panel. */
@@ -393,7 +394,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccol>.ic{grid-column:1;grid-row:1;align-self:center;width:3.6cqw;height:3.6cqw}
 .conccol>h3{grid-column:2;grid-row:1}
 .conccol>:not(.ic):not(h3){grid-column:1/-1}
-/* a column whose concept matched no icon keeps the full width for its title */
+/* a column with no icon — the default — keeps the full width for its title */
 .conccol:not(:has(>.ic))>h3{grid-column:1/-1}
 .conccol h3{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink);line-height:1.15;text-wrap:balance}
 .ccdef{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.35}
@@ -501,6 +502,16 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
 .iffill .imgph.svg svg,.iffill .imgph.has :is(img,video,iframe){position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
 .iffill .imgph.has :is(img,video){object-fit:scale-down}
+/* A non-picture exhibit in the fill — a code panel (an un-rendered ASCII figure in the `--draft`
+   view) or an aligned grid. Unlike a picture it has no letterbox to hide in, so it keeps the
+   header's side margins, takes the height its content needs (`fitCode` shrinks it past that) and
+   centres in the area rather than drawing a slab across all of it. */
+.iffill:has(>.mcode,>.mtable){display:flex;align-items:center;justify-content:center;padding:0 5.5cqw 2.4cqw}
+.iffill>:is(.mcode,.mtable){width:100%;max-height:100%;margin:0}
+/* The one highlight image-full renders is its `source` (see image-full.j2): a citation line under
+   the fill, on the header's margins. `.iffill` is `flex:1 1 auto; min-height:0`, so it is the fill
+   that gives up the line's height — the band is never pushed off the slide. */
+.stage.imgfull>.hl-source{margin-top:0;padding:1.2cqw 5.5cqw 2.4cqw}
 .citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
@@ -619,6 +630,25 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cbdot{width:.62em;height:.62em;border-radius:50%;background:#4D4D55}
 .cbdot:first-child{background:#FF5F57}.cbdot:nth-child(2){background:#FEBC2E}.cbdot:nth-child(3){background:#28C840}
 .cblang{margin-left:auto;font-family:var(--mono);font-size:.92em;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
+/* Fullscreen — the bar's last control puts this one panel on the whole screen (the Fullscreen API
+   on the `.codebox`, `_CODE_FULL` in html_style.py), for the snippet the back row can't read at
+   slide size. Hidden until the script has confirmed the browser can do it, so a page without
+   script, the print view and an export never show a control that does nothing. */
+.cbfull{display:none;margin-left:auto;width:1.25em;height:1.25em;align-items:center;justify-content:center;
+  font:inherit;padding:0;border:0;border-radius:.3em;background:none;color:var(--cb-dim);cursor:pointer;opacity:.7}
+.cblang~.cbfull{margin-left:-.2em}
+.cbfull:hover{opacity:1;background:var(--cb-hair)}
+.cbfull svg{width:1em;height:1em}
+:root[data-cb-full] .cbfull{display:flex}
+.cbfull .ic-fs-out,.codebox:fullscreen .cbfull .ic-fs-in{display:none}
+.codebox:fullscreen .cbfull .ic-fs-out{display:block}
+html.print-pdf .cbfull{display:none}
+@media print{.cbfull{display:none}}
+/* On screen the panel is the window. The `!important` beats the inline `max-height` fitCode left
+   on it for the slide; `vw`/`vh` replace the `cqw` sizes, which would still measure the slide. */
+.codebox:fullscreen{width:100vw;height:100vh;max-height:none!important;border:0;border-radius:0;box-shadow:none}
+.codebox:fullscreen .cbbar{padding:.6em 1.4em}
+.codebox:fullscreen .cbcode{padding:3vh 4vw;overflow:auto}
 /* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
    and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
    (a URL, a long identifier), so ordinary code breaks at its spaces. */
@@ -652,10 +682,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ctpanels{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:3cqw}.ctp{background:var(--card);border-radius:1.6cqw;padding:2.4cqw;font-size:2.2cqw;color:var(--body);font-weight:600}
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
-.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:9cqw;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+/* `--fit` (set by `fitCover` in the deck script, 1 when unset) scales only the **display** line of
+   the full-bleed text slides — `.big`, `.qa`, `.quotemark`, `.quotetext`. A long line shrinks and
+   re-wraps at the full measure; the eyebrow, sub-line and attribution keep their reading size. */
+.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:calc(9cqw*var(--fit,1));font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
 /* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
-.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
-.quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:calc(12cqw*var(--fit,1));line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
+.quotetext{font-size:calc(5cqw*var(--fit,1));font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
 /* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
 .timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}

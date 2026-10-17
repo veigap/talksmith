@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -123,7 +124,8 @@ def _entry(deck_html: Path, root: Path) -> dict | None:
         "institution": info.get("institution", ""),
         "cls": info.get("class", ""),
         "presenter": info.get("presenter", ""),
-        "date": info.get("date", ""),
+        "date": _shown_date(info.get("date", "")),
+        "talk_date": _talk_date(info.get("date", "")),
         "slides": info.get("slides") or 0,
         "draft": info.get("mode") == "draft",
         "lang": info.get("lang", ""),
@@ -132,12 +134,38 @@ def _entry(deck_html: Path, root: Path) -> dict | None:
     }
 
 
+_ISO_DATE = re.compile(r"^\s*(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b")
+
+
+def _talk_date(raw) -> str | None:
+    """The deck's delivery `date` (profile/frontmatter, ISO `YYYY-MM-DD` by schema) as a sortable
+    `YYYY-MM-DD`, or None when it is not a date (`TBD`, empty, free text)."""
+    m = _ISO_DATE.match(str(raw or ""))
+    return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}" if m else None
+
+
+def _shown_date(raw) -> str:
+    """The date as the card shows it — the author's own text, minus the `TBD` placeholder."""
+    raw = str(raw or "").strip()
+    return "" if raw.upper() in ("TBD", "TBA", "-") else raw
+
+
+def _natural(text: str) -> list:
+    """`Clase 2` before `Clase 10`: digit runs compare as numbers."""
+    return [(0, int(t), "") if t.isdigit() else (1, 0, t)
+            for t in re.split(r"(\d+)", str(text or "").casefold()) if t]
+
+
 def collect(root: Path) -> list[dict]:
-    """Every rendered deck under `<root>/talks/`, newest render first."""
+    """Every rendered deck under `<root>/talks/`, **in delivery order**: by the talk's own `date`,
+    then class, then title — the order a course is taught in. Undated decks follow, oldest render
+    first. Sorting by render time instead (the old order) moved a class to the top every time it
+    was touched up, so the page never read as a syllabus."""
     entries = [e for e in (_entry(p, root)
                            for p in sorted((root / "talks").glob("*/output/html/index.html")))
                if e]
-    entries.sort(key=lambda e: e["sort"], reverse=True)
+    entries.sort(key=lambda e: (0, e["talk_date"], _natural(e["cls"]), _natural(e["title"]))
+                 if e["talk_date"] else (1, e["sort"]))
     return entries
 
 
@@ -154,7 +182,9 @@ def update_index(root: Path) -> Path | None:
     entries = collect(root)
     if not entries:
         return None
-    lang = next((e["lang"] for e in entries if e["lang"]), "en")   # newest render's language
+    # the most recently rendered deck's language
+    lang = max(entries, key=lambda e: e["sort"])["lang"] or next(
+        (e["lang"] for e in entries if e["lang"]), "en")
     out = root / INDEX_NAME
     if out.exists() and MARKER not in out.read_text(encoding="utf-8", errors="ignore"):
         print(f"[html] {INDEX_NAME} is not Talksmith's — writing {FALLBACK_NAME} instead",

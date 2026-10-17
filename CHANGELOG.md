@@ -13,6 +13,61 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.1.0] — 2026-10-17
+
+No re-init needed. Existing working directories should add `talks/*/images/.trash/` to their
+`.gitignore` by hand (the init block is written once and is not re-appended).
+
+Twenty-one defects reported from a working directory's bug log, fixed at the source.
+
+### Added
+
+- **Code panels go fullscreen.** A button in the panel's title bar puts that one snippet on the
+  whole screen, re-fitted to the largest size at which every line shows; `Esc` or the same button
+  returns it to the slide. Arrow keys don't change slides meanwhile. The button never appears in
+  the PDF, the `.pptx`, or a browser that can't go fullscreen.
+- **`feedback_cycle.py move`** — the Step-8 Move as one atomic call: promoted rows are archived to
+  `feedback-processed.md` and deleted from the backlog, rows an earlier copy-only Move left behind
+  are cleaned up, and the call fails if any promoted row is still in the backlog.
+
+### Changed
+
+- **The diagram critic is dispatched by the illustrator coordinator** — render wave, critic wave,
+  revision wave — instead of by per-block subagents, which cannot launch subagents. The critique
+  loop no longer depends on workarounds.
+- **Long quotes, statements and closing heroes shrink their type and re-wrap** at full width
+  instead of scaling down into a narrow column; one past the size floor is reported as clipped.
+- **The workspace index lists decks in delivery order** (talk date, then class) and shows each
+  talk's date; the render date is secondary.
+- **A template pin that is unknown, or would drop the slide's body, is overridden at FILL** and
+  the override is recorded. `quote`/`statement` pins carry no bullets.
+- **Diagram notes:** `emphasize:` names exactly one focal element; a new `terms:` line lists
+  terms of art that stay in their original language, which the critic no longer asks to translate.
+- **`gc --apply` moves orphaned renders to `images/.trash/<timestamp>/`** instead of deleting them.
+
+### Fixed
+
+- **Web capture** picks up figures that aren't a plain `<img src>` (arXiv SVG `<object>`s,
+  `<embed>`, `srcset`, `data-src`, `<picture>`, SVG `<image>`); saves a 401/403/paywall response
+  with its status (exit code 3) as the skill promised; survives very long asset URLs; and never
+  leaves a partial folder.
+- **A renumbered slide reuses its existing diagram** instead of re-rendering it, and
+  `stamp-renders` no longer marks an outdated drawing current (new `--only`).
+- **`mirror-row` requires `--expect-text`** and refuses a stale line or an already-mirrored
+  bullet, so tags can't land on a neighbouring backlog row.
+- **Audits:** no false notes/callout drop when a section opener and a slide share a title
+  (multi-level numbers like `7.1` are ignored when matching); every `_`-prefixed key is ignored
+  as metadata; a title a quote slide doesn't show is now flagged.
+- **Render:** `\*` and other backslash escapes are literal; `image-full` keeps its source line
+  and can show an ASCII diagram as a code panel in the live draft view; `concept-columns` no
+  longer draws guessed icons; content bodies sit in the upper third again (an earlier change to
+  the fit pass had left them top-aligned).
+- **Specs that contradicted each other or the code:** the `--draft` live view runs no classifier
+  critic per slide; symbols outside Latin (∈, ∀, arrows, ✓) are documented as rendering as empty
+  boxes in diagrams; defect-log keys and values are written as the schema spells them
+  (`status: open`); stale links, parameters and `format: list` removed from the md-to-deck skill
+  and the template catalog.
+
 ## [1.0.3] — 2026-09-27
 
 No re-init needed.

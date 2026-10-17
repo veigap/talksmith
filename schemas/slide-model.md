@@ -268,7 +268,7 @@ when the content warrants. Field names are the contract — the renderers read e
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `image-full` | `title`, `image:{src,alt}` | `lead` (one line under the title) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or `highlights` belong here |
+| `image-full` | `title`, `image:{src,alt}` (or a code panel `{code,language}` — the `--draft` ASCII case below) | `lead` (one line under the title), `highlights` of `kind: source` **only** (the citation line, under the image) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or other highlights belong here |
 | `content-image` | `title`, `media:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
 | `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` | `lead`, per-card `icon` (else content-matched), `design` |
 | `concept-columns` | `title`, `columns:[{label,body}]` (2–4) | **`subtitle`** — the block's own heading, naming what the columns are (`IA Tradicional vs. Foundation Models`); it is a *name*, distinct from the `lead`, which is a framing sentence. Per column: **`text`** — free text after the description, a **list** → bullets or a **string** → paragraphs (blank-line separated), because the columns genuinely differ in shape; `text_label` (a bold lead over it, e.g. `Características:`), `example` (a bold closing line, e.g. `Ejemplos: …`), `emphasis` (`true` on **at most one** column — a filled accent panel with the column inverted). Also slide-level `lead`. Columns share **no** row structure — that is what separates this from `value-columns` |
@@ -371,6 +371,12 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `concept-breakdown` + `format: row`, `icon-list` → `concept-breakdown`, `format: list` → the
   default `grid`. The render refuses a model that still carries one of these (`_RETIRED_TEMPLATES`
   in `build_html.py`) and warns on a retired `format`, so a missed translation is loud.
+  **A pin that cannot be honoured is ignored.** An id that is neither in the catalog nor retired
+  (`template: table`), or a pin whose template cannot hold the slide's body — a `quote` or
+  `statement` pinned over bullets (neither renders a list or `highlights`, so the bullets would
+  vanish) — is dropped: classify the slide normally, and record the overridden pin in `_choice`
+  (`rejected: {"quote (pinned)": "renders no list — the 2 bullets would be dropped"}`). A pin
+  chooses *among* templates that keep the content; it never licenses dropping it.
 - **An H1 that names a `deck.sections` entry** → a `section-agenda` slide (`title` = the section
   name, number stripped) — the roadmap. A `〔divisor〕` sub-opener (or an H1 that is not a real
   section) → a plain `divider`.
@@ -378,6 +384,11 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `template` (**unless a `<!-- template: … -->` hint pins it**), decompose `### Content`'s body into
   that template's required fields (below), set `section` to the current section, and carry a
   `<!-- reveal: … -->` hint into `reveal`.
+- **`--draft` only — an ```` ```ascii ```` fence is the slide's figure, not code.** In `draft.md`
+  diagrams are still ASCII (Step 6 renders them to SVG), so the fence is classified as an image
+  (catalog → `has_code`). Carry it verbatim as a code panel where the picture will go: a slide that
+  is just the diagram is `image-full` with `image:{code:"<the fence body>", language:"text"}`; on a
+  composed template it is `media:{code, language:"text"}`.
 - **`### Speaker notes`** → lifted **verbatim** into the slide's `notes` (never onto the slide
   face). Keep image `src` paths exactly as written (`images/…`).
   **Verbatim means every sentence — copy the block, do not summarize it.** Notes are the one field
@@ -404,6 +415,8 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
     (`[WHO — Ethics and governance of AI for health](https://who.int/…)`) — a titled link reads on
     a slide, a 90-character address does not. Normalize a source line to that shape when the title
     is right there next to the URL; leave the URL bare rather than inventing a title when it isn't.
+  - **Keep a backslash escape as written** (`P\*`, `\_`) — it renders as the bare literal
+    character, never as a mark.
   - **Block markdown does not survive** — headings, lists, tables, blockquotes inside a field
     render as literal text. Structure is the model's job: it becomes `cards` / `steps` / `columns`,
     never `- ` lines inside one `body`. (`notes` is the one exception: it is free prose, so its

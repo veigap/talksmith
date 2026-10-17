@@ -42,7 +42,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
     extract_block_context,
 )
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
-    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems,
+    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, run_gc,
     scan_final_path, write_json,
 )
 
@@ -566,9 +566,10 @@ def _generated_aside_stems(images_dir: Path) -> set[str]:
 
 
 def cmd_gc(args: argparse.Namespace) -> int:
-    """List (or --apply delete) generated aside triplets (`<stem>.png` + `.imgprompt` + `.imgstamp`)
-    no longer referenced by final.md. Non-destructive by default; only assets proven generated (a
-    sidecar or stamp) are candidates, so a presenter-owned image is never a deletion target."""
+    """List (or --apply move to `images/.trash/<timestamp>/`) generated aside triplets (`<stem>.png`
+    + `.imgprompt` + `.imgstamp`) no longer referenced by final.md. Non-destructive by default and
+    recoverable with --apply; only assets proven generated (a sidecar or stamp) are candidates, so a
+    presenter-owned image is never touched."""
     final_path = Path(args.final).resolve()
     if not final_path.exists():
         print(f"error: final.md not found: {final_path}", file=sys.stderr)
@@ -581,32 +582,11 @@ def cmd_gc(args: argparse.Namespace) -> int:
     referenced = referenced_stems(final_path.read_text())
     orphans = sorted(s for s in _generated_aside_stems(images_dir) if s not in referenced)
 
-    targets: list[Path] = []
-    for s in orphans:
-        for cand in (images_dir / f"{s}.png", images_dir / f"{s}.imgprompt",
-                     images_dir / f"{s}{STAMP_SUFFIX}"):
-            if cand.exists():
-                targets.append(cand)
-
-    if not orphans:
-        print("gc: no orphaned generated aside assets — images/ is clean")
-        return 0
-
-    print(f"gc: {len(orphans)} orphaned generated aside(s), {len(targets)} file(s):")
-    for f in targets:
-        print(f"  {f.relative_to(final_path.parent)}")
-    if args.apply:
-        removed = 0
-        for f in targets:
-            try:
-                f.unlink()
-                removed += 1
-            except OSError as e:
-                print(f"  ⚠  could not remove {f}: {e}", file=sys.stderr)
-        print(f"gc: removed {removed} file(s)")
-    else:
-        print("gc: dry-run — pass --apply to delete")
-    return 0
+    targets = [cand for s in orphans
+               for cand in (images_dir / f"{s}.png", images_dir / f"{s}.imgprompt",
+                            images_dir / f"{s}{STAMP_SUFFIX}")
+               if cand.exists()]
+    return run_gc(final_path.parent, images_dir, orphans, targets, args.apply, "aside")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -647,9 +627,9 @@ def main(argv: list[str]) -> int:
     add_plan_args(p_cleanup)
     p_cleanup.set_defaults(func=cmd_cleanup)
 
-    p_gc = sub.add_parser("gc", help="list (or --apply delete) generated aside triplets (png + .imgprompt + .imgstamp) no longer referenced by final.md; presenter-owned images are never touched")
+    p_gc = sub.add_parser("gc", help="list (or --apply move to images/.trash/) generated aside triplets (png + .imgprompt + .imgstamp) no longer referenced by final.md; presenter-owned images are never touched")
     p_gc.add_argument("--final", required=True, help="path to the Talk's final.md")
-    p_gc.add_argument("--apply", action="store_true", help="delete the orphaned files (default: dry-run list only)")
+    p_gc.add_argument("--apply", action="store_true", help="move the orphaned files to images/.trash/<timestamp>/ (default: dry-run list only)")
     p_gc.add_argument("--dry-run", action="store_true", help="explicit no-op; gc is dry by default (kept for symmetry)")
     p_gc.set_defaults(func=cmd_gc)
 

@@ -68,6 +68,13 @@
       "notes": "A quote with no attribution. Plenty of quoted lines have no person to name — a slogan, an anonymized line from a user interview, a sentence from a standard or a report, something said in the room. The template treats attribution as optional and renders nothing in its place: the quotation mark and the centering already say these are someone else's words, which is the only thing that distinguishes a quote from a statement. The rule this fixture guards is that the fill must not invent an attribution to satisfy the template, and must not demote the slide to statement because none exists."
     },
     {
+      "template": "quote",
+      "section": "Statement & emphasis",
+      "quote": "An agent is anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators. A rational agent is one that does the right thing — for each possible percept sequence, it selects an action expected to maximize its performance measure, given the evidence provided by the percept sequence and whatever built-in knowledge it has.",
+      "attribution": "Russell & Norvig, Artificial Intelligence: A Modern Approach",
+      "notes": "A long quote (~60 words) is the edge the full-bleed fit exists for. Only the display type steps down, and it re-wraps across the full measure — the old fit scaled the whole block, which shrank the wrap width with the glyphs and left a narrow column in the middle of an empty slide. The attribution keeps its reading size. Past the floor the slide would be flagged as clipped."
+    },
+    {
       "template": "callout",
       "section": "Statement & emphasis",
       "title": "callout: an emphasized aside",
@@ -1181,6 +1188,32 @@
         "src": "images/pipeline.svg",
         "alt": "The Talksmith pipeline diagram"
       }
+    },
+    {
+      "template": "image-full",
+      "section": "Visual & data",
+      "title": "image-full: a source line under the picture",
+      "image": {
+        "src": "images/pipeline.svg",
+        "alt": "The Talksmith pipeline diagram"
+      },
+      "highlights": [
+        {
+          "kind": "source",
+          "body": "Fuente: [Talksmith — md-to-deck](https://example.org/talksmith) (2026)."
+        }
+      ],
+      "notes": "The one highlight image-full renders is its source: a picture without its citation is a picture nobody can check. The line sits under the image on the header's margins, and the image gives up the height it needs — the band is never pushed off the slide. Any other highlight kind on this template is dropped, and field_coverage names it."
+    },
+    {
+      "template": "image-full",
+      "section": "Visual & data",
+      "title": "image-full: an ASCII figure, before Polish renders it",
+      "image": {
+        "code": "  draft.md ──► FILL ──► slide-model.json ──► RENDER ──► index.html\n                │                                   │\n                └──── audits (coverage, diversity) ─┘",
+        "language": "text"
+      },
+      "notes": "In the --draft live view a diagram is still an ascii fence — Step 6 has not rendered it yet. The fill carries it verbatim as a code panel where the picture will go, so the slide previews its shape instead of losing the figure. image is polymorphic exactly as media is."
     },
     {
       "template": "content-image",

@@ -1,11 +1,18 @@
 {% import "_macros.j2" as m %}
-{# One image, edge to edge under the normal header. This is a full-bleed slide, so it emits its
+{# One exhibit, edge to edge under the normal header. This is a full-bleed slide, so it emits its
    own `.stage` instead of calling `stage(s)`: the shared stage pads every side, and that padding
    is exactly what this template exists to remove below the header. Consequences on purpose —
    no `.cfit`, so the content-fit pass leaves it alone (the image is sized by CSS to the box it is
    given, and a long title shrinks that box rather than overflowing it), and no highlights band or
-   aside column, neither of which belongs on a slide whose whole body is the picture. #}
+   aside column, neither of which belongs on a slide whose whole body is the picture.
+   The one exception is a `source` highlight: a picture without its citation is a picture someone
+   cannot check, so that band (and only that kind) sits under the fill, and the fill gives up the
+   height it needs.
+   `s.image` is polymorphic exactly as `media` is (`m.smedia`): a picture or clip `{src,alt}`, or
+   a code panel `{code, language}` — an un-rendered ASCII figure in the live `--draft` view. #}
+{% set hlsrc = (s.highlights or []) | selectattr('kind', 'eq', 'source') | list %}
 <div class="stage imgfull">
 <div class="shead">{{ m.header(s) }}</div>
-<div class="iffill">{{ embed_img(s.image) }}</div>
+<div class="iffill">{{ m.smedia(s.image) }}</div>
+{% if hlsrc %}{{ m.hlband(hlsrc, ' hl-source', '') }}{% endif %}
 </div>

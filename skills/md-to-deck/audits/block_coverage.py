@@ -34,8 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _model import model_strings  # noqa: E402  (shared audit plumbing)
 
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from text_coverage import tokens  # noqa: E402  (one tokenizer, shared by every coverage audit)
+from text_coverage import _HEADING_NUM, tokens  # noqa: E402  (one tokenizer + heading-number rule, shared by every coverage audit)
 
 
 # Emoji ranges from ${CLAUDE_PLUGIN_ROOT}/config/pptx-styles/pptx-strict/pptx-prompt.md §17.7 detection ranges.
@@ -44,8 +43,6 @@ EMOJI_CLASS = r"[\U0001F300-\U0001FAFF☀-➿⌀-⏿]"
 # Known non-content image paths to exclude from the per-slide <p:pic> count:
 # - cover logo ppt/media/image-1-*.png (institution mark, slide 1 only)
 # - section-pill icons (small icon-*.png/svg in branded library)
-
-_HEADING_NUM = re.compile(r"^\s*\d+[.)]\s*")
 
 # The three ways a callout is authored in `final.md` (schemas/draft.md; strict §8).
 _CALLOUT_ADMONITION = re.compile(r"^\s*>\s*\[!\w+\]")
@@ -59,34 +56,6 @@ _SKIP_H3 = ("sources", "presenter feedback", "speaker notes")
 # --------------------------------------------------------------------------- #
 # final.md parsing
 # --------------------------------------------------------------------------- #
-
-@dataclass
-class SourceSlide:
-    h2_line: int
-    h2_title: str
-    callouts: int = 0
-    images: int = 0
-    callout_lines: list[int] = field(default_factory=list)
-    image_lines: list[int] = field(default_factory=list)
-
-
-def parse_model(path: str) -> list[SourceSlide]:
-    """Expected callout/image blocks per slide, read straight from `slide-model.json` — the
-    structured model already enumerates them, so there is no markdown to parse. Images = an
-    `media` (composed slides) or `image` (`image-full`, which names its own picture field) +
-    `images[]` + each `figures[].image`; a callout block = a `callout`-template slide. Matched to
-    the deck by normalized title (its `title`, or `section` for dividers)."""
-    import json
-    model = json.loads(open(path, encoding="utf-8").read())
-    slides: list[SourceSlide] = []
-    for idx, s in enumerate(model.get("slides", []), start=1):
-        images = (1 if (s.get("media") or s.get("image")) else 0) + len(s.get("images", []))
-        images += sum(1 for f in s.get("figures", []) if f.get("image"))
-        callouts = 1 if s.get("template") == "callout" else 0
-        title = s.get("title") or s.get("section") or ""
-        slides.append(SourceSlide(h2_line=idx, h2_title=title, callouts=callouts, images=images))
-    return slides
-
 
 # --------------------------------------------------------------------------- #
 # final.md parsing — the source stage (no .pptx needed)
@@ -131,6 +100,13 @@ def content_windows(body: list[str], window: int = 5, limit: int = 8) -> list[st
     return out
 
 
+# Model slides that no `##` heading produces: the deck opener and the section / sub-part openers.
+# A section opener repeats its section's name, and so, often, does a content slide inside it
+# (`# 7. Cómo fallan` → `## 7.1 Cómo fallan`). Indexing the opener lets it win that title and
+# report the content slide's notes or callouts as dropped — the opener never carries them.
+NOT_FROM_H2 = frozenset({"cover", "section-agenda", "divider"})
+
+
 class SlideIndex:
     """Model slides addressable by title **or** by the text they carry.
 
@@ -139,40 +115,55 @@ class SlideIndex:
     those templates as unmatched — and then never audits them. Falling back to a text match fixes
     that without loosening the title path: a source slide is matched by content only when exactly
     one model slide carries a distinctive run of its words.
+
+    Nor is a title unique. Each title maps to every model slide carrying it, and `find` *claims*
+    them in order — so callers must call it once per source `##` slide, in document order, and
+    two slides sharing a title pair up first-with-first. Openers (`NOT_FROM_H2`) are never indexed.
     """
 
-    def __init__(self, entries: list[tuple[str, str]]):
-        """entries: (title, full slide text) in model order."""
-        self.by_title: dict[str, int] = {}
-        self.texts: list[str] = []
-        for idx, (title, text) in enumerate(entries, start=1):
+    def __init__(self, entries: list[tuple[str, str, str]]):
+        """entries: (title, full slide text, template) in model order."""
+        self.by_title: dict[str, list[int]] = {}
+        self.texts: dict[int, str] = {}
+        self.claimed: set[int] = set()
+        for idx, (title, text, template) in enumerate(entries, start=1):
+            if template in NOT_FROM_H2:
+                continue
             key = _normalize_title(title)
-            if key and key not in self.by_title:
-                self.by_title[key] = idx
-            self.texts.append(" " + " ".join(tokens(text)) + " ")
+            if key:
+                self.by_title.setdefault(key, []).append(idx)
+            self.texts[idx] = " " + " ".join(tokens(text)) + " "
+
+    def _open(self, idxs: list[int]) -> int | None:
+        return next((i for i in idxs if i not in self.claimed), None)
+
+    def _claim(self, idx: int | None) -> int | None:
+        if idx is not None:
+            self.claimed.add(idx)
+        return idx
 
     def find(self, title: str, windows: list[str] | None = None) -> int | None:
         key = _normalize_title(title)
-        if key in self.by_title:
-            return self.by_title[key]
+        if key in self.by_title and self._open(self.by_title[key]) is not None:
+            return self._claim(self._open(self.by_title[key]))
         if key:
-            cands = [i for k, i in self.by_title.items()
-                     if k.startswith(key[:20]) or key.startswith(k[:20])]
+            cands = [self._open(v) for k, v in self.by_title.items()
+                     if (k.startswith(key[:20]) or key.startswith(k[:20])) and self._open(v)]
             if len(cands) == 1:
-                return cands[0]
+                return self._claim(cands[0])
         if not windows:
             return None
         hits: dict[int, int] = {}
         for w in windows:
             needle = f" {w} "
-            for i, text in enumerate(self.texts, start=1):
-                if needle in text:
+            for i, text in self.texts.items():
+                if i not in self.claimed and needle in text:
                     hits[i] = hits.get(i, 0) + 1
         if not hits:
             return None
         best = max(hits.values())
         winners = [i for i, n in hits.items() if n == best]
-        return winners[0] if len(winners) == 1 else None
+        return self._claim(winners[0]) if len(winners) == 1 else None
 
 
 def slide_text(slide: dict) -> str:
@@ -246,9 +237,9 @@ def model_callout_slots(path: str) -> tuple[list[ModelSlot], SlideIndex]:
     for sl in model.get("slides", []):
         slots = 1 if (sl.get("template") == "callout" or sl.get("callout")) else 0
         slots += len(sl.get("highlights") or [])
-        title = sl.get("title") or sl.get("section") or ""
+        title = sl.get("title") or ""          # never `section`: that is the slide's parent
         out.append(ModelSlot(title=title, slots=slots, template=sl.get("template") or ""))
-        entries.append((title, slide_text(sl)))
+        entries.append((title, slide_text(sl), sl.get("template") or ""))
     return out, SlideIndex(entries)
 
 
@@ -257,9 +248,9 @@ def reconcile_source(md: list[MdSlide], slots: list[ModelSlot],
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
     for m in md:
+        idx = index.find(m.title, m.windows())   # every slide, in order: it claims its match
         if not m.callouts:
             continue                      # only a slide that authored one can drop one
-        idx = index.find(m.title, m.windows())
         if idx is None:
             unmatched.append(Unmatched(h2_line=m.line, h2_title=m.title))
             continue

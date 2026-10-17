@@ -16,18 +16,18 @@ The diagram-illustrator picks templates and dispatches `talksmith:ascii-to-svg` 
 3. **Diagram-Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
 4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr.
 5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
-6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each.
+6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each. **A block gets no args file when a stamped SVG with its digest already exists** — at the planned basename, *or under any other name in `images/`*: a renumbered slide changes the basename but not the drawing, so the stamped render (SVG, deliverable PNG, `.critique/` PNG and log, the log's H1 renamed) is **copied** to the new stem and counted as reused. Filenames never decide, in either direction.
 7. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the args file. Easily parallelizable across subagents.
-8. **`stamp-renders`** *(mandatory — never skip)* — stamp each rendered SVG with the SHA-256 digest of the ASCII it was drawn from. This is what makes step 6 (`prepare-render-args`) able to skip unchanged blocks on the **next** pass: it is the one and only signal consulted, so an unstamped SVG re-renders every time, forever. Run once after **all** renders complete, before `cleanup`. Blocks whose render failed have no SVG on disk and are skipped + reported on stderr — they correctly re-render next pass.
+8. **`stamp-renders`** *(mandatory — never skip)* — stamp each rendered SVG with the SHA-256 digest of the ASCII it was drawn from. This is what makes step 6 (`prepare-render-args`) able to skip unchanged blocks on the **next** pass: it is the one and only signal consulted, so an unstamped SVG re-renders every time, forever. Run once after **all** renders complete, before `cleanup`. Blocks whose render failed have no SVG on disk and are skipped + reported on stderr — they correctly re-render next pass. An SVG that is **older than its `.ascii` sidecar and stamped from other ASCII** is an old drawing still waiting for (or having failed) its re-render: it is **not** stamped, and is reported — stamping it would mark the old picture current forever. `--only <slide_id …>` stamps just the named blocks, for when those renders land later.
 9. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
 A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup). **`apply` does not stamp** — if you use it after rendering SVGs by hand, run `stamp-renders` yourself or the next pass re-renders everything.
 
-A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references. It is **non-destructive by default** (lists only); pass `--apply` to delete. Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
+A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references. It is **non-destructive by default** (lists only); `--apply` **moves** the files — `.critique/<stem>.md` too — into `images/.trash/<YYYYMMDD-HHMMSS>/`, keeping their relative layout so a restore is one `mv` (nothing else globs into `.trash/`; delete the folder once sure). Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md           # list
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # delete
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
 ```
 
 ## When to use
@@ -125,7 +125,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
     cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 
-`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk; it does **not** stamp, so pair it with `stamp-renders` when you've rendered by hand. Read-only subcommands (`scan`, `inspect-intents`, `annotate-renders`, `prepare-render-args`) and `extract`/`stamp-renders` are idempotent; a second `cleanup`/`apply` with the same plan exits 3 by design (the fences are gone — re-run `scan` for a fresh plan).
+`apply` is a single-shot wrapper around `extract` + `cleanup` for re-running Polish after every SVG already exists on disk; it does **not** stamp, so pair it with `stamp-renders` when you've rendered by hand. Read-only subcommands (`scan`, `inspect-intents`, `annotate-renders`), `prepare-render-args` (whose only writes under `images/` are reused-render copies) and `extract`/`stamp-renders` are idempotent; a second `cleanup`/`apply` with the same plan exits 3 by design (the fences are gone — re-run `scan` for a fresh plan).
 
 ## Output
 
@@ -181,7 +181,7 @@ For each block with `render` non-null:
    - ASCII payload verbatim (no fence, no leading/trailing blank-line manipulation).
    - If `note.payload` exists: one blank line, then the captured note verbatim through `-->`.
    - Trailing `\n` to keep POSIX-friendly.
-   - Idempotency: skip the write if existing bytes match exactly.
+   - Idempotency: skip the write if existing bytes match exactly — so a sidecar's mtime marks the last time its content changed, which is what `stamp-renders`' stale check reads.
 2. **`final.md` rewrite.** Replace lines `ascii.start_line` … `ascii.end_line` (inclusive) in `final.md` with:
    ```
    ![<alt>](images/<svg_basename>)
@@ -198,7 +198,7 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 ## Boundaries
 
 - Reads `final.md`; in `scan` it is read-only; in `apply` / `cleanup` it is rewritten atomically.
-- Writes only under `talks/<Talk>/images/` (sidecars) and to `final.md` itself.
+- Writes only under `talks/<Talk>/images/` (sidecars, reused-render copies, `gc`'s `.trash/`) and to `final.md` itself.
 - Never reads or writes `draft.md`.
 - Does **not** render SVGs — that's `talksmith:ascii-to-svg`.
 - Does **not** assign `svg_basename` — the diagram-illustrator does (filename convention spec in `${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`).

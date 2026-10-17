@@ -14,7 +14,7 @@ Every `[closed]` bullet from a Talk's Step 5 Review is mirrored here, building a
 |---|---|---|
 | Orchestrator | Step 8 entry | Scan for ≥3× recurrences across Talks, surface promotion candidates by asking the presenter. Read-only — never writes the file directly. |
 | Editor role | Step 5 (Review) | Read existing tag vocabulary before appending a new closed-bullet row. **Sole writer.** Append-only in Step 5. |
-| Editor role | Step 8 (Learnings), Move pass | Remove rows being relocated to `feedback-processed.md`. **Row-removal here is the sole deletion the Editor performs in any step**, and is only allowed during a Step 8 Move — justified because the row is fully preserved (with `promoted_to:` + `promoted_at:` metadata) in `feedback-processed.md`. |
+| Editor role | Step 8 (Learnings), Move pass | Remove rows being relocated to `feedback-processed.md` — only through `feedback_cycle.py move` ([`skills/feedback-cycle/SKILL.md`](${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/SKILL.md)), which appends and deletes in one call. **Row-removal here is the sole deletion the Editor performs in any step**, and is only allowed during a Step 8 Move — justified because the row is fully preserved (with `promoted_to:` + `promoted_at:` metadata) in `feedback-processed.md`. |
 
 ## Entry format
 

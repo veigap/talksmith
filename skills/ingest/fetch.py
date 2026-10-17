@@ -8,6 +8,11 @@ Outputs:
 
 Stdlib only (urllib, html.parser, pathlib). CLI-safe.
 
+The folder is assembled in a hidden sibling temp dir and renamed into place
+only once every file is written, so a failure never leaves a partial capture.
+An HTTP error status (401/403/404/5xx…) is not a crash: its body is saved as
+`original.html` with the status in `metadata.yaml`, and the exit code is 3.
+
 Usage:
     python fetch.py <url> --talk-path <talks/<Talk>> [--folder-name <slug>]
 
@@ -20,8 +25,13 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import hashlib
 import html
+import http.client
+import mimetypes
+import os
 import re
+import shutil
 import sys
 import urllib.error
 import urllib.parse
@@ -37,6 +47,17 @@ _IMG_TIMEOUT_SEC = 15
 
 # Tags whose content should be dropped entirely (boilerplate, navigation, ads).
 _DROP_TAGS = {"script", "style", "noscript", "nav", "footer", "aside", "form", "iframe"}
+
+# An <object>/<embed> without a `type` counts as an image only if its URL ends in one of these.
+_IMAGE_EXTS = {".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".bmp", ".tif", ".tiff"}
+
+# Longest asset filename kept verbatim. Some hosts put a whole hex-encoded URL in the last path
+# segment (GitHub's camo proxy) and blow past the 255-byte filesystem limit; longer names become
+# a short URL hash plus the extension.
+_MAX_ASSET_NAME_BYTES = 100
+
+# Exit code for "saved, but the server answered with an HTTP error status".
+EXIT_HTTP_ERROR = 3
 
 
 def _slugify(text: str) -> str:
@@ -55,13 +76,89 @@ def _default_folder_name(url: str) -> str:
 
 
 def _fetch_url(url: str) -> tuple[bytes, int, str]:
-    """Return (body, status, final_url) for a single GET. Raises on hard failure."""
+    """Return (body, status, final_url) for a single GET.
+
+    An HTTP error status is a *response*, not a failure: its body (the 403 page, the paywall
+    notice) is returned with its code so the caller can save exactly what the server sent.
+    Only transport failures (DNS, refused connection, timeout) raise.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT_SEC) as resp:
-        body = resp.read()
-        status = resp.status
-        final_url = resp.geturl()
+    try:
+        with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT_SEC) as resp:
+            body = resp.read()
+            status = resp.status
+            final_url = resp.geturl()
+    except urllib.error.HTTPError as exc:
+        try:
+            body = exc.read() or b""
+        except (OSError, http.client.HTTPException):
+            body = b""
+        finally:
+            exc.close()
+        return body, exc.code, exc.geturl() or url
     return body, status, final_url
+
+
+def _largest_srcset_candidate(srcset: str) -> str:
+    """The URL of the highest-resolution candidate in a `srcset` ("" if none).
+
+    Candidates are `url [Nw|Nx]`; a URL runs to the next whitespace (so a `data:` URI's own
+    commas survive) and a bare URL is `1x`. Width descriptors win over density ones.
+    """
+    cands: list[tuple[str, str]] = []
+    pos, n = 0, len(srcset)
+    while pos < n:
+        while pos < n and (srcset[pos].isspace() or srcset[pos] == ","):
+            pos += 1
+        start = pos
+        while pos < n and not srcset[pos].isspace():
+            pos += 1
+        url = srcset[start:pos]
+        if not url:
+            break
+        descriptor = ""
+        if url.endswith(","):
+            url = url.rstrip(",")
+        else:
+            end = srcset.find(",", pos)
+            end = n if end == -1 else end
+            descriptor = srcset[pos:end].strip()
+            pos = end
+        if url:
+            cands.append((url, descriptor))
+    best_url, best_key = "", (-1, -1.0)
+    for url, descriptor in cands:
+        m = re.fullmatch(r"(\d+(?:\.\d+)?)([wx])", descriptor.lower())
+        if m:
+            key = (1, float(m.group(1))) if m.group(2) == "w" else (0, float(m.group(1)))
+        else:
+            key = (0, 1.0)
+        if key > best_key:
+            best_url, best_key = url, key
+    return best_url
+
+
+def _img_url(attrs: dict[str, str]) -> str:
+    """Pick the one URL an `<img>` stands for: the largest srcset candidate, then the lazy-load
+    `data-*` attributes, then `src`. A `data:` placeholder yields to any real URL."""
+    picks = [
+        _largest_srcset_candidate(attrs.get("srcset", "")),
+        _largest_srcset_candidate(attrs.get("data-srcset", "")),
+        attrs.get("data-src", ""),
+        attrs.get("src", ""),
+    ]
+    picks = [p.strip() for p in picks if p and p.strip()]
+    for p in picks:
+        if not p.startswith("data:"):
+            return p
+    return picks[0] if picks else ""
+
+
+def _is_image_ref(url: str, mime: str) -> bool:
+    """Whether an `<object data>` / `<embed src>` embeds an image (not a page, PDF or plugin)."""
+    if mime.strip():
+        return mime.strip().lower().startswith("image/")
+    return Path(urllib.parse.urlparse(url).path).suffix.lower() in _IMAGE_EXTS
 
 
 class _HtmlExtractor(HTMLParser):
@@ -69,7 +166,11 @@ class _HtmlExtractor(HTMLParser):
 
     Captures title from `<title>`. Skips _DROP_TAGS subtrees. Emits Markdown
     for headings, paragraphs, lists, links, code, strong/em, and image refs.
-    Collects image URLs encountered for later download.
+    Collects image URLs encountered for later download — from `<img>` (src,
+    srcset, data-src, data-srcset), `<picture><source srcset>`, image-typed
+    `<object data>` / `<embed src>` (arXiv/ar5iv figures are SVG objects), and
+    inline-SVG `<image href|xlink:href>`. Each image yields one URL, used both
+    for the download and for its `![alt](url)` ref in page.md.
     """
 
     def __init__(self) -> None:
@@ -85,6 +186,12 @@ class _HtmlExtractor(HTMLParser):
         self._link_text_buffer: list[str] | None = None
         self._image_urls: list[tuple[str, str]] = []  # (src, alt)
         self._in_pre = False
+        # <picture>: candidate URLs from its <source>s, used only if its <img> yields none.
+        self._picture_sources: list[str] | None = None
+        self._picture_done = False
+        # One entry per open <object>: True when it was collected as an image, so its
+        # fallback content (often a PNG twin of the SVG) isn't collected a second time.
+        self._object_stack: list[bool] = []
 
     # ------------------ public ------------------
     @property
@@ -96,6 +203,12 @@ class _HtmlExtractor(HTMLParser):
     @property
     def image_urls(self) -> list[tuple[str, str]]:
         return self._image_urls
+
+    def _add_image(self, url: str, alt: str) -> None:
+        if not url or any(self._object_stack):
+            return
+        self._image_urls.append((url, alt))
+        self._md_parts.append(f"![{alt}]({url})")
 
     # ------------------ HTMLParser hooks ------------------
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -148,11 +261,30 @@ class _HtmlExtractor(HTMLParser):
                 self._pending_link_href = href
                 self._link_text_buffer = []
         elif tag == "img":
-            src = attr_dict.get("src", "")
-            alt = attr_dict.get("alt", "")
-            if src:
-                self._image_urls.append((src, alt))
-                self._md_parts.append(f"![{alt}]({src})")
+            url = _img_url(attr_dict)
+            if self._picture_sources is not None:
+                url = url or (self._picture_sources[0] if self._picture_sources else "")
+                self._picture_done = True
+            self._add_image(url, attr_dict.get("alt", ""))
+        elif tag == "picture":
+            self._picture_sources, self._picture_done = [], False
+        elif tag == "source" and self._picture_sources is not None:
+            best = _largest_srcset_candidate(attr_dict.get("srcset", ""))
+            if best:
+                self._picture_sources.append(best)
+        elif tag == "object":
+            data = attr_dict.get("data", "").strip()
+            is_image = bool(data) and _is_image_ref(data, attr_dict.get("type", ""))
+            if is_image:
+                self._add_image(data, attr_dict.get("title", "") or attr_dict.get("aria-label", ""))
+            self._object_stack.append(is_image)
+        elif tag == "embed":
+            src = attr_dict.get("src", "").strip()
+            if src and _is_image_ref(src, attr_dict.get("type", "")):
+                self._add_image(src, attr_dict.get("title", ""))
+        elif tag == "image":
+            href = (attr_dict.get("href", "") or attr_dict.get("xlink:href", "")).strip()
+            self._add_image(href, "")
 
     def handle_endtag(self, tag: str) -> None:
         if tag in _DROP_TAGS:
@@ -166,6 +298,13 @@ class _HtmlExtractor(HTMLParser):
             return
         if self._stack and self._stack[-1] == tag:
             self._stack.pop()
+        if tag == "picture" and self._picture_sources is not None:
+            # A <picture> whose <img> was missing or empty still stands for its first source.
+            if not self._picture_done and self._picture_sources:
+                self._add_image(self._picture_sources[0], "")
+            self._picture_sources = None
+        elif tag == "object" and self._object_stack:
+            self._object_stack.pop()
         if tag in {"h1", "h2", "h3", "h4", "h5", "h6", "p", "blockquote"}:
             self._md_parts.append("\n\n")
         elif tag in {"ul", "ol"}:
@@ -213,8 +352,29 @@ class _HtmlExtractor(HTMLParser):
             self._md_parts.append(text)
 
 
+def _asset_name(absolute: str, content_type: str) -> str:
+    """Local filename for a downloaded asset: the URL's last path segment, given an extension
+    from the response's Content-Type when it has none, and replaced by a 12-hex URL hash (plus
+    extension) when longer than `_MAX_ASSET_NAME_BYTES`."""
+    name = Path(urllib.parse.urlparse(absolute).path).name or "image"
+    stem, dot, ext = name.rpartition(".")
+    if not dot or not stem:
+        guessed = mimetypes.guess_extension(content_type) if content_type else None
+        ext = (guessed or ".bin").lstrip(".")
+        name = f"{name}.{ext}"
+    if len(name.encode("utf-8")) > _MAX_ASSET_NAME_BYTES:
+        if not (ext.isalnum() and len(ext) <= 8):
+            ext = "bin"
+        name = f"{hashlib.sha1(absolute.encode('utf-8')).hexdigest()[:12]}.{ext}"
+    return name
+
+
 def _download_assets(image_urls: list[tuple[str, str]], base_url: str, assets_dir: Path) -> list[dict]:
-    """Best-effort download of `<img src>` references. Returns a manifest list."""
+    """Best-effort download of the collected image references. Returns a manifest list.
+
+    Every per-asset failure — network, HTTP status, an unwritable name — lands in the manifest
+    as `skipped` and never aborts the capture.
+    """
     assets_dir.mkdir(parents=True, exist_ok=True)
     manifest: list[dict] = []
     seen: dict[str, str] = {}  # absolute_url -> local filename
@@ -226,25 +386,23 @@ def _download_assets(image_urls: list[tuple[str, str]], base_url: str, assets_di
         if absolute in seen:
             manifest.append({"src": src, "absolute": absolute, "saved_as": seen[absolute], "alt": alt, "deduped": True})
             continue
-        # Build local filename.
-        parsed = urllib.parse.urlparse(absolute)
-        basename = Path(parsed.path).name or "image"
-        if "." not in basename:
-            basename = basename + ".bin"
-        local = assets_dir / basename
-        # Collision: append numeric suffix.
-        idx = 2
-        while local.exists():
-            stem, _, ext = basename.rpartition(".")
-            local = assets_dir / f"{stem}-{idx}.{ext}" if ext else assets_dir / f"{basename}-{idx}"
-            idx += 1
         try:
             req = urllib.request.Request(absolute, headers={"User-Agent": _USER_AGENT})
             with urllib.request.urlopen(req, timeout=_IMG_TIMEOUT_SEC) as resp:
-                local.write_bytes(resp.read())
+                data = resp.read()
+                content_type = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
+            basename = _asset_name(absolute, content_type)
+            local = assets_dir / basename
+            # Collision: append numeric suffix.
+            idx = 2
+            while local.exists():
+                stem, _, ext = basename.rpartition(".")
+                local = assets_dir / f"{stem}-{idx}.{ext}" if ext else assets_dir / f"{basename}-{idx}"
+                idx += 1
+            local.write_bytes(data)
             seen[absolute] = local.name
             manifest.append({"src": src, "absolute": absolute, "saved_as": local.name, "alt": alt})
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as exc:
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, http.client.HTTPException) as exc:
             manifest.append({"src": src, "absolute": absolute, "skipped": f"fetch-failed: {exc.__class__.__name__}"})
     return manifest
 
@@ -300,8 +458,17 @@ def _write_metadata_yaml(target: Path, url: str, title: str, status: int, byte_s
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def fetch(url: str, talk_path: Path, folder_name: str | None = None, force: bool = False) -> Path:
-    """Fetch `url` and persist into `talk_path/research/web/<folder_name>/`. Returns the folder."""
+def fetch(url: str, talk_path: Path, folder_name: str | None = None, force: bool = False) -> tuple[Path, int]:
+    """Fetch `url` and persist into `talk_path/research/web/<folder_name>/`.
+
+    Returns `(folder, http_status)`. Everything is written into a hidden temp dir beside the
+    target and renamed into place only at the end, so any exception leaves no folder behind
+    (and, under --force, leaves the previous capture intact).
+
+    An HTTP error status keeps the server's body as `original.html` and records the status in
+    `metadata.yaml`, but page.md carries a banner saying it is an error body, and no assets
+    are downloaded — a 403 page's logos are not research.
+    """
     folder = folder_name or _default_folder_name(url)
     folder = _slugify(folder)
     target = talk_path / "research" / "web" / folder
@@ -310,39 +477,67 @@ def fetch(url: str, talk_path: Path, folder_name: str | None = None, force: bool
             raise FileExistsError(
                 f"{target} already exists and is non-empty. Pass --force to overwrite."
             )
-    target.mkdir(parents=True, exist_ok=True)
 
     body, status, final_url = _fetch_url(url)
     raw_html = body.decode("utf-8", errors="replace")
+    is_error = status >= 400
 
     extractor = _HtmlExtractor()
     extractor.feed(raw_html)
     extractor.close()
 
-    (target / "original.html").write_bytes(body)
-    (target / "page.md").write_text(
-        f"# {extractor.title or final_url}\n\n_Source: <{final_url}>_\n\n{extractor.markdown}",
-        encoding="utf-8",
-    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    # Hidden sibling on the same filesystem, so the final rename is atomic. Path.mkdir (not
+    # tempfile.mkdtemp) so the folder gets the umask's permissions rather than 0700.
+    staging = target.parent / f".{folder}.{os.getpid()}-{os.urandom(3).hex()}.partial"
+    staging.mkdir()
+    try:
+        (staging / "original.html").write_bytes(body)
+        banner = (
+            f"> **HTTP {status}.** The server refused this request; what follows is the error or "
+            "paywall body it returned, not the page's content.\n\n"
+            if is_error else ""
+        )
+        (staging / "page.md").write_text(
+            f"# {extractor.title or final_url}\n\n_Source: <{final_url}>_\n\n{banner}{extractor.markdown}",
+            encoding="utf-8",
+        )
 
-    assets_dir = target / "assets"
-    asset_manifest = _download_assets(extractor.image_urls, final_url, assets_dir)
-    if not any(assets_dir.iterdir()):
-        # Remove empty assets dir for cleanliness.
-        try:
+        assets_dir = staging / "assets"
+        asset_manifest = [] if is_error else _download_assets(extractor.image_urls, final_url, assets_dir)
+        if assets_dir.is_dir() and not any(assets_dir.iterdir()):
+            # Remove empty assets dir for cleanliness.
             assets_dir.rmdir()
-        except OSError:
-            pass
 
-    _write_metadata_yaml(
-        target / "metadata.yaml",
-        url=final_url,
-        title=extractor.title,
-        status=status,
-        byte_size=len(body),
-        asset_manifest=asset_manifest,
-    )
-    return target
+        _write_metadata_yaml(
+            staging / "metadata.yaml",
+            url=final_url,
+            title=extractor.title,
+            status=status,
+            byte_size=len(body),
+            asset_manifest=asset_manifest,
+        )
+        _swap_into_place(staging, target)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return target, status
+
+
+def _swap_into_place(staging: Path, target: Path) -> None:
+    """Rename the finished `staging` dir to `target`, replacing any existing one only after the
+    new capture is complete (the old one is set aside first and deleted last)."""
+    if not target.exists():
+        os.rename(staging, target)
+        return
+    backup = target.with_name(f".{target.name}.old-{os.getpid()}")
+    os.rename(target, backup)
+    try:
+        os.rename(staging, target)
+    except OSError:
+        os.rename(backup, target)
+        raise
+    shutil.rmtree(backup, ignore_errors=True)
 
 
 def main() -> int:
@@ -372,13 +567,16 @@ def main() -> int:
         return 2
 
     try:
-        out = fetch(args.url, args.talk_path, folder_name=args.folder_name, force=args.force)
+        out, status = fetch(args.url, args.talk_path, folder_name=args.folder_name, force=args.force)
     except FileExistsError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
-        print(f"error: fetch failed: {exc}", file=sys.stderr)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, http.client.HTTPException) as exc:
+        print(f"error: fetch failed: {exc.__class__.__name__}: {exc}", file=sys.stderr)
         return 1
+    if status >= 400:
+        print(f"http-error: {status} · saved: {out} (the server's error body, not the page)")
+        return EXIT_HTTP_ERROR
     print(f"saved: {out}")
     return 0
 

@@ -117,8 +117,9 @@ With no hint, the default holds (image on the slide → documentation-only). The
 \`\`\`
 <!-- ascii-note:
 intent: <one line — what this diagram is trying to show>
-emphasize: <which boxes/arrows/labels matter most; what should pop visually>
+emphasize: <the ONE box/arrow/label that should pop — the diagram's single focal element>
 labels: <if axes/legend/units exist, list them>
+terms: <optional — terms of art kept in another language on purpose, comma-separated: tools, loop>
 -->
 ```
 
@@ -130,7 +131,12 @@ Hard rules for the editor when *producing* ASCII:
 
 Downstream extractors key on the `ascii` tag **alone** — there is no payload heuristic and no fallback tier, so an untagged fence is never rendered no matter what it draws ([`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
 
-The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent. **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
+The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines, plus `terms:` when needed) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent, and to the blind critic as the diagram's intent.
+- **`emphasize:` names exactly one element.** The single-accent rule is [`diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md)'s (one focal element per diagram); a note naming two produces two red elements the critic then has to wave through. If two things genuinely compete, the diagram is making two points — pick one, or split the slide.
+- **`terms:` declares deliberate foreign-language terms** (e.g. `tools`, `loop` kept in English in a Spanish deck because the slide prose uses them). The critic flags any label not in the presentation language *unless* it is listed here — so list every term of art the diagram keeps, or it will be "translated" away from the slide's prose.
+- **No slide numbers or cross-references in the note** (`"same layout as ReAct (3.2)"`). The note is part of the render digest, so a renumbering that only rewrites such a reference re-renders a diagram whose drawing did not change. Name the other diagram by its subject, not its position.
+
+**An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
 
 An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the diagram-illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 
@@ -156,7 +162,7 @@ The orchestrator picks one of three modes; the Editor's authoring sequence insid
 
 You don't **have** to tag templates — the render classifies each slide from its content — but **when you have a clear intent for a slide, you may record it** as an optional metadata line right under the slide's `##` heading:
 
-- `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `concept-breakdown`), for when the content is ambiguous or you specifically want that treatment. Use only an id the catalog lists **today** — names you remember from an older draft may be retired (`comparison` is now `value-columns`; `card-row` and `icon-list` are `concept-breakdown`);
+- `<!-- template: <type> -->` — pin the slide type (e.g. `quote`, `timeline`, `stat`, `concept-breakdown`), for when the content is ambiguous or you specifically want that treatment. Use only an id the catalog lists **today** — names you remember from an older draft may be retired (`comparison` is now `value-columns`; `card-row` and `icon-list` are `concept-breakdown`), and only a template that can hold the slide's body — `quote`/`statement` pins carry no bullets (fold a reveal into the claim, or don't pin). A pin that fails either test is overridden at FILL ([`schemas/slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md));
 - `<!-- reveal: together -->` — opt **out** of progressive reveal on this slide (sequential reveal is the default; the HTML deck steps through enumerated items on click). `together` is the only recognized value — anything else leaves the default in place.
 - `<!-- design: <value> -->` — pin **how the canvas is divided**, when the template is right but the default placement isn't. Read by every slide that carries supporting media (`content-image`, `content+cards+image`, `process`, `quiz`, `value-columns`). `split-right` (default — body left, media right) and `split-left` (mirrored: the media leads the eye, the body follows) are the readable pair — neither crops, so both are safe for a diagram the audience must actually read. `banded` stacks the media over a short caption. `column-left`/`column-right` put it in a narrow full-bleed strip **cropped to fill** — atmosphere only, never a chart. `bleed` fills the stage and sets the content over it. So wanting the media first is never a reason to give up a template's structure — pin `split-left` on the one that fits the content. A design the slide has no media to fill falls back to `full` (with a warning at render) rather than erroring.
 - `<!-- format: <value> -->` — pin the **presentation of a labeled set** (`concept-breakdown`), when the type is right but the default arrangement isn't: `grid` (default — a card per concept), `row` (one horizontal band of short cards), and `editorial` (**no cards at all** — a flat grid of icon + label + body on the canvas, up to 8 concepts, separated by white space and a hairline). Pin `editorial` when the panels would only add weight and the slide should read as an organized collection of concepts rather than an application screen; leave it off to keep the cards. An unrecognized value falls back to `grid` with a warning at render.
@@ -195,8 +201,9 @@ Per-round loop:
       python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
           --draft talks/<Talk>/draft.md \
           --backlog config/feedback-backlog.md \
-          --line <N> --tags "<csv>"
+          --line <N> --expect-text "<the bullet's verbatim>" --tags "<csv>"
       ```
+      `--expect-text` is mandatory: line numbers shift every time `close` inserts a Resolution line, and the helper refuses (exit 5) a `--line` that no longer holds this bullet. On a refusal, re-read the current line from `find-closed-unmirrored --format json` — never retry with a guessed number.
 
 4. **Sanity check at end of round.**
    ```bash
@@ -204,7 +211,7 @@ Per-round loop:
        --draft talks/<Talk>/draft.md \
        --backlog config/feedback-backlog.md
    ```
-   Catches any **presenter-origin** `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each. Editor-origin bullets are excluded by default and reported only as a count; add `--origin all` if you need to see them.
+   Catches any **presenter-origin** `[closed]` bullet that didn't get its `mirror-row` (crashed mid-loop, manual close, etc.) — surface and re-run `mirror-row` for each, passing the `line` and `text` its `--format json` output reports. Editor-origin bullets are excluded by default and reported only as a count; add `--origin all` if you need to see them.
 
 The Step 6 (c) `rescue-open` pass uses the same helper (`feedback_cycle.py rescue-open`) but **runs against `final.md`**, not `draft.md`, and is invoked from Step 6 — not here.
 
@@ -238,8 +245,9 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --fina
 #    in Mode B (ascii_file: <path>) so the skill reads source + note straight from the sidecar.
 #    One sidecar → one skill invocation → one SVG written next to it.
 
-# 4′) editor: before cleanup, check the renders are on disk — every svg_basename the annotated
-#     plan declares needs its .svg AND .png under talks/<Talk>/images/. If any is missing, dispatch
+# 4′) editor: before cleanup, check the renders are on disk — for every svg_basename the annotated
+#     plan declares (it already ends in .svg; <stem> = svg_basename minus .svg), both <stem>.svg
+#     AND <stem>.png must exist under talks/<Talk>/images/. If any is missing, dispatch
 #     the diagram-illustrator again for the rest (at most twice), then report what is still
 #     missing as failed. Never trust the illustrator's word alone: its turn has been cut short.
 
@@ -287,7 +295,13 @@ Do **not** hand-strip these blocks — the blank-line-before-boundary guard is l
 **Step 8 — two passes, in order.**
 
 1. **Promote.** Append a new entry to `config/learnings.md` in its existing format (rule, why, where it applies, evidence, date). Generate a stable entry id (incrementing integer or next slug — match the file's convention). Return the entry id.
-2. **Move.** For each backlog row to move: append it to `config/feedback-processed.md` adding `promoted_to: <entry id>` and `promoted_at: <date>`, then remove it from `config/feedback-backlog.md`. This removal is the only deletion the Editor performs in any step.
+2. **Move.** Never by hand — a hand Move has only ever copied, leaving promoted rows in the backlog to be counted again. Write one selector per contributing row (`{"talk", "feedback"}`, plus `date`/`location` for a note pasted on two slides) and run, once per learning:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py move \
+       --backlog config/feedback-backlog.md --processed config/feedback-processed.md \
+       --rows <selectors.json> --promoted-to <entry id>
+   ```
+   It appends each row to `feedback-processed.md` with `promoted_to:` / `promoted_at:`, deletes it from the backlog, and fails unless no archived row remains in the backlog (contract: [SKILL.md](../skills/feedback-cycle/SKILL.md) → *`move`*). A non-zero exit is a defect to report, not a cue to finish by hand. This removal is the only deletion the Editor performs in any step.
 
 ## Operating principles
 

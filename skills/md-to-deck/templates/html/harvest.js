@@ -419,7 +419,7 @@
   }
 
   /* ---- the walk -------------------------------------------------------------------------- */
-  var SKIP = /^(deckanim|deckpdf|deckfull|deckstyle|deckthemes|deckstylemenu|notes)$/;
+  var SKIP = /^(deckanim|deckpdf|deckfull|deckstyle|deckthemes|deckstylemenu|notes|cbfull)$/;
 
   function skip(el) {
     var c = el.getAttribute && el.getAttribute('class');

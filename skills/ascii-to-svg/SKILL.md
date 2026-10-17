@@ -28,7 +28,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 |---|---|---|
 | `ascii_block` | Mode A | the fenced block's payload, verbatim |
 | `ascii_file` | Mode B | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.ascii` |
-| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis. |
+| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis; `terms:` lists terms of art to keep verbatim (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*). |
 | `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.svg`. In Mode B, if omitted, the skill defaults to the sibling SVG path (same basename as `ascii_file`, `.svg` extension). |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
 | `slide_content_prose` | recommended | the `### Content` body — used for subtitles, panel headings, in-panel callouts. Pass an empty string for sparse-context slides; the skill falls back to minimal labelling. |
@@ -59,7 +59,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    - Per-panel heading: pull from `slide_content_prose` — the words the audience will hear
    - Per-panel subhead: the secondary phrase from `slide_content_prose`
    - In-panel callouts (axis labels, peak markers, equation captions): drawn from `speaker_notes` when it flags something to emphasize
-   - **All text in `presentation_language`** — never mix languages. If unclear, fall back to the dominant language of `slide_content_prose`.
+   - **All text in `presentation_language`** — never mix languages, except the terms the note's `terms:` line keeps on purpose (never translate those). If unclear, fall back to the dominant language of `slide_content_prose`.
 
 5. **Render the SVG.** Use a `viewBox` proportional to the diagram's aspect ratio (commonly `0 0 680 H` for landscape diagrams). Include `<title>` and `<desc>` as the first two children of the root `<svg>` for accessibility. Choose colors and shapes that satisfy *every* standing rule + any non-conflicting per-render directive. When the diagram has semantic structure (input/output, before/after, baseline/improved), use distinct hues to make the structure visible; default palette is the presenter's choice or a tasteful neutral if no directive is provided.
 

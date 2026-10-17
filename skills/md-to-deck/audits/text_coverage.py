@@ -101,7 +101,8 @@ _SKIP_H3 = {"sources", "presenter feedback"}
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?;])\s+")
 # Slide headings are numbered in the source (`## 3. Título`) and unnumbered in the model
 # (`"title": "Título"`); the numbering is locator, not content, and must not defeat matching.
-_HEADING_NUM = re.compile(r"^\s*\d+[.)]\s*")
+# Any depth: `## 3. Título`, `## 7.1 Título`, `## 7.1.2) Título`. Shared by every coverage audit.
+_HEADING_NUM = re.compile(r"^\s*\d+(?:\.\d+)*[.)]?\s+")
 # A line that starts its own unit: list item, numbered item, or table row.
 _NEW_UNIT = re.compile(r"^\s*(?:[-*+]\s|\d+[.)]\s|\|)")
 # A markdown table row, and its `|---|:--:|` separator (structure, carrying no content).

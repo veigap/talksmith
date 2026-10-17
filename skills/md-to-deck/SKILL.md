@@ -124,8 +124,8 @@ The judgment is the LLM's, against a fixed field contract. Write to
 > **Copy every image `src` verbatim — extension included.** A `final.md` ref to
 > `images/<name>.svg` fills the model as `images/<name>.svg`. This render **inlines SVG as vector
 > markup**; silently substituting the `.png` companion downgrades the diagram to a raster and is a
-> render defect. The `.svg`-forbidden rule in *Prerequisites (Path A)* below belongs to the `.pptx`
-> path alone — it is a prerequisite check on `final.md`, never an instruction for this fill step.
+> render defect. (The `.pptx` export rasterizes SVG itself, from the rendered deck — no raster ref
+> is ever needed in the model.)
 
 **`slide-model.json` is a generated artifact, refreshed every render — never a hand-maintained
 file.** FILL always runs from the *current* source immediately before RENDER; a renderer must never
@@ -152,9 +152,9 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py out
 
 `degenerate_enum` and the two coverage preflights below all check the **internal consistency of a
 choice already made**. `template_diversity` asks the other question — *was a richer template
-available and passed over?* — which nothing used to ask, and which matters most here
-(CONTROL is `audit-none`, FEEDBACK is `no-critique`, so an unexamined model shipped straight to the
-deck). It **fails** on any `fallback` slide (the catalog defines it as "nothing matched": either the
+available and passed over?* — which nothing used to ask, and which matters most here: the render
+itself never second-guesses a model, so a choice nobody re-examined ships straight to the deck. It
+**fails** on any `fallback` slide (the catalog defines it as "nothing matched": either the
 walk missed a signal or the catalog needs an entry — resolve which). Its other findings are
 **advisory** and are the worklist for Step 1.6, never an instruction to rewrite a choice:
 `[dominance]` one template over 40% of content slides (15% for `content-text`/`fallback`),
@@ -194,11 +194,11 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py output/
 
 > **Notes and body prose are read differently, and the difference is the whole point.** `notes` is copied **verbatim** — it never competes for room on screen, so compressing it can only lose — which makes a missing notes line unambiguous, and `--strict-notes` (above) **fails the step on one**. Body prose is *decomposed*, and decomposition legitimately rewrites: two prose bullets folded into a comparison table keep every idea while changing every word. So a body line with no literal match is sorted into `[text-drop]` (its distinctive words are absent too — nothing of it is on the deck) or `[text-rewritten]` (its words are all there in another shape), and only the first counts. Rewrites are hidden unless `--show-rewrites`. Without that split roughly nine in ten body rows on a real deck are innocent, and a report that cries wolf is a report the presenter stops reading. Fix a real drop by moving the line into a field, a card, a fact or `highlights`; fix a notes drop by **copying the block over verbatim instead of summarizing it**; waive a deliberate omission with `<!-- deck-omit-text: <substring> -->`.
 
-`notes_coverage --source` and `block_coverage --source` are the same two audits that run at CONTROL against a `.pptx`, pointed one step earlier at the model: a `### Speaker notes` block that never reached `notes`, and a callout the fill left with nowhere to land. Both take `--source` implicitly from the model's freshness stamp, so `--source` can be omitted on a stamped model.
+`notes_coverage` and `block_coverage` compare the model against `final.md`: a `### Speaker notes` block that never reached `notes`, and a callout the fill left with nowhere to land. Both take `--source` implicitly from the model's freshness stamp, so `--source` can be omitted on a stamped model.
 
 > **A source block is classified against the template its slide resolved to, not in the abstract.** On a `quote` slide the blockquote *is* the slide — it lands in the `quote` field, which is not a callout slot — so reading it as an aside reports a drop on every correctly filled quote slide. And a **markdown table is audited cell by cell**: the source row is row-major, `value-columns` and `matrix` store it column-major, so no run of a row's words is ever consecutive in the model however completely its cells survived. Both were false positives that fired on every deck that had the shape, which is worse than a missing check — it teaches the reader to skim the line where a real drop appears.
 
-> **All three match a slide by title *or* by its text.** `quote`, `big-number`, `image-grid`, `quiz` and `callout` carry no `title` field at all (see the schema's per-template contract), so a title-only match reports every slide of those templates as unmatched — permanent noise in exactly the line (`[unmatched]`) where a genuinely missing slide would appear. When the title does not resolve, the audits look for a distinctive run of the source slide's words and match the one model slide that carries it.
+> **All three match a slide by title *or* by its text.** `quote`, `big-number`, `image-grid`, `quiz` and `callout` carry no `title` field at all (see the schema's per-template contract), so a title-only match reports every slide of those templates as unmatched — permanent noise in exactly the line (`[unmatched]`) where a genuinely missing slide would appear. When the title does not resolve, the audits look for a distinctive run of the source slide's words and match the one model slide that carries it. **Titles pair in order, and openers are never candidates:** a `section-agenda` or `divider` repeats its section's name, and so, often, does the first content slide inside it — matched to the opener, that slide's notes read as dropped. Each source `##` claims the next unclaimed content slide with its title, so two slides sharing a title pair first-with-first.
 
 A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: an enumeration template
 (`content-text` panels, `concept-breakdown` cards, `stat` stats, `process` steps, …)
@@ -281,7 +281,7 @@ and offer to re-fill those slides. `--no-coverage` skips it.
 > A plain `coverage check skipped` line, by contrast, is benign — an unreadable or malformed file.
 
 The **same `slide-model.json` is the shared IR for PPTX** — both renderers read fields, so a slide
-looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see Path A.)
+looks the same across HTML and PPTX. (The `.pptx` is measured from the rendered HTML — see EXPORT.)
 
 - **Render mechanics.** Each template's markup is `templates/html/<type>.j2`, rendered by
   `html_style.render_model_slide` (cards, per-concept Material Symbols icons matched against the
@@ -316,9 +316,9 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   against the markdown as it stands now. It exists because a live-view refresh is a full FILL pass
   and therefore gets skipped: without this, a stale deck is indistinguishable from a current one.
   A stale deck is also badged **out of date** on the working-directory landing page.
-- **No critique loop.** `the render` is a single-pass GENERATE — no automated FEEDBACK/critique
-  cycles. The presenter reviews the deck and resolves anything by editing the source (which re-fills
-  the model) and re-rendering.
+- **No critique of the rendered deck.** RENDER itself is a single pass; the one independent
+  critique is of the *classification*, before it (Step 1.6). The presenter reviews the deck and
+  resolves anything by editing the source (which re-fills the model) and re-rendering.
 - **Landing page.** Every `the render` render (deliverable *and* Step-5.5 live view) also rewrites
   `index.html` **at the working-directory root** — a card per rendered Talk, linking to its deck
   ([`build_index.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_index.py)). A deck buried at
@@ -330,8 +330,6 @@ looks the same across HTML and PPTX. (PPTX consumes it via its style spec; see P
   `<!-- talksmith:index -->` marker is left alone and the page goes to `talksmith-index.html`
   instead. Failure here is logged, never fatal — the deck is still delivered. Regenerate on demand
   with `python3 build_index.py --root .`.
-
-The rest of this file (Path A) does not apply to `the render`.
 
 ---
 
@@ -429,17 +427,13 @@ the original three-stage rail. Report the outcome in presenter language: **"adju
 
 - **Never modify `final.md`/`draft.md`.** All work is in memory or `output/…`. `the render --draft` reads `draft.md` read-only.
 - **Never re-render SVGs.** A missing SVG ref → stop, the orchestrator dispatches the Diagram-Illustrator.
-- **Speaker notes** go into the Reveal `<aside class="notes">` (Path B) / the notes pane (Path A), never on the slide body.
-
-Path A adds four more (base template, system fonts, spec-as-contract) — in [`pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Rules (Path A)*.
+- **Speaker notes** go into the Reveal `<aside class="notes">` (and from there into the `.pptx` notes pane), never on the slide body.
 
 ## Failure modes to surface
 
-- **`style:` missing** → `[pptx 0/8] FAILED: style: invocation parameter missing …`; do not default.
-- **Style resolution failed** — value not a directory under `config/pptx-styles/`, or a resolved path missing → surface verbatim.
+- **Unknown `style:`** → the render fails naming the value and the styles on disk (parameter table above); surface it verbatim, never default.
 - **`final.md` not produced / still has `Presenter feedback` or raw ASCII fences**, or the path points at `draft.md` → stop; return to Step 6 / ask.
-- **Stale / unstamped `slide-model.json`** → the render is refusing an outdated model (Path B exit 2; Path A `check` exit 3). This is the freshness guard working — **re-run FILL + `model_freshness.py stamp` from the current source**, then re-render. Never bypass with `--allow-stale` to ship a deck (it exists only for deliberate ad-hoc renders).
+- **Stale / unstamped `slide-model.json`** → the render is refusing an outdated model (exit 2). This is the freshness guard working — **re-run FILL + `model_freshness.py stamp` from the current source**, then re-render. Never bypass with `--allow-stale` to ship a deck (it exists only for deliberate ad-hoc renders).
 - **FILL failed / produced no model** → stop the render and surface it; do **not** fall back to a pre-existing `slide-model.json`.
-- **the render render error** (Path B) → report the deck/live view is unavailable (never fatal).
+- **Render error** → report the deck/live view is unavailable (never fatal).
 
-The `.pptx`-only failure modes (pptx skill unavailable, base template, CONTROL audits, OOXML, agenda capacity) are in [`pptx-render.md`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/pptx-render.md) → *Failure modes to surface (Path A)*.

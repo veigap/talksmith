@@ -9,7 +9,7 @@ the other didn't, one's error text said "plan" where the other's said "plan JSON
 So the scaffolding lives here, imported the same way both already import `_context`:
 
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
-    from _plan import add_plan_args, load_plan, read_json_arg, referenced_stems
+    from _plan import add_plan_args, load_plan, read_json_arg, referenced_stems, run_gc
 
 The block-specific parts — what a scan detects, what a sidecar holds, how a stamp is computed —
 stay in each skill. This is the shared frame, not shared behavior.
@@ -18,8 +18,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -109,3 +111,53 @@ def referenced_stems(final_text: str) -> set[str]:
     This is `gc`'s live set: a generated file whose stem is absent here is orphaned.
     """
     return {IMG_EXT_RE.sub("", m.group(1).rsplit("/", 1)[-1]) for m in IMG_REF_RE.finditer(final_text)}
+
+
+# ── gc: list, then (with --apply) move to a recoverable trash ───────────────
+# `gc --apply` used to `unlink()`. The orphan test is "no image ref in final.md", and final.md is
+# exactly the file a renumbering pass rewrites — so a render that was orphaned only for one pass
+# (or reusable under a new name) was gone for good. Moving it under `images/.trash/<timestamp>/`
+# costs nothing, keeps the relative layout (`.critique/` included) so restoring is one `mv`, and is
+# invisible to every other stage: they all glob `images/*`, never recursively.
+TRASH_DIRNAME = ".trash"
+
+
+def trash_dir(images_dir: Path) -> Path:
+    """A fresh `images/.trash/<YYYYMMDD-HHMMSS>[-N]/` — never an existing one, so two runs never mix."""
+    base = images_dir / TRASH_DIRNAME / datetime.now().strftime("%Y%m%d-%H%M%S")
+    dest, n = base, 1
+    while dest.exists():
+        n += 1
+        dest = base.with_name(f"{base.name}-{n}")
+    return dest
+
+
+def run_gc(talk_root: Path, images_dir: Path, orphans: list[str], targets: list[Path],
+           apply: bool, noun: str) -> int:
+    """Report `gc`'s orphans and, with `apply`, move `targets` into a fresh trash folder.
+
+    The skill decides *what* is orphaned (each proves "generated" its own way); this decides what
+    happens to it, identically for both. Returns the exit code.
+    """
+    if not orphans:
+        print(f"gc: no orphaned generated {noun} assets — images/ is clean")
+        return 0
+    print(f"gc: {len(orphans)} orphaned generated {noun}(s), {len(targets)} file(s):")
+    for f in targets:
+        print(f"  {f.relative_to(talk_root)}")
+    if not apply:
+        print("gc: dry-run — pass --apply to move them to images/.trash/")
+        return 0
+    dest = trash_dir(images_dir)
+    moved = 0
+    for f in targets:
+        to = dest / f.relative_to(images_dir)
+        try:
+            to.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(f, to)
+            moved += 1
+        except OSError as e:
+            print(f"  ⚠  could not move {f}: {e}", file=sys.stderr)
+    print(f"gc: moved {moved} file(s) to {dest.relative_to(talk_root)}/ — restore with `mv`, "
+          f"or delete that folder once you are sure")
+    return 0

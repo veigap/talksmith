@@ -285,7 +285,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   width:100%;height:100%;max-height:none;object-fit:cover}
 .d-column>.smedia .imgph.svg svg,.d-bleed>.smedia .imgph.svg svg{
   width:100%;height:100%;max-height:none}
-.big{font-size:6.2cqw;font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.big{font-size:calc(6.2cqw*var(--fit,1));font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
 /* section divider — big red section number + title, with an accent rule */
 .secdiv{display:flex;flex-direction:column;gap:1.4cqw}
 .secnum{font-size:3.4cqw;font-weight:800;color:var(--red);font-family:var(--mono);letter-spacing:.05em;line-height:1}
@@ -415,7 +415,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    distributed to a shared baseline — forcing one would invent an alignment the content does not
    have (which is exactly what `.compare` below *does* have, and why it is a grid). The *panels*
    do share a height: that is a surface matching its neighbours, not a row aligning to one.
-   Each column is a panel — card fill, accent rule on top, its own icon — for the same reason
+   Each column is a panel — card fill, accent rule on top — for the same reason
    every other labeled set in this deck is: three columns of bare prose read as one wall of text,
    and nothing on the canvas says the three are parallel things rather than one argument in three
    paragraphs. The column count drives the density, in CSS via `:has()` — nothing upstream
@@ -428,7 +428,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccols{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:2.2cqw;align-items:stretch;margin-top:auto}
 .conccols:has(>.conccol:nth-child(2):last-child){--n:2}
 .conccols:has(>.conccol:nth-child(4)){--n:4}
-/* The icon rides **with the term**, not on a line of its own above it: stacked, it read as a
+/* An icon (only ever one the author named — none is inferred here) rides **with the term**, not
+   on a line of its own above it: stacked, it read as a
    third element in the column and pushed the title down; beside the title it does what an icon is
    for, which is to label the thing it sits next to. Same relationship the cards have. Everything
    after the title spans both tracks, so the prose keeps the full width of the panel. */
@@ -438,7 +439,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .conccol>.ic{grid-column:1;grid-row:1;align-self:center;width:3.6cqw;height:3.6cqw}
 .conccol>h3{grid-column:2;grid-row:1}
 .conccol>:not(.ic):not(h3){grid-column:1/-1}
-/* a column whose concept matched no icon keeps the full width for its title */
+/* a column with no icon — the default — keeps the full width for its title */
 .conccol:not(:has(>.ic))>h3{grid-column:1/-1}
 .conccol h3{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink);line-height:1.15;text-wrap:balance}
 .ccdef{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.35}
@@ -546,6 +547,16 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    to `inset:0` the box is definite, and object-fit/preserveAspectRatio centre the picture in it. */
 .iffill .imgph.svg svg,.iffill .imgph.has :is(img,video,iframe){position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
 .iffill .imgph.has :is(img,video){object-fit:scale-down}
+/* A non-picture exhibit in the fill — a code panel (an un-rendered ASCII figure in the `--draft`
+   view) or an aligned grid. Unlike a picture it has no letterbox to hide in, so it keeps the
+   header's side margins, takes the height its content needs (`fitCode` shrinks it past that) and
+   centres in the area rather than drawing a slab across all of it. */
+.iffill:has(>.mcode,>.mtable){display:flex;align-items:center;justify-content:center;padding:0 5.5cqw 2.4cqw}
+.iffill>:is(.mcode,.mtable){width:100%;max-height:100%;margin:0}
+/* The one highlight image-full renders is its `source` (see image-full.j2): a citation line under
+   the fill, on the header's margins. `.iffill` is `flex:1 1 auto; min-height:0`, so it is the fill
+   that gives up the line's height — the band is never pushed off the slide. */
+.stage.imgfull>.hl-source{margin-top:0;padding:1.2cqw 5.5cqw 2.4cqw}
 .citext{display:flex;flex-direction:column;gap:1.6cqw}
 .cifacts{list-style:none;margin:.4cqw 0 0;padding:0;display:flex;flex-direction:column;gap:1.2cqw}
 .cifacts li{position:relative;padding-left:2.4cqw;font-size:2.5cqw;line-height:1.3;color:var(--body)}
@@ -664,6 +675,25 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .cbdot{width:.62em;height:.62em;border-radius:50%;background:#4D4D55}
 .cbdot:first-child{background:#FF5F57}.cbdot:nth-child(2){background:#FEBC2E}.cbdot:nth-child(3){background:#28C840}
 .cblang{margin-left:auto;font-family:var(--mono);font-size:.92em;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cb-dim)}
+/* Fullscreen — the bar's last control puts this one panel on the whole screen (the Fullscreen API
+   on the `.codebox`, `_CODE_FULL` in html_style.py), for the snippet the back row can't read at
+   slide size. Hidden until the script has confirmed the browser can do it, so a page without
+   script, the print view and an export never show a control that does nothing. */
+.cbfull{display:none;margin-left:auto;width:1.25em;height:1.25em;align-items:center;justify-content:center;
+  font:inherit;padding:0;border:0;border-radius:.3em;background:none;color:var(--cb-dim);cursor:pointer;opacity:.7}
+.cblang~.cbfull{margin-left:-.2em}
+.cbfull:hover{opacity:1;background:var(--cb-hair)}
+.cbfull svg{width:1em;height:1em}
+:root[data-cb-full] .cbfull{display:flex}
+.cbfull .ic-fs-out,.codebox:fullscreen .cbfull .ic-fs-in{display:none}
+.codebox:fullscreen .cbfull .ic-fs-out{display:block}
+html.print-pdf .cbfull{display:none}
+@media print{.cbfull{display:none}}
+/* On screen the panel is the window. The `!important` beats the inline `max-height` fitCode left
+   on it for the slide; `vw`/`vh` replace the `cqw` sizes, which would still measure the slide. */
+.codebox:fullscreen{width:100vw;height:100vh;max-height:none!important;border:0;border-radius:0;box-shadow:none}
+.codebox:fullscreen .cbbar{padding:.6em 1.4em}
+.codebox:fullscreen .cbcode{padding:3vh 4vw;overflow:auto}
 /* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
    and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
    (a URL, a long identifier), so ordinary code breaks at its spaces. */
@@ -697,10 +727,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .ctpanels{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:3cqw}.ctp{background:var(--card);border-radius:1.6cqw;padding:2.4cqw;font-size:2.2cqw;color:var(--body);font-weight:600}
 .ctagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.2cqw;margin-top:auto}
 .ctacard{background:var(--card);border-radius:2cqw;padding:2.4cqw;display:flex;flex-direction:column;gap:.8cqw}.ctacard .ic{width:4.6cqw;height:4.6cqw}.ctacard h4{margin:0;font-size:2.7cqw;font-weight:800;color:var(--ink)}.ctacard p{margin:0;font-size:2.1cqw;color:var(--red);font-family:var(--mono)}
-.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:9cqw;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
+/* `--fit` (set by `fitCover` in the deck script, 1 when unset) scales only the **display** line of
+   the full-bleed text slides — `.big`, `.qa`, `.quotemark`, `.quotetext`. A long line shrinks and
+   re-wraps at the full measure; the eyebrow, sub-line and attribution keep their reading size. */
+.hero{margin:auto;max-width:86%;display:flex;flex-direction:column;gap:2.4cqw}.qa{font-size:calc(9cqw*var(--fit,1));font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.02em;text-wrap:balance}.qc{font-size:2.4cqw;color:var(--body);font-family:var(--mono)}
 /* quote — a pull-quote with attribution (a claim in someone's voice, vs the `statement` template) */
-.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:12cqw;line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
-.quotetext{font-size:5cqw;font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.quotewrap{margin:auto 0;max-width:90%}.quotemark{font-size:calc(12cqw*var(--fit,1));line-height:.5;color:var(--red);margin:0 0 1cqw;font-weight:800}
+.quotetext{font-size:calc(5cqw*var(--fit,1));font-weight:700;color:var(--ink);line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .quoteattr{font-size:2.4cqw;color:var(--body);margin:3cqw 0 0;font-weight:600}
 /* timeline — a dated/milestone sequence (time-anchored, vs the `process` steps) */
 .timeline{display:flex;flex-direction:column;gap:2.2cqw;border-left:.5cqw solid var(--card);padding-left:3.5cqw;margin-left:1.5cqw}
@@ -947,7 +980,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <div class="shead"><span class="pill">Statement &amp; emphasis</span><h2 class="stitle">big-number: one hero metric</h2></div><div class="cbody"><div class="cfit"><div class="bignumwrap"><p class="bignum">1</p><p class="bigcap">big-number is for a single hero figure — one number set very large, one caption, nothing competing with it.</p></div>
 </div></div>
 </div>
-</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.</p><p class="quoteattr">&mdash; the Talksmith style guide</p></div></div></section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">No hubo hackers. No hubo malware. Alguien pegó código en un chatbot.</p></div></div><aside class="notes"><p>A quote with no attribution. Plenty of quoted lines have no person to name — a slogan, an anonymized line from a user interview, a sentence from a standard or a report, something said in the room. The template treats attribution as optional and renders nothing in its place: the quotation mark and the centering already say these are someone else's words, which is the only thing that distinguishes a quote from a statement. The rule this fixture guards is that the fill must not invent an attribution to satisfy the template, and must not demote the slide to statement because none exists.</p></aside></section><section class="slide" data-kind="callout"><div class="stage d-full">
+</section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">A quote slide is the whole slide — one voiced line, centered, with an attribution beneath.</p><p class="quoteattr">&mdash; the Talksmith style guide</p></div></div></section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">No hubo hackers. No hubo malware. Alguien pegó código en un chatbot.</p></div></div><aside class="notes"><p>A quote with no attribution. Plenty of quoted lines have no person to name — a slogan, an anonymized line from a user interview, a sentence from a standard or a report, something said in the room. The template treats attribution as optional and renders nothing in its place: the quotation mark and the centering already say these are someone else's words, which is the only thing that distinguishes a quote from a statement. The rule this fixture guards is that the fill must not invent an attribution to satisfy the template, and must not demote the slide to statement because none exists.</p></aside></section><section class="slide" data-kind="quote"><div class="stage cover"><div class="quotewrap"><p class="steyebrow">Statement &amp; emphasis</p><p class="quotemark">&ldquo;</p><p class="quotetext">An agent is anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators. A rational agent is one that does the right thing — for each possible percept sequence, it selects an action expected to maximize its performance measure, given the evidence provided by the percept sequence and whatever built-in knowledge it has.</p><p class="quoteattr">&mdash; Russell &amp; Norvig, Artificial Intelligence: A Modern Approach</p></div></div><aside class="notes"><p>A long quote (~60 words) is the edge the full-bleed fit exists for. Only the display type steps down, and it re-wraps across the full measure — the old fit scaled the whole block, which shrank the wrap width with the glyphs and left a narrow column in the middle of an empty slide. The attribution keeps its reading size. Past the floor the slide would be flagged as clipped.</p></aside></section><section class="slide" data-kind="callout"><div class="stage d-full">
 <div class="shead"><span class="pill">Statement &amp; emphasis</span><h2 class="stitle">callout: an emphasized aside</h2></div><div class="cbody"><div class="cfit"><div class="callout pink"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m274-450 248 248-42 42-320-320 320-320 42 42-248 248h526v60H274Z"/></svg></span><p><b>Think of it this way</b> A callout is a single rounded panel for a tip, analogy, or warning — pink for a lateral note, blue for a declarative takeaway.</p></div>
 </div></div>
 </div>
@@ -1273,19 +1306,19 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </section><section class="slide" data-kind="concept-columns"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">concept-columns: four terms, the third emphasised</h2><p class="lead">Each column explains its own term; reading across a row says nothing.</p></div><div class="cbody"><div class="cfit"><div class="conccols">
 <div class="conccol fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M323-111.5Q250-143 196-197t-85-127.5Q80-398 80-482t31-156.5Q142-711 196-765t127-84.5Q396-880 480-880t157 30.5Q710-819 764-765t85 126.5Q880-566 880-482t-31 157.5Q818-251 764-197t-127 85.5Q564-80 480-80t-157-31.5ZM480-138q35-36 58.5-82.5T577-331H384q14 60 37.5 108t58.5 85Zm-85-12q-25-38-43-82t-30-99H172q38 71 88 111.5T395-150Zm171-1q72-23 129.5-69T788-331H639q-13 54-30.5 98T566-151ZM152-391h159q-3-27-3.5-48.5T307-482q0-25 1-44.5t4-43.5H152q-7 24-9.5 43t-2.5 45q0 26 2.5 46.5T152-391Zm221 0h215q4-31 5-50.5t1-40.5q0-20-1-38.5t-5-49.5H373q-4 31-5 49.5t-1 38.5q0 21 1 40.5t5 50.5Zm275 0h160q7-24 9.5-44.5T820-482q0-26-2.5-45t-9.5-43H649q3 35 4 53.5t1 34.5q0 22-1.5 41.5T648-391Zm-10-239h150q-33-69-90.5-115T565-810q25 37 42.5 80T638-630Zm-254 0h194q-11-53-37-102.5T480-820q-32 27-54 71t-42 119Zm-212 0h151q11-54 28-96.5t43-82.5q-75 19-131 64t-91 115Z"/></svg></span><h3>Language Model</h3>
+<h3>Language Model</h3>
 <p class="ccdef">Asigna probabilidades a secuencias de palabras: dado un contexto, predice qué sigue.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Existen desde los años 1950</li><li>Basados en P(palabra | contexto)</li><li>Primero estadísticos, luego neuronales</li></ul>
 <p class="ccex">Ejemplos: N-gramas · Shannon (1948) · RNNs</p></div>
 <div class="conccol fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M201-120v-166h-83v-60h83v-206L76-457l-36-47 440-336 440 336-37 47-125-96v207h83v60h-83v166h-60v-166H510v166h-60v-166H261v166h-60Zm60-226h189v-396L261-598v252Zm249 0h188v-252L510-742v396Z"/></svg></span><h3>Foundation Model</h3>
+<h3>Foundation Model</h3>
 <p class="ccdef">Entrenado a escala masiva sobre datos generales, adaptable a múltiples tareas.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Entrenado con billones de tokens</li><li>Generalista por naturaleza</li><li>Base para aplicaciones específicas</li></ul>
 <p class="ccex">Ejemplos: GPT-4, Gemini, Claude, LLaMA</p></div>
 <div class="conccol em fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>LLM</h3>
+<h3>LLM</h3>
 <p class="ccdef">Un Foundation Model especializado en texto: aprende la distribución del lenguaje natural.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Sólo procesa y genera tokens</li><li>Arquitectura Transformer</li><li>Desde 7B hasta +1T parámetros</li></ul>
 <p class="ccex">Ejemplos: GPT-4, Claude 3, Mistral</p></div>
 <div class="conccol fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M206-206q-41-48-63.5-107.5T120-440q0-150 105-254.5T480-799q10 0 20.5.5T519-797l-81-81 42-42 160 160-160 160-43-43 92-92q-11-2-26-3t-23-1q-125 0-212.5 87T180-440q0 51 17 102t52 89l-43 43Zm236-4q0-21-15-43t-32.5-45Q377-321 362-346.5T347-400q0-55 39-94t94-39q55 0 94 39t39 94q0 28-15 53.5T565.5-298Q548-275 533-253t-15 43h-76Zm-2 90v-50h80v50h-80Zm314-86-42-42q30-36 49-85t19-107q0-66-27.5-125.5T670-670l44-44q58 50 92 120.5T840-440q0 67-22.5 126.5T754-206Z"/></svg></span><h3>Modelo Multimodal</h3>
+<h3>Modelo Multimodal</h3>
 <p class="ccdef">Un Foundation Model que procesa y genera varios tipos de dato a la vez.</p><p class="ccflab">Características</p><ul class="ccfeat"><li>Combina encoders de varias modalidades</li><li>Un solo modelo para ver, oír y hablar</li><li>Razonamiento cruzado entre modalidades</li></ul>
 <p class="ccex">Ejemplos: GPT-4o, Gemini 1.5 Pro, LLaVA</p></div>
 </div>
@@ -1294,11 +1327,11 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 <aside class="notes"><p>Four terms explained side by side. The columns deliberately share no row structure — that is the whole discriminator against value-columns, which is a table wearing columns and whose cells align row by row against a shared factor. Here reading across a row says nothing: each column is read top to bottom on its own, and one column may carry four bullets where its neighbour carries a paragraph. The emphasised column marks the term the slide is about, the one the others define by contrast; it is not a verdict, so the older or worse option may carry it just as well.</p></aside></section><section class="slide" data-kind="concept-columns"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">concept-columns: two terms, no shared factors</h2><p class="lead">It looks adversarial, but there is no row to read across — so it is not a comparison grid.</p></div><div class="cbody"><div class="cfit"><p class="ccsub">IA Tradicional vs. Foundation Models</p><div class="conccols">
 <div class="conccol em fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>IA Tradicional</h3>
+<h3>IA Tradicional</h3>
 <p class="ccdef">Un modelo por tarea específica, entrenado en casa.</p><ul class="ccfeat"><li>Requiere datos etiquetados abundantes para cada caso de uso</li><li>Difícil de reutilizar entre dominios distintos</li></ul>
 <p class="ccex">Ejemplo: un detector de fallos en autopartes sólo detecta eso.</p></div>
 <div class="conccol fragment fade-up">
-<span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M201-120v-166h-83v-60h83v-206L76-457l-36-47 440-336 440 336-37 47-125-96v207h83v60h-83v166h-60v-166H510v166h-60v-166H261v166h-60Zm60-226h189v-396L261-598v252Zm249 0h188v-252L510-742v396Z"/></svg></span><h3>Foundation Models</h3>
+<h3>Foundation Models</h3>
 <p class="ccdef">Modelos entrenados con datos a gran escala que adquieren una comprensión general y se adaptan después.</p><p class="ccfree">Se exponen como SaaS o se pueden correr localmente.</p><p class="ccfree">No hace falta un equipo de data science para empezar a usarlos.</p></div>
 </div>
 </div></div>
@@ -1483,9 +1516,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
 </svg></div></div>
-</div></section><section class="slide" data-kind="content-image"><div class="stage d-split side-right bodyless">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: the empty-text-column guard</h2></div><div class="cbody"><div class="cfit"></div></div>
-<div class="highlights hl-bottom fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p><b>Guard, not a shape to author</b>: a bare image here still drops the text column instead of projecting an empty one — new models use image-full.</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</div></section><section class="slide" data-kind="image-full"><div class="stage imgfull">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-full: a source line under the picture</h2></div>
+<div class="iffill"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1499,10 +1532,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div></div></div>
-</section><section class="slide" data-kind="figures"><div class="stage d-full">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: a set where each item has its own image</h2><p class="lead">Three or more figure cards, each an image with a label and a line:</p></div><div class="cbody"><div class="cfit"><div class="figs">
-<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div></div>
+<div class="highlights hl-source"><div class="highlight source"><p>Fuente: <a class="mdlink" href="https://example.org/talksmith" target="_blank" rel="noopener">Talksmith — md-to-deck</a> (2026).</p></div></div></div><aside class="notes"><p>The one highlight image-full renders is its source: a picture without its citation is a picture nobody can check. The line sits under the image on the header's margins, and the image gives up the height it needs — the band is never pushed off the slide. Any other highlight kind on this template is dropped, and field_coverage names it.</p></aside></section><section class="slide" data-kind="image-full"><div class="stage imgfull">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-full: an ASCII figure, before Polish renders it</h2></div>
+<div class="iffill"><div class="codebox mcode"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><button class="cbfull" type="button" aria-label="Fullscreen" title="Fullscreen"><svg class="ic-fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="ic-fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button></div><pre class="cbcode"><code class="language-plaintext">draft.md ──► FILL ──► slide-model.json ──► RENDER ──► index.html
+              │                                   │
+              └──── audits (coverage, diversity) ─┘</code></pre></div></div>
+</div><aside class="notes"><p>In the --draft live view a diagram is still an ascii fence — Step 6 has not rendered it yet. The fill carries it verbatim as a code panel where the picture will go, so the slide previews its shape instead of losing the figure. image is polymorphic exactly as media is.</p></aside></section><section class="slide" data-kind="content-image"><div class="stage d-split side-right bodyless">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content-image: the empty-text-column guard</h2></div><div class="cbody"><div class="cfit"></div></div>
+<div class="highlights hl-bottom fragment fade-up"><div class="highlight note"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-180h400v-200h200v-400H180v600Zm0 60q-24.75 0-42.37-17.63Q120-155.25 120-180v-600q0-24.75 17.63-42.38Q155.25-840 180-840h600q24.75 0 42.38 17.62Q840-804.75 840-780v420L600-120H180Zm120-300v-60h170v60H300Zm0-160v-60h360v60H300ZM180-180v-600 600Z"/></svg></span><p><b>Guard, not a shape to author</b>: a bare image here still drops the text column instead of projecting an empty one — new models use image-full.</p></div></div><div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1516,7 +1554,9 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
+</svg></div></div></div>
+</section><section class="slide" data-kind="figures"><div class="stage d-full">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: a set where each item has its own image</h2><p class="lead">Three or more figure cards, each an image with a label and a line:</p></div><div class="cbody"><div class="cfit"><div class="figs">
 <div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
@@ -1531,7 +1571,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
+</svg></div><h4>Image per item</h4><p>This is what separates figures from concept-breakdown.</p></div>
 <div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
@@ -1546,13 +1586,8 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
-</div>
-</div></div>
-</div>
-</section><section class="slide" data-kind="image-grid"><div class="stage d-full">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
-<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Uniform crop</h4><p>Every figure shares the same size and alignment.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1566,7 +1601,13 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Label and line</h4><p>A short caption sits under each image.</p></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="image-grid"><div class="stage d-full">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1636,13 +1677,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div></div>
-</div></div>
-</div>
-</section><section class="slide" data-kind="content+cards+image"><div class="stage d-split side-right">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: cards beside one image</h2><p class="lead">A short lead sits above the cards (regression guard for the lead field).</p></div><div class="cbody"><div class="cfit"><div class="ccicards">
-<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards on one side</h3><p>A labeled set fills one half of the slide.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm56-97h489L578-473 446-302l-93-127-117 152Zm-56 97v-600 600Z"/></svg></span><h3>Image on the other</h3><p>A single supporting visual fills the rest.</p></div></div></div></div>
-<div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1656,10 +1691,12 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div></div></div>
-</section><section class="slide" data-kind="content+cards+image"><div class="stage d-split side-left">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: image-left mirrors the columns</h2><p class="lead">Same slide, image first — the cards are untouched:</p></div><div class="cbody"><div class="cfit"><div class="ccicards">
-<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M273-160 80-353l193-193 42 42-121 121h316v60H194l121 121-42 42Zm414-254-42-42 121-121H450v-60h316L645-758l42-42 193 193-193 193Z"/></svg></span><h3>Columns swap</h3><p>the image takes the left column, the cards the right.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards unchanged</h3><p>they keep their order, their icons and their left alignment.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M100-200q-24 0-42-18t-18-42v-438q0-24.75 17.63-42.38Q75.25-758 100-758h150q3-18 16.95-30 13.96-12 31.63-12H373q19 0 33 12t17 30h437q24.75 0 42.38 17.62Q920-722.75 920-698v438q0 24.75-17.62 42.37Q884.75-200 860-200H100Zm760-60v-438H100v438h760ZM100-698v438-438Zm110 249q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Z"/></svg></span><h3>Widths stay put</h3><p>the wider grid track remains the cards', not the image's.</p></div></div></div></div>
+</svg></div></div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="content+cards+image"><div class="stage d-split side-right">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: cards beside one image</h2><p class="lead">A short lead sits above the cards (regression guard for the lead field).</p></div><div class="cbody"><div class="cfit"><div class="ccicards">
+<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards on one side</h3><p>A labeled set fills one half of the slide.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm56-97h489L578-473 446-302l-93-127-117 152Zm-56 97v-600 600Z"/></svg></span><h3>Image on the other</h3><p>A single supporting visual fills the rest.</p></div></div></div></div>
 <div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
@@ -1675,9 +1712,27 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
 </svg></div></div></div>
+</section><section class="slide" data-kind="content+cards+image"><div class="stage d-split side-left">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">content+cards+image: image-left mirrors the columns</h2><p class="lead">Same slide, image first — the cards are untouched:</p></div><div class="cbody"><div class="cfit"><div class="ccicards">
+<div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M273-160 80-353l193-193 42 42-121 121h316v60H194l121 121-42 42Zm414-254-42-42 121-121H450v-60h316L645-758l42-42 193 193-193 193Z"/></svg></span><h3>Columns swap</h3><p>the image takes the left column, the cards the right.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M220-500v-241h241v241H220Zm0 281v-241h241v241H220Zm280-281v-241h241v241H500Zm0 281v-241h241v241H500ZM280-560h121v-121H280v121Zm280 0h121v-121H560v121ZM280-279h121v-121H280v121Zm280 0h121v-121H560v121ZM401-560Zm159 0Zm0 160Zm-159 0ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Z"/></svg></span><h3>Cards unchanged</h3><p>they keep their order, their icons and their left alignment.</p></div><div class="ccard sm fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M100-200q-24 0-42-18t-18-42v-438q0-24.75 17.63-42.38Q75.25-758 100-758h150q3-18 16.95-30 13.96-12 31.63-12H373q19 0 33 12t17 30h437q24.75 0 42.38 17.62Q920-722.75 920-698v438q0 24.75-17.62 42.37Q884.75-200 860-200H100Zm760-60v-438H100v438h760ZM100-698v438-438Zm110 249q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Z"/></svg></span><h3>Widths stay put</h3><p>the wider grid track remains the cards', not the image's.</p></div></div></div></div>
+<div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+  </g>
+  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div></div></div>
 </section><section class="slide" data-kind="code-example"><div class="stage d-full">
 <div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: a readable code surface</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="explain">
-<p>The code sits on a monospace surface with syntax colors.</p><p>A short explanation column reads alongside it.</p></div><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">Python</span></div><pre class="cbcode"><code class="language-python">client.messages.create(
+<p>The code sits on a monospace surface with syntax colors.</p><p>A short explanation column reads alongside it.</p></div><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">Python</span><button class="cbfull" type="button" aria-label="Fullscreen" title="Fullscreen"><svg class="ic-fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="ic-fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button></div><pre class="cbcode"><code class="language-python">client.messages.create(
   model=&#34;claude-opus-4-8&#34;,
   system=[{
     &#34;type&#34;: &#34;text&#34;,
@@ -1689,7 +1744,7 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 </div></div>
 </div>
 </section><section class="slide" data-kind="code-example"><div class="stage d-full">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: code alone, another grammar, a long snippet</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">TypeScript</span></div><pre class="cbcode"><code class="language-typescript">type Cache = { key: string; ttl: number };
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">code-example: code alone, another grammar, a long snippet</h2></div><div class="cbody"><div class="cfit"><div class="split"><div class="codebox"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">TypeScript</span><button class="cbfull" type="button" aria-label="Fullscreen" title="Fullscreen"><svg class="ic-fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="ic-fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button></div><pre class="cbcode"><code class="language-typescript">type Cache = { key: string; ttl: number };
 
 export async function ask(
   prompt: string,
@@ -1735,10 +1790,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e25-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e25-a)"/>
   </g>
-  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e25-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1756,10 +1811,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e25-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e25-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e26-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e26-a)"/>
   </g>
-  <defs><marker id="e25-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e26-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1777,10 +1832,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e26-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e26-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e27-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e27-a)"/>
   </g>
-  <defs><marker id="e26-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e27-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1796,18 +1851,18 @@ export async function ask(
      no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="e27-ag" x1="0" y1="0" x2="0.6" y2="1">
+    <linearGradient id="e28-ag" x1="0" y1="0" x2="0.6" y2="1">
       <stop offset="0" stop-color="#1b2a6b"/>
       <stop offset="0.55" stop-color="#3f4f9d"/>
       <stop offset="1" stop-color="#0d1330"/>
     </linearGradient>
-    <radialGradient id="e27-glow" cx="0.7" cy="0.25" r="0.75">
+    <radialGradient id="e28-glow" cx="0.7" cy="0.25" r="0.75">
       <stop offset="0" stop-color="#e8a24a" stop-opacity="0.55"/>
       <stop offset="1" stop-color="#e8a24a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="600" height="900" fill="url(#e27-ag)"/>
-  <rect width="600" height="900" fill="url(#e27-glow)"/>
+  <rect width="600" height="900" fill="url(#e28-ag)"/>
+  <rect width="600" height="900" fill="url(#e28-glow)"/>
   <g fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5">
     <path d="M-40 700 C 140 560, 300 640, 420 470 S 640 250, 700 120"/>
     <path d="M-40 780 C 160 640, 320 720, 450 545 S 660 320, 720 195"/>
@@ -1829,18 +1884,18 @@ export async function ask(
      no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="e28-ag" x1="0" y1="0" x2="0.6" y2="1">
+    <linearGradient id="e29-ag" x1="0" y1="0" x2="0.6" y2="1">
       <stop offset="0" stop-color="#1b2a6b"/>
       <stop offset="0.55" stop-color="#3f4f9d"/>
       <stop offset="1" stop-color="#0d1330"/>
     </linearGradient>
-    <radialGradient id="e28-glow" cx="0.7" cy="0.25" r="0.75">
+    <radialGradient id="e29-glow" cx="0.7" cy="0.25" r="0.75">
       <stop offset="0" stop-color="#e8a24a" stop-opacity="0.55"/>
       <stop offset="1" stop-color="#e8a24a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="600" height="900" fill="url(#e28-ag)"/>
-  <rect width="600" height="900" fill="url(#e28-glow)"/>
+  <rect width="600" height="900" fill="url(#e29-ag)"/>
+  <rect width="600" height="900" fill="url(#e29-glow)"/>
   <g fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5">
     <path d="M-40 700 C 140 560, 300 640, 420 470 S 640 250, 700 120"/>
     <path d="M-40 780 C 160 640, 320 720, 450 545 S 660 320, 720 195"/>
@@ -1943,10 +1998,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e30-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e30-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e31-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e31-a)"/>
   </g>
-  <defs><marker id="e30-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e31-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1971,10 +2026,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e31-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e31-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e32-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e32-a)"/>
   </g>
-  <defs><marker id="e31-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e32-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -2011,7 +2066,7 @@ export async function ask(
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M503.5-289.48q9.5-9.48 9.5-23.5t-9.48-23.52q-9.48-9.5-23.5-9.5t-23.52 9.48q-9.5 9.48-9.5 23.5t9.48 23.52q9.48 9.5 23.5 9.5t23.52-9.48ZM453-433h60v-253h-60v253Zm27.27 353q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></svg></span><h3>Silent when wrong</h3><p>Leak the test set in and nothing raises; the score just flatters you.</p></div>
 </div>
 </div></div>
-<div class="smedia"><div class="codebox mcode"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">Python</span></div><pre class="cbcode"><code class="language-python">scaler = StandardScaler()
+<div class="smedia"><div class="codebox mcode"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span><span class="cblang">Python</span><button class="cbfull" type="button" aria-label="Fullscreen" title="Fullscreen"><svg class="ic-fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="ic-fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button></div><pre class="cbcode"><code class="language-python">scaler = StandardScaler()
 scaler.fit(X_train)            # train only
 X_val  = scaler.transform(X_val)
 X_test = scaler.transform(X_test)</code></pre></div></div></div>
@@ -3325,7 +3380,8 @@ function fitContent(cb){
     for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ s=mid; lo=mid; } else { hi=mid; } } }
   cf.style.width=(rw/s)+'px';
   var vh=cf.scrollHeight*s;
-  if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
+  if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped
+  cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
 // A code panel carries the **whole** snippet, so the panel's type is what gives: it is sized to
@@ -3412,12 +3468,21 @@ function fitType(box, apply){
   }
   apply(fit);
 }
-function fitCover(st){                       // full-bleed text slides (quote/statement/closing-hero) have no .cfit
+// Full-bleed text slides (quote / statement / closing-hero) have no `.cfit`, so fitContent never
+// sees them. What gives here is the **type**, not the block: `--fit` (theme.css) multiplies the
+// display line's font-size, so a long quote re-wraps across the full measure at a smaller size.
+// Scaling the whole block with a transform — what this used to do — shrank the wrap width with
+// the glyphs and left a long quote as a narrow column in the middle of an empty slide. Same
+// halving search as fitType; past the floor the slide is flagged, never clipped in silence.
+function fitCover(st){
   var cf=st.querySelector('.hero,.stmt,.quotewrap'); if(!cf) return;
-  cf.style.transform='none';
+  cf.style.removeProperty('--fit');
   var cs=getComputedStyle(st), availH=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-  var h=cf.scrollHeight;
-  if(h>availH+1){ var s=Math.max(0.4, availH/h); cf.style.transformOrigin='center center'; cf.style.transform='scale('+s.toFixed(4)+')'; }
+  var fits=function(f){ cf.style.setProperty('--fit', f); return cf.scrollHeight<=availH+1; };
+  if(fits(1)){ cf.style.removeProperty('--fit'); return; }  // fits as authored (the common case)
+  var lo=0.4, hi=1, fit=lo;
+  for(var k=0;k<12;k++){ var mid=(lo+hi)/2; if(fits(mid)){ fit=mid; lo=mid; } else { hi=mid; } }
+  if(!fits(fit)) flagOverflow(cf, 'body');                // even the floor size doesn't fit
 }
 // Every fit above has a floor, and past it content is clipped — rows, lines, whole bullets gone
 // from the projected slide. That must never be silent: the slide is marked `data-overflow` (and
@@ -3515,6 +3580,37 @@ Reveal.initialize({
 <script>(function(){var btn=document.querySelector('[data-deck-pdf]');if(!btn)return;btn.addEventListener('click',function(){var t=document.documentElement.getAttribute('data-deck-theme')||'light';var s=document.documentElement.getAttribute('data-deck-style');var u=location.pathname+'?print-pdf&deck-theme='+t+(s?'&deck-style='+s:'');var w=window.open(u,'_blank');if(!w)location.href=u;});})();</script>
 <script>(function(){if(!/print-pdf/.test(location.search))return;if(/[?&]export=/.test(location.search))return;if(window.Reveal&&Reveal.on)Reveal.on('pdf-ready',function(){setTimeout(function(){window.print();},200);});})();</script>
 <script>(function(){var btn=document.querySelector('[data-deck-full]');if(!btn)return;btn.addEventListener('click',function(){if(document.fullscreenElement){document.exitFullscreen();}else{document.documentElement.requestFullscreen();}});})();</script>
+<script>(function(){
+var d=document, open=null;
+if(!d.fullscreenEnabled) return;
+d.documentElement.setAttribute('data-cb-full','');
+function fitScreen(cb){
+  var pre=cb.querySelector('.cbcode'); if(!pre) return;
+  var apply=function(px){ pre.style.fontSize=px+'px'; cb.style.setProperty('--cb-fs', px+'px'); };
+  var lo=8, hi=Math.max(lo, Math.min(innerWidth/40, innerHeight/16)), fit=lo;
+  apply(hi); if(pre.scrollHeight<=pre.clientHeight+1){ return; }
+  for(var k=0;k<16;k++){ var mid=(lo+hi)/2; apply(mid);
+    if(pre.scrollHeight<=pre.clientHeight+1){ fit=mid; lo=mid; } else hi=mid; }
+  apply(fit);
+}
+d.addEventListener('click', function(e){
+  var b=e.target.closest && e.target.closest('.cbfull'); if(!b) return;
+  var cb=b.closest('.codebox'); if(!cb) return;
+  e.stopPropagation();
+  if(d.fullscreenElement===cb) d.exitFullscreen(); else cb.requestFullscreen();
+});
+d.addEventListener('fullscreenchange', function(){
+  var el=d.fullscreenElement;
+  if(el && el.classList.contains('codebox')){
+    open=el; if(window.Reveal) Reveal.configure({keyboard:false});
+    requestAnimationFrame(function(){ fitScreen(el); });
+  } else if(open){
+    var cb=open; open=null; if(window.Reveal) Reveal.configure({keyboard:true});
+    requestAnimationFrame(function(){ fitCode(cb); });
+  }
+});
+window.addEventListener('resize', function(){ if(open && d.fullscreenElement===open) fitScreen(open); });
+})();</script>
 <script>(function(){var L=["default", "business", "editorial", "forest", "ocean", "sunset", "terminal"];var root=document.documentElement,btn=document.querySelector('[data-deck-style-toggle]');if(!btn)return;var menu=document.createElement('div');menu.className='deckstylemenu';L.forEach(function(s){var it=document.createElement('button');it.type='button';it.className='dsitem';it.textContent=s;it.setAttribute('data-style',s);it.addEventListener('click',function(e){e.stopPropagation();set(s);close();});menu.appendChild(it);});document.body.appendChild(menu);function mark(){var cur=root.getAttribute('data-deck-style')||'default';menu.querySelectorAll('.dsitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-style')===cur);});btn.title='Style: '+cur;}function set(s){if(s==='default')root.removeAttribute('data-deck-style');else root.setAttribute('data-deck-style',s);try{localStorage.setItem('deckStyle',s);}catch(e){}deckUrlSync('deck-style',s,'default');mark();if(window.Reveal&&Reveal.layout)Reveal.layout();}function close(){menu.classList.remove('open');}btn.addEventListener('click',function(e){e.stopPropagation();mark();menu.classList.toggle('open');});document.addEventListener('click',close);mark();})();</script>
 <script>(function(){var root=document.documentElement,t;function show(){root.classList.add('deck-ui');clearTimeout(t);t=setTimeout(function(){root.classList.remove('deck-ui');},2000);}['pointermove','mousedown','touchstart','wheel'].forEach(function(ev){document.addEventListener(ev,show,{passive:true});});})();</script>
 <script>/* Geometry harvester — the export path's measuring instrument.
@@ -3938,7 +4034,7 @@ Reveal.initialize({
   }
 
   /* ---- the walk -------------------------------------------------------------------------- */
-  var SKIP = /^(deckanim|deckpdf|deckfull|deckstyle|deckthemes|deckstylemenu|notes)$/;
+  var SKIP = /^(deckanim|deckpdf|deckfull|deckstyle|deckthemes|deckstylemenu|notes|cbfull)$/;
 
   function skip(el) {
     var c = el.getAttribute && el.getAttribute('class');

@@ -56,20 +56,6 @@ class SourceSlide:
         return content_windows(self.body)
 
 
-def parse_model(path: str) -> list[SourceSlide]:
-    """Which slides carry notes, read straight from `slide-model.json`: a slide's `notes` field
-    (lifted verbatim during FILL) is non-empty. Matched to the deck by normalized title (its
-    `title`, or `section` for dividers). No markdown to parse."""
-    import json
-    model = json.loads(open(path, encoding="utf-8").read())
-    out: list[SourceSlide] = []
-    for idx, s in enumerate(model.get("slides", []), start=1):
-        title = s.get("title") or s.get("section") or ""
-        out.append(SourceSlide(h2_line=idx, h2_title=title,
-                               has_notes=bool((s.get("notes") or "").strip())))
-    return out
-
-
 # --------------------------------------------------------------------------- #
 # final.md parsing — which slides authored notes (the source stage)
 # --------------------------------------------------------------------------- #
@@ -122,9 +108,9 @@ def model_notes(path: str) -> tuple[list[tuple[str, bool]], SlideIndex]:
     out: list[tuple[str, bool]] = []
     entries: list[tuple[str, str]] = []
     for sl in model.get("slides", []):
-        title = sl.get("title") or sl.get("section") or ""
+        title = sl.get("title") or ""          # never `section`: that is the slide's parent
         out.append((title, bool((sl.get("notes") or "").strip())))
-        entries.append((title, slide_text(sl)))
+        entries.append((title, slide_text(sl), sl.get("template") or ""))
     return out, SlideIndex(entries)
 
 
@@ -157,9 +143,9 @@ def reconcile_source(md: list[SourceSlide], model: list[tuple[str, bool]],
     drops: list[Drop] = []
     unmatched: list[Unmatched] = []
     for sslide in md:
+        idx = index.find(sslide.h2_title, sslide.windows())   # every slide, in order: it claims
         if not sslide.has_notes:
             continue
-        idx = index.find(sslide.h2_title, sslide.windows())
         if idx is None:
             unmatched.append(Unmatched(h2_line=sslide.h2_line, h2_title=sslide.h2_title))
             continue
