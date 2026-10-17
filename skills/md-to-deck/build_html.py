@@ -64,6 +64,9 @@ _VC_MAX_COLS, _VC_MAX_ROWS = 3, 5
 # snippet — the panel shrinks its type to fit, nothing is dropped — but the code gets smaller than
 # a room can read, and no renderer can fix that. It is a slide that wants splitting, so say so.
 _CODE_MAX_LINES = 28
+# Pictures a `media: {images:[…]}` set holds. Past this every picture still renders — the cells
+# just get smaller — but four or more shared pictures where variety is the message is `image-grid`.
+_MEDIA_MAX_PICS = 3
 
 # The labeled set's `format` (schemas/slide-model.md). An unrecognized value renders as `grid`,
 # which looks like a deliberate card set rather than a typo — the same reason `layout` warns.
@@ -151,7 +154,7 @@ def render(model: dict, talk_root: Path, out_dir: Path):
         slides_html.append(f'<section class="slide cover-slide">{_hs.cover_from_deck(deck, talk_root)}</section>')
 
     unknown, bad_layouts, dense = [], [], []
-    bad_formats, crowded, longcode = [], [], []
+    bad_formats, crowded, longcode, bigset = [], [], [], []
     for s in model.get("slides", []):
         t = s.get("template", "fallback")
         # `design` divides the canvas, so every design but `full` needs media to put in the part
@@ -190,6 +193,10 @@ def render(model: dict, talk_root: Path, out_dir: Path):
             nlines = len(str(code).splitlines()) if code else 0
             if nlines > _CODE_MAX_LINES:
                 longcode.append((name, nlines))
+        for m in (media, s.get("image")):
+            pics = m.get("images") if isinstance(m, dict) else None
+            if isinstance(pics, list) and len(pics) > _MEDIA_MAX_PICS:
+                bigset.append((name, len(pics)))
         if t == "value-columns" and media:
             cols = s.get("columns") or []
             rows = max((len(c.get("cells") or []) for c in cols), default=0)
@@ -229,6 +236,10 @@ def render(model: dict, talk_root: Path, out_dir: Path):
               f"type size) — every line is shown, but the panel shrinks the type to fit and the "
               f"room stops being able to read it; split the snippet across slides or cut it down "
               f"to what you will actually talk through  ({slide_title})", file=sys.stderr)
+    for slide_title, n in bigset:
+        print(f"[html] warning: a media picture set of {n} (max {_MEDIA_MAX_PICS}) — every picture "
+              f"is shown, each in a smaller cell; four or more shared pictures where variety is the "
+              f"point is `image-grid`, otherwise split the slide  ({slide_title})", file=sys.stderr)
     for slide_title, ncols, nrows in dense:
         print(f"[html] warning: value-columns grid {ncols}×{nrows} beside an image "
               f"(max {_VC_MAX_COLS}×{_VC_MAX_ROWS} at half width) — cells will crowd; "

@@ -13,6 +13,28 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.2.0] — 2026-10-17
+
+No re-init needed.
+
+### Added
+
+- **`media` takes a set of 2–3 pictures** (`{images:[…]}`) on every template that takes
+  `media`, and on `image-full`: stacked in a split or column design, side by side in a band. A
+  card set that shares two diagrams is now `content+cards+image` with both pictures instead of
+  losing one; four or more still belong to `image-grid` (the build warns).
+
+### Fixed
+
+- **Renumbered or swapped slides keep their own pictures.** Both polish passes read every reused
+  render before writing any, so a chain of renames (or two slides trading places) no longer copies
+  one slide's diagram onto another — a regression in 1.1.0's diagram reuse.
+- **Generated aside images are reused after a renumbering** instead of being regenerated, and
+  `stamp-renders` in polish-images no longer stamps an old image whose regeneration is pending
+  (`--only` stamps late arrivals).
+- **Defect-log ids stay unique**: a new entry takes the day's highest sequence plus one, since
+  another session may have logged earlier the same day. Closing an entry may add `fixed_in:`.
+
 ## [1.1.0] — 2026-10-17
 
 No re-init needed. Existing working directories should add `talks/*/images/.trash/` to their

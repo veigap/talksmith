@@ -1376,6 +1376,132 @@
       "design": "split-left"
     },
     {
+      "template": "content+cards+image",
+      "section": "Visual & data",
+      "title": "content+cards+image: cards beside a pair of images",
+      "lead": "Two diagrams the whole set shares — neither is dropped to fit one media slot.",
+      "cards": [
+        {
+          "label": "A media pair",
+          "body": "`media: {images: […]}` carries two pictures."
+        },
+        {
+          "label": "Stacked in a split",
+          "body": "each takes half the media column, contained."
+        },
+        {
+          "label": "Not figures",
+          "body": "the pictures belong to the set, not one per card."
+        }
+      ],
+      "_choice": {
+        "signals": [
+          "labeled_items=3",
+          "is_ordered=false",
+          "n_images=2"
+        ],
+        "candidates": [
+          "content+cards+image",
+          "figures",
+          "concept-breakdown"
+        ],
+        "picked": "content+cards+image",
+        "rejected": {
+          "figures": "2 images for 3 cards — the pictures are shared, not one per item",
+          "concept-breakdown": "requires images == 0; would drop both diagrams"
+        }
+      },
+      "media": {
+        "images": [
+          {
+            "src": "images/pipeline.svg",
+            "alt": "The Talksmith pipeline diagram"
+          },
+          {
+            "src": "images/portrait.svg",
+            "alt": "A tall portrait test image"
+          }
+        ]
+      },
+      "design": "split-right"
+    },
+    {
+      "template": "content-image",
+      "section": "Visual & data",
+      "title": "content-image: a pair of images, picture first",
+      "lead": "Prose beside two contained pictures, mirrored so the pictures lead.",
+      "facts": [
+        {
+          "label": "Two pictures",
+          "body": "one media set, stacked in the column."
+        },
+        {
+          "label": "Never cropped",
+          "body": "each keeps its own aspect inside its half."
+        }
+      ],
+      "_choice": {
+        "signals": [
+          "labeled_items=0",
+          "n_images=2",
+          "prose=true"
+        ],
+        "candidates": [
+          "content-image",
+          "image-grid"
+        ],
+        "picked": "content-image",
+        "rejected": {
+          "image-grid": "wants ≥4 images where variety is the message"
+        }
+      },
+      "media": {
+        "images": [
+          {
+            "src": "images/portrait.svg",
+            "alt": "A tall portrait test image"
+          },
+          {
+            "src": "images/pipeline.svg",
+            "alt": "The Talksmith pipeline diagram"
+          }
+        ]
+      },
+      "design": "split-left"
+    },
+    {
+      "template": "image-full",
+      "section": "Visual & data",
+      "title": "image-full: two pictures, side by side",
+      "image": {
+        "images": [
+          {
+            "src": "images/pipeline.svg",
+            "alt": "The Talksmith pipeline diagram"
+          },
+          {
+            "src": "images/portrait.svg",
+            "alt": "A tall portrait test image"
+          }
+        ]
+      },
+      "_choice": {
+        "signals": [
+          "image_only=true",
+          "n_images=2"
+        ],
+        "candidates": [
+          "image-full",
+          "image-grid"
+        ],
+        "picked": "image-full",
+        "rejected": {
+          "image-grid": "wants ≥4 images where variety is the message"
+        }
+      },
+      "notes": "Two pictures and no prose: the same edge-to-edge fill, divided between them. Each is contained in its own half, never cropped."
+    },
+    {
       "template": "code-example",
       "section": "Visual & data",
       "title": "code-example: a readable code surface",

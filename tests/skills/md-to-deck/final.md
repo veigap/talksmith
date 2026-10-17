@@ -355,6 +355,37 @@ El diagrama se lee primero; el texto lo recorre después.
 
 ---
 
+## Content + cards + image · dos imágenes compartidas
+<!-- template: content+cards+image -->
+
+- **Un par de imágenes** Dos diagramas que comparte todo el set.
+- **Apiladas** Cada una ocupa media columna, sin recortar.
+- **No es figures** Las imágenes no son una por tarjeta.
+
+![Diagrama del pipeline](images/pipeline.svg)
+![Retrato](images/portrait.svg)
+
+---
+
+## Content + image · dos imágenes, primero las imágenes
+<!-- template: content-image -->
+<!-- design: split-left -->
+
+Prosa al lado de dos imágenes contenidas.
+
+![Retrato](images/portrait.svg)
+![Diagrama del pipeline](images/pipeline.svg)
+
+---
+
+## Image-full · dos imágenes lado a lado
+<!-- template: image-full -->
+
+![Diagrama del pipeline](images/pipeline.svg)
+![Retrato](images/portrait.svg)
+
+---
+
 ## Code-example · caching
 <!-- template: code-example -->
 

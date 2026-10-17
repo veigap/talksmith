@@ -126,7 +126,7 @@ deliverable; `draft.md` → live in-progress view).
   shape the content takes inside it. They are independent: **every content template accepts every
   design**, because the renderer's stage places the media and the template only emits content.
 
-  **`media` is what the design places, and it has three shapes** — the template never branches on
+  **`media` is what the design places, and it has four shapes** — the template never branches on
   which, because *what* the media is is not the template's business:
 
   | shape | is | notes |
@@ -134,6 +134,7 @@ deliverable; `draft.md` → live in-progress view).
   | `{src, alt}` | an image or a clip | the original, and still the common case |
   | `{code, language?}` | a code / worked-example panel | rendered in the same code surface `code-example` uses (a few lines fewer — it stands beside content) |
   | `{columns: [{header, cells}]}` | a small aligned grid | the same compare-strip `value-columns` uses |
+  | `{images: [{src, alt}, …]}` | a picture set — **2–3** pictures the slide shares (two related diagrams, a before/after) | each entry is a full `{src, alt}` (a clip too) in its own frame; the design's box is divided equally — **stacked** in a `split`/`column`, **side by side** in `banded`/`bleed`/`image-full` (whose `image` takes this shape too). 4+ renders and warns: that many shared pictures is `image-grid` |
 
   The two non-picture shapes close a gap this schema created: the catalog's `content+cards+image`
   promises "labeled cards on one side **and a supporting image/example/code** on the other", and
@@ -143,6 +144,12 @@ deliverable; `draft.md` → live in-progress view).
   the supporting half in `media` and keep the cards. Because code and a grid are *read*, they are
   always contained: on a `column-*` or `bleed` design the renderer places them in the matching
   `split` rather than cropping them.
+
+  The picture set closes the same kind of gap for a second picture: a card set illustrated by
+  **two** shared diagrams had one `{src}`, `figures` wants a picture *per item* and `image-grid`
+  wants ≥4 — so the fill kept one diagram and dropped the other. One picture per item is still
+  `figures`; 1–3 pictures shared by the whole slide are `media` (`{src, alt}` for one,
+  `{images: […]}` for two or three).
 
   `design` is one of:
 
@@ -268,9 +275,9 @@ when the content warrants. Field names are the contract — the renderers read e
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
 | `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
-| `image-full` | `title`, `image:{src,alt}` (or a code panel `{code,language}` — the `--draft` ASCII case below) | `lead` (one line under the title), `highlights` of `kind: source` **only** (the citation line, under the image) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or other highlights belong here |
-| `content-image` | `title`, `media:{src,alt}`, and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
-| `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` | `lead`, per-card `icon` (else content-matched), `design` |
+| `image-full` | `title`, `image:{src,alt}` (or a code panel `{code,language}` — the `--draft` ASCII case below — or a 2–3 picture set `{images:[…]}`, side by side) | `lead` (one line under the title), `highlights` of `kind: source` **only** (the citation line, under the image) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or other highlights belong here |
+| `content-image` | `title`, `media:{src,alt}` (or a 2–3 picture set `{images:[…]}`), and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
+| `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` — or `media:{images:[{src,alt},{src,alt}]}` when the set shares **two** (up to three) pictures | `lead`, per-card `icon` (else content-matched), `design` |
 | `concept-columns` | `title`, `columns:[{label,body}]` (2–4) | **`subtitle`** — the block's own heading, naming what the columns are (`IA Tradicional vs. Foundation Models`); it is a *name*, distinct from the `lead`, which is a framing sentence. Per column: **`text`** — free text after the description, a **list** → bullets or a **string** → paragraphs (blank-line separated), because the columns genuinely differ in shape; `text_label` (a bold lead over it, e.g. `Características:`), `example` (a bold closing line, e.g. `Ejemplos: …`), `emphasis` (`true` on **at most one** column — a filled accent panel with the column inverted). Also slide-level `lead`. Columns share **no** row structure — that is what separates this from `value-columns` |
 | `value-columns` | `title`, `columns:[{header,cells:[str]}]` | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). **Width budget, not a definition:** beside media, ≤3 value columns × ≤5 rows; at `design: full`, ≤4 × ≤7. A leading *factor* column (`header: ""` or the factor's name) does not count toward that number, so a `factor → X → Y → Z` table is 4 entries and in contract. Past the budget the slide is a **split candidate**, never a demotion to `concept-breakdown` — see the catalog |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |

@@ -28,9 +28,9 @@ Mirrors polish-ascii; the image-illustrator role owns the judgement steps.
 2. **Image-Illustrator composes the generation map** (judgement-only) — `{<slide_id>: {png_basename, alt, description, prompt}}`, where `description` is the editor's original line (verbatim) and `prompt` is the **enriched** generation instruction (expanded subject/mood/composition + the deck-palette / portrait-aspect / no-text overlay). See the agent spec.
 3. **`annotate`** — `--plan <scan.json> --gen <gen.json> -o <annotated.json>` merges the map in, setting `render` per directive (`null` for unmapped / conflicting ones).
 4. **`extract`** — write `talks/<Talk>/images/<basename>.imgprompt` sidecars: `side` + the **original description** + the **enriched prompt**, self-describing. `final.md` is **not** modified here.
-5. **`prepare-render-args`** — one `<slide_id>.json` args file per renderable directive under `--out-dir`, carrying `prompt`, `prompt_file`, `output_path`, `aspect: portrait`, `side`, and the context bundle. Idempotency: a directive is **skipped** (no args written) when its PNG exists *and* its `<basename>.imgstamp` matches the digest of the current `description + side` — so an unchanged aside never regenerates.
+5. **`prepare-render-args`** — one `<slide_id>.json` args file per renderable directive under `--out-dir`, carrying `prompt`, `prompt_file`, `output_path`, `aspect: portrait`, `side`, and the context bundle. Idempotency: a directive gets **no args file** when a PNG whose `.imgstamp` matches the digest of the current `description + side` already exists — at the planned basename, *or under any other name in `images/`*. Aside names are positional (`<slide-id>-<n>-aside.png`), so inserting or reordering slides renames every aside after the change while its description stays put: the stamped PNG and its `.imgstamp` are **copied** to the new stem (the new `.imgprompt` is `extract`'s) and counted as reused. Every donor is read before any destination is written, so a shift (2 → 3 while 3 → 4) or a swap hands each slide its own image. Filenames never decide; an unchanged aside never regenerates.
 6. **Generate** — the image-illustrator dispatches [`talksmith:generate-image`](../generate-image/SKILL.md) once per args file (tool-agnostic; degrades gracefully when no image capability is present).
-7. **`stamp-renders`** *(mandatory — never skip)* — write each PNG's `<basename>.imgstamp` = `sha256(side + description)`. This is the **only** signal `prepare-render-args` consults next pass. Skip it and every pass regenerates forever.
+7. **`stamp-renders`** *(mandatory — never skip)* — write each PNG's `<basename>.imgstamp` = `sha256(side + description)`. This is the **only** signal `prepare-render-args` consults next pass. Skip it and every pass regenerates forever. A PNG that is **older than its `.imgprompt` and stamped from another description** is an old image still waiting for (or having failed, or lacked the capability for) its regeneration: it is **not** stamped, and is reported — stamping it would mark the old picture current forever. `--only <slide_id …>` stamps just the named directives, for when those generations land later.
 8. **`cleanup`** — rewrite each `<!-- generate-image: … -->` directive in `final.md` into an aside ref + provenance echo:
    ```
    <!-- aside: <side> ![<alt>](images/<basename>.png) -->
@@ -52,7 +52,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final t
 ## Boundaries
 
 - Reads `final.md`; `scan` is read-only, `cleanup` rewrites it atomically (`.tmp` + `os.replace`).
-- Writes only under `talks/<Talk>/images/` (`.imgprompt` sidecars, `.imgstamp` stamps) and to `final.md`.
+- Writes only under `talks/<Talk>/images/` (`.imgprompt` sidecars, `.imgstamp` stamps, reused-image copies, `gc`'s `.trash/`) and to `final.md`.
 - Never reads or writes `draft.md`. Never generates images — that's [`talksmith:generate-image`](../generate-image/SKILL.md). Never authors the prompt — that's the image-illustrator.
 - Does **not** touch ` ```ascii ` fences, existing `![](…)` refs, or authored `<!-- aside: … -->` hints — those belong to polish-ascii / the editor.
 
@@ -69,7 +69,8 @@ The same shape as [`polish-ascii`](../polish-ascii/SKILL.md), subcommand for sub
 | `--output` / `-o` | `scan` · `annotate` | Write to a file instead of stdout. |
 | `--out-dir` | `prepare-render-args` | Where the per-directive `<slide_id>.json` args files land. |
 | `--repo-root` | `prepare-render-args` | Anchors the paths written into the args files when the render runs from a different cwd. Defaults to the plan's own `final.md` root — pass it only when they differ. |
-| `--dry-run` | `extract` · `cleanup` · `gc` | Print the planned change instead of touching disk. |
+| `--only` | `stamp-renders` | Stamp only these slide ids (space- or comma-separated). |
+| `--dry-run` | `extract` · `stamp-renders` · `cleanup` · `gc` | Print the planned change instead of touching disk. |
 | `--apply` | `gc` | Move the orphans to `images/.trash/<timestamp>/` (`gc` lists only by default). |
 
 ## Exit codes

@@ -87,6 +87,14 @@
      {src, alt}                  a picture or a clip  (the original, and still the common case)
      {code, language?}           a code / worked-example panel
      {columns:[{header,cells}]}  an aligned grid — a small supporting table
+     {images:[{src,alt}, …]}     a picture set — 2 or 3 pictures shared by the slide
+
+   The picture set is the same frame emitted once per picture, as siblings directly under
+   `.smedia` — so every per-picture rule a design already has (contained, cropped, stretched to
+   its box) applies to each one unchanged, and `theme.css` only has to divide the box between
+   them (`.smedia:has(>.imgph+.imgph)`). It exists because a card set illustrated by two related
+   diagrams had no legal shape: one `{src}`, `figures` wants a picture per item, `image-grid`
+   wants ≥4 — so the fill kept one picture and dropped the other.
 
    The two non-picture shapes exist because the catalog already promised them: the
    `content+cards+image` entry says "labeled cards on one side AND a supporting
@@ -102,6 +110,7 @@
    it — and reuse the same classes, so the two read as one piece in two places. #}
 {% macro smedia(m) %}
 {%- if m is mapping and m.code %}{{ codepanel(m.code, m.language, 'mcode') }}
+{%- elif m is mapping and m.images %}{% for im in m.images %}{{ embed_img(im) }}{% endfor %}
 {%- elif m is mapping and m.columns %}<div class="compare mtable" style="--cc:{{ m.columns | length or 1 }}"><div class="chead">{% for c in m.columns %}<span>{{ c.header }}</span>{% endfor %}</div>{% for row in pivot(m.columns) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}</div>
 {%- else %}{{ embed_img(m) }}{%- endif %}
 {% endmacro %}

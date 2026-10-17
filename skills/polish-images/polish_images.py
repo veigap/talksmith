@@ -10,8 +10,9 @@ Subcommands:
   annotate            --plan <plan.json|-> --gen <gen.json|-> [-o <out.json|->]
   extract             --final <final.md> --plan <plan.json|->
   prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>]
-  stamp-renders       --final <final.md> --plan <plan.json|-> [--dry-run]
+  stamp-renders       --final <final.md> --plan <plan.json|-> [--only <ids>] [--dry-run]
   cleanup             --final <final.md> --plan <plan.json|-> [--dry-run]
+  gc                  --final <final.md> [--apply]
 
 Like polish_ascii, every subcommand operates on `talks/<Talk>/final.md`; `draft.md`
 is never read or written. The per-block slide-context scanner is shared: see
@@ -42,7 +43,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
     extract_block_context,
 )
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
-    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, run_gc,
+    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, relocate_staged, run_gc,
     scan_final_path, write_json,
 )
 
@@ -238,6 +239,52 @@ def read_stamp(stamp_path: Path) -> str | None:
         return None
 
 
+def _companions(images_dir: Path, stem: str) -> tuple[Path, Path, Path]:
+    """Every file one generated aside owns — (png, sidecar, stamp) — the set `gc` retires together."""
+    return (images_dir / f"{stem}.png", images_dir / f"{stem}.imgprompt",
+            images_dir / f"{stem}{STAMP_SUFFIX}")
+
+
+def _reused_files(images_dir: Path, stem: str) -> tuple[Path, Path]:
+    """What a reused aside carries to its new stem: the PNG and its stamp (not `extract`'s sidecar)."""
+    return images_dir / f"{stem}.png", images_dir / f"{stem}{STAMP_SUFFIX}"
+
+
+def _stamped_png_index(images_dir: Path) -> dict[str, list[Path]]:
+    """digest → every `images/*.png` whose `.imgstamp` carries it (sorted, so the pick is deterministic).
+
+    Checking only the planned basename let a renumbering hide a valid image: the slide moved, its
+    positional `<slide-id>-<n>-aside.png` name changed, and the PNG stamped with the very same
+    description digest sat under the old name while a fresh — costly — generation was ordered for
+    the new one. Filenames never decide; the stamp does.
+    """
+    index: dict[str, list[Path]] = {}
+    for stamp in sorted(images_dir.glob(f"*{STAMP_SUFFIX}")):
+        png = images_dir / f"{stamp.name[: -len(STAMP_SUFFIX)]}.png"
+        d = read_stamp(stamp)
+        if d and png.exists():
+            index.setdefault(d, []).append(png)
+    return index
+
+
+def _stale_image(png_path: Path, digest: str) -> bool:
+    """True when the PNG at a planned basename is an *old* image, not this pass's generation.
+
+    `extract` rewrites an `.imgprompt` only when its bytes changed, so a sidecar newer than the PNG
+    means its content changed after that PNG was made. If the `.imgstamp` also carries a different
+    digest, the PNG was generated from another description — a generation still pending, or one
+    that failed or was `unavailable`, under a basename a previous pass used. Stamping it would mark
+    the old picture current and it would never regenerate. An unstamped PNG is left to the normal
+    path (stamping a hand-placed generation is legitimate).
+    """
+    stem = png_path.stem
+    current = read_stamp(png_path.with_name(f"{stem}{STAMP_SUFFIX}"))
+    sidecar = png_path.with_name(f"{stem}.imgprompt")
+    if current is None or current == digest or not sidecar.exists():
+        return False
+    return png_path.stat().st_mtime < sidecar.stat().st_mtime
+
+
 # ── sidecar (.imgprompt) ──────────────────────────────────────────────────────
 
 def build_sidecar_content(description: str, prompt: str, side: str) -> str:
@@ -425,6 +472,9 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         return 2
 
     written = reused = 0
+    moves: list[tuple[tuple[Path, ...], tuple[Path, ...]]] = []
+    relocated: list[tuple[str, Path, Path]] = []
+    index = _stamped_png_index(images_dir)          # the pre-pass state; every decision reads it
     for d in renderables:
         sid = d.get("slide_id", "")
         basename = d["render"]["png_basename"]
@@ -433,6 +483,16 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         digest = imgprompt_digest(d["directive"]["description"], d["directive"]["side"])
         stamp = _stamp_path(images_dir, basename)
         if png_path.exists() and read_stamp(stamp) == digest:
+            reused += 1
+            continue
+        # Same digest under another name (the slide was renumbered): copy it across instead of
+        # ordering a new generation of an image that already exists.
+        donors = [p for p in index.get(digest, []) if p != png_path]
+        if donors:
+            # PNG + stamp; the `.imgprompt` stays `extract`'s. Staged in `relocate_staged`, since
+            # positional names make a renumbering a chain or a swap.
+            moves.append((_reused_files(images_dir, donors[0].stem), _reused_files(images_dir, stem)))
+            relocated.append((sid, donors[0], png_path))
             reused += 1
             continue
         ctx = d.get("context") or {}
@@ -458,10 +518,13 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
             payload["repo_root"] = str(repo_root)
         (out_dir / f"{sid}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
         written += 1
+    relocate_staged(images_dir, moves)
 
     print(f"wrote args for {written} directive(s) to {out_dir}", file=sys.stderr)
     if reused:
         print(f"  reused {reused} (PNG stamped with the same description digest — no regenerate)", file=sys.stderr)
+    for sid, donor, dst in relocated:
+        print(f"     {sid}: copied {donor.name} → {dst.name} (with its .imgstamp)", file=sys.stderr)
     if skipped:
         print(f"  skipped {skipped} (no render mapping)", file=sys.stderr)
     return 0
@@ -470,25 +533,40 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
 # ── stamp-renders ─────────────────────────────────────────────────────────────
 
 def cmd_stamp_renders(args: argparse.Namespace) -> int:
+    """Write each generated PNG's `.imgstamp` — the sole re-generate signal for the next pass.
+
+    A stale PNG (see `_stale_image`) is skipped and reported rather than stamped; `--only` limits
+    the pass to the named slide ids, for generations that land later.
+    """
     loaded = load_plan(args)
     if isinstance(loaded, int):
         return loaded
     final_path, plan = loaded
     images_dir = final_path.parent / "images"
+    only = {i for v in (args.only or []) for i in v.split(",") if i}
 
     stamped = 0
     missing: list[tuple[str, Path]] = []
+    stale: list[tuple[str, Path]] = []
+    seen: set[str] = set()
     for d in plan.get("directives", []):
         render = d.get("render")
         if not render:
             continue
+        sid = d.get("slide_id", "")
+        if only and sid not in only:
+            continue
+        seen.add(sid)
         basename = render["png_basename"]
         png_path = images_dir / basename
         if not png_path.exists():
-            missing.append((d.get("slide_id", ""), png_path))
+            missing.append((sid, png_path))
+            continue
+        digest = imgprompt_digest(d["directive"]["description"], d["directive"]["side"])
+        if _stale_image(png_path, digest):
+            stale.append((sid, png_path))
             continue
         if not args.dry_run:
-            digest = imgprompt_digest(d["directive"]["description"], d["directive"]["side"])
             _stamp_path(images_dir, basename).write_text(digest + "\n")
         stamped += 1
 
@@ -498,6 +576,16 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
         print(f"  ⚠  {len(missing)} image(s) not on disk — they regenerate next pass:", file=sys.stderr)
         for sid, p in missing:
             print(f"     {sid} → {p}", file=sys.stderr)
+    if stale:
+        print(f"  ⚠  {len(stale)} image(s) NOT stamped — older than their .imgprompt sidecar and stamped "
+              f"from another description, so they predate this pass's generation (still pending, failed, "
+              f"or unavailable). Generate them, then `stamp-renders --only <ids>`:", file=sys.stderr)
+        for sid, p in stale:
+            print(f"     {sid} → {p}", file=sys.stderr)
+    unknown = sorted(only - seen)
+    if unknown:
+        print(f"  ⚠  --only named {len(unknown)} id(s) with no renderable directive in the plan: "
+              f"{', '.join(unknown)}", file=sys.stderr)
     return 0
 
 
@@ -582,10 +670,7 @@ def cmd_gc(args: argparse.Namespace) -> int:
     referenced = referenced_stems(final_path.read_text())
     orphans = sorted(s for s in _generated_aside_stems(images_dir) if s not in referenced)
 
-    targets = [cand for s in orphans
-               for cand in (images_dir / f"{s}.png", images_dir / f"{s}.imgprompt",
-                            images_dir / f"{s}{STAMP_SUFFIX}")
-               if cand.exists()]
+    targets = [cand for s in orphans for cand in _companions(images_dir, s) if cand.exists()]
     return run_gc(final_path.parent, images_dir, orphans, targets, args.apply, "aside")
 
 
@@ -621,6 +706,7 @@ def main(argv: list[str]) -> int:
 
     p_stamp = sub.add_parser("stamp-renders", help="stamp each generated image with the digest of its description+side — the sole re-generate signal")
     add_plan_args(p_stamp)
+    p_stamp.add_argument("--only", nargs="+", metavar="SLIDE_ID", help="stamp only these slide ids (space- or comma-separated)")
     p_stamp.set_defaults(func=cmd_stamp_renders)
 
     p_cleanup = sub.add_parser("cleanup", help="rewrite generate-image directives in final.md to aside image refs")

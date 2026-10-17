@@ -83,11 +83,11 @@ Append-only, newest at the bottom. One entry per distinct defect:
   plugin_version: <version from .claude-plugin/plugin.json, or "-" if unknown>
 ```
 
-- **`id`** — `NN` is the sequence within that date, zero-padded: `BUG-20260825-01`.
+- **`id`** — `NN` is the sequence within that date, zero-padded: `BUG-20260825-01`. Take **one more than the highest `NN` already in the file for that date** — another session may have logged earlier the same day, and restarting at `01` gives two different defects the same id.
 - **`impact`** — `blocked` (the step could not complete its job), `degraded` (completed, worse output), `cosmetic` (no effect on the deliverable).
 - **`expected` / `actual`** — observed facts only. The pair is what makes an entry actionable; an entry that can't state both is usually a vague hunch, so either sharpen it or don't log it.
 - **`suggested_fix`** — always reads as a suggestion, never as a verdict. Keep it out of `what:` / `actual:`.
-- **`status: fixed`** is set by a human, not by the workflow. Talksmith only ever appends or bumps.
+- **`status: fixed`** is set by a human, not by the workflow. Talksmith only ever appends or bumps. Whoever closes an entry may add `fixed_in: <version>` under it (the plugin version that carries the fix) and, for a partial fix, a `note:` saying which part is still open.
 
 ### Example
 

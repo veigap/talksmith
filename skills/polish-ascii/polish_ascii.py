@@ -25,7 +25,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -47,7 +46,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
 )
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
     IMG_REF_RE,
-    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, run_gc,
+    add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, relocate_staged, run_gc,
     scan_final_path, write_json,
 )
 
@@ -430,33 +429,19 @@ def _stamped_svg_index(images_dir: Path) -> dict[str, list[Path]]:
 _CRITIQUE_H1 = re.compile(r"^# Critique log — .*$", re.MULTILINE)
 
 
-def _relocate_render(src_svg: Path, dst_svg: Path) -> list[str]:
-    """Copy a reusable render (svg, png, critique png + log) from `src_svg`'s stem to `dst_svg`'s.
+def _reuse_log(src: Path, dst: Path, staged: Path) -> str | None:
+    """`relocate_staged`'s rewrite: a critique log names its stem in the H1, and records the reuse."""
+    if src.suffix != ".md":
+        return None
+    log = _CRITIQUE_H1.sub(f"# Critique log — {dst.stem}", staged.read_text(), count=1)
+    return log.rstrip("\n") + (f"\n\n## Reused — {date.today().isoformat()}\n"
+                               f"Copied from `{src.stem}` by `prepare-render-args`: same ASCII "
+                               f"digest, so not re-rendered or re-critiqued.\n")
 
-    A copy, not a move: the old name may still be referenced until `cleanup` rewrites final.md,
-    and `gc` retires it afterwards. The critique log's H1 names its stem, so it is rewritten, and a
-    `## Reused` section records where the render came from. Returns the companions that were
-    absent at the source (a missing deliverable PNG is worth a warning; the rest are optional).
-    """
-    images_dir = dst_svg.parent
-    src_stem, dst_stem = src_svg.stem, dst_svg.stem
-    missing: list[str] = []
-    for src, dst in zip(_companions(images_dir, src_stem), _companions(images_dir, dst_stem)):
-        if src.suffix == ".ascii":
-            continue                       # `extract` already wrote the new sidecar
-        if not src.exists():
-            missing.append(str(src.relative_to(images_dir)))
-            continue
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        if src.suffix == ".md":
-            log = _CRITIQUE_H1.sub(f"# Critique log — {dst_stem}", src.read_text(), count=1)
-            log = log.rstrip("\n") + (f"\n\n## Reused — {date.today().isoformat()}\n"
-                                       f"Copied from `{src_stem}` by `prepare-render-args`: same ASCII "
-                                       f"digest, so not re-rendered or re-critiqued.\n")
-            dst.write_text(log)
-        else:
-            shutil.copy2(src, dst)
-    return missing
+
+def _reused_files(images_dir: Path, stem: str) -> tuple[Path, ...]:
+    """What a reused render carries to its new stem: every companion but the `.ascii` (`extract`'s)."""
+    return tuple(p for p in _companions(images_dir, stem) if p.suffix != ".ascii")
 
 
 def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
@@ -762,7 +747,8 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
     written = 0
     reused = 0
     relocated: list[tuple[str, Path, Path]] = []
-    index = _stamped_svg_index(images_dir)
+    moves: list[tuple[tuple[Path, ...], tuple[Path, ...]]] = []
+    index = _stamped_svg_index(images_dir)          # the pre-pass state; every decision reads it
     for b in renderables:
         sid = b.get("slide_id", "")
         basename = b["render"]["svg_basename"]
@@ -782,10 +768,11 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
         donors = [p for p in index.get(digest, []) if p != svg_path]
         if donors:
             donor = next((p for p in donors if p.with_suffix(".png").exists()), donors[0])
-            for m in _relocate_render(donor, svg_path):
-                if m.endswith(".png") and "/" not in m:
-                    print(f"  ⚠  {sid}: reused {donor.name} has no deliverable {m} — rasterize "
-                          f"{basename} before the deck build", file=sys.stderr)
+            if not donor.with_suffix(".png").exists():
+                print(f"  ⚠  {sid}: reused {donor.name} has no deliverable {donor.stem}.png — rasterize "
+                      f"{basename} before the deck build", file=sys.stderr)
+            # Copied after the loop, all donors staged first: a renumbering is a chain or a swap.
+            moves.append((_reused_files(images_dir, donor.stem), _reused_files(images_dir, stem)))
             relocated.append((sid, donor, svg_path))
             reused += 1
             continue
@@ -810,6 +797,7 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
             payload["repo_root"] = str(repo_root)
         (out_dir / f"{sid}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
         written += 1
+    relocate_staged(images_dir, moves, rewrite=_reuse_log)
 
     print(f"wrote args for {written} block(s) to {out_dir}", file=sys.stderr)
     if reused:

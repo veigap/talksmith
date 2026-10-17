@@ -9,7 +9,8 @@ Run:  python3 tests/skills/md-to-deck/test_render_contracts.py
     `_`-prefixed metadata keys;
   * `image-full` could not draw a code-panel `image` and dropped its `source` highlight;
   * `concept-columns` drew content-matched icons the catalog says it never uses;
-  * the working-directory index sorted by render time, so touching an old class moved it first.
+  * the working-directory index sorted by render time, so touching an old class moved it first;
+  * a card set sharing two diagrams had no `media` shape that held both, so one was dropped.
 
 No network: icons resolve offline (see test_icon_offline.py), and none of these slides needs one.
 """
@@ -37,6 +38,9 @@ socket.socket = _NoNetwork
 import html_style as h  # noqa: E402
 import field_coverage as fc  # noqa: E402
 import build_index as bi  # noqa: E402
+import image_coverage as ic  # noqa: E402
+
+FIXTURE = Path(__file__).resolve().parent
 
 
 def t_backslash_escape():
@@ -91,6 +95,39 @@ def t_image_full():
     return fails
 
 
+def t_media_picture_set():
+    """`media: {images:[…]}` renders one frame per picture inside the one media box, on every
+    template that takes media and on `image-full`; the audits see both pictures."""
+    fails = []
+    pair = [{"src": "images/pipeline.svg", "alt": "Pipeline"},
+            {"src": "images/portrait.svg", "alt": "Portrait"}]
+    cci = {"template": "content+cards+image", "title": "t", "design": "split-right",
+           "cards": [{"label": "A", "body": "a"}, {"label": "B", "body": "b"}],
+           "media": {"images": pair}}
+    with tempfile.TemporaryDirectory() as td:
+        html = h.render_model_slide(json.loads(json.dumps(cci)), Path(td) / ".icons", FIXTURE)
+    media = html.split('class="smedia"', 1)[-1]
+    if html.count('class="smedia"') != 1 or media.count('class="imgph svg"') != 2:
+        fails.append("  content+cards+image: a picture pair must embed both pictures in one media box")
+    for t, extra in [("content-image", {"facts": [{"body": "f"}]}), ("process", {"steps": [{"body": "s"}]})]:
+        got = _render({"template": t, "title": "t", "design": "banded", "media": {"images": pair}, **extra})
+        if got.split('class="smedia"', 1)[-1].count('class="imgph') != 2:
+            fails.append(f"  {t}: `smedia` must draw a picture set on every media-taking template")
+    full = _render({"template": "image-full", "title": "t", "image": {"images": pair}})
+    if full.split('class="iffill"', 1)[-1].count('class="imgph') != 2:
+        fails.append("  image-full: a picture-set `image` must draw both pictures in the fill")
+    if fc.audit({"slides": [cci]}):
+        fails.append(f"  field_coverage: a picture-set `media` satisfies content+cards+image, got "
+                     f"{fc.audit({'slides': [cci]})}")
+    final = "## t\n\n- **A** a\n\n![](images/pipeline.svg)\n![](images/portrait.svg)\n"
+    if ic.audit(final, {"slides": [cci]}):
+        fails.append("  image_coverage: both pictures of a set must count as present")
+    cci["media"]["images"] = pair[:1]
+    if ic.audit(final, {"slides": [cci]}) != ["portrait.svg"]:
+        fails.append("  image_coverage: a picture dropped from the set must still be caught")
+    return fails
+
+
 def t_concept_columns_no_inferred_icon():
     html = _render({"template": "concept-columns", "title": "t",
                     "columns": [{"label": "Debate", "body": "Agents argue."},
@@ -116,7 +153,7 @@ def t_index_order():
 
 
 def main() -> int:
-    tests = [t_backslash_escape, t_field_coverage, t_image_full,
+    tests = [t_backslash_escape, t_field_coverage, t_image_full, t_media_picture_set,
              t_concept_columns_no_inferred_icon, t_index_order]
     failed = 0
     for t in tests:

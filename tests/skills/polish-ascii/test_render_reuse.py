@@ -9,7 +9,9 @@ Three behaviours, each a regression from a real renumbered Talk:
   diagram's planned basename changes while its ASCII does not. `prepare-render-args` used to check
   only the planned path, ignore the identically-stamped SVG under the old name, and order a fresh
   render (and critique) of a drawing that already existed. It must copy it across instead —
-  SVG, PNG, critique PNG and log, with the log's H1 renamed.
+  SVG, PNG, critique PNG and log, with the log's H1 renamed. A renumbering is often a *chain*
+  (2 → 3 while 3 → 4) or a swap, so every donor must be read before any destination is written —
+  copying in plan order handed the second slide the first one's drawing.
 - **No stamp on a stale SVG.** `stamp-renders` stamped whatever SVG sat at each planned basename.
   An old drawing there — its render still pending or failed — got marked current and never
   re-rendered. It must be skipped when it is older than its sidecar and stamped from other ASCII;
@@ -22,6 +24,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -108,6 +111,69 @@ def test_digest_reuse_across_rename(tmp: Path) -> None:
     _check("reuse: a changed ascii-note still emits render args", (args / "s1-2-1.json").exists())
 
 
+def _diagram(word: str) -> str:
+    return f"```ascii\n+-----+    +-----+\n| {word} | -> | out |\n+-----+    +-----+\n```\n"
+
+
+def _slides(*bodies: str) -> str:
+    return "# 1. Sección\n\n" + "".join(f"## {i}. Slide {i}\n\nTexto.\n\n{b}\n" for i, b in enumerate(bodies, 1))
+
+
+def _render_tagged(images: Path, stem: str, tag: str) -> None:
+    """A render whose every file carries a `TAG-<tag>` marker saying which drawing it is."""
+    _render(images, stem)
+    (images / f"{stem}.svg").write_text(_SVG.replace("<rect/>", f"<desc>TAG-{tag}</desc>"))
+    (images / f"{stem}.png").write_bytes(f"PNG TAG-{tag}".encode())
+    (images / ".critique" / f"{stem}.png").write_bytes(f"CRIT TAG-{tag}".encode())
+    (images / ".critique" / f"{stem}.md").write_text(f"# Critique log — {stem}\n\nTAG-{tag} clean\n")
+
+
+def _tags(images: Path, stem: str) -> tuple[str, ...]:
+    """The marker in each of the stem's four render files ('?' when absent or mixed)."""
+    out = []
+    for f in (images / f"{stem}.svg", images / f"{stem}.png", images / ".critique" / f"{stem}.png",
+              images / ".critique" / f"{stem}.md"):
+        found = set(re.findall(r"TAG-([AB])", f.read_text(errors="replace"))) if f.exists() else set()
+        out.append(found.pop() if len(found) == 1 else "?")
+    return tuple(out)
+
+
+def test_chain_and_swap(tmp: Path) -> None:
+    talk = tmp / "chain"
+    images = talk / "images"
+    images.mkdir(parents=True)
+    final = talk / "final.md"
+    # The illustrator reuses a slug, so a shift lands one diagram on the other's old basename.
+    final.write_text(_slides(_diagram("aaa"), _diagram("bbb")))
+    ann = _plan(talk, {"s1-1-1": "s1-1-1-flow.svg", "s1-2-1": "s1-2-1-flow.svg"})
+    _render_tagged(images, "s1-1-1-flow", "A")
+    _render_tagged(images, "s1-2-1-flow", "B")
+    _run("stamp-renders", "--final", str(final), "--plan", str(ann))
+
+    # Insert a slide in front: aaa 1 → 2 (onto bbb's old name), bbb 2 → 3.
+    final.write_text(_slides("", _diagram("aaa"), _diagram("bbb")))
+    ann = _plan(talk, {"s1-2-1": "s1-2-1-flow.svg", "s1-3-1": "s1-3-1-flow.svg"})
+    args = tmp / "args-chain"
+    code, err = _run("prepare-render-args", "--plan", str(ann), "--out-dir", str(args))
+    _check("chain: nothing re-renders", code == 0 and not list(args.glob("*.json")), err)
+    _check("chain: each slide keeps its own SVG, PNG and critique pair",
+           _tags(images, "s1-2-1-flow") == ("A",) * 4 and _tags(images, "s1-3-1-flow") == ("B",) * 4,
+           f"{_tags(images, 's1-2-1-flow')} / {_tags(images, 's1-3-1-flow')}")
+    log = (images / ".critique" / "s1-3-1-flow.md").read_text()
+    _check("chain: the relocated log is the donor's, renamed", log.startswith("# Critique log — s1-3-1-flow\n")
+           and "TAG-B clean" in log and "## Reused" in log, log[:80])
+
+    # Swap: bbb now at slide 2, aaa at slide 3.
+    final.write_text(_slides("", _diagram("bbb"), _diagram("aaa")))
+    ann = _plan(talk, {"s1-2-1": "s1-2-1-flow.svg", "s1-3-1": "s1-3-1-flow.svg"})
+    code, err = _run("prepare-render-args", "--plan", str(ann), "--out-dir", str(args))
+    _check("swap: nothing re-renders", code == 0 and not list(args.glob("*.json")), err)
+    _check("swap: the renders trade places",
+           _tags(images, "s1-2-1-flow") == ("B",) * 4 and _tags(images, "s1-3-1-flow") == ("A",) * 4,
+           f"{_tags(images, 's1-2-1-flow')} / {_tags(images, 's1-3-1-flow')}")
+    _check("swap: no staging directory left behind", not list(images.glob(".reuse-*")))
+
+
 def test_stamp_skips_stale_svg(tmp: Path) -> None:
     talk = tmp / "stamp"
     images = talk / "images"
@@ -174,6 +240,8 @@ def main_() -> int:
         tmp = Path(td)
         print("render reuse:")
         test_digest_reuse_across_rename(tmp)
+        print("chain / swap:")
+        test_chain_and_swap(tmp)
         print("stamp-renders:")
         test_stamp_skips_stale_svg(tmp)
         print("gc:")

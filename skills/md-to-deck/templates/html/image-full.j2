@@ -8,8 +8,9 @@
    The one exception is a `source` highlight: a picture without its citation is a picture someone
    cannot check, so that band (and only that kind) sits under the fill, and the fill gives up the
    height it needs.
-   `s.image` is polymorphic exactly as `media` is (`m.smedia`): a picture or clip `{src,alt}`, or
-   a code panel `{code, language}` — an un-rendered ASCII figure in the live `--draft` view. #}
+   `s.image` is polymorphic exactly as `media` is (`m.smedia`): a picture or clip `{src,alt}`, a
+   2–3 picture set `{images:[…]}` (side by side, each contained), or a code panel
+   `{code, language}` — an un-rendered ASCII figure in the live `--draft` view. #}
 {% set hlsrc = (s.highlights or []) | selectattr('kind', 'eq', 'source') | list %}
 <div class="stage imgfull">
 <div class="shead">{{ m.header(s) }}</div>

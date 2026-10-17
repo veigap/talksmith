@@ -109,8 +109,10 @@ Decide the template **from the content**, as a discriminator walk — not first-
      `is_ordered` → `process`. Check `date_labels` **first**: dated milestones are also ordered,
      so testing `is_ordered` first is what silently swallows every timeline into `process`.
    - `labeled_items ≥ 2`, each item has its own image → `figures`.
-   - **`labeled_items ≥ 2` and exactly one shared supporting image → `content+cards+image`.**
-     The labeled set stays a card set; the image sits beside it. Do **not** dissolve the labels
+   - **`labeled_items ≥ 2` and one or two shared supporting images → `content+cards+image`.**
+     The labeled set stays a card set; the image sits beside it — or, when the set shares **two**
+     pictures (two related diagrams), both do, as a `media: {images: […]}` pair. Never keep one
+     and drop the other to fit a single `{src}`. Do **not** dissolve the labels
      into `content-image` `facts` (they lose their per-concept icon) and do **not** drop the
      image to keep `concept-breakdown` — this hybrid exists precisely for this shape, and
      wanting the image on the left is a `design` choice (`split-left`), never a reason to reclassify.
@@ -130,7 +132,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
      `image-grid` (which wants ≥4 images and treats variety as the message), and never an
      invented paragraph to justify a text column.
    - `n_images ≥ 4`, variety is the message → `image-grid`; `n_images` 1–3 supporting prose →
-     `content-image`.
+     `content-image` (2–3 as a `media: {images: […]}` set).
    - `one_claim` (a single dominant ≤ ~16-word assertion, optionally with a short reveal /
      one counter-point — e.g. a myth→reality slide) → `statement`; the same shape **past ~16
      words** → `single-point`, never a `quote` dressed up to get the type size.
@@ -164,7 +166,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | Do the items imply an **order** (steps, `1.`, `Paso N`, a flow)? | `process` |
    | Are the bodies **numbers** — is a figure the payload rather than prose? | `stat` (2–4) / `big-number` (1) |
    | Do the items **align row by row** over a shared factor, or split into two groups? | `value-columns`, or `pros-cons` when the split is upside/downside |
-   | Is there an image — **one shared** or **one per item**? | `content+cards+image` / `figures`. Never drop a picture to keep `concept-breakdown`, whose `images == 0` precondition is what disqualified it |
+   | Is there an image — **shared by the set** (one or two) or **one per item**? | `content+cards+image` (two shared → a `media` pair) / `figures`. Never drop a picture to keep `concept-breakdown`, whose `images == 0` precondition is what disqualified it |
    | *(when you landed on `content+cards+image`)* Do the items **read across** — two sides of a comparison, or rows over shared factors? | `value-columns`, **carrying the image**. This is the single most common miss: the picture is not a reason to collapse aligned columns into card bodies, and `value-columns` has an `image` slot precisely so you don't have to choose. Its own titles give it away — *"A contra B"*, *"A vs B"*, *"X e Y no son lo mismo"* |
 
    Landing on `concept-breakdown` after six honest `no`s is correct and common — it is the right
@@ -225,7 +227,7 @@ sub-category follows, grouped by family.
 | **Ordered sequence** — order carries meaning | `process` · `timeline` | date/period labels → `timeline`; else `process` |
 | **Metrics** — standalone numbers | `big-number` · `stat` | 1 hero figure → `big-number`; 2–4 figures → `stat` |
 | **Aligned columns** — parallel values, read across | `value-columns` · `pros-cons` · `matrix` | a decision framed upside/downside (colour-coded) → `pros-cons`; **two named axes** (cells indexed by position) → `matrix`; parallel value columns over one shared factor → `value-columns` (which may carry supporting media) |
-| **Visual** — images carry the content | `image-full` · `content-image` · `content+cards+image` · `figures` · `image-grid` | **one image and no prose → `image-full`**; 1–3 supporting prose → `content-image`; cards + 1 image → `content+cards+image`; each item imaged → `figures`; ≥4 where variety is the point → `image-grid` |
+| **Visual** — images carry the content | `image-full` · `content-image` · `content+cards+image` · `figures` · `image-grid` | **one image and no prose → `image-full`**; 1–3 supporting prose → `content-image`; cards + 1–2 shared images → `content+cards+image` (two as a `media` pair); one image per item → `figures`; ≥4 where variety is the point → `image-grid` |
 | **Verbatim / last-resort** | `code-example` · `content-text` · `fallback` | code meant to be read → `code-example`; only prose → `content-text`; nothing matches → `fallback` |
 
 The signal *definitions* are in *Classification procedure* above; the row-level tie-breaks
@@ -278,9 +280,10 @@ precise rules.
 > | `column-right` / `column-left` | a narrow full-bleed strip, **cropped to fill** | atmosphere only — never anything that must be read |
 > | `bleed` | media fills the slide, content over it | a picture that *is* the slide |
 >
-> **`media` is what the design places, and it is not always a picture.** Three shapes:
+> **`media` is what the design places, and it is not always one picture.** Four shapes:
 > `{src, alt}` — an image or a clip; `{code, language?}` — a code / worked-example panel;
-> `{columns: [{header, cells}]}` — a small aligned grid. Set the design from an author
+> `{columns: [{header, cells}]}` — a small aligned grid; `{images: [{src, alt}, …]}` — a set of
+> **2–3** pictures the slide shares, stacked in a split, side by side in a band. Set the design from an author
 > `<!-- design: <value> -->` hint when there is one.
 >
 > The last two exist because this catalog already promised them and could not deliver:
@@ -448,7 +451,7 @@ precise rules.
   (→ `figures`). A **2-item** set is valid (two cards) — do **not** drop it to bullets or prose.
   **Hard rule — no source image.** Its per-card icons are renderer-added §17 glyphs, never source
   pictures. **If the slide has any `![]()` image, it is NOT this** → `figures` (a per-item image),
-  `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + one shared image).
+  `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + 1–2 shared images).
   **Not:** ordered/numbered (→ `process`); exactly one item (→ `single-point`).
 - **The only id.** `concept-breakdown` is the whole family; `format` picks the arrangement. What
   used to be `card-row` is `format: row`, and what used to be `icon-list` is the default `grid`.
@@ -718,11 +721,13 @@ precise rules.
 
 #### `content+cards+image`
 - **Match:** labeled **cards/steps on one side AND a supporting image/example/code on the
-  other** — the hybrid (strict's own 4th type). Both a card set *and* a single evidence
-  visual. **This is the default for `labeled_items ≥ 2` + one shared image** — it is not a rare
-  hybrid to reach for only when nothing else fits.
+  other** — the hybrid (strict's own 4th type). Both a card set *and* its evidence visual — **one
+  or two shared images**. **This is the default for `labeled_items ≥ 2` + 1–2 shared images** —
+  it is not a rare hybrid to reach for only when nothing else fits. Two pictures (two related
+  diagrams) go in `media` together as a pair, `{images: [{src, alt}, {src, alt}]}`, stacked in
+  the media column; one picture *per card* is `figures`, not this.
 - **Format:** ~50/50 split: cards or a numbered list on one half + one supporting
-  image/worked-example/code panel on the other, aligned to a shared baseline. **Two arrangements**
+  image/worked-example/code panel (or a picture pair, stacked) on the other, aligned to a shared baseline. **Two arrangements**
   (`design` field): `split-right` (default — cards left, media right) and `split-left` (mirrored —
   media left, cards right). Pick it from the content the same way `content-image` does (media to be
   read first → `split-left`); an author `<!-- design: <value> -->` hint pins it and overrides that
@@ -740,7 +745,8 @@ precise rules.
   An author writing "just the image, no text" produces exactly this. **Not:** a caption or a
   couple of supporting facts alongside it (→ `content-image`, whose prose leads); not ≥4 images
   where variety is the message (→ `image-grid`); not atmosphere behind text (→ a `column-*`
-  design, which crops).
+  design, which crops). Two or three pictures and no prose are the same slide with the pictures
+  side by side: `image: {images: […]}`.
 - **Format:** the **normal header** — section pill + title, plus an optional one-line `lead` —
   kept compact at the top; the image then takes **all remaining space, bleeding to the left,
   right and bottom edges** with no padding, no frame, no rounded corners. It is **contained,
@@ -925,7 +931,7 @@ La ingeniería de prompts es el arte de estructurar instrucciones para un modelo
 | a labeled set (**≥2**) | labels are **dates/periods** | `timeline` (check before `process`) |
 | a labeled set (**≥2**) | ordered (steps/1./Paso), labels not dates | `process` |
 | a labeled set (**≥2**) | **each item** has an image | `figures` |
-| a labeled set (**≥2**) | **one shared** supporting image | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts |
+| a labeled set (**≥2**) | **one or two shared** supporting images | `content+cards+image` — keep the cards; **never** dissolve them into `content-image` facts. Two → `media: {images: [ … ]}`, never one of them dropped |
 | a labeled set (**≥2**) | **no image** (incl. a **2-item** set) | `concept-breakdown` (renderer adds per-card icons) — then `format`: `row` = lead + 3–5 items, every body ≤ ~80 chars; `editorial` = 2–8 short items composed flat (no cards); `grid` otherwise — prose bodies and anaphoras included. **`list` is retired; it is not a value** |
 | **exactly 1 labeled item** | lead + one point/reveal | `single-point` (card/callout, never a bullet) |
 | **exactly 1 labeled item** | it's a tip/warning/analogy — tone *is* the message | `callout` |

@@ -9,7 +9,7 @@ the other didn't, one's error text said "plan" where the other's said "plan JSON
 So the scaffolding lives here, imported the same way both already import `_context`:
 
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
-    from _plan import add_plan_args, load_plan, read_json_arg, referenced_stems, run_gc
+    from _plan import add_plan_args, load_plan, read_json_arg, referenced_stems, relocate_staged, run_gc
 
 The block-specific parts — what a scan detects, what a sidecar holds, how a stamp is computed —
 stay in each skill. This is the shared frame, not shared behavior.
@@ -20,10 +20,12 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Sequence
 
 # Every `![…](images/<name>)` reference, including the ones inside the `<!-- aside: … -->` comments
 # polish-images writes — the pattern is the same either way, so `gc` sees the same live set.
@@ -161,3 +163,47 @@ def run_gc(talk_root: Path, images_dir: Path, orphans: list[str], targets: list[
     print(f"gc: moved {moved} file(s) to {dest.relative_to(talk_root)}/ — restore with `mv`, "
           f"or delete that folder once you are sure")
     return 0
+
+
+# ── render reuse: copy a stamped render to its renumbered name ──────────────
+# Both skills reuse a render by digest when a renumbering renamed its slide: the donor's files are
+# copied to the new stem instead of ordering a fresh render. Each skill finds its own donor (the
+# digest lives inside an SVG for one, in an `.imgstamp` for the other) and names its own companion
+# files; the copy itself is this, because the hazard is the same for both. Names are positional,
+# so a renumbering is a chain (slide 2 → 3 while 3 → 4) or a swap, and the file being written to
+# `s1-3-…` is the very one that must move on to `s1-4-…`. Copying in plan order hands the second
+# slide the first one's picture; reading every donor first cannot.
+
+def relocate_staged(stage_dir: Path, moves: Sequence[tuple[Sequence[Path], Sequence[Path]]],
+                    rewrite: Callable[[Path, Path, Path], str | None] | None = None) -> list[Path]:
+    """Copy each donor's files to its destination's, position by position, staging every donor first.
+
+    `moves` holds `(donor_files, destination_files)` pairs of equal length. Every donor file that
+    exists is copied into a temporary directory under `stage_dir` before any destination is
+    written, so the copies see the pre-pass state whatever the order. `rewrite(src, dst, staged)`
+    may return replacement text for a file (e.g. a log that names its stem); `None` copies it
+    byte-for-byte. A copy, never a move: the old name may stay referenced until `cleanup`, and `gc`
+    retires it afterwards. Returns the donor files that were absent (nothing is written for them).
+    """
+    missing: list[Path] = []
+    if not moves:
+        return missing
+    with tempfile.TemporaryDirectory(prefix=".reuse-", dir=stage_dir) as td:
+        staged: dict[Path, Path] = {}
+        for srcs, _ in moves:
+            for src in srcs:
+                if src not in staged and src.exists():
+                    staged[src] = Path(td) / f"{len(staged)}{src.suffix}"   # by index: names collide across dirs
+                    shutil.copy2(src, staged[src])
+        for srcs, dsts in moves:
+            for src, dst in zip(srcs, dsts):
+                if src not in staged:
+                    missing.append(src)
+                    continue
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                text = rewrite(src, dst, staged[src]) if rewrite else None
+                if text is None:
+                    shutil.copy2(staged[src], dst)
+                else:
+                    dst.write_text(text)
+    return missing

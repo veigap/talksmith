@@ -851,6 +851,23 @@ html.print-pdf .cbfull{display:none}
    inside it. `overflow` is the backstop for the case even the floor cannot fit. */
 .smedia>.mtable{align-self:center;max-height:100%;overflow:hidden}
 .smedia>.mtable{--cmp-fs:2.1cqw}
+/* ── a picture set as media: `media: {images:[…]}`, 2–3 pictures shared by the slide ─────────
+   `smedia` emits one ordinary picture frame per entry, side by side under `.smedia`, so every
+   rule a design already writes for *its* picture (contained in a split, cropped in a column or
+   bleed, stretched to its box) applies to each one unchanged. All that is new is dividing the
+   box: the media becomes a grid of equal cells, and each frame's `height:100%` then resolves
+   against its cell instead of the whole column. The axis follows the shape of the box — a tall
+   box (a split or column half) stacks them, a wide one (a band, the bleed, `image-full`'s fill)
+   sets them side by side. Selected by count, so a one-entry set is just a picture. */
+.smedia:has(>.imgph+.imgph),.iffill:has(>.imgph+.imgph){display:grid;gap:1.6cqw;
+  grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr)}
+.stage:is(.d-banded,.d-bleed)>.smedia:has(>.imgph+.imgph),.iffill:has(>.imgph+.imgph){
+  grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr)}
+.stage.d-banded>.smedia:has(>.imgph+.imgph){gap:2.4cqw}
+/* `image-full` pins its one frame to the fill (`inset:0`); two pinned frames would sit on top of
+   each other, so in a set each frame takes its grid cell and pins its picture to *that*. */
+.iffill:has(>.imgph+.imgph)>.imgph{position:relative;inset:auto;width:auto;height:auto}
 /* A stat band under the body — the composition the catalog describes as "a stat pair as the lower
    band of a content-image slide". It is the same `.stat` card as the `stat` template's, one size
    down, because here it comments on a body rather than being the whole slide. Inside `.cfit`, so
