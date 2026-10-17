@@ -785,12 +785,20 @@ html.print-pdf .cbfull{display:none}
 .reveal.print-pdf ~ .deckstylemenu,html.print-pdf .deckstylemenu{display:none}
 @media print{.deckstylemenu{display:none}}
 /* section separator — roadmap list (left) + the current section big (right) */
-.secag{margin:auto 0;display:grid;grid-template-columns:1.05fr .95fr;gap:5cqw;align-items:center}
-.secaglist{display:flex;flex-direction:column;gap:1.5cqw}
-.secagrow{display:flex;gap:2.2cqw;align-items:baseline;font-size:2.7cqw;color:var(--fm);font-weight:600;text-decoration:none;transition:color .12s}
+.secag{margin:auto 0;display:grid;grid-template-columns:1.25fr .75fr;gap:4cqw;align-items:center}
+/* The roadmap is read from the back of the room, so its type follows the section count instead of
+   one size for every deck: a fixed 2.7cqw left a five-section agenda filling under half the slide
+   and too small to read projected. `--sa` steps down only as rows are added (floor = the old size,
+   which ten rows still fit). The inactive numbers use the muted ink, not the hairline colour —
+   on a projector `--hair` disappears. */
+.secaglist{--sa:3.8cqw;display:flex;flex-direction:column;gap:calc(var(--sa)*.5)}
+.secaglist:has(>.secagrow:nth-child(5)){--sa:3.4cqw}
+.secaglist:has(>.secagrow:nth-child(7)){--sa:3cqw}
+.secaglist:has(>.secagrow:nth-child(9)){--sa:2.7cqw}
+.secagrow{display:flex;gap:calc(var(--sa)*.8);align-items:baseline;font-size:var(--sa);line-height:1.15;color:var(--fm);font-weight:600;text-decoration:none;transition:color .12s}
 .secagrow:hover{color:var(--ink)}.secagrow:hover .secagn{color:var(--red)}
-.secagrow .secagn{font-family:var(--mono);font-size:2cqw;color:var(--hair);min-width:3.2cqw}
-.secagrow.on{color:var(--ink);font-weight:800}.secagrow.on .secagn{color:var(--red)}
+.secagrow .secagn{font-family:var(--mono);font-size:calc(var(--sa)*.74);color:var(--fm);opacity:.7;min-width:calc(var(--sa)*1.2)}
+.secagrow.on{color:var(--ink);font-weight:800}.secagrow.on .secagn{color:var(--red);opacity:1}
 .secagnow{text-align:right}
 .secagnum{font-size:11cqw;font-weight:800;color:var(--red);font-family:var(--mono);line-height:.85;letter-spacing:-.02em}
 .secagtitle{font-size:4.8cqw;font-weight:800;color:var(--ink);margin:1.6cqw 0 0;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}

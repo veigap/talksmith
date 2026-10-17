@@ -13,6 +13,23 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.3.1] — 2026-10-17
+
+No re-init needed.
+
+### Fixed
+
+- **The section agenda is readable from the back of the room.** Its list sized every deck's
+  roadmap at one small type, so a five-section agenda filled under half the slide; the type now
+  steps with the section count (largest for a short agenda), the list gets the wider column, and
+  the inactive section numbers no longer fade to the hairline colour.
+
+### Added
+
+- **A "too small to read" warning.** A slide whose body had to be shrunk below 70% of its size to
+  fit is marked, and the PDF/`.pptx` export names it next to the clipped-slide warnings: it still
+  fits, but projected it is 10–12 pt text. The cure is editorial — split the slide in `final.md`.
+
 ## [1.3.0] — 2026-10-17
 
 No re-init needed.

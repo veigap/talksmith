@@ -1134,6 +1134,7 @@ _EXPORT_EARLY = ("(function(){try{var p=new URLSearchParams(location.search),q=p
 # handled by Reveal. The ONLY custom code is fitContent(): a per-slide content-fit (scale .cfit
 # to fill width + fit height), which Reveal has no equivalent for and CSS can't do (reflow).
 _REVEAL_INIT = """
+var DENSE_SCALE=0.7;
 function fitContent(cb){
   var cf=cb.querySelector('.cfit'); if(!cf) return;
   var cs=getComputedStyle(cb);
@@ -1165,6 +1166,12 @@ function fitContent(cb){
   cf.style.width=(rw/s)+'px';
   var vh=cf.scrollHeight*s;
   if(vh>rh+1) flagOverflow(cb, 'body');   // even the floor scale doesn't fit: content is being clipped
+  // Fitting is not the same as readable. Below DENSE_SCALE the body is drawn at under 70% of its
+  // authored size — on a projector that is the 10-12pt text nobody past the third row reads. It
+  // still fits, so it isn't clipped; it is marked so the exports name it (harvest.js) and the cure,
+  // as with clipping, is editorial: split the slide in final.md.
+  var sec=cb.closest?cb.closest('section.slide'):null;
+  if(sec && s<DENSE_SCALE) sec.setAttribute('data-dense', Math.round(s*100)+'%');
   cf.style.marginTop=Math.max(0,(rh-vh)*0.36)+'px';   // upper-third, not dead-centre
   cf.style.transform='scale('+s.toFixed(4)+')';                             // origin top-left → fills width, no side void
 }
@@ -1290,7 +1297,7 @@ function fitAll(scope){
   secs.forEach(function(sec){ if(sec.getClientRects().length) fitSlide(sec); });
 }
 function fitSlide(sec){
-  sec.removeAttribute('data-overflow');
+  sec.removeAttribute('data-overflow'); sec.removeAttribute('data-dense');
   // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
   // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
   // the slide no longer has. Natural layout first, then code type, then the body scale — each

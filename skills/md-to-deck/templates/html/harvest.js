@@ -591,6 +591,9 @@
         // missing content, so say which slide.
         var over = sec.getAttribute('data-overflow');
         if (over) warn.push('content clipped (' + over + ') — the slide holds more than it has room for; split it in final.md');
+        // fitContent marks a body it had to shrink below a readable size (html_style.py → DENSE_SCALE).
+        var dense = sec.getAttribute('data-dense');
+        if (dense && !over) warn.push('text shrunk to ' + dense + ' to fit — too small to read projected; split it in final.md');
         var clip = {x: 0, y: 0, w: px(br.width), h: px(br.height)};
         for (var c = 0; c < sec.children.length; c++) {
           walk(sec.children[c], br.x, br.y, clip, nodes, warn);
