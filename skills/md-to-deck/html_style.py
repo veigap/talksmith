@@ -1015,17 +1015,32 @@ def _catalog_names() -> set[str] | None:
     return {name for name, _tset, _pop in _CAT_INDEX}
 
 
-def _resolve_item_icons(items: list) -> None:
+# The explicit "no icon" value — per item (`icon: "none"`) or for a whole slide's item set
+# (`icons: "none"`). A missing / empty `icon` keeps its old meaning, "infer one", so a model that
+# never says anything is unchanged; this is the only way to say "draw none" — a deck imported from
+# a PPTX whose cards carried no glyphs otherwise came back covered in content-matched ones.
+_NO_ICON = "none"
+
+
+def _no_icon(v) -> bool:
+    return isinstance(v, str) and v.strip().lower() == _NO_ICON
+
+
+def _resolve_item_icons(items: list, infer: bool = True) -> None:
     """Resolve each item's icon in place. The fill may **suggest** an `icon` (a Material Symbols
     name) per item, choosing distinct ones. A suggestion is honored only when it exists in the live
     catalog: an invalid name (a typo) would fetch nothing and fall to a generic placeholder circle,
     so instead we **drop it and content-match** via `icon_for`, logging `invalid_icon` so the render
     report can surface it. Valid suggestions are reserved first so content-matching fills around
-    them; `icon_for` never repeats an icon already on this slide."""
+    them; `icon_for` never repeats an icon already on this slide.
+
+    `icon: "none"` opts one item out (its icon becomes `""` and the template draws no slot);
+    `infer=False` (the slide's `icons: "none"`) turns content-matching off for the whole set, so
+    only an icon an item names itself is drawn."""
     valid = _catalog_names()
     for it in items:
         sug = it.get("icon")
-        if not sug:
+        if not sug or _no_icon(sug):
             continue
         if _icon_slug(sug) in _LETTER_GLYPHS:
             print(f"[html] letter_icon: {sug!r} draws letters, not a picture — "
@@ -1039,7 +1054,10 @@ def _resolve_item_icons(items: list) -> None:
         else:
             _USED_ICONS.add(sug)
     for it in items:
-        it["icon"] = it.get("icon") or icon_for(it.get("label", ""), it.get("body", ""))
+        if _no_icon(it.get("icon")):
+            it["icon"] = ""
+        elif not it.get("icon"):
+            it["icon"] = icon_for(it.get("label", ""), it.get("body", "")) if infer else ""
 
 
 def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang="en") -> str:
@@ -1060,7 +1078,7 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang=
         point = slide.get("point") or slide.get("callout")
         if isinstance(point, dict):
             items.append(point)
-    _resolve_item_icons(items)
+    _resolve_item_icons(items, infer=not _no_icon(slide.get("icons")))
     # Inline styling last: icon content-matching reads the raw label/body, and matching against
     # markup (`<b>700.000 litros</b>`) would pick glyphs off the tags instead of the words.
     return _render(_TMPL.get(t, "fallback.j2"), cache, s=_richtext(slide), L=_labels(lang))
@@ -1261,21 +1279,31 @@ function flagOverflow(el, what){
   if(window.console&&console.warn) console.warn('[deck] content clipped ('+what+') on slide:',
     (sec.querySelector('.stitle')||sec).textContent.trim().slice(0,80));
 }
-function fitAll(scope){ var r=(scope||document);
-  r.querySelectorAll('.reveal .slides section[data-overflow]').forEach(function(s){ s.removeAttribute('data-overflow'); });
+// Fit only what is laid out. Reveal keeps the slides past its view distance at `display:none`, and a
+// slide with no box measures as zero height: fitCover then found "no room" for a statement three
+// slides ahead of the cover and flagged it clipped — a false report that depended on which slide
+// the deck was opened at. An unrendered slide is skipped instead, and gets its fit (and its flag,
+// stale ones cleared) when it is laid out: `slidechanged` fits the slide being entered, the print
+// view lays every slide out and re-fits them all on `pdf-ready`.
+function fitAll(scope){
+  var secs=scope?[scope]:[].slice.call(document.querySelectorAll('.reveal .slides section'));
+  secs.forEach(function(sec){ if(sec.getClientRects().length) fitSlide(sec); });
+}
+function fitSlide(sec){
+  sec.removeAttribute('data-overflow');
   // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
   // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
   // the slide no longer has. Natural layout first, then code type, then the body scale — each
   // step measured against the one before it.
-  r.querySelectorAll('.reveal .slides section .cfit').forEach(function(cf){
+  sec.querySelectorAll('.cfit').forEach(function(cf){
     cf.style.transform='none'; cf.style.width=''; cf.style.marginTop=''; });
-  r.querySelectorAll('.reveal .slides section .codebox').forEach(fitCode);
-  r.querySelectorAll('.reveal .slides section .smedia>.mtable').forEach(fitTable);
-  r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
+  sec.querySelectorAll('.codebox').forEach(fitCode);
+  sec.querySelectorAll('.smedia>.mtable').forEach(fitTable);
+  sec.querySelectorAll('.cbody').forEach(fitContent);
   // A picture the layout squeezed to nothing is lost content too — say so like a clipped body.
-  r.querySelectorAll('.reveal .slides section .smedia>.imgph').forEach(function(m){
+  sec.querySelectorAll('.smedia>.imgph').forEach(function(m){
     if(m.offsetParent!==null && m.offsetHeight<20) flagOverflow(m, 'media'); });
-  r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
+  sec.querySelectorAll('.stage.cover').forEach(fitCover); }
 // PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into
 // its own `.pdf-page`, given a fresh width) and only then fires `pdf-ready`. The fit each slide got
 // on screen was measured against the old geometry, so re-fit the deck here or the export prints

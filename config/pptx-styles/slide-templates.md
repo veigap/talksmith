@@ -55,7 +55,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `is_cover` | The unit is slide 1 / has frontmatter and no H2. |
    | `is_divider` | The heading is an **H1** (`# …`), not an H2 — the canonical signal. **Also** a slide whose title carries an explicit section-break marker (`〔divisor〕`, `〔Backup〕`, or equivalent) even at H2: some authoring conventions mark dividers/backups by marker rather than heading level, and the pipeline must treat these as dividers, not content slides. |
    | `is_terminal` | The unit is the last slide of the deck or of a section. |
-   | `n_images` | Count of `![alt](path)` refs in the body. |
+   | `n_images` | Count of **content** `![alt](path)` refs in the body — **decoration excluded** (*Decoration is not content*, right under this table). Record what was excluded as `decoration=N`. |
    | `has_code` | A fenced ```` ``` ```` block is present as body content. **Not** an ```` ```ascii ```` fence in the `--draft` view: there it is a diagram Step 6 has not rendered yet, and it counts toward `n_images` (field mapping: `schemas/slide-model.md` → *Walking the body*). |
    | `has_table` | A Markdown pipe-table (`\| … \| … \|` with a `---` separator row) is present. |
    | `labeled_items` | Count of **labeled** units: a bullet whose lead is bold (`- **Label** body` / `- <emoji> **Label:** body`), an `#### Label` / `### Subhead` immediately followed by a short paragraph, **or** a **numbered-list line** (`1. …`) when there are ≥2 of them (each line is an ordered step item, label optional). A *labeled* item ≠ a plain `- text` bullet. |
@@ -72,6 +72,38 @@ Decide the template **from the content**, as a discriminator walk — not first-
    | `one_metric` | **One** dominant figure is the whole slide (`$2.50`, `18%`, `1M`) with a one-line caption and nothing else competing. (2–4 figures is `big_metrics`.) |
    | `is_cta` | A terminal (or section-terminal) slide whose items are **next steps / resources / links / where-to-go** — names + URLs + one-line descriptors, not concepts. |
    | `image_only` | `n_images ≥ 1`, **no enumeration**, and no body prose **beyond one short framing line** (≤ ~120 chars) — a screenshot or diagram the presenter narrates, its detail in `### Notes`. That one line is the `image-full` `lead`, which its *Format* and the schema both grant: reading `image_only` as "no prose at all" made the lead-bearing variant unselectable, because any line that would fill it voided the signal. Two sentences or more is prose that *leads*, and that is `content-image`. An explicit "just the image" author instruction produces exactly this. |
+
+   **Decoration is not content.** Sort every image ref before counting `n_images`. A ref is
+   **decoration** when any of these holds — each is checked on the file or its source, not judged
+   by taste:
+   - **The source marks it:** its corpus stub says `Role: icon` or `Role: frame`
+     ([`corpus-record.md`](${CLAUDE_PLUGIN_ROOT}/schemas/corpus-record.md)), or an extraction
+     manifest beside the original (a `.pptx` import's `_manifest.json`, matched by basename) gives
+     it an icon/decoration `role`.
+   - **It is tiny:** the file's longer side is **≤ 128 px**, or the source placed it **≤ 0.5 in**
+     (a manifest's `w_emu`/`h_emu` ≤ 457200). Read the size from the header (`file`, `sips -g
+     pixelWidth -g pixelHeight`), never by eye.
+   - **It is a frame:** no subject of its own — flat fills, a border, a header bar, no text, figure
+     or photo — or the **same bytes** placed ≥ 2× on one slide behind different items. It is the
+     card the source drew its text on; the template draws its own.
+
+   *Exception:* a logo or portrait that **identifies its item** (a company mark, a person) is
+   content however small. Decoration never counts toward `n_images`, so it can neither select a
+   visual template (`figures`, `image-full`, …) nor void `concept-breakdown`'s `images == 0`. An
+   icon beside an item's label becomes that item's **`icon`** — a Material Symbol that matches the
+   glyph, or `"none"` (the explicit no-icon value, [`slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md))
+   when none does or the source deck shows no per-item glyph worth keeping; any other icon, and
+   every frame, is dropped. Either way the ref leaves through the slide's **`_omitted`** trace
+   ([`slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md) → *Walking the body*) — the
+   fill never edits `final.md` to waive it.
+
+   **A formula strip is neither decoration nor a figure.** An image **≥ 4:1** and one text line
+   tall (≤ ~160 px) that reads as an equation — a manifest sizing images often mislabels it an icon;
+   this test wins over that role — is the slide's math. Legible → transcribe it as text where it
+   sits (Unicode or inline `` `code` ``) and omit the image with reason `formula`. Not legible →
+   keep it as `media` **at full width** (`design: banded`, or `image-full` when it is the slide),
+   counted in `n_images`. **Never** a per-item `figures` image or a `split` column, where a 15:1
+   strip shrinks to an unreadable line.
 
 2. **Enumerate every catalog entry whose _Match_ fires** given those signals.
 3. **Apply the disambiguators** (each entry's *Match* names what it is **not**) to pick
@@ -108,7 +140,8 @@ Decide the template **from the content**, as a discriminator walk — not first-
    - `labeled_items ≥ 2` and `date_labels` → `timeline` (the rail; *when* is the axis), else
      `is_ordered` → `process`. Check `date_labels` **first**: dated milestones are also ordered,
      so testing `is_ordered` first is what silently swallows every timeline into `process`.
-   - `labeled_items ≥ 2`, each item has its own image → `figures`.
+   - `labeled_items ≥ 2`, each item has its own **content** image → `figures`. An icon per item
+     is decoration, not this: the set is a card set with per-item `icon`s.
    - **`labeled_items ≥ 2` and one or two shared supporting images → `content+cards+image`.**
      The labeled set stays a card set; the image sits beside it — or, when the set shares **two**
      pictures (two related diagrams), both do, as a `media: {images: […]}` pair. Never keep one
@@ -117,7 +150,7 @@ Decide the template **from the content**, as a discriminator walk — not first-
      image to keep `concept-breakdown` — this hybrid exists precisely for this shape, and
      wanting the image on the left is a `design` choice (`split-left`), never a reason to reclassify.
    - `labeled_items ≥ 2`, unordered, **and `images == 0`** → `concept-breakdown` (**including a
-     2-item set** → two cards). It requires `images == 0` — any source image disqualifies it (its
+     2-item set** → two cards). It requires `images == 0` — any content image disqualifies it (its
      per-card icons are renderer-added, not source pictures). Then pick its `format` by count and
      body length: `row` for a lead + 3–5 items whose bodies are **all ≤ ~80 chars**, `editorial`
      for 2–8 short items when the composition wanted is **flat** (no cards), `grid` otherwise —
@@ -450,7 +483,8 @@ precise rules.
   labeled set of 2+ items that isn't ordered (→ `process`/`timeline`) or per-item-imaged
   (→ `figures`). A **2-item** set is valid (two cards) — do **not** drop it to bullets or prose.
   **Hard rule — no source image.** Its per-card icons are renderer-added §17 glyphs, never source
-  pictures. **If the slide has any `![]()` image, it is NOT this** → `figures` (a per-item image),
+  pictures. **If the slide has any content `![]()` image, it is NOT this** (decoration does not
+  count — *Classification procedure* → *Decoration is not content*) → `figures` (a per-item image),
   `content-image` (1–3 supporting prose), or `content+cards+image` (a card set + 1–2 shared images).
   **Not:** ordered/numbered (→ `process`); exactly one item (→ `single-point`).
 - **The only id.** `concept-breakdown` is the whole family; `format` picks the arrangement. What
@@ -598,7 +632,9 @@ precise rules.
 - **Format:** either **two equal columns** (left = A, right = B; parallel headings, equal
   weight/height) or a **compare-strip**: header row (Factor · A · B) + N aligned rows,
   rendered as a **card-per-row grid, never a native table**. Uniform column widths,
-  shared gridlines. **Not** bullets.
+  shared gridlines. **Not** bullets. Only a compare-strip's Factor column is styled as row
+  labels; two equal columns (A · B) render as data, at equal weight. Which one a table is:
+  `columns[0].factor` (schema → `value-columns`).
 - **A supporting image is allowed** (optional `media` + a `design` — usually `split-right`,
   or `split-left` mirrored): the grid takes the wider column, the diagram sits beside it.
   This is the fifth body-plus-image composition, not a separate template — a table and a diagram
@@ -758,11 +794,13 @@ precise rules.
   (`claude-cowork` 1.4).
 
 #### `figures`
-- **Match:** a **visual set** where **each item carries its own image/diagram** — ≥3
-  `![]()` interleaved with per-item labels.
+- **Match:** a **visual set** where **each item carries its own image/diagram** — ≥2
+  `![]()` interleaved with per-item labels. Content images only: per-item icons and card frames
+  are decoration (*Classification procedure*), and a formula strip is never a figure.
 - **Format:** optional lead line + N **figure cards** = image + label + short body, in a
-  row or grid; **uniform crop, uniform size, aligned**. Distinct from `concept-breakdown`
-  only by the per-item image.
+  row or grid; **uniform crop, uniform size, aligned**. The figure count sets the columns:
+  2 → two, 3 → three, 4 → 2×2, 5–6 → three per row — no empty column beside a pair. Distinct
+  from `concept-breakdown` only by the per-item image.
 - **Strict recipe:** §13 image-grid / content+cards. **Provenance:** ref S9/22, final
   S2/5/6/8/21.
 
@@ -860,7 +898,8 @@ row of 3 cards. Had any body run 2–4 sentences (> 80 chars), it would be the d
 ![conf](images/hall-3.svg) **Confianza sin verificación** No distingue saber de inventar.
 ```
 → `figures`. `labeled_items=3` **and each carries its own image** (`n_images=3`, one per
-item) → image+label+body cards. Without the per-item images this is `concept-breakdown`.
+item) → image+label+body cards. Without the per-item images this is `concept-breakdown` — and
+so it is when those images are icon-sized glyphs: decoration, mapped to each card's `icon`.
 
 **`content-image` vs `image-grid`** — image count + intent:
 ```

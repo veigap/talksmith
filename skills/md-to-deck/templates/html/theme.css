@@ -304,6 +304,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    icon sits on the label's line instead of spanning a row that isn't there */
 .ccard:not(:has(p))>.ic{grid-row:1;align-self:center}
 .ccard:not(:has(p)){align-content:center}
+/* no icon (`icon: "none"`, or the slide's `icons: "none"`): the template emits no `.ic`, so the icon
+   track goes too — label and body take the whole card instead of indenting past an empty slot */
+.ccard:not(:has(>.ic)),.eitem:not(:has(>.ic)){grid-template-columns:1fr}
+.ccard:not(:has(>.ic))>*,.eitem:not(:has(>.ic))>*{grid-column:1}
 /* `format: editorial` — the labeled set without the card. No panel, no radius, no wide padding:
    a small icon leads the label and the body is indented under it, separated by a hairline and
    white space instead of a box. It is the same content as the `grid` format, composed flat, and
@@ -437,7 +441,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .compare{--cmp-fs:2.5cqw;margin-top:auto;display:flex;flex-direction:column;gap:.48em;font-size:var(--cmp-fs)}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:.64em;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:1em;padding-bottom:.24em;border-bottom:.16em solid var(--card)}
-.crow{font-size:.92em;color:var(--body)}.crow>span{background:var(--card);padding:.61em .78em;border-radius:.52em}.crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
+.crow{font-size:.92em;color:var(--body)}.crow>span{background:var(--card);padding:.61em .78em;border-radius:.52em}
+/* the row-label (factor) column, only on a `.compare.fac` (set by
+   the `cmptable` macro: `factor`, else 3+ columns or an empty first header). A 2-column table defaults to data. */
+.compare.fac .crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
 /* stat count drives the grid, capped at 4 across (5+ wrap into rows of 4) */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2.4cqw;margin-top:auto}
 .stats:has(>.stat:only-child){grid-template-columns:1fr}
@@ -445,7 +452,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stats:has(>.stat:nth-child(3):last-child){grid-template-columns:repeat(3,1fr)}
 .stat{background:var(--card);border-radius:2cqw;padding:3cqw 2.4cqw;display:flex;flex-direction:column;gap:1cqw}
 .statn{font-size:6cqw;font-weight:800;color:var(--red);line-height:1;letter-spacing:-.02em}.statl{font-size:2.1cqw;color:var(--body);line-height:1.25}
+/* figure count drives the grid, like .cards/.stats: 1 → one centred column, 2 → two, 4 → 2×2,
+   3 and 5+ → rows of three. A fixed three left a third of the slide empty under two figures. */
 .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
+.figs:has(>.figc:only-child){grid-template-columns:minmax(0,56%);justify-content:center}
+.figs:has(>.figc:nth-child(2):last-child),.figs:has(>.figc:nth-child(4):last-child){grid-template-columns:repeat(2,1fr)}
+/* two rows (4+): a width-bound picture keeps its height however the body is scaled, so the fit
+   pass could only clip the second row. A cap in plain cqw (a share of the slide — see fitContent)
+   lets the pictures give up height instead. */
+.figs:has(>.figc:nth-child(4)) .imgph :is(svg,img,video){max-height:13cqw}
 .figc{display:flex;flex-direction:column;gap:1cqw}.figc h4{margin:.6cqw 0 0;font-size:2.6cqw;font-weight:800;color:var(--ink)}.figc p{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.25}
 .imgph{background:repeating-linear-gradient(45deg,#eee,#eee 6px,#e4e4e4 6px,#e4e4e4 12px);border:1px solid #ddd;border-radius:1.4cqw;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.imgph span{font-family:var(--mono);font-size:1.9cqw;color:#999}
 /* a real image sizes to its own aspect ratio (never cropped) — the placeholder keeps 16:9 */

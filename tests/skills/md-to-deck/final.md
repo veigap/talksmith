@@ -95,6 +95,18 @@ Ocho es el techo del formato: una grilla regular de cuatro por dos.
 
 ---
 
+## Concept-breakdown · sin íconos (importado de un PPTX)
+<!-- template: concept-breakdown -->
+
+El original no tenía íconos; el modelo lo dice con `icons: "none"`:
+
+- **Sin ranura** La tarjeta no dibuja el ícono y el título arranca en el borde.
+- **Misma grilla** Cuatro tarjetas siguen siendo un 2×2.
+- **Ícono nombrado** Un ítem que nombra su ícono lo conserva.
+- **Por ítem** `icon: "none"` apaga sólo esa tarjeta.
+
+---
+
 ## concept-breakdown · format row · 3 short cards
 <!-- template: concept-breakdown -->
 <!-- format: row -->
@@ -322,6 +334,28 @@ El diagrama se lee primero; el texto lo recorre después.
 - **Chain-of-thought** Pide razonar paso a paso.
 
 ![a](images/pipeline.svg) ![b](images/pipeline.svg) ![c](images/pipeline.svg)
+
+---
+
+## Figures · 2 figuras, dos columnas
+<!-- template: figures -->
+
+- **Pérdida si es real** −ln(x): grande cuando x → 0.
+- **Pérdida si es falsa** −ln(1−x): grande cuando x → 1.
+
+![a](images/pipeline.svg) ![b](images/pipeline.svg)
+
+---
+
+## Figures · 4 figuras, 2×2
+<!-- template: figures -->
+
+- **Pérdida si es real** −ln(x): grande cuando x → 0.
+- **Pérdida si es falsa** −ln(1−x): grande cuando x → 1.
+- **Tercer panel** Dos por dos abajo.
+- **Cuarto panel** La grilla cierra cuadrada.
+
+![a](images/pipeline.svg) ![b](images/pipeline.svg) ![c](images/pipeline.svg) ![d](images/pipeline.svg)
 
 ---
 

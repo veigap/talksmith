@@ -22,7 +22,7 @@ At the end of Phase 1, write a per-image stub in the record's `## Images / diagr
 
 One corpus record per source (chat ZIP = one record; web folder = one record; standalone image file = one record).
 
-**Phase 2 — image transcription (only when `process_images: true`).** Transcribe and describe every deferred image. Fill `Depiction`, `Why it matters`, `Transcribed text` in the Phase-1 stubs. Bytes are already on disk from Phase 1 — Phase 2 only touches prose. If an image is unreadable, mark `<!-- pending: failed: <reason> -->` and list under `Unparseable`.
+**Phase 2 — image transcription (only when `process_images: true`).** Transcribe and describe every deferred image. Fill `Depiction`, `Why it matters`, `Transcribed text` and `Role` (content / icon / frame / formula — see the schema; a slide-deck source's icons and card frames are why it exists) in the Phase-1 stubs. Bytes are already on disk from Phase 1 — Phase 2 only touches prose. If an image is unreadable, mark `<!-- pending: failed: <reason> -->` and list under `Unparseable`.
 
 Never silently run Phase 2 — it runs only when explicitly requested.
 

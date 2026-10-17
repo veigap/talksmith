@@ -22,13 +22,13 @@
    partial last row sits, how the type steps down when it gets tight) is count-driven CSS. #}
 <div class="editgrid">
 {% for c in items %}
-<div class="eitem{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>
+<div class="eitem{{ m.frag(s) }}">{% if c.icon %}{{ icon(c.icon) }}{% endif %}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>
 {% endfor %}
 </div>
 {% elif fmt == 'row' %}
 <div class="cardrow">
 {% for c in items %}
-<div class="rcard{{ m.frag(s) }}">{{ chip(c.icon) }}<h3>{{ c.label | nocolon }}</h3><p>{{ c.body }}</p></div>
+<div class="rcard{{ m.frag(s) }}">{% if c.icon %}{{ chip(c.icon) }}{% endif %}<h3>{{ c.label | nocolon }}</h3><p>{{ c.body }}</p></div>
 {% endfor %}
 </div>
 {% else %}
@@ -36,7 +36,7 @@
    anaphora) becomes a label-only card rather than a card with an empty paragraph in it. #}
 <div class="cards">
 {% for c in items %}
-<div class="ccard{{ m.frag(s) }}">{{ icon(c.icon) }}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>
+<div class="ccard{{ m.frag(s) }}">{% if c.icon %}{{ icon(c.icon) }}{% endif %}<h3>{{ c.label | nocolon }}</h3>{% if c.body %}<p>{{ c.body }}</p>{% endif %}</div>
 {% endfor %}
 </div>
 {% endif %}

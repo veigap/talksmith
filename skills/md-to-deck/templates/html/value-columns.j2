@@ -1,7 +1,4 @@
 {% import "_macros.j2" as m %}
 {% call m.stage(s) %}
-<div class="compare" style="--cc:{{ s.columns | length or 1 }}">
-<div class="chead">{% for c in s.columns %}<span>{{ c.header }}</span>{% endfor %}</div>
-{% for row in pivot(s.columns) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}
-</div>
+{{ m.cmptable(s.columns, '') }}
 {% endcall %}

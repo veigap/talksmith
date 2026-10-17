@@ -67,7 +67,7 @@ Exactly one of:
 
 The librarian uses HTML-comment markers when a record is incomplete:
 
-- `<!-- pending: process_images -->` — image stub from Phase 1; Phase 2 fills `Depiction` / `Why it matters` / `Transcribed text` when the Librarian role is re-run with `process_images: true`. The image bytes are already on disk in the companion folder regardless — only the prose is pending.
+- `<!-- pending: process_images -->` — image stub from Phase 1; Phase 2 fills `Depiction` / `Why it matters` / `Transcribed text` / `Role` when the Librarian role is re-run with `process_images: true`. The image bytes are already on disk in the companion folder regardless — only the prose is pending.
 - `<!-- pending: failed: <one-line reason> -->` — image unreadable (corrupted, unsupported codec, zero bytes); listed under `Unparseable` in the librarian's final report.
 
 A corpus record is **complete** iff it exists, is non-empty, **and** contains no `<!-- pending: ... -->` markers anywhere. The librarian's idempotency check skips complete records unless the orchestrator passes `force: true`.
@@ -151,7 +151,7 @@ ingested_at: <ISO date>
 Every item is marked `- [verified] <defect> — <what was checked>.` or `- [open question] <what looks off> — <what would settle it>.` — see *Claim discipline* above. A claim about the outside world that was not actually checked is an open question, not an assertion.>
 
 ## Images / diagrams
-<Per image: filename (always `<source-stem>/images/<file>` — resolvable from research/corpus/), depiction, relevance, transcribed text. For image-type stubs, leave Depiction / Why it matters / Transcribed text empty in Phase 1 and add the appropriate <!-- pending: ... --> marker. Phase 1 has already copied the bytes into the companion folder.>
+<Per image: filename (always `<source-stem>/images/<file>` — resolvable from research/corpus/), depiction, relevance, transcribed text, and `Role: content | icon | frame | formula` — decided by looking, against the slide catalog's *Decoration is not content* tests (an extractor's size-based role is a hint, not the answer: it calls formula strips icons); the deck FILL reads it to keep decoration off the slides. For image-type stubs, leave Depiction / Why it matters / Transcribed text / Role empty in Phase 1 and add the appropriate <!-- pending: ... --> marker. Phase 1 has already copied the bytes into the companion folder.>
 
 ## Raw / preserved excerpts
 <Long quotes or full sections kept verbatim. Over-include rather than lose.

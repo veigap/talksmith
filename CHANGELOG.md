@@ -13,6 +13,36 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.3.0] — 2026-10-17
+
+No re-init needed.
+
+### Added
+
+- **Cards without icons.** `icon: "none"` on an item draws no icon; `icons: "none"` on the slide
+  turns inferred icons off for the whole set (an icon an item names itself still draws). The icon
+  slot disappears and the label takes the room. Meant for decks imported from a `.pptx` whose
+  cards never had glyphs.
+- **Decoration is not content.** The template catalog now tells FILL what to leave out of a
+  slide's image count: icons, empty card frames, and formula strips from an imported `.pptx`
+  (marked by the source, tiny, or the same frame repeated). Icons become card icons or are
+  dropped, frames are dropped, formulas become text or a full-width image — never a figure or a
+  card thumbnail. Omissions are recorded in the model (`_omitted`) and the image audit accepts
+  them, so no hand-written `deck-omit` waivers. The librarian marks each image's role.
+
+### Changed
+
+- **The label column of a `value-columns` table is set in the model** (`factor`). Unset, a table
+  with 3+ columns or an empty first header keeps its label column as before; a 2-column table is
+  now two data columns instead of a label column and one data column.
+
+### Fixed
+
+- **`figures` sizes its columns by figure count** (2 → two, 4 → 2×2) instead of always three,
+  which left a third of the slide empty.
+- **The clipped-slide warning no longer depends on which slide the deck was opened at.** Slides
+  Reveal had not laid out were measured at zero height and flagged.
+
 ## [1.2.0] — 2026-10-17
 
 No re-init needed.

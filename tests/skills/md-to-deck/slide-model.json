@@ -530,6 +530,53 @@
     {
       "template": "concept-breakdown",
       "section": "Enumerations",
+      "title": "concept-breakdown · icons: none — no inferred glyphs",
+      "icons": "none",
+      "lead": "`icons: \"none\"` turns content-matching off for the set — a deck imported from slides without icons stays without them:",
+      "cards": [
+        {
+          "label": "No slot",
+          "body": "The card draws no icon element at all, so the label starts at the card's edge."
+        },
+        {
+          "label": "Same grid",
+          "body": "Count still drives the layout — four cards are a 2×2, exactly as with icons."
+        },
+        {
+          "label": "Named icons still draw",
+          "body": "An item that names its own `icon` keeps it; only the inferred ones go.",
+          "icon": "brush"
+        },
+        {
+          "label": "Per item too",
+          "body": "`icon: \"none\"` on one card opts out just that card."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
+      "title": "concept-breakdown · editorial, one item opted out",
+      "format": "editorial",
+      "cards": [
+        {
+          "label": "Inferred",
+          "body": "This concept gets a content-matched glyph."
+        },
+        {
+          "label": "Opted out",
+          "body": "`icon: \"none\"` — the label aligns with the hairline, no indent.",
+          "icon": "none"
+        },
+        {
+          "label": "Inferred again",
+          "body": "The set keeps one icon per item everywhere else."
+        }
+      ]
+    },
+    {
+      "template": "concept-breakdown",
+      "section": "Enumerations",
       "title": "Inline styling works in *every* field",
       "lead": "`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[text](url)` and a naked URL are resolved in **every** text field of **every** template:",
       "cards": [
@@ -964,7 +1011,8 @@
             "Column widths",
             "Reading order",
             "Cell alignment"
-          ]
+          ],
+          "factor": true
         },
         {
           "header": "Mirrored",
@@ -1261,6 +1309,68 @@
           },
           "label": "Label and line",
           "body": "A short caption sits under each image."
+        }
+      ]
+    },
+    {
+      "template": "figures",
+      "section": "Visual & data",
+      "title": "figures: two figures fill two columns",
+      "figures": [
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 1"
+          },
+          "label": "Loss when real",
+          "body": "−ln(x): large as x → 0."
+        },
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 2"
+          },
+          "label": "Loss when fake",
+          "body": "−ln(1−x): large as x → 1."
+        }
+      ]
+    },
+    {
+      "template": "figures",
+      "section": "Visual & data",
+      "title": "figures: four figures make a 2×2",
+      "figures": [
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 1"
+          },
+          "label": "Loss when real",
+          "body": "−ln(x): large as x → 0."
+        },
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 2"
+          },
+          "label": "Loss when fake",
+          "body": "−ln(1−x): large as x → 1."
+        },
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 3"
+          },
+          "label": "Third panel",
+          "body": "Two by two below."
+        },
+        {
+          "image": {
+            "src": "images/pipeline.svg",
+            "alt": "Pipeline diagram, figure 4"
+          },
+          "label": "Fourth panel",
+          "body": "The grid closes square."
         }
       ]
     },
@@ -1977,7 +2087,8 @@
               "Deep net",
               "Vision",
               "Transformers"
-            ]
+            ],
+            "factor": true
           },
           {
             "header": "Reach for",

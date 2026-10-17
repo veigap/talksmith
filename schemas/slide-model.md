@@ -133,7 +133,7 @@ deliverable; `draft.md` → live in-progress view).
   |---|---|---|
   | `{src, alt}` | an image or a clip | the original, and still the common case |
   | `{code, language?}` | a code / worked-example panel | rendered in the same code surface `code-example` uses (a few lines fewer — it stands beside content) |
-  | `{columns: [{header, cells}]}` | a small aligned grid | the same compare-strip `value-columns` uses |
+  | `{columns: [{header, cells}]}` | a small aligned grid | the same compare-strip `value-columns` uses (row labels by the same `columns[0].factor` rule) |
   | `{images: [{src, alt}, …]}` | a picture set — **2–3** pictures the slide shares (two related diagrams, a before/after) | each entry is a full `{src, alt}` (a clip too) in its own frame; the design's box is divided equally — **stacked** in a `split`/`column`, **side by side** in `banded`/`bleed`/`image-full` (whose `image` takes this shape too). 4+ renders and warns: that many shared pictures is `image-grid` |
 
   The two non-picture shapes close a gap this schema created: the catalog's `content+cards+image`
@@ -271,15 +271,15 @@ when the content warrants. Field names are the contract — the renderers read e
 | `section-agenda` | `title` (section name) | — (roadmap + active index derived from `deck.sections`) |
 | `divider` | `title` | `number` — the sub-part's numeral, set above the title; omit it and the title stands alone (a plain sub-opener within a section) |
 | `statement` | `title` (the one dominant claim) | `sub` (a one-line reveal) |
-| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched), `lead`, `format` (`grid`\|`row`\|`editorial`; **`list` is retired** — a model carrying it renders as `grid`) — see below |
+| `concept-breakdown` | `title`, `cards:[{label,body}]` (2–6; 2–8 with `format:"editorial"`) | per-card `icon` (else content-matched; `"none"` = no icon), slide `icons: "none"` (no inferred icons), `lead`, `format` (`grid`\|`row`\|`editorial`; **`list` is retired** — a model carrying it renders as `grid`) — see below |
 | `process` | `title`, `steps:[{body}]` (ordered) | `lead`, per-step `label`, and any `design` + `media` (a supporting diagram/example). **Steps with no `label` render as a numbered list** — one outlined number + the line per row — which is also where a **plain enumeration** of 3–8 unlabeled lines belongs (see below) |
-| `figures` | `title`, `figures:[{image,label,body}]` | `lead` |
+| `figures` | `title`, `figures:[{image,label,body}]` (2+; the count sets the columns — 2 → two, 4 → 2×2, 3/5/6 → three) | `lead` |
 | `image-grid` | `images:[{src,alt}]` (≥4) | `title` |
 | `image-full` | `title`, `image:{src,alt}` (or a code panel `{code,language}` — the `--draft` ASCII case below — or a 2–3 picture set `{images:[…]}`, side by side) | `lead` (one line under the title), `highlights` of `kind: source` **only** (the citation line, under the image) — the image fills everything below the header, edge to edge; **no** `facts`, `cards` or other highlights belong here |
 | `content-image` | `title`, `media:{src,alt}` (or a 2–3 picture set `{images:[…]}`), and **text** — `facts:[{body,label?}]` and/or `lead` | `design` (its caption band is what `banded` is for). With neither `lead` nor `facts` the slide is **`image-full`**, not this — the renderer still drops the empty text column defensively, but that shape belongs to the other template |
-| `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` — or `media:{images:[{src,alt},{src,alt}]}` when the set shares **two** (up to three) pictures | `lead`, per-card `icon` (else content-matched), `design` |
+| `content+cards+image` | `title`, `cards:[{label,body}]`, `media:{src,alt}` — or `media:{images:[{src,alt},{src,alt}]}` when the set shares **two** (up to three) pictures | `lead`, per-card `icon` (else content-matched; `"none"` = no icon), slide `icons: "none"`, `design` |
 | `concept-columns` | `title`, `columns:[{label,body}]` (2–4) | **`subtitle`** — the block's own heading, naming what the columns are (`IA Tradicional vs. Foundation Models`); it is a *name*, distinct from the `lead`, which is a framing sentence. Per column: **`text`** — free text after the description, a **list** → bullets or a **string** → paragraphs (blank-line separated), because the columns genuinely differ in shape; `text_label` (a bold lead over it, e.g. `Características:`), `example` (a bold closing line, e.g. `Ejemplos: …`), `emphasis` (`true` on **at most one** column — a filled accent panel with the column inverted). Also slide-level `lead`. Columns share **no** row structure — that is what separates this from `value-columns` |
-| `value-columns` | `title`, `columns:[{header,cells:[str]}]` | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). **Width budget, not a definition:** beside media, ≤3 value columns × ≤5 rows; at `design: full`, ≤4 × ≤7. A leading *factor* column (`header: ""` or the factor's name) does not count toward that number, so a `factor → X → Y → Z` table is 4 entries and in contract. Past the budget the slide is a **split candidate**, never a demotion to `concept-breakdown` — see the catalog |
+| `value-columns` | `title`, `columns:[{header,cells:[str]}]` | `lead` (one framing line above the grid), `design` + `media` (a supporting diagram/example). **Width budget, not a definition:** beside media, ≤3 value columns × ≤5 rows; at `design: full`, ≤4 × ≤7. A leading *factor* column — the row labels, set by **`factor`** on `columns[0]` (explicit `true`/`false` always wins; unset, a table of **3+ columns** or one whose first `header` is empty has one, and a **2-column** table is two data columns) — is styled as labels and does not count toward that number, so a `factor → X → Y → Z` table is 4 entries and in contract. Past the budget the slide is a **split candidate**, never a demotion to `concept-breakdown` — see the catalog |
 | `stat` | `title`, `stats:[{value,caption}]` (2–4) | `lead` |
 | `big-number` | `number`, `caption` | `title` |
 | `quote` | `quote` | `attribution`, `section` |
@@ -287,12 +287,12 @@ when the content warrants. Field names are the contract — the renderers read e
 | `matrix` | `title`, `columns:[str]` (2–3 x-axis ticks), `rows:[str]` (2–3 y-axis ticks), `cells:[{label,body}]` (`columns × rows`, in reading order: row 1 left→right, then row 2) | `x_label` / `y_label` (the axis **names**, rendered as chrome — a matrix without them is four cards), per-cell `tone` (`good`\|`bad`), `lead` |
 | `pros-cons` | `title`, `pros:[str]`, `cons:[str]` | `pro_label` / `con_label` — override the two column headers when the sides have real names (`Qué hacer` / `Qué no hacer`, `Antes` / `Después`); omitted, they fall to the `deck.lang` chrome labels |
 | `quiz` | `question`, `answer` | `title` (topic), `options:[str]` (choices), `correct` (the right choice — option text, 1-based index, or letter A/B/C…; highlighted on reveal), `explanation` (extra reveal), `design` + `media` (shown beside the quiz — use a `split`, never a `column`, so it is not cropped), `answer_label` (label on the answer panel; default "Respuesta") |
-| `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched) |
-| `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched) |
+| `single-point` | `title`, `point:{label,body}` | `point.icon` (else content-matched; `"none"` = no icon) |
+| `callout` | `callout:{label,body}`, `tone` (`pink`\|`blue`) | `title`, `callout.icon` (else content-matched; `"none"` = no icon) |
 | `code-example` | `title`, `code` | `language`, `explanation:[str]` |
 | `content-text` | `title`, `big`, `panels:[str]` | — *(last-resort prose; flag to restructure)* |
 | `closing-hero` | `title` | `body` |
-| `closing-cta` | `title`, `items:[{label,body}]` | — |
+| `closing-cta` | `title`, `items:[{label,body}]` | per-item `icon` (else content-matched; `"none"` = no icon), slide `icons: "none"` |
 | `fallback` | `title` | `big` (the dominant line; defaults to `title`), `points:[str]` (rendered as accent panels, never plain bullets) — *last resort; the renderer warns, and a recurring fallback means the catalog needs a new entry. An unlabeled list is **not** a fallback: it is a `process` numbered list (or, for an anaphora, a label-only `concept-breakdown`)* |
 
 ### The classification trace — `_choice` (required on every content slide)
@@ -396,6 +396,18 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   (catalog → `has_code`). Carry it verbatim as a code panel where the picture will go: a slide that
   is just the diagram is `image-full` with `image:{code:"<the fence body>", language:"text"}`; on a
   composed template it is `media:{code, language:"text"}`.
+- **Every image ref is sorted before it is placed** — content, decoration, or a formula strip, by
+  the catalog's checkable tests (*Classification procedure* → *Decoration is not content*; the
+  catalog owns them). Only content images fill `image`/`media`/`figures` slots. A decoration ref,
+  and a formula transcribed into text, is recorded on its slide as
+  `"_omitted": [{"src": "images/slide-05-1.png", "reason": "icon"}]` — `reason` is exactly
+  `icon` (mapped to an item's `icon`, or dropped), `frame`, or `formula`. `_omitted` is metadata
+  like `_choice`: the renderers never read it, and
+  [`audits/image_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py)
+  accepts it as the waiver for that ref **and lists every one by reason**, so an omission is
+  visible rather than silent; any other `reason` waives nothing. It is the fill's counterpart of
+  the author's `<!-- deck-omit: <path> -->` in `final.md` — the fill never edits `final.md`, and
+  the presenter should never have to hand-write a waiver for an icon.
 - **`### Speaker notes`** → lifted **verbatim** into the slide's `notes` (never onto the slide
   face). Keep image `src` paths exactly as written (`images/…`).
   **Verbatim means every sentence — copy the block, do not summarize it.** Notes are the one field
@@ -450,7 +462,10 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
 - **Standalone metrics** — the number is `value`, its trailing text the `caption` (`stat.stats`;
   a lone hero metric fills `big-number.number` + `caption`).
 - **A pipe table** → `value-columns.columns:[{header,cells}]` (header row → `header`, body cells in
-  column order); a label/value table decomposes as `cards`. *(Which template a given shape gets is
+  column order). Set `columns[0].factor` only where the `value-columns` default (row above) is
+  wrong: `true` on a 2-column table whose first column holds row labels (`Factor | A`), `false` on
+  a 3+-column table with no label column. A label/value table
+  decomposes as `cards`. *(Which template a given shape gets is
   the catalog's Match rules — not restated here.)*
 - **Images** — carry `src` paths exactly as written into `image:{src,alt}` / `images` / `figures`.
   **Never rewrite the extension.** A `.svg` ref stays `.svg`: the HTML render inlines it as vector
@@ -539,7 +554,11 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   either way. This includes the single-item templates: `single-point` takes `point.icon` and
   `callout` takes `callout.icon`, both optional in exactly the same way. A suggestion the renderer
   cannot resolve falls back to a real glyph and warns; it is never dropped and never becomes a
-  bare shape. Because an icon stands in for the emoji, **strip leading/inline emoji from the labels
+  bare shape. **To draw no icon**, say so: `icon: "none"` on an item drops that item's icon, and
+  `icons: "none"` on the slide turns content-matching off for its whole item set (an item that
+  names its own `icon` keeps it) — the way to keep a deck imported from slides without glyphs
+  free of them. Either way the template emits no icon element, so the label takes the space; a
+  missing or empty `icon` still means "content-match one". Because an icon stands in for the emoji, **strip leading/inline emoji from the labels
   and bodies of those slides** — keeping both is redundant. (Emoji on a non-icon template, e.g. a
   `statement`, may stay.)
 

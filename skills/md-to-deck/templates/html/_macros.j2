@@ -111,7 +111,7 @@
 {% macro smedia(m) %}
 {%- if m is mapping and m.code %}{{ codepanel(m.code, m.language, 'mcode') }}
 {%- elif m is mapping and m.images %}{% for im in m.images %}{{ embed_img(im) }}{% endfor %}
-{%- elif m is mapping and m.columns %}<div class="compare mtable" style="--cc:{{ m.columns | length or 1 }}"><div class="chead">{% for c in m.columns %}<span>{{ c.header }}</span>{% endfor %}</div>{% for row in pivot(m.columns) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}</div>
+{%- elif m is mapping and m.columns %}{{ cmptable(m.columns, ' mtable') }}
 {%- else %}{{ embed_img(m) }}{%- endif %}
 {% endmacro %}
 
@@ -133,4 +133,15 @@
 {% macro codepanel(code, language, extra='') %}
 {%- set c = codeprep(code, language) -%}
 <div class="codebox{{ ' ' ~ extra if extra else '' }}"><div class="cbbar"><span class="cbdot"></span><span class="cbdot"></span><span class="cbdot"></span>{% if c.label %}<span class="cblang">{{ c.label }}</span>{% endif %}<button class="cbfull" type="button" aria-label="Fullscreen" title="Fullscreen"><svg class="ic-fs-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><svg class="ic-fs-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button></div><pre class="cbcode"><code{% if c.lang %} class="language-{{ c.lang }}"{% endif %}>{{ c.text }}</code></pre></div>
+{%- endmacro %}
+
+{# The compare strip — `value-columns`' body and a `media:{columns}` table, one markup. Whether the
+   first column is a row-label (*factor*) column is said by `columns[0].factor` (true/false always
+   wins). Unset, the default keeps saved models rendering as they did: 3+ columns (the classic
+   factor + compared items shape) or an empty first `header` → labels; a 2-column table → two data
+   columns at equal weight (an "A vs B" table used to have its A styled as labels). #}
+{% macro cmptable(cols, extra) %}
+{%- set c0 = cols[0] if cols else {} %}
+{%- set fac = c0.factor if c0.factor is defined else ((cols | length) >= 3 or (c0.header is defined and c0.header == '')) %}
+<div class="compare{{ extra }}{{ ' fac' if fac }}" style="--cc:{{ cols | length or 1 }}"><div class="chead">{% for c in cols %}<span>{{ c.header }}</span>{% endfor %}</div>{% for row in pivot(cols) %}<div class="crow">{% for cell in row %}<span>{{ cell }}</span>{% endfor %}</div>{% endfor %}</div>
 {%- endmacro %}

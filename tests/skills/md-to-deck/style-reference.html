@@ -349,6 +349,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    icon sits on the label's line instead of spanning a row that isn't there */
 .ccard:not(:has(p))>.ic{grid-row:1;align-self:center}
 .ccard:not(:has(p)){align-content:center}
+/* no icon (`icon: "none"`, or the slide's `icons: "none"`): the template emits no `.ic`, so the icon
+   track goes too — label and body take the whole card instead of indenting past an empty slot */
+.ccard:not(:has(>.ic)),.eitem:not(:has(>.ic)){grid-template-columns:1fr}
+.ccard:not(:has(>.ic))>*,.eitem:not(:has(>.ic))>*{grid-column:1}
 /* `format: editorial` — the labeled set without the card. No panel, no radius, no wide padding:
    a small icon leads the label and the body is indented under it, separated by a hairline and
    white space instead of a box. It is the same content as the `grid` format, composed flat, and
@@ -482,7 +486,10 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .compare{--cmp-fs:2.5cqw;margin-top:auto;display:flex;flex-direction:column;gap:.48em;font-size:var(--cmp-fs)}
 .chead,.crow{display:grid;grid-template-columns:repeat(var(--cc,3),1fr);gap:.64em;align-items:center}
 .chead{font-weight:800;color:var(--ink);font-size:1em;padding-bottom:.24em;border-bottom:.16em solid var(--card)}
-.crow{font-size:.92em;color:var(--body)}.crow>span{background:var(--card);padding:.61em .78em;border-radius:.52em}.crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
+.crow{font-size:.92em;color:var(--body)}.crow>span{background:var(--card);padding:.61em .78em;border-radius:.52em}
+/* the row-label (factor) column, only on a `.compare.fac` (set by
+   the `cmptable` macro: `factor`, else 3+ columns or an empty first header). A 2-column table defaults to data. */
+.compare.fac .crow>span:first-child{font-weight:700;color:var(--ink);background:transparent;padding-left:0}
 /* stat count drives the grid, capped at 4 across (5+ wrap into rows of 4) */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2.4cqw;margin-top:auto}
 .stats:has(>.stat:only-child){grid-template-columns:1fr}
@@ -490,7 +497,15 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
 .stats:has(>.stat:nth-child(3):last-child){grid-template-columns:repeat(3,1fr)}
 .stat{background:var(--card);border-radius:2cqw;padding:3cqw 2.4cqw;display:flex;flex-direction:column;gap:1cqw}
 .statn{font-size:6cqw;font-weight:800;color:var(--red);line-height:1;letter-spacing:-.02em}.statl{font-size:2.1cqw;color:var(--body);line-height:1.25}
+/* figure count drives the grid, like .cards/.stats: 1 → one centred column, 2 → two, 4 → 2×2,
+   3 and 5+ → rows of three. A fixed three left a third of the slide empty under two figures. */
 .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
+.figs:has(>.figc:only-child){grid-template-columns:minmax(0,56%);justify-content:center}
+.figs:has(>.figc:nth-child(2):last-child),.figs:has(>.figc:nth-child(4):last-child){grid-template-columns:repeat(2,1fr)}
+/* two rows (4+): a width-bound picture keeps its height however the body is scaled, so the fit
+   pass could only clip the second row. A cap in plain cqw (a share of the slide — see fitContent)
+   lets the pictures give up height instead. */
+.figs:has(>.figc:nth-child(4)) .imgph :is(svg,img,video){max-height:13cqw}
 .figc{display:flex;flex-direction:column;gap:1cqw}.figc h4{margin:.6cqw 0 0;font-size:2.6cqw;font-weight:800;color:var(--ink)}.figc p{margin:0;font-size:2.1cqw;color:var(--body);line-height:1.25}
 .imgph{background:repeating-linear-gradient(45deg,#eee,#eee 6px,#e4e4e4 6px,#e4e4e4 12px);border:1px solid #ddd;border-radius:1.4cqw;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.imgph span{font-family:var(--mono);font-size:1.9cqw;color:#999}
 /* a real image sizes to its own aspect ratio (never cropped) — the placeholder keeps 16:9 */
@@ -1210,6 +1225,23 @@ html.print-pdf .cbfull{display:none}
 </div></div>
 </div>
 </section><section class="slide" data-kind="concept-breakdown"><div class="stage d-full">
+<div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">concept-breakdown · icons: none — no inferred glyphs</h2><p class="lead"><code>icons: "none"</code> turns content-matching off for the set — a deck imported from slides without icons stays without them:</p></div><div class="cbody"><div class="cfit"><div class="cards">
+<div class="ccard fragment fade-up"><h3>No slot</h3><p>The card draws no icon element at all, so the label starts at the card's edge.</p></div>
+<div class="ccard fragment fade-up"><h3>Same grid</h3><p>Count still drives the layout — four cards are a 2×2, exactly as with icons.</p></div>
+<div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M215-117q-33.83 0-66.92-11.5Q115-140 90-166q35-12 50-35t15-62q0-43.75 30.68-74.38Q216.35-368 260.18-368q43.82 0 74.32 30.62Q365-306.75 365-263q0 64-43.5 105T215-117Zm0-60q35 0 62.5-25t27.5-61q0-20-12.5-32.5T260-308q-20 0-32.5 12.5T215-263q0 39-8.5 57.5T175-183q6 1 20 3.5t20 2.5Zm230-177-90-95 376-376q14-14 31-14.5t32 14.5l29 29q15 15 14.5 32.5T823-732L445-354Zm-185 91Z"/></svg></span><h3>Named icons still draw</h3><p>An item that names its own <code>icon</code> keeps it; only the inferred ones go.</p></div>
+<div class="ccard fragment fade-up"><h3>Per item too</h3><p><code>icon: "none"</code> on one card opts out just that card.</p></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="concept-breakdown"><div class="stage d-full">
+<div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">concept-breakdown · editorial, one item opted out</h2></div><div class="cbody"><div class="cfit"><div class="editgrid">
+<div class="eitem fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3>Inferred</h3><p>This concept gets a content-matched glyph.</p></div>
+<div class="eitem fragment fade-up"><h3>Opted out</h3><p><code>icon: "none"</code> — the label aligns with the hairline, no indent.</p></div>
+<div class="eitem fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M280-80 120-240l160-160 42 44-86 86h464v-160h60v220H236l86 86-42 44Zm-80-450v-220h524l-86-86 42-44 160 160-160 160-42-44 86-86H260v160h-60Z"/></svg></span><h3>Inferred again</h3><p>The set keeps one icon per item everywhere else.</p></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="concept-breakdown"><div class="stage d-full">
 <div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">Inline styling works in <i>every</i> field</h2><p class="lead"><code>**bold**</code>, <code>*italic*</code>, <code>~~strike~~</code>, <code>`code`</code>, <code>[text](url)</code> and a naked URL are resolved in <b>every</b> text field of <b>every</b> template:</p></div><div class="cbody"><div class="cfit"><div class="cards">
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m813-61-99-99H160v-94q0-38 19-65t49-41q60-27 115.5-42T455-419L61-813l43-43 752 752-43 43ZM220-220h434L515-359q-8-1-17-1h-18q-57 0-111 11.5T252-306q-14 7-23 21.5t-9 30.5v34Zm511-140q31 14 50 41t19 65v8L657-389q18 6 36.5 13.5T731-360ZM550-496l-48-48q30-7 49-31t19-56q0-38-26-64t-64-26q-32 0-56 19t-31 49l-48-48q19-38 55.5-59t79.5-21q63 0 106.5 43.5T630-631q0 43-21 79.5T550-496Zm104 276H220h434ZM448-599Z"/></svg></span><h3><b>Bold</b> a figure</h3><p>Entrenar un LMM puede consumir <b>700.000 litros</b> de agua — the number carries the line, so it reads as the number.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M530-481 332-679l43-43 241 241-241 241-43-43 198-198Z"/></svg></span><h3><i>Italic</i> a term</h3><p>The <i>lead</i> is the title's sub-line; the <i>body</i> is what follows it.</p></div>
@@ -1354,21 +1386,15 @@ html.print-pdf .cbfull{display:none}
 </div></div>
 <div class="highlights hl-source"><div class="highlight source"><p>Lectura recomendada: <a class="mdlink" href="https://arxiv.org/abs/2108.07258" target="_blank" rel="noopener">On the Opportunities and Risks of Foundation Models</a> (Stanford HAI, 2021).</p></div></div></div>
 <aside class="notes"><p>The two-column case, and the one most likely to be misclassified. It reads adversarial — old way versus new way — but there is no shared factor and no row to read across, so it is not a value-columns grid: each side is explained in its own terms, with its own internal structure. Note also that the emphasised column here is the traditional approach, not the one the talk advocates: emphasis marks the subject under discussion, never the winner.</p></aside></section><section class="slide" data-kind="value-columns"><div class="stage d-full">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns: three columns</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:3">
-<div class="chead"><span>Layout</span><span>Rows</span><span>Rule</span></div>
-<div class="crow"><span>Two to three equal columns</span><span>Cells align across columns</span><span>A card-per-row grid</span></div><div class="crow"><span>Parallel headers</span><span>One row per comparison point</span><span>Never a native table</span></div><div class="crow"><span>Uniform widths</span><span>Shared gridlines</span><span>No plain bullets</span></div></div>
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns: three columns</h2></div><div class="cbody"><div class="cfit"><div class="compare fac" style="--cc:3"><div class="chead"><span>Layout</span><span>Rows</span><span>Rule</span></div><div class="crow"><span>Two to three equal columns</span><span>Cells align across columns</span><span>A card-per-row grid</span></div><div class="crow"><span>Parallel headers</span><span>One row per comparison point</span><span>Never a native table</span></div><div class="crow"><span>Uniform widths</span><span>Shared gridlines</span><span>No plain bullets</span></div></div>
 </div></div>
 </div>
 </section><section class="slide" data-kind="value-columns"><div class="stage d-full">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns: two columns (myth vs reality)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2">
-<div class="chead"><span>Myth</span><span>Reality</span></div>
-<div class="crow"><span>A comparison needs a real HTML table</span><span>It renders as a card-per-row grid</span></div><div class="crow"><span>The two columns should look different</span><span>Both columns share the same weight and width</span></div></div>
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns: two columns (myth vs reality)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2"><div class="chead"><span>Myth</span><span>Reality</span></div><div class="crow"><span>A comparison needs a real HTML table</span><span>It renders as a card-per-row grid</span></div><div class="crow"><span>The two columns should look different</span><span>Both columns share the same weight and width</span></div></div>
 </div></div>
 </div>
 </section><section class="slide" data-kind="value-columns"><div class="stage d-split side-right">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: the grid keeps its columns</h2><p class="lead">A table and a diagram on the same slide — neither one has to go.</p></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:3">
-<div class="chead"><span>What changes</span><span>Chatting</span><span>Delegating</span></div>
-<div class="crow"><span>The way of working</span><span>One question at a time</span><span>One whole assignment</span></div><div class="crow"><span>The steps</span><span>You supply them</span><span>It plans and runs them</span></div><div class="crow"><span>The output</span><span>Text in the window</span><span>Files on disk</span></div><div class="crow"><span>The human role</span><span>You write and wait</span><span>You commission and review</span></div></div>
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: the grid keeps its columns</h2><p class="lead">A table and a diagram on the same slide — neither one has to go.</p></div><div class="cbody"><div class="cfit"><div class="compare fac" style="--cc:3"><div class="chead"><span>What changes</span><span>Chatting</span><span>Delegating</span></div><div class="crow"><span>The way of working</span><span>One question at a time</span><span>One whole assignment</span></div><div class="crow"><span>The steps</span><span>You supply them</span><span>It plans and runs them</span></div><div class="crow"><span>The output</span><span>Text in the window</span><span>Files on disk</span></div><div class="crow"><span>The human role</span><span>You write and wait</span><span>You commission and review</span></div></div>
 </div></div>
 <div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
@@ -1386,9 +1412,7 @@ html.print-pdf .cbfull{display:none}
   </g>
 </svg></div></div></div>
 </section><section class="slide" data-kind="value-columns"><div class="stage d-split side-left">
-<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: mirrored (image-left)</h2></div><div class="cbody"><div class="cfit"><div class="compare" style="--cc:2">
-<div class="chead"><span>Factor</span><span>Mirrored</span></div>
-<div class="crow"><span>Column widths</span><span>The grid keeps the wider track</span></div><div class="crow"><span>Reading order</span><span>Grid then image, unchanged</span></div><div class="crow"><span>Cell alignment</span><span>Still left-aligned</span></div></div>
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">value-columns + image: mirrored (image-left)</h2></div><div class="cbody"><div class="cfit"><div class="compare fac" style="--cc:2"><div class="chead"><span>Factor</span><span>Mirrored</span></div><div class="crow"><span>Column widths</span><span>The grid keeps the wider track</span></div><div class="crow"><span>Reading order</span><span>Grid then image, unchanged</span></div><div class="crow"><span>Cell alignment</span><span>Still left-aligned</span></div></div>
 </div></div>
 <div class="smedia"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
@@ -1622,9 +1646,9 @@ html.print-pdf .cbfull{display:none}
 </div>
 </div></div>
 </div>
-</section><section class="slide" data-kind="image-grid"><div class="stage d-full">
-<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
-<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</section><section class="slide" data-kind="figures"><div class="stage d-full">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: two figures fill two columns</h2></div><div class="cbody"><div class="cfit"><div class="figs">
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1638,7 +1662,8 @@ html.print-pdf .cbfull{display:none}
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Loss when real</h4><p>−ln(x): large as x → 0.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1652,7 +1677,13 @@ html.print-pdf .cbfull{display:none}
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Loss when fake</h4><p>−ln(1−x): large as x → 1.</p></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="figures"><div class="stage d-full">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">figures: four figures make a 2×2</h2></div><div class="cbody"><div class="cfit"><div class="figs">
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1666,7 +1697,8 @@ html.print-pdf .cbfull{display:none}
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Loss when real</h4><p>−ln(x): large as x → 0.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1680,7 +1712,8 @@ html.print-pdf .cbfull{display:none}
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Loss when fake</h4><p>−ln(1−x): large as x → 1.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1694,7 +1727,8 @@ html.print-pdf .cbfull{display:none}
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
   </g>
-</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+</svg></div><h4>Third panel</h4><p>Two by two below.</p></div>
+<div class="figc"><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g stroke="#DA1B2E" stroke-width="3">
     <rect x="40" y="150" width="140" height="60" rx="10"/>
@@ -1704,6 +1738,96 @@ html.print-pdf .cbfull{display:none}
     <path d="M390 180 H460" marker-end="url(#e22-a)"/>
   </g>
   <defs><marker id="e22-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><h4>Fourth panel</h4><p>The grid closes square.</p></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="image-grid"><div class="stage d-full">
+<div class="shead"><span class="pill">Visual &amp; data</span><h2 class="stitle">image-grid: four or more images as one composite</h2></div><div class="cbody"><div class="cfit"><div class="imggrid">
+<div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e23-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e23-a)"/>
+  </g>
+  <defs><marker id="e23-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+  </g>
+  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e25-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e25-a)"/>
+  </g>
+  <defs><marker id="e25-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e26-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e26-a)"/>
+  </g>
+  <defs><marker id="e26-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e27-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e27-a)"/>
+  </g>
+  <defs><marker id="e27-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+    <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
+  <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
+    <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
+  </g>
+</svg></div><div class="imgph svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <rect width="640" height="360" fill="#FFFFFF"/>
+  <g stroke="#DA1B2E" stroke-width="3">
+    <rect x="40" y="150" width="140" height="60" rx="10"/>
+    <rect x="250" y="150" width="140" height="60" rx="10"/>
+    <rect x="460" y="150" width="140" height="60" rx="10"/>
+    <path d="M180 180 H250" marker-end="url(#e28-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e28-a)"/>
+  </g>
+  <defs><marker id="e28-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1720,10 +1844,10 @@ html.print-pdf .cbfull{display:none}
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e23-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e23-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e29-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e29-a)"/>
   </g>
-  <defs><marker id="e23-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e29-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1738,10 +1862,10 @@ html.print-pdf .cbfull{display:none}
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e24-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e24-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e30-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e30-a)"/>
   </g>
-  <defs><marker id="e24-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e30-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1756,10 +1880,10 @@ html.print-pdf .cbfull{display:none}
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e25-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e25-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e31-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e31-a)"/>
   </g>
-  <defs><marker id="e25-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e31-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1797,10 +1921,10 @@ html.print-pdf .cbfull{display:none}
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e28-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e28-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e34-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e34-a)"/>
   </g>
-  <defs><marker id="e28-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e34-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1814,10 +1938,10 @@ html.print-pdf .cbfull{display:none}
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e29-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e29-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e35-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e35-a)"/>
   </g>
-  <defs><marker id="e29-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e35-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1894,10 +2018,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e31-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e31-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e37-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e37-a)"/>
   </g>
-  <defs><marker id="e31-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e37-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1915,10 +2039,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e32-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e32-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e38-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e38-a)"/>
   </g>
-  <defs><marker id="e32-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e38-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1936,10 +2060,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e33-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e33-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e39-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e39-a)"/>
   </g>
-  <defs><marker id="e33-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e39-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -1955,18 +2079,18 @@ export async function ask(
      no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="e34-ag" x1="0" y1="0" x2="0.6" y2="1">
+    <linearGradient id="e40-ag" x1="0" y1="0" x2="0.6" y2="1">
       <stop offset="0" stop-color="#1b2a6b"/>
       <stop offset="0.55" stop-color="#3f4f9d"/>
       <stop offset="1" stop-color="#0d1330"/>
     </linearGradient>
-    <radialGradient id="e34-glow" cx="0.7" cy="0.25" r="0.75">
+    <radialGradient id="e40-glow" cx="0.7" cy="0.25" r="0.75">
       <stop offset="0" stop-color="#e8a24a" stop-opacity="0.55"/>
       <stop offset="1" stop-color="#e8a24a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="600" height="900" fill="url(#e34-ag)"/>
-  <rect width="600" height="900" fill="url(#e34-glow)"/>
+  <rect width="600" height="900" fill="url(#e40-ag)"/>
+  <rect width="600" height="900" fill="url(#e40-glow)"/>
   <g fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5">
     <path d="M-40 700 C 140 560, 300 640, 420 470 S 640 250, 700 120"/>
     <path d="M-40 780 C 160 640, 320 720, 450 545 S 660 320, 720 195"/>
@@ -1988,18 +2112,18 @@ export async function ask(
      no readable information. `slice` makes it crop-to-fill like the photos an aside really takes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="e35-ag" x1="0" y1="0" x2="0.6" y2="1">
+    <linearGradient id="e41-ag" x1="0" y1="0" x2="0.6" y2="1">
       <stop offset="0" stop-color="#1b2a6b"/>
       <stop offset="0.55" stop-color="#3f4f9d"/>
       <stop offset="1" stop-color="#0d1330"/>
     </linearGradient>
-    <radialGradient id="e35-glow" cx="0.7" cy="0.25" r="0.75">
+    <radialGradient id="e41-glow" cx="0.7" cy="0.25" r="0.75">
       <stop offset="0" stop-color="#e8a24a" stop-opacity="0.55"/>
       <stop offset="1" stop-color="#e8a24a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="600" height="900" fill="url(#e35-ag)"/>
-  <rect width="600" height="900" fill="url(#e35-glow)"/>
+  <rect width="600" height="900" fill="url(#e41-ag)"/>
+  <rect width="600" height="900" fill="url(#e41-glow)"/>
   <g fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5">
     <path d="M-40 700 C 140 560, 300 640, 420 470 S 640 250, 700 120"/>
     <path d="M-40 780 C 160 640, 320 720, 450 545 S 660 320, 720 195"/>
@@ -2102,10 +2226,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e37-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e37-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e43-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e43-a)"/>
   </g>
-  <defs><marker id="e37-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e43-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -2130,10 +2254,10 @@ export async function ask(
     <rect x="40" y="150" width="140" height="60" rx="10"/>
     <rect x="250" y="150" width="140" height="60" rx="10"/>
     <rect x="460" y="150" width="140" height="60" rx="10"/>
-    <path d="M180 180 H250" marker-end="url(#e38-a)"/>
-    <path d="M390 180 H460" marker-end="url(#e38-a)"/>
+    <path d="M180 180 H250" marker-end="url(#e44-a)"/>
+    <path d="M390 180 H460" marker-end="url(#e44-a)"/>
   </g>
-  <defs><marker id="e38-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+  <defs><marker id="e44-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g fill="#1F1E1E" font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
     <text x="110" y="185">Tokeniza</text><text x="320" y="185">Predice</text><text x="530" y="185">Genera</text>
@@ -2180,7 +2304,7 @@ X_test = scaler.transform(X_test)</code></pre></div></div></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M350-160q-14.25 0-27-6.38-12.75-6.37-21-17.62L80-480l221-296q8.25-11.25 21-17.63 12.75-6.37 27-6.37h472q24.75 0 42.38 17.62Q881-764.75 881-740v520q0 24.75-17.62 42.37Q845.75-160 821-160H350ZM155-480l195 260h471v-520H350L155-480Zm269 29q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm152 0q12-12 12-29t-12-29q-12-12-29-12t-29 12q-12 12-12 29t12 29q12 12 29 12t29-12Zm-142-29Z"/></svg></span><h3>More data</h3><p>The one that always works, and the one nobody has.</p></div>
 </div>
 </div></div>
-<div class="smedia"><div class="compare mtable" style="--cc:2"><div class="chead"><span>Situation</span><span>Reach for</span></div><div class="crow"><span>Small tabular net</span><span>L2</span></div><div class="crow"><span>Deep net</span><span>Dropout</span></div><div class="crow"><span>Vision</span><span>Augmentation first</span></div><div class="crow"><span>Transformers</span><span>Both, plus warmup</span></div></div></div></div>
+<div class="smedia"><div class="compare mtable fac" style="--cc:2"><div class="chead"><span>Situation</span><span>Reach for</span></div><div class="crow"><span>Small tabular net</span><span>L2</span></div><div class="crow"><span>Deep net</span><span>Dropout</span></div><div class="crow"><span>Vision</span><span>Augmentation first</span></div><div class="crow"><span>Transformers</span><span>Both, plus warmup</span></div></div></div></div>
 <aside class="notes"><p>A lookup table is supporting evidence here, not the slide — so it rides in media like a diagram would. Rendered with the same compare-strip classes value-columns uses, so a table beside a body and a table that is the body read as one piece.</p></aside></section><section class="slide" data-kind="content-image"><div class="stage d-split side-right">
 <div class="shead"><span class="pill">Frames &amp; openers</span><h2 class="stitle">a stat band under the body</h2><p class="lead">Two figures that comment on the body — without making the whole slide a stat.</p></div><div class="cbody"><div class="cfit"><div class="citext">
 <ul class="cifacts"><li><b>The hook is a contrast</b>: A pair of numbers can carry a slide's opening without being its structure.</li></ul></div>
@@ -3599,21 +3723,31 @@ function flagOverflow(el, what){
   if(window.console&&console.warn) console.warn('[deck] content clipped ('+what+') on slide:',
     (sec.querySelector('.stitle')||sec).textContent.trim().slice(0,80));
 }
-function fitAll(scope){ var r=(scope||document);
-  r.querySelectorAll('.reveal .slides section[data-overflow]').forEach(function(s){ s.removeAttribute('data-overflow'); });
+// Fit only what is laid out. Reveal keeps the slides past its view distance at `display:none`, and a
+// slide with no box measures as zero height: fitCover then found "no room" for a statement three
+// slides ahead of the cover and flagged it clipped — a false report that depended on which slide
+// the deck was opened at. An unrendered slide is skipped instead, and gets its fit (and its flag,
+// stale ones cleared) when it is laid out: `slidechanged` fits the slide being entered, the print
+// view lays every slide out and re-fits them all on `pdf-ready`.
+function fitAll(scope){
+  var secs=scope?[scope]:[].slice.call(document.querySelectorAll('.reveal .slides section'));
+  secs.forEach(function(sec){ if(sec.getClientRects().length) fitSlide(sec); });
+}
+function fitSlide(sec){
+  sec.removeAttribute('data-overflow');
   // Clear the previous fit before measuring anything: fitContent leaves `.cfit` laid out at an
   // inflated width, and a code panel measured against *that* stale geometry shrinks to fit a box
   // the slide no longer has. Natural layout first, then code type, then the body scale — each
   // step measured against the one before it.
-  r.querySelectorAll('.reveal .slides section .cfit').forEach(function(cf){
+  sec.querySelectorAll('.cfit').forEach(function(cf){
     cf.style.transform='none'; cf.style.width=''; cf.style.marginTop=''; });
-  r.querySelectorAll('.reveal .slides section .codebox').forEach(fitCode);
-  r.querySelectorAll('.reveal .slides section .smedia>.mtable').forEach(fitTable);
-  r.querySelectorAll('.reveal .slides section .cbody').forEach(fitContent);
+  sec.querySelectorAll('.codebox').forEach(fitCode);
+  sec.querySelectorAll('.smedia>.mtable').forEach(fitTable);
+  sec.querySelectorAll('.cbody').forEach(fitContent);
   // A picture the layout squeezed to nothing is lost content too — say so like a clipped body.
-  r.querySelectorAll('.reveal .slides section .smedia>.imgph').forEach(function(m){
+  sec.querySelectorAll('.smedia>.imgph').forEach(function(m){
     if(m.offsetParent!==null && m.offsetHeight<20) flagOverflow(m, 'media'); });
-  r.querySelectorAll('.reveal .slides section .stage.cover').forEach(fitCover); }
+  sec.querySelectorAll('.stage.cover').forEach(fitCover); }
 // PDF export: Reveal re-lays the whole deck when it builds the print view (every slide moved into
 // its own `.pdf-page`, given a fresh width) and only then fires `pdf-ready`. The fit each slide got
 // on screen was measured against the old geometry, so re-fit the deck here or the export prints

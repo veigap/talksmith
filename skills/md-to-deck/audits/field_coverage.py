@@ -28,8 +28,9 @@ from pathlib import Path
 
 # Fields any slide may legitimately carry whatever its template renders — metadata the renderer
 # reads itself (`template`, `notes`, `lang`, `id`), the slide's `section` (set on every content
-# slide by FILL, whether or not its template shows it), and the two layout knobs `reveal` and
-# `design`, which carry no content of their own. Never flagged.
+# slide by FILL, whether or not its template shows it), and the layout knobs `reveal`, `design` and
+# `icons` (`"none"` turns content-matched icons off for the slide's item set — read by html_style,
+# not a template), which carry no content of their own. Never flagged.
 #
 # Content the shared macros render (`highlights`, `media`, `lead`, `stats`, `title`, …) is NOT
 # here: it is consumed only by the templates that call those macros (see `_consumed`). It used to
@@ -39,7 +40,7 @@ from pathlib import Path
 # Every `_`-prefixed key is metadata by the model's own convention (`_model.py` → `model_strings`;
 # `_source` the freshness stamp, `_choice` the classification trace) — never rendered, so its
 # being unconsumed is the design, not a finding. That rule is applied in `audit`, not listed here.
-_UNIVERSAL = {"template", "section", "notes", "reveal", "lang", "id", "design"}
+_UNIVERSAL = {"template", "section", "notes", "reveal", "lang", "id", "design", "icons"}
 
 # Fields a template consumes only in part. `image-full` reads `highlights` for its citation line
 # and nothing else (image-full.j2), so any other `kind` is dropped there — flag it by name.

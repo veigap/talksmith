@@ -13,7 +13,20 @@ What it ignores (never counted as a missing image):
     - refs inside `<!-- ascii-source: … -->` provenance comments (echoes of ASCII source, not a
       slide image);
     - anything under `# Cut material` / `# Open questions` (not delivered slides);
-    - a ref explicitly waived with `<!-- deck-omit: <path> -->` on any line (intentional omission).
+    - a ref explicitly waived with `<!-- deck-omit: <path> -->` on any line (intentional omission);
+    - a ref a slide's **`_omitted`** trace names with a known reason — `icon`, `frame` or `formula`.
+      That is the FILL's half of the catalog rule *Decoration is not content*
+      (`config/pptx-styles/slide-templates.md`): a PPTX import carries per-card icons and empty card
+      frames that are not content, and the FILL never edits `final.md`, so the waiver has to live
+      in the model. It is honest because it is **visible** — every such omission is listed on
+      stdout by reason, never folded silently into "ok" — and **closed**: an unknown reason waives
+      nothing. `_`-keys are otherwise never read as rendered images (an `_omitted` `src` is the
+      opposite of one).
+
+Advisory `[decoration?]` lines flag the reverse failure — the one that shipped twenty slides of
+giant icons and empty frames: a **rendered** raster that is icon-sized (longer side <= 128 px), or
+a formula strip (>= 4:1, <= 160 px tall) placed as a per-item `figures` image. They never change
+the exit code: a small logo that identifies its item is legitimately content.
 
 Aside refs (`<!-- aside: <side> ![](images/…) -->`) DO render, so they are counted — a dropped
 aside is a real defect too.
@@ -32,12 +45,18 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
 import sys
 from pathlib import Path
 
 _IMG_REF_ANY = re.compile(r"!\[[^\]]*\]\(\s*([^)\s]+?)\s*\)")
 _OMIT_RE = re.compile(r"<!--\s*deck-omit:\s*([^>]+?)\s*-->", re.IGNORECASE)
 _NONSLIDE_HEADING = re.compile(r"^#\s+(Cut material|Open questions)\b", re.IGNORECASE)
+
+# The closed vocabulary of a model-side `_omitted` waiver (catalog → *Decoration is not content*).
+OMIT_REASONS = ("icon", "frame", "formula")
+ICON_MAX_PX = 128          # longer side at or under this → icon-sized
+STRIP_ASPECT, STRIP_MAX_H = 4.0, 160   # wide and one text line tall → a formula strip
 
 
 def _base(path: str) -> str:
@@ -90,7 +109,7 @@ def model_image_srcs(model: dict) -> set[str]:
             for k, v in o.items():
                 if k == "src" and isinstance(v, str) and v:
                     out.add(_base(v))
-                else:
+                elif not k.startswith("_"):   # `_choice`/`_omitted` are traces, not renders
                     walk(v)
         elif isinstance(o, list):
             for x in o:
@@ -100,11 +119,79 @@ def model_image_srcs(model: dict) -> set[str]:
     return out
 
 
+def model_omitted(model: dict) -> tuple[dict[str, str], list[tuple[str, str]]]:
+    """(basename → reason for every valid `_omitted` entry, [(basename, reason)] for invalid ones).
+
+    `_omitted: [{src, reason}]` sits on a slide beside `_choice`. Only a reason in `OMIT_REASONS`
+    waives; anything else is returned as invalid so the report can say why it did not count."""
+    ok: dict[str, str] = {}
+    bad: list[tuple[str, str]] = []
+    for sl in model.get("slides") or []:
+        for e in (sl.get("_omitted") or []) if isinstance(sl, dict) else []:
+            if not isinstance(e, dict) or not isinstance(e.get("src"), str) or not e["src"]:
+                continue
+            reason = str(e.get("reason", "")).strip().lower()
+            if reason in OMIT_REASONS:
+                ok[_base(e["src"])] = reason
+            else:
+                bad.append((_base(e["src"]), reason or "<none>"))
+    return ok, bad
+
+
+def _px(path: Path) -> tuple[int, int] | None:
+    """(width, height) of a PNG or GIF from its header; None for anything else or unreadable."""
+    try:
+        head = path.read_bytes()[:26]
+    except OSError:
+        return None
+    if head[:8] == b"\x89PNG\r\n\x1a\n" and len(head) >= 24:
+        return struct.unpack(">II", head[16:24])
+    if head[:6] in (b"GIF87a", b"GIF89a") and len(head) >= 10:
+        return struct.unpack("<HH", head[6:10])
+    return None
+
+
+def decoration_suspects(model: dict, root: Path) -> list[str]:
+    """Rendered rasters that look like decoration: icon-sized anywhere, or a formula strip used as
+    a per-item `figures` image. Advisory — a small logo that identifies its item is content."""
+    out: list[str] = []
+
+    def check(src: str, where: str, per_item: bool) -> None:
+        wh = _px(root / src)
+        if not wh or not all(wh):
+            return
+        w, h = wh
+        if max(w, h) <= ICON_MAX_PX:
+            out.append(f"{where}: {_base(src)} is {w}x{h} px — icon-sized; decoration is not "
+                       f"content (map it to the item's `icon`, or omit it with `_omitted`)")
+        elif per_item and w / h >= STRIP_ASPECT and h <= STRIP_MAX_H:
+            out.append(f"{where}: {_base(src)} is a {w}x{h} px strip — a formula, not a figure "
+                       f"(transcribe it, or give it full-width media)")
+
+    def walk(o, where: str, per_item: bool) -> None:
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == "src" and isinstance(v, str) and v:
+                    check(v, where, per_item)
+                elif not k.startswith("_"):
+                    walk(v, where, per_item or k == "figures")
+        elif isinstance(o, list):
+            for x in o:
+                walk(x, where, per_item)
+
+    for i, sl in enumerate(model.get("slides") or [], 1):
+        title = sl.get("title") if isinstance(sl, dict) else None
+        walk(sl, f"slide {i}" + (f" «{title}»" if title else ""), False)
+    return out
+
+
 def audit(final_text: str, model: dict) -> list[str]:
     """Return the ordered, de-duplicated list of image basenames present in final.md but missing
-    from the model (excluding explicitly-omitted ones)."""
+    from the model (excluding explicitly-omitted ones: a `deck-omit` waiver in final.md, or a
+    valid `_omitted` entry in the model)."""
     refs, omit = final_image_refs(final_text)
     have = model_image_srcs(model)
+    omit = omit | set(model_omitted(model)[0])
     missing: list[str] = []
     seen: set[str] = set()
     for r in refs:
@@ -134,13 +221,27 @@ def main(argv=None) -> int:
         return 2
 
     missing = audit(final_text, model)
+    omitted, bad = model_omitted(model)
+    if omitted:
+        by: dict[str, list[str]] = {}
+        for b, r in omitted.items():
+            by.setdefault(r, []).append(b)
+        print(f"image_coverage: {len(omitted)} ref(s) left out by the fill as decoration/formula "
+              f"(`_omitted`): " + "; ".join(f"{r} ×{len(v)}: {', '.join(sorted(v))}"
+                                            for r, v in sorted(by.items())))
+    for b, r in bad:
+        print(f"image_coverage: `_omitted` {b} has reason {r!r} — not one of "
+              f"{', '.join(OMIT_REASONS)}, so it waives nothing", file=sys.stderr)
+    for line in decoration_suspects(model, args.final.parent):
+        print(f"  [decoration?] {line}", file=sys.stderr)
     if not missing:
         print(f"image_coverage: ok — every final.md image ref is present in {args.model.name}")
         return 0
 
     print(f"image_coverage: {len(missing)} image ref(s) in {args.final.name} MISSING from the model "
           f"(a slide may render with no image — re-check the FILL step, or waive with "
-          f"`<!-- deck-omit: <path> -->`):", file=sys.stderr)
+          f"`<!-- deck-omit: <path> -->`; decoration the catalog excludes goes in the slide's "
+          f"`_omitted`):", file=sys.stderr)
     for m in missing:
         print(f"  - {m}", file=sys.stderr)
     return 1 if args.strict else 0
