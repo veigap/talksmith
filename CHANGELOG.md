@@ -13,6 +13,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.3.2] — 2026-10-20
+
+No re-init needed.
+
+### Added
+
+- **Pictures open full-window on click.** Clicking an image or diagram on a slide shows it as
+  large as the window allows (a small picture grows, a cropped one opens whole); `Esc`, the ✕ or
+  a click outside closes it, and the arrow keys don't change the slide underneath meanwhile.
+  Only content pictures zoom: the decorative side strips (`column-left`/`column-right`) and
+  `bleed` backdrops don't, and videos keep their own controls. Nothing changes in the PDF or the
+  `.pptx`.
+
 ## [1.3.1] — 2026-10-17
 
 No re-init needed.

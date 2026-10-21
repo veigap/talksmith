@@ -664,6 +664,23 @@ html.print-pdf .cbfull{display:none}
 .codebox:fullscreen{width:100vw;height:100vh;max-height:none!important;border:0;border-radius:0;box-shadow:none}
 .codebox:fullscreen .cbbar{padding:.6em 1.4em}
 .codebox:fullscreen .cbcode{padding:3vh 4vw;overflow:auto}
+/* Image zoom — a click on a content picture (not a `column-*`/`bleed` decoration) opens a clone of it in `.decklb`, a modal <dialog>
+   (`_IMG_ZOOM` in html_style.py; it only sets `--ar`, the picture's aspect ratio). The sizing is
+   here: the largest box of that ratio inside 94% × 90% of the window, so a small picture grows
+   instead of sitting at its slide size. The cursor only advertises it once the script is armed. */
+:root[data-img-zoom] .reveal .slides :is(.imgph.has:not(.vid)>img,.imgph.svg>svg):not(.stage:is(.d-column,.d-bleed)>.smedia *){cursor:zoom-in}
+.decklb{position:fixed;inset:0;width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;
+  border:0;outline:0;background:rgba(8,8,10,.88);color:#fff;place-items:center;cursor:zoom-out}
+.decklb[open]{display:grid}
+.decklb::backdrop{background:transparent}
+.lbfig{aspect-ratio:var(--ar,16/9);width:min(94vw,calc(90vh*var(--ar,1.7778)));background:#fff;
+  border-radius:8px;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.45);cursor:default}
+.lbfig>:is(img,svg){display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:contain}
+.lbclose{position:fixed;top:16px;right:16px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  padding:0;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(0,0,0,.35);color:#fff;
+  cursor:pointer;opacity:.8;transition:opacity .15s,background .15s}
+.lbclose:hover{opacity:1;background:rgba(255,255,255,.15)}
+.lbclose svg{width:18px;height:18px}
 /* `pre-wrap`, not `pre`: a line wider than the panel wraps instead of being clipped at the edge,
    and its own indentation survives the wrap. `overflow-wrap` only breaks what still doesn't fit
    (a URL, a long identifier), so ordinary code breaks at its spaces. */

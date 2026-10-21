@@ -1537,6 +1537,50 @@ d.addEventListener('fullscreenchange', function(){
 window.addEventListener('resize', function(){ if(open && d.fullscreenElement===open) fitScreen(open); });
 })();"""
 
+# Image zoom — clicking a picture that is part of a slide's content (an `.imgph` image or inline
+# SVG diagram) opens it in a modal `<dialog>` filling the window, for
+# the diagram whose labels the back row can't read at slide size. `Esc` (the dialog's own), the ✕
+# or a click outside the picture closes it. The picture is a *clone*, so the slide is untouched;
+# the script only supplies its aspect ratio (`--ar`) — the sizing is theme.css (`.decklb`). An
+# `<img>` uses its natural size, not its box, so a picture a design crops (`object-fit:cover`)
+# opens whole. Reveal's keyboard is off meanwhile, as for a fullscreen code panel. Never armed in
+# the print view, so the PDF and the `.pptx` (measured from it) see no trace of it. Inlined only
+# into decks with a picture. Not zoomable: a clip (its own controls want the click) and decoration —
+# the `column-*` strip and the `bleed` backdrop, atmosphere the catalog says is never read closely.
+_IMG_ZOOM = """(function(){
+var d=document;
+if(/print-pdf/.test(location.search)) return;
+d.documentElement.setAttribute('data-img-zoom','');
+var dlg=d.createElement('dialog'); dlg.className='decklb'; dlg.setAttribute('aria-label','Image');
+dlg.autofocus=true;   // focus the dialog itself on open, not the ✕ (which would wear a focus ring)
+dlg.innerHTML='<button class="lbclose" type="button" aria-label="Close" title="Close (Esc)">'
+  +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+  +'<path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="lbfig"></div>';
+d.body.appendChild(dlg);
+var fig=dlg.querySelector('.lbfig');
+function ratio(m){
+  if(m.tagName.toLowerCase()==='img' && m.naturalWidth && m.naturalHeight) return m.naturalWidth/m.naturalHeight;
+  var vb=m.viewBox && m.viewBox.baseVal; if(vb && vb.width && vb.height) return vb.width/vb.height;
+  var r=m.getBoundingClientRect(); return r.width && r.height ? r.width/r.height : 0;
+}
+d.addEventListener('click', function(e){
+  var m=e.target.closest && e.target.closest('.reveal .slides .imgph.has:not(.vid)>img, .reveal .slides .imgph.svg>svg');
+  if(!m || m.closest('.stage:is(.d-column,.d-bleed)>.smedia')) return;   // decoration, not content
+  var ar=ratio(m); if(!ar) return;
+  e.stopPropagation();
+  fig.replaceChildren(m.cloneNode(true));
+  fig.style.setProperty('--ar', ar);
+  if(window.Reveal) Reveal.configure({keyboard:false});
+  dlg.showModal();
+});
+dlg.addEventListener('click', function(e){
+  if(!e.target.closest('.lbfig') || e.target.closest('.lbclose')) dlg.close();
+});
+dlg.addEventListener('close', function(){
+  fig.replaceChildren(); if(window.Reveal) Reveal.configure({keyboard:true});
+});
+})();"""
+
 # Runtime style cycler — deck-wide font/color/background skins. Each style is its own CSS file
 # under templates/html/styles/<name>.css (a `:root[data-deck-style=…]` token-override block plus
 # its dark variant), discovered here and inlined by page() — add a style by adding a file.
@@ -1640,6 +1684,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'<script>{_PDF_AUTOPRINT}</script>\n'
         f'<script>{_FULL_SWITCH}</script>\n'
         + (f'<script>{_CODE_FULL}</script>\n' if hljs_js else '')
+        + (f'<script>{_IMG_ZOOM}</script>\n'
+           if 'class="imgph has"' in body_html or 'class="imgph svg"' in body_html else '')
         + f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
         # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what
