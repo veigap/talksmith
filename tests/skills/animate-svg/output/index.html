@@ -1832,7 +1832,7 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 </section>
 <section class="card" id="pipeline-sd">
   <header><h2>pipeline-sd</h2><span class="title">9. Pipeline completo de inferencia</span>
-    <span class="badge pending">pending — still being animated</span>
+    <span class="badge ok">clean — after 1 revision (iteration 1: [A13] the &#x27;en cámara </span>
     <button class="replay" type="button">↻ Replay</button></header>
   <div class="pair">
     <figure class="anim"><figcaption>Animated</figcaption><svg xmlns="http://www.w3.org/2000/svg" class="ts-anim-pipeline-sd" viewBox="0 0 998 492" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
@@ -1857,7 +1857,7 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 .ts-anim-pipeline-sd .tkb{animation:ts-anim-pipeline-sd-on .01s 5.39s both,ts-anim-pipeline-sd-off .01s 9.19s forwards}
 .ts-anim-pipeline-sd .tkc{animation:ts-anim-pipeline-sd-on .01s 9.19s both,ts-anim-pipeline-sd-off .1s 11.85s forwards}
 .ts-anim-pipeline-sd .tka .mv{offset-path:path("M202,62 H518 V222 H288 V62");offset-rotate:0deg;animation:ts-anim-pipeline-sd-a 3.20s linear 2.2s both}
-.ts-anim-pipeline-sd .tke .mv{offset-path:path("M788,62 H518");offset-rotate:0deg;animation:ts-anim-pipeline-sd-e 1.00s linear 2.2s both}
+.ts-anim-pipeline-sd .tke .mv{offset-path:path("M788,62 H518");offset-rotate:0deg;animation:ts-anim-pipeline-sd-e 1.60s linear 2.2s both}
 .ts-anim-pipeline-sd .tkb .mv{offset-path:path("M288,62 H518 V222 H288 V62 H518 V222 H288 V62 H518 V222 H288 V62");offset-rotate:0deg;animation:ts-anim-pipeline-sd-b 3.60s linear 5.6s both}
 .ts-anim-pipeline-sd .tkc .mv{offset-path:path("M288,62 H518 V222 H883 V372");offset-rotate:0deg;animation:ts-anim-pipeline-sd-c 2.80s linear 9.4s both}
 .ts-anim-pipeline-sd .c1{animation:ts-anim-pipeline-sd-on .3s 5.05s both,ts-anim-pipeline-sd-off .1s 7.2s forwards}
@@ -1870,7 +1870,7 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 @keyframes ts-anim-pipeline-sd-on{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-pipeline-sd-off{from{opacity:1}to{opacity:0}}
 @keyframes ts-anim-pipeline-sd-a{0.00%{offset-distance:0.00%}25.00%{offset-distance:13.79%}29.69%{offset-distance:18.39%}32.81%{offset-distance:36.78%}42.19%{offset-distance:36.78%}45.31%{offset-distance:41.38%}54.69%{offset-distance:50.57%}56.25%{offset-distance:55.17%}64.06%{offset-distance:55.17%}68.75%{offset-distance:73.56%}75.00%{offset-distance:78.16%}100.00%{offset-distance:100.00%}}
-@keyframes ts-anim-pipeline-sd-e{0.00%{offset-distance:0.00%}80.00%{offset-distance:31.48%}100.00%{offset-distance:100.00%}}
+@keyframes ts-anim-pipeline-sd-e{0.00%{offset-distance:0.00%}50.00%{offset-distance:31.48%}59.38%{offset-distance:40.74%}68.75%{offset-distance:100.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-pipeline-sd-b{0.00%{offset-distance:0.00%}25.00%{offset-distance:0.00%}50.00%{offset-distance:33.33%}75.00%{offset-distance:66.67%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-pipeline-sd-c{0.00%{offset-distance:0.00%}8.93%{offset-distance:7.73%}14.29%{offset-distance:29.83%}25.00%{offset-distance:34.25%}28.57%{offset-distance:38.67%}35.71%{offset-distance:43.09%}42.86%{offset-distance:43.09%}46.43%{offset-distance:60.77%}50.00%{offset-distance:66.85%}55.36%{offset-distance:72.93%}60.71%{offset-distance:83.43%}69.64%{offset-distance:83.43%}73.21%{offset-distance:86.74%}75.00%{offset-distance:88.95%}82.14%{offset-distance:93.37%}100.00%{offset-distance:100.00%}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-sd *{animation:none}}
@@ -2870,7 +2870,7 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 <text x="274" y="264" font-size="17" font-weight="bold">paso 50 de 50</text>
 <text x="274" y="285" font-size="15">t = 1</text>
 </g>
-<text class="fast" opacity="0" x="274" y="304" text-anchor="end" font-size="13" font-style="italic" fill="#6B6560">en cámara rápida</text>
+<text class="fast" opacity="0" x="274" y="304" text-anchor="end" font-size="15" font-style="italic" fill="#3B3535">en cámara rápida</text>
 </svg></figure>
     <figure class="still"><figcaption>Approved still</figcaption><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 998 492" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
 <title>Pipeline completo de inferencia</title>
@@ -3848,7 +3848,8 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 </g>
 </svg></figure>
   </div>
-  <details><summary>Brief and critique</summary><ol><li>«seed» da el «latente ruidoso 64x64x4».</li><li>La U-Net, con el «embedding del prompt», predice el ruido, y el «scheduler» lo resta: el latente queda un poco más limpio.</li><li>El loop gira: t baja vuelta a vuelta, un contador llega a ~50 y el latente pasa de ruido a una imagen reconocible.</li><li>El «VAE decoder» devuelve la «imagen 512x512x3».</li></ol><pre>pending — still being animated</pre></details>
+  <details><summary>Brief and critique</summary><ol><li>«seed» da el «latente ruidoso 64x64x4».</li><li>La U-Net, con el «embedding del prompt», predice el ruido, y el «scheduler» lo resta: el latente queda un poco más limpio.</li><li>El loop gira: t baja vuelta a vuelta, un contador llega a ~50 y el latente pasa de ruido a una imagen reconocible.</li><li>El «VAE decoder» devuelve la «imagen 512x512x3».</li></ol><pre>clean — after 1 revision (iteration 1: [A13] the &#x27;en cámara rápida&#x27; note was too small to read; now the counter&#x27;s size)
+still: [#11] &#x27;embedding&#x27;, &#x27;prompt&#x27;, &#x27;decoder&#x27; are English and not in terms:</pre></details>
 </section>
 <section class="card" id="react-bifurcacion">
   <header><h2>react-bifurcacion</h2><span class="title">1. ReAct: pensar también es una acción</span>
