@@ -142,6 +142,7 @@ The note is for the **rendering pass**, not the reader of `draft.md` — keep it
   - **One numbered beat per line, in the order the process runs.** Each beat names what it touches by the ASCII's own labels — the box that appears, the arrow that carries data, the element that lights up — and never introduces anything the ASCII does not draw.
   - **The last beat leaves the diagram complete as drawn.** The rendered SVG is the end state; the animation is the path to it.
   - **A loop says so:** which arrow returns, how many passes are shown, what changes on each pass, what ends it.
+  - **It plays once by default.** Write `animation: loop` on the key line only when the process genuinely cycles with no end the slide cares about (a heartbeat, a polling cycle) — the sequence then repeats until the slide is left. A loop *inside* an algorithm that terminates is not that: its beats show the passes, and the animation plays once.
   - **3–8 beats.** More means the diagram is carrying two processes — split it.
   - **Describe the process, not the delivery** — no seconds, clicks, or "the presenter points at" cues (those belong to nobody's note).
   - It is exempt from the terse-note budget — beats are what it costs. It is part of the note and so of the render digest: editing it re-renders the diagram.

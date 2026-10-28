@@ -65,7 +65,8 @@ The HTML deliverable is a self-contained [Reveal.js](https://revealjs.com/) app 
 | Fullscreen | `F`, or the ⤢ button |
 | Export to PDF | the ⇩ button — opens the print view carrying the active theme/style and fires the print dialog (or open the deck with `?print-pdf` yourself) |
 | Light / dark | the moon button, or force per link with `?deck-theme=dark` |
-| Animations on/off | the rings button — fragments and transitions off for a static read-through |
+| Animations on/off | the rings button — fragments, transitions and animated diagrams off for a static read-through |
+| Replay an animated diagram | `←` on its slide once it has finished, or after 5 s — an earlier `←` (or a second one right after the replay) goes back a slide as usual |
 | Deck style | the palette button — token-only skins (fonts, colors, background; layout untouched), or per link with `?deck-style=iae` |
 
 The buttons sit top-right, fade in on pointer movement, and never appear in print/PDF.

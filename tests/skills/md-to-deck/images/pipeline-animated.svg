@@ -2,8 +2,8 @@
   <title>Pipeline, step by step</title>
   <desc>Tokenize, predict, generate — each step arriving in turn.</desc>
 <style>/* talksmith-animation */
-.ts-anim-pipeline-animated [data-beat]{animation:ts-beat-in 0.6s ease-out backwards}
-.ts-anim-pipeline-animated [data-beat-effect=pulse]{animation-name:ts-beat-pulse;animation-duration:0.8s;animation-fill-mode:none;transform-box:fill-box;transform-origin:center}
+.ts-anim-pipeline-animated [data-beat]{animation:ts-beat-in 0.6s ease-out both}
+.ts-anim-pipeline-animated [data-beat-effect=pulse]{animation-name:ts-beat-pulse;animation-duration:0.8s;transform-box:fill-box;transform-origin:center}
 .ts-anim-pipeline-animated [data-beat="1"]{animation-delay:0.50s}
 .ts-anim-pipeline-animated [data-beat="2"]{animation-delay:1.60s}
 .ts-anim-pipeline-animated [data-beat="3"]{animation-delay:2.70s}
@@ -11,7 +11,7 @@
 @keyframes ts-beat-pulse{0%,100%{transform:none}50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-animated [data-beat]{animation:none}}
 </style>
-  <rect width="640" height="360" fill="#FFFFFF"/>
+<rect width="640" height="360" fill="#FFFFFF"/>
   <defs><marker id="a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">

@@ -13,6 +13,18 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.4.1] — 2026-10-28
+
+No re-init needed.
+
+### Changed
+
+- **Animated diagrams play once, and back replays them.** An animated diagram plays once and
+  holds the complete picture; only a note that says `animation: loop` cycles. Pressing back
+  (`←`, PageUp, the on-screen arrow) on its slide replays the animation once it has finished
+  or has run for more than 5 s; an earlier press — including one right after a replay — goes
+  back a slide as usual.
+
 ## [1.4.0] — 2026-10-28
 
 No re-init needed.

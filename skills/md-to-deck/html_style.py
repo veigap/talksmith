@@ -1581,6 +1581,45 @@ dlg.addEventListener('close', function(){
 });
 })();"""
 
+# Animated diagrams — back replays before it leaves. On a slide whose diagram is animated
+# (`ascii-to-svg/animate_svg.py`), a back press (←, PageUp, h, p, Shift+Space, the on-screen back
+# arrow) restarts the animation instead of navigating once it has finished or has been running
+# for more than 5 s; earlier than that, back navigates as usual — so a second press right after a
+# replay leaves the slide. The age is the animations' own clock (`currentTime`), so there is no
+# bookkeeping: entering the slide restarts it (theme.css → *Animated diagrams*) and so does a
+# replay. Listens in the capture phase on `window`, ahead of Reveal's listener on `document`, and
+# swallows the event only when it replays. Inert when Reveal's keyboard is off (a zoomed picture,
+# a fullscreen code panel), in the overview, and with animations toggled off (nothing is playing).
+# Never armed in the print view. Inlined only into decks with an animated diagram.
+_DIAGRAM_REPLAY = """(function(){
+if(/print-pdf/.test(location.search)) return;
+var REPLAY_AFTER=5000;
+function replay(){
+  if(!window.Reveal || !Reveal.getConfig().keyboard || Reveal.isOverview()) return false;
+  var s=Reveal.getCurrentSlide(); if(!s) return false;
+  var a=[]; s.querySelectorAll('svg [data-beat]').forEach(function(el){ a=a.concat(el.getAnimations()); });
+  if(!a.length) return false;
+  var done=a.every(function(x){ return x.playState==='finished'; });
+  var age=Math.max.apply(null, a.map(function(x){ return x.currentTime||0; }));
+  if(!done && age<=REPLAY_AFTER) return false;
+  a.forEach(function(x){ x.currentTime=0; x.play(); });
+  return true;
+}
+function isBack(e){
+  if(e.altKey||e.ctrlKey||e.metaKey) return false;
+  var k=(e.key||'').toLowerCase();
+  return k==='arrowleft'||k==='pageup'||k==='h'||k==='p'||(k===' '&&e.shiftKey);
+}
+function swallow(e){ e.preventDefault(); e.stopImmediatePropagation(); }
+window.addEventListener('keydown', function(e){
+  if(e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if(isBack(e) && replay()) swallow(e);
+}, true);
+window.addEventListener('click', function(e){
+  if(e.target.closest && e.target.closest('.reveal .controls :is(.navigate-left,.navigate-prev)') && replay()) swallow(e);
+}, true);
+})();"""
+
 # Runtime style cycler — deck-wide font/color/background skins. Each style is its own CSS file
 # under templates/html/styles/<name>.css (a `:root[data-deck-style=…]` token-override block plus
 # its dark variant), discovered here and inlined by page() — add a style by adding a file.
@@ -1686,6 +1725,7 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         + (f'<script>{_CODE_FULL}</script>\n' if hljs_js else '')
         + (f'<script>{_IMG_ZOOM}</script>\n'
            if 'class="imgph has"' in body_html or 'class="imgph svg"' in body_html else '')
+        + (f'<script>{_DIAGRAM_REPLAY}</script>\n' if 'data-beat=' in body_html else '')
         + f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
         # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what

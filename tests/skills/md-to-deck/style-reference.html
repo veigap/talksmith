@@ -1358,8 +1358,8 @@ html.print-pdf .cbfull{display:none}
   <title>Pipeline, step by step</title>
   <desc>Tokenize, predict, generate — each step arriving in turn.</desc>
 <style>/* talksmith-animation */
-.ts-anim-pipeline-animated [data-beat]{animation:ts-beat-in 0.6s ease-out backwards}
-.ts-anim-pipeline-animated [data-beat-effect=pulse]{animation-name:ts-beat-pulse;animation-duration:0.8s;animation-fill-mode:none;transform-box:fill-box;transform-origin:center}
+.ts-anim-pipeline-animated [data-beat]{animation:ts-beat-in 0.6s ease-out both}
+.ts-anim-pipeline-animated [data-beat-effect=pulse]{animation-name:ts-beat-pulse;animation-duration:0.8s;transform-box:fill-box;transform-origin:center}
 .ts-anim-pipeline-animated [data-beat="1"]{animation-delay:0.50s}
 .ts-anim-pipeline-animated [data-beat="2"]{animation-delay:1.60s}
 .ts-anim-pipeline-animated [data-beat="3"]{animation-delay:2.70s}
@@ -1367,7 +1367,7 @@ html.print-pdf .cbfull{display:none}
 @keyframes ts-beat-pulse{0%,100%{transform:none}50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-animated [data-beat]{animation:none}}
 </style>
-  <rect width="640" height="360" fill="#FFFFFF"/>
+<rect width="640" height="360" fill="#FFFFFF"/>
   <defs><marker id="e4-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
@@ -3939,6 +3939,34 @@ dlg.addEventListener('click', function(e){
 dlg.addEventListener('close', function(){
   fig.replaceChildren(); if(window.Reveal) Reveal.configure({keyboard:true});
 });
+})();</script>
+<script>(function(){
+if(/print-pdf/.test(location.search)) return;
+var REPLAY_AFTER=5000;
+function replay(){
+  if(!window.Reveal || !Reveal.getConfig().keyboard || Reveal.isOverview()) return false;
+  var s=Reveal.getCurrentSlide(); if(!s) return false;
+  var a=[]; s.querySelectorAll('svg [data-beat]').forEach(function(el){ a=a.concat(el.getAnimations()); });
+  if(!a.length) return false;
+  var done=a.every(function(x){ return x.playState==='finished'; });
+  var age=Math.max.apply(null, a.map(function(x){ return x.currentTime||0; }));
+  if(!done && age<=REPLAY_AFTER) return false;
+  a.forEach(function(x){ x.currentTime=0; x.play(); });
+  return true;
+}
+function isBack(e){
+  if(e.altKey||e.ctrlKey||e.metaKey) return false;
+  var k=(e.key||'').toLowerCase();
+  return k==='arrowleft'||k==='pageup'||k==='h'||k==='p'||(k===' '&&e.shiftKey);
+}
+function swallow(e){ e.preventDefault(); e.stopImmediatePropagation(); }
+window.addEventListener('keydown', function(e){
+  if(e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if(isBack(e) && replay()) swallow(e);
+}, true);
+window.addEventListener('click', function(e){
+  if(e.target.closest && e.target.closest('.reveal .controls :is(.navigate-left,.navigate-prev)') && replay()) swallow(e);
+}, true);
 })();</script>
 <script>(function(){var L=["default", "business", "editorial", "forest", "ocean", "sunset", "terminal"];var root=document.documentElement,btn=document.querySelector('[data-deck-style-toggle]');if(!btn)return;var menu=document.createElement('div');menu.className='deckstylemenu';L.forEach(function(s){var it=document.createElement('button');it.type='button';it.className='dsitem';it.textContent=s;it.setAttribute('data-style',s);it.addEventListener('click',function(e){e.stopPropagation();set(s);close();});menu.appendChild(it);});document.body.appendChild(menu);function mark(){var cur=root.getAttribute('data-deck-style')||'default';menu.querySelectorAll('.dsitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-style')===cur);});btn.title='Style: '+cur;}function set(s){if(s==='default')root.removeAttribute('data-deck-style');else root.setAttribute('data-deck-style',s);try{localStorage.setItem('deckStyle',s);}catch(e){}deckUrlSync('deck-style',s,'default');mark();if(window.Reveal&&Reveal.layout)Reveal.layout();}function close(){menu.classList.remove('open');}btn.addEventListener('click',function(e){e.stopPropagation();mark();menu.classList.toggle('open');});document.addEventListener('click',close);mark();})();</script>
 <script>(function(){var root=document.documentElement,t;function show(){root.classList.add('deck-ui');clearTimeout(t);t=setTimeout(function(){root.classList.remove('deck-ui');},2000);}['pointermove','mousedown','touchstart','wheel'].forEach(function(ev){document.addEventListener(ev,show,{passive:true});});})();</script>

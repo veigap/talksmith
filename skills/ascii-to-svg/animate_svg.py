@@ -2,7 +2,7 @@
 """Turn a rendered diagram's beat tags into its animation.
 
 Usage:
-    python3 animate_svg.py <svg> [--ascii <sidecar.ascii> | --beats N]
+    python3 animate_svg.py <svg> [--ascii <sidecar.ascii> | --beats N [--loop]]
 
 The renderer's only animation work is *tagging*: it wraps the elements each beat of the
 `ascii-note`'s `animation:` section brings in as `<g data-beat="N">` (or marks an element that is
@@ -10,17 +10,28 @@ already on screen and lights up at beat N with `data-beat="N" data-beat-effect="
 script owns everything else — the timing, the keyframes, the scoping — so the motion is the same
 fixed CSS in every diagram and none of it is model-authored.
 
+It plays **once** and holds the complete diagram. Only a note that says `animation: loop` cycles:
+the beats arrive, the whole holds, fades, and the sequence starts over until the slide is left.
+
 Why CSS, and why the *still* state is the end state. The animation is a `<style>` block whose
-keyframes start from hidden (`animation-fill-mode: backwards`); the elements' own attributes stay
+keyframes start from hidden (`animation-fill-mode: both`); the elements' own attributes stay
 fully visible. Everything that cannot or should not play it therefore draws the complete diagram
 with no special case: cairosvg ignores `@keyframes` (the deliverable PNG, the critic's PNG and
 the aspect audit all see the last beat), the deck switches `animation` off outside the present
 slide, in the print view and with animations off, and the `.pptx` export switches it off in its
 own raster page.
 
+Why `both` and not `backwards`, which would draw the same. A play-once animation that has
+finished stops being "in effect" under `backwards`, and `getAnimations()` stops returning it —
+so the deck's back-to-replay (`html_style.py` → `_DIAGRAM_REPLAY`) would find nothing to replay
+on exactly the slide where the animation is done. Holding the end state keeps it reachable. The
+price is that the animation owns `opacity` and `transform` on a tagged element for good, which
+is why a tag on an element that sets either itself is a defect: it would be silently overridden.
+
 Why a per-diagram scope class. The deck inlines every SVG into one document, so a `<style>` in one
 diagram applies to all of them. Every selector here hangs off `ts-anim-<stem>` on the root, so one
-diagram's beat timings can never reach another's.
+diagram's beat timings can never reach another's — a looping diagram's per-beat keyframes are
+named after it too.
 
 Exit codes: 0 = animated, or nothing to animate (`animation: none`); 1 = a tagging defect — the
 file is left untouched (static and complete) and the line goes back to the renderer as a defect,
@@ -38,6 +49,8 @@ LEAD = 0.5         # s before beat 1 — lets the slide transition land first
 STEP = 1.1         # s between beats
 APPEAR = 0.6       # s a beat takes to fade in
 PULSE = 0.8        # s an already-visible element takes to pulse
+HOLD = 2.0         # loop only: s the complete diagram holds before the cycle restarts
+FADE = 0.4         # loop only: s it takes to clear for the next cycle
 
 MARK = "/* talksmith-animation */"
 _STYLE_RE = re.compile(r"<style[^>]*>\s*" + re.escape(MARK) + r".*?</style>\s*", re.DOTALL)
@@ -50,21 +63,23 @@ _INERT = {"defs", "marker", "symbol", "clipPath", "mask", "pattern", "style", "t
 _EFFECTS = {"appear", "pulse"}
 
 
-def note_beats(sidecar_text: str) -> int | None:
-    """Count the numbered beats under the note's `animation:` key; None when there is no key."""
+def note_animation(sidecar_text: str) -> tuple[int, str] | None:
+    """The note's `animation:` section as (numbered beats, mode); None when there is no section.
+    The mode is whatever follows the key on its own line — "" (play once) or "loop"."""
     at = sidecar_text.find(_NOTE_OPEN)
     if at < 0:
         return None
     lines = sidecar_text[at:].split("-->", 1)[0].splitlines()
     for i, line in enumerate(lines):
-        if re.match(r"^\s*animation\s*:", line):
+        m = re.match(r"^\s*animation\s*:(.*)$", line)
+        if m:
             n = 0
             for rest in lines[i + 1:]:
                 if _BEAT_LINE.match(rest):
                     n += 1
                 elif _KEY_LINE.match(rest):
                     break
-            return n
+            return n, m.group(1).strip().lower()
     return None
 
 
@@ -93,6 +108,10 @@ def collect(root: ET.Element) -> tuple[dict[int, int], list[str]]:
                     defects.append(f"{where} inside <defs>/<marker>/… — tag what is drawn, not its definition")
                 else:
                     beats[int(raw)] = beats.get(int(raw), 0) + 1
+                style = ch.get("style", "")
+                if ch.get("opacity") or ch.get("transform") or re.search(r"\b(opacity|transform)\s*:", style):
+                    defects.append(f"{where} sets opacity/transform itself — the animation drives "
+                                   "those on the tagged element; move them to a child")
                 eff = ch.get("data-beat-effect", "appear")
                 if eff not in _EFFECTS:
                     defects.append(f"{where}: unknown data-beat-effect \"{eff}\" (appear | pulse)")
@@ -104,12 +123,16 @@ def collect(root: ET.Element) -> tuple[dict[int, int], list[str]]:
     return beats, defects
 
 
-def css(scope: str, n: int) -> str:
+def css(scope: str, n: int, loop: bool = False) -> str:
+    return _css_loop(scope, n) if loop else _css_once(scope, n)
+
+
+def _css_once(scope: str, n: int) -> str:
     s = "." + scope
     rules = [
-        f"{s} [data-beat]{{animation:ts-beat-in {APPEAR:g}s ease-out backwards}}",
+        f"{s} [data-beat]{{animation:ts-beat-in {APPEAR:g}s ease-out both}}",
         f"{s} [data-beat-effect=pulse]{{animation-name:ts-beat-pulse;animation-duration:{PULSE:g}s;"
-        "animation-fill-mode:none;transform-box:fill-box;transform-origin:center}",
+        "transform-box:fill-box;transform-origin:center}",
     ]
     rules += [f'{s} [data-beat="{k}"]{{animation-delay:{LEAD + (k - 1) * STEP:.2f}s}}' for k in range(1, n + 1)]
     rules += [
@@ -117,6 +140,28 @@ def css(scope: str, n: int) -> str:
         "@keyframes ts-beat-pulse{0%,100%{transform:none}50%{transform:scale(1.08)}}",
         f"@media (prefers-reduced-motion:reduce){{{s} [data-beat]{{animation:none}}}}",
     ]
+    return "<style>" + MARK + "\n" + "\n".join(rules) + "\n</style>\n"
+
+
+def _css_loop(scope: str, n: int) -> str:
+    """One shared cycle; each beat gets keyframes placing its entrance at its own point in it.
+    A delay would only offset the first pass, so the timing lives in the keyframe percentages."""
+    s = "." + scope
+    cycle = LEAD + (n - 1) * STEP + APPEAR + HOLD + FADE
+    pct = lambda t: f"{100 * t / cycle:.2f}%"
+    rules = []
+    for k in range(1, n + 1):
+        at = LEAD + (k - 1) * STEP
+        rules += [
+            f'{s} [data-beat="{k}"]{{animation:{scope}-b{k} {cycle:g}s linear infinite}}',
+            f'{s} [data-beat="{k}"][data-beat-effect=pulse]{{animation-name:{scope}-p{k};'
+            "transform-box:fill-box;transform-origin:center}",
+            f"@keyframes {scope}-b{k}{{0%,{pct(at)}{{opacity:0}}"
+            f"{pct(at + APPEAR)},{pct(cycle - FADE)}{{opacity:1}}100%{{opacity:0}}}}",
+            f"@keyframes {scope}-p{k}{{0%,{pct(at)},{pct(at + PULSE)},100%{{transform:none}}"
+            f"{pct(at + PULSE / 2)}{{transform:scale(1.08)}}}}",
+        ]
+    rules.append(f"@media (prefers-reduced-motion:reduce){{{s} [data-beat]{{animation:none}}}}")
     return "<style>" + MARK + "\n" + "\n".join(rules) + "\n</style>\n"
 
 
@@ -137,12 +182,12 @@ def _set_scope(svg_text: str, scope: str | None) -> str:
     return svg_text[:m.start()] + new + svg_text[m.end():]
 
 
-def apply(svg_text: str, scope: str, n: int) -> str:
+def apply(svg_text: str, scope: str, n: int, loop: bool = False) -> str:
     """Strip any earlier animation, then (n > 0) inject the scoped style after <desc>/<title>."""
     out = _set_scope(_STYLE_RE.sub("", svg_text), scope if n else None)
     if not n:
         return out
-    block = css(scope, n)
+    block = css(scope, n, loop)
     for anchor in ("</desc>", "</title>"):
         i = out.find(anchor)
         if i >= 0:
@@ -158,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--ascii", type=Path, help="the block's .ascii sidecar — its note's beat count is the expectation")
     g.add_argument("--beats", type=int, help="the note's beat count, when there is no sidecar (Mode A)")
+    ap.add_argument("--loop", action="store_true", help="with --beats: the note says `animation: loop`")
     a = ap.parse_args(argv)
 
     try:
@@ -170,15 +216,18 @@ def main(argv: list[str] | None = None) -> int:
         print("failed: animation: root element is not <svg>")
         return 2
 
-    expected = a.beats
+    expected, mode = a.beats, ("loop" if a.loop else "")
     if a.ascii is not None:
         try:
-            expected = note_beats(a.ascii.read_text(encoding="utf-8"))
+            note = note_animation(a.ascii.read_text(encoding="utf-8"))
         except OSError as e:
             print(f"failed: animation: {e}")
             return 2
+        expected, mode = note if note else (None, "")
 
     beats, defects = collect(root)
+    if mode not in ("", "loop"):
+        defects.append(f"unknown animation mode \"{mode}\" — `animation:` plays once, `animation: loop` cycles")
     top = max(beats, default=0)
     missing = [k for k in range(1, top + 1) if k not in beats]
     if missing:
@@ -190,10 +239,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     scope = "ts-anim-" + (re.sub(r"[^a-z0-9-]+", "-", a.svg.stem.lower()).strip("-") or "svg")
-    new = apply(text, scope, top)
+    loop = mode == "loop"
+    new = apply(text, scope, top, loop)
     if new != text:
         a.svg.write_text(new, encoding="utf-8")
-    print(f"animation: {top} beats" if top else "animation: none")
+    print(f"animation: {top} beats" + (", loop" if loop else "") if top else "animation: none")
     return 0
 
 
