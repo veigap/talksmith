@@ -1,0 +1,52 @@
+<!-- talksmith-ascii-sha256: d8b7f3ec8acd00981a963aa4108c60adee11ce9d13dc4cdaa43c191eda556b82 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 434" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3B3535">
+<title>ReAct: pensar también es una acción</title>
+<desc>La idea entera de ReAct entra en esta lámina.</desc>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">
+<path d="M0,0 L12,6 L0,12 z" fill="#3B3535"/>
+</marker>
+<marker id="ahr" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" viewBox="0 0 14 14" refX="14" refY="7" orient="auto">
+<path d="M0,0 L14,7 L0,14 z" fill="#DA1B2E"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="620" height="434" fill="#ffffff"/>
+<g transform="translate(-30,0)">
+<g>
+<rect x="170" y="21" width="340" height="76" rx="10" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="340" y="54" text-anchor="middle" font-size="18" font-weight="bold" fill="#1F1E1E">El LLM elige el próximo paso</text>
+<text x="340" y="78" text-anchor="middle">según el contexto</text>
+</g>
+<g>
+<line x1="340" y1="97" x2="340" y2="128" stroke="#3B3535" stroke-width="2"/>
+<path d="M340,128 H170 V166" fill="none" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<path d="M340,128 H510 V166" fill="none" stroke="#DA1B2E" stroke-width="3" marker-end="url(#ahr)"/>
+<rect x="80" y="166" width="180" height="38" rx="19" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="170" y="190" text-anchor="middle" font-size="16" font-weight="bold" fill="#1F1E1E">acción en A</text>
+<rect x="410" y="166" width="200" height="38" rx="19" fill="#DA1B2E"/>
+<text x="510" y="190" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">pensamiento en L</text>
+</g>
+<g>
+<line x1="170" y1="204" x2="170" y2="240" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<rect x="80" y="240" width="180" height="54" rx="10" fill="#FFFFFF" stroke="#3B3535" stroke-width="2"/>
+<text x="170" y="273" text-anchor="middle" font-size="17" font-weight="bold" fill="#1F1E1E">AMBIENTE</text>
+</g>
+<g>
+<line x1="170" y1="294" x2="170" y2="332" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<text x="182" y="318" font-size="13" font-style="italic">observación</text>
+<rect x="50" y="332" width="240" height="82" rx="10" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="170" y="359" text-anchor="middle" font-size="16" font-weight="bold" fill="#1F1E1E">hay observación</text>
+<text x="170" y="381" text-anchor="middle">el contexto suma la acción</text>
+<text x="170" y="400" text-anchor="middle">y la observación</text>
+</g>
+<g>
+<line x1="510" y1="204" x2="510" y2="332" stroke="#DA1B2E" stroke-width="3" marker-end="url(#ahr)"/>
+<text x="498" y="272" text-anchor="end" font-size="13" font-style="italic" fill="#DA1B2E">sin pasar por</text>
+<text x="498" y="290" text-anchor="end" font-size="13" font-style="italic" fill="#DA1B2E">el ambiente</text>
+<rect x="390" y="332" width="240" height="82" rx="10" fill="#F2EEEE" stroke="#DA1B2E" stroke-width="2"/>
+<text x="510" y="359" text-anchor="middle" font-size="16" font-weight="bold" fill="#1F1E1E">no hay observación</text>
+<text x="510" y="381" text-anchor="middle">el contexto suma</text>
+<text x="510" y="400" text-anchor="middle">solo el pensamiento</text>
+</g>
+</g>
+</svg>

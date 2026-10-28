@@ -1,0 +1,22 @@
+ "perro en la playa" --> [ text encoder ]  --> T1   T2   T3  ...  TN
+ "gato en un sofa"   -->                        |    |    |        |
+  ...                                           v    v    v        v
+                                       I1  -> [I1T1] I1T2 I1T3 ... I1TN
+ foto 1 --> +---------------+          I2  ->  I2T1 [I2T2] I2T3 ... I2TN
+ foto 2 --> | image encoder | -->      I3  ->  I3T1  I3T2 [I3T3] ... I3TN
+  ...       +---------------+          ...
+                                       IN  ->  INT1  INT2  INT3 ... [INTN]
+
+      [ diagonal ] = pares reales: acercar      resto = pares falsos: alejar
+
+<!-- ascii-note:
+intent: entrenamiento contrastivo de CLIP; matriz de similitudes imagen x texto con la diagonal positiva
+emphasize: la diagonal de la matriz (pares reales)
+labels: T = embeddings de texto, I = embeddings de imagen, celda = similitud
+terms: text encoder, image encoder
+animation:
+  1. Un lote de pares: «perro en la playa» con su foto, «gato en un sofa» con la suya.
+  2. Los textos pasan por el «text encoder» y salen T1…TN; las fotos, por el «image encoder», y salen I1…IN.
+  3. Se llena la matriz: cada celda es la similitud entre una imagen y un texto.
+  4. El entrenamiento acerca la diagonal (los pares reales) y aleja el resto: la diagonal se enciende y el resto se apaga.
+-->

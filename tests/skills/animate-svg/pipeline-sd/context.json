@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/segmentacion-y-stable-diffusion — the ASCII behind images/pipeline-sd-en-vivo.gif; the `animation:` brief was written for this fixture",
+  "slide_title": "9. Pipeline completo de inferencia",
+  "slide_content_prose": "1. **Prompt** → tokenizer → CLIP Text Encoder → embedding de texto (77 × 768).\n2. **Latente inicial**: un tensor aleatorio de 64×64×4 desde una normal, controlado por la seed. Es el bloque de mármol que vamos a tallar.\n3. **Bucle de denoising** (~50 pasos): la U-Net recibe (latente, t, embedding) y predice el ruido; el scheduler lo resta.\n4. **Decodificar**: latente final 64×64×4 → VAE Decoder → imagen 512×512×3.",
+  "speaker_notes": "Todo lo que vimos (U-Net, embeddings de texto, condición) confluye en este pipeline. Stable Diffusion no es un modelo monolítico: son tres piezas modulares orquestadas por un loop iterativo.\n\n---",
+  "presentation_language": "es"
+}

@@ -207,7 +207,7 @@ def rasterize_svgs(svgs: dict[str, str], sizes: dict[str, tuple[float, float]],
         html = ('<!doctype html><meta charset="utf-8">'
                 '<style>html,body{margin:0;background:transparent}'
                 'div>svg{width:100%;height:100%;display:block}'
-                '[data-beat]{animation:none!important}</style>' + cells)
+                'svg[class*="ts-anim-"],svg[class*="ts-anim-"] *{animation:none!important}</style>' + cells)
         src = workdir / ("sprite-%d.html" % n)
         png = workdir / ("sprite-%d.png" % n)
         src.write_text(html, encoding="utf-8")

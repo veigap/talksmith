@@ -13,6 +13,30 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.5.0] — 2026-10-28
+
+No re-init needed.
+
+### Changed
+
+- **Diagrams are animated by a model that understands them, not by a fixed recipe.** A new
+  pass, `animate-svg`, takes a finished diagram — once its static version is approved — and
+  evolves it into its animated version, reading the diagram, the slide and the note's
+  `animation:` brief and deciding what should move and how. It can add what the static picture
+  does not draw when that is the point: the image a block produces at each stage, a ball that
+  takes a different route depending on the result, a value changing on each pass. The editor's
+  brief describes what the audience should see happen, in order; it is no longer bound to the
+  elements the ASCII draws. It works on hand-drawn diagrams (an `image-note` brief) as well as
+  ASCII ones. The critic judges the animation from frames taken at its own key moments, and an
+  animation that does not come out clean is dropped: the slide keeps its approved static
+  diagram. Only the deck's playback rules are fixed — so it still plays once, restarts on each
+  entry, replays on back, and stays static in the PDF and the `.pptx`.
+
+### Added
+
+- Twelve reference diagrams from real talks under `tests/skills/animate-svg/` to run the pass
+  on, and one worked example shipped with the skill.
+
 ## [1.4.2] — 2026-10-28
 
 No re-init needed.

@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/segmentacion-y-stable-diffusion — the ASCII behind images/clip-en-vivo.gif; the `animation:` brief was written for this fixture",
+  "slide_title": "4. CLIP: el puente texto ↔ imagen",
+  "slide_content_prose": "- Una red no procesa palabras: el texto se **tokeniza**, cada token pasa a un vector y un encoder Transformer produce un embedding de la oración completa.\n- **CLIP** (OpenAI, 2021) entrena dos encoders en paralelo, uno para imagen y otro para texto, para que sus salidas vivan en el **mismo espacio vectorial**.\n- Con 400 millones de pares (imagen, descripción) de internet: los pares reales quedan cerca y los mal apareados, lejos. Es entrenamiento contrastivo.\n- Ese embedding de texto es la entrada con la que la U-Net de Stable Diffusion se condiciona.",
+  "speaker_notes": "Absorbe lo esencial de la lámina vieja sobre cómo una red neuronal representa texto (tokenización, embeddings, encoder contextual: \"banco de plaza\" vs \"banco financiero\"). Resultado del entrenamiento: la frase \"una foto de un perro corriendo en la playa\" aterriza en el mismo vecindario que una foto real de eso. CLIP proyecta el texto a un espacio que la U-Net usa como entrada.\n\n---",
+  "presentation_language": "es"
+}

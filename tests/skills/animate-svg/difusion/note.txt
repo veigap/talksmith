@@ -1,0 +1,10 @@
+<!-- ascii-note:
+intent: las dos direcciones de la difusión; forward agrega ruido, reverse lo quita guiado por la condición
+emphasize: el predictor de ruido condicionado en c
+labels: x0 = imagen limpia, xT = ruido puro
+terms: forward, reverse
+animation:
+  1. FORWARD: una imagen x0 se va llenando de ruido paso a paso hasta xT, ruido puro.
+  2. REVERSE: desde xT, el «predictor de ruido» estima el ruido de cada paso y se lo resta; la imagen reaparece.
+  3. La «condicion c» (el prompt) entra al predictor: con otro prompt, el mismo ruido termina en otra imagen.
+-->

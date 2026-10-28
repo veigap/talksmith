@@ -1,0 +1,9 @@
+<!-- image-note:
+intent: el recorrido de StyleGAN: el ruido se vuelve estilo y el estilo entra en cada bloque de la red de síntesis, de 4×4 a 1024×1024.
+animation:
+  1. «ruido z» (512 números) entra a «1 · RED DE MAPEO» (8 capas).
+  2. Sale el «estilo w» (512 números).
+  3. «2 · RED DE SÍNTESIS» arma bloques 4×4, 8×8, 16×16, …, 1024×1024.
+  4. «el estilo w entra en cada bloque (AdaIN)» y cada bloque recibe su «ruido por bloque».
+  5. «capas bajas: pose y forma» / «capas altas: textura y color» → «la cara final», y el diagrama queda completo.
+-->

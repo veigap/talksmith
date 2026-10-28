@@ -1582,7 +1582,7 @@ dlg.addEventListener('close', function(){
 })();"""
 
 # Animated diagrams — back replays before it leaves. On a slide whose diagram is animated
-# (`ascii-to-svg/animate_svg.py`), a back press (←, PageUp, h, p, Shift+Space, the on-screen back
+# (`animate-svg` — any CSS animation under a `ts-anim-*` root), a back press (←, PageUp, h, p, Shift+Space, the on-screen back
 # arrow) restarts the animation instead of navigating once it has finished or has been running
 # for more than 5 s; earlier than that, back navigates as usual — so a second press right after a
 # replay leaves the slide. The age is the animations' own clock (`currentTime`), so there is no
@@ -1597,7 +1597,7 @@ var REPLAY_AFTER=5000;
 function replay(){
   if(!window.Reveal || !Reveal.getConfig().keyboard || Reveal.isOverview()) return false;
   var s=Reveal.getCurrentSlide(); if(!s) return false;
-  var a=[]; s.querySelectorAll('svg [data-beat]').forEach(function(el){ a=a.concat(el.getAnimations()); });
+  var a=[]; s.querySelectorAll('svg[class*="ts-anim-"]').forEach(function(el){ a=a.concat(el.getAnimations({subtree:true})); });
   if(!a.length) return false;
   var done=a.every(function(x){ return x.playState==='finished'; });
   var age=Math.max.apply(null, a.map(function(x){ return x.currentTime||0; }));
@@ -1725,7 +1725,7 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         + (f'<script>{_CODE_FULL}</script>\n' if hljs_js else '')
         + (f'<script>{_IMG_ZOOM}</script>\n'
            if 'class="imgph has"' in body_html or 'class="imgph svg"' in body_html else '')
-        + (f'<script>{_DIAGRAM_REPLAY}</script>\n' if 'data-beat=' in body_html else '')
+        + (f'<script>{_DIAGRAM_REPLAY}</script>\n' if 'ts-anim-' in body_html else '')
         + f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
         # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what

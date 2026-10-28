@@ -121,8 +121,8 @@ emphasize: <the ONE box/arrow/label that should pop — the diagram's single foc
 labels: <if axes/legend/units exist, list them>
 terms: <optional — terms of art kept in another language on purpose, comma-separated: tools, loop>
 animation:
-  1. <first beat — what appears, moves or lights up, named by its ASCII label>
-  2. <next beat, in the order the process runs>
+  1. <first moment — what the audience sees happen, named by the diagram's own labels>
+  2. <next moment, in the order it happens>
 -->
 ```
 
@@ -138,15 +138,14 @@ The note is for the **rendering pass**, not the reader of `draft.md` — keep it
 - **`emphasize:` names exactly one element.** The single-accent rule is [`diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md)'s (one focal element per diagram); a note naming two produces two red elements the critic then has to wave through. If two things genuinely compete, the diagram is making two points — pick one, or split the slide.
 - **`terms:` declares deliberate foreign-language terms** (e.g. `tools`, `loop` kept in English in a Spanish deck because the slide prose uses them). The critic flags any label not in the presentation language *unless* it is listed here — so list every term of art the diagram keeps, or it will be "translated" away from the slide's prose.
 - **No slide numbers or cross-references in the note** (`"same layout as ReAct (3.2)"`). The note is part of the render digest, so a renumbering that only rewrites such a reference re-renders a diagram whose drawing did not change. Name the other diagram by its subject, not its position.
-- **`animation:` describes how the diagram unfolds — required on every diagram of an algorithm, a process, or a sequence of steps.** `intent:` says *what* the diagram shows; `animation:` says *in what order it happens*. Whoever draws the ASCII writes it in the same edit, because the order is in their head when they draw — never left for a later pass. It is required when the diagram's meaning is an order of events: a pipeline, an algorithm, a loop, state transitions, a request/response exchange, a numbered procedure. Omit it for static structure (hierarchy, anatomy, comparison, map), where nothing happens in sequence. When you touch an existing process diagram that lacks one, add it.
-  - **One numbered beat per line, in the order the process runs.** Each beat names what it touches by the ASCII's own labels — the box that appears, the arrow that carries data, the element that lights up — and never introduces anything the ASCII does not draw.
-  - **The last beat leaves the diagram complete as drawn.** The rendered SVG is the end state; the animation is the path to it.
-  - **A loop says so:** which arrow returns, how many passes are shown, what changes on each pass, what ends it.
-  - **It plays once by default.** Write `animation: loop` on the key line only when the process genuinely cycles with no end the slide cares about (a heartbeat, a polling cycle) — the sequence then repeats until the slide is left. A loop *inside* an algorithm that terminates is not that: its beats show the passes, and the animation plays once.
-  - **3–8 beats.** More means the diagram is carrying two processes — split it.
-  - **Describe the process, not the delivery** — no seconds, clicks, or "the presenter points at" cues (those belong to nobody's note).
-  - It is exempt from the terse-note budget — beats are what it costs. It is part of the note and so of the render digest: editing it re-renders the diagram.
-  - **It is what the diagram plays.** At Step 6 the renderer turns the beats into an animated SVG that runs beat by beat when its slide is presented in the HTML deck; the PDF and `.pptx` keep the complete, static diagram ([`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) → *Animation*). So a beat is something the audience will watch arrive — write it as one.
+- **`animation:` is the brief for what the audience should see happen — required on every diagram of an algorithm, a process, or a sequence of steps.** `intent:` says *what* the diagram shows; `animation:` says *what happens in it, in order*. Whoever draws the ASCII writes it in the same edit, because the story is in their head when they draw — never left for a later pass. It is required when the diagram's meaning is something happening: a pipeline, an algorithm, a loop, a decision, a request/response exchange, a numbered procedure. Omit it for static structure (hierarchy, anatomy, comparison, map). When you touch an existing process diagram that lacks one, add it. The same section works in the `<!-- image-note: … -->` under a hand-drawn diagram.
+  - **It is a brief, not a script.** After the static diagram is approved, the [`animate-svg`](../skills/animate-svg/SKILL.md) pass reads the diagram, the slide and this brief and *evolves* the SVG into its animation — it decides how. So write the story the slide needs told, as specifically as the subject allows, and ask for what the still cannot show when that is the point: the image a block produces at each stage, the route a datum takes when the result differs, the value that changes on each pass. The pass draws it.
+  - **Numbered moments, in the order they happen,** naming what they touch by the diagram's own labels. If it takes more than eight or so, the diagram may be telling two stories — consider splitting it.
+  - **A loop says so:** what goes around, what changes on each pass, what ends it.
+  - **It plays once by default.** Write `animation: loop` on the key line only when the process genuinely cycles with no end the slide cares about (a heartbeat, a polling cycle) — it then repeats until the slide is left. A loop *inside* an algorithm that terminates is not that: the brief shows its passes, and the animation plays once.
+  - **Describe the subject, not the delivery** — no seconds, clicks, or "the presenter points at" cues.
+  - It is exempt from the terse-note budget. It is part of the note and so of the render digest: editing it re-renders the diagram and animates it again.
+  - **Where it plays:** in the HTML deck, each time its slide is entered; the PDF and the `.pptx` keep the static diagram.
 
 **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing — and always when it needs an `animation:`.
 

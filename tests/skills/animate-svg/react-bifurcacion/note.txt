@@ -1,0 +1,12 @@
+<!-- ascii-note:
+intent: la bifurcacion que define ReAct; una rama toca el ambiente y la otra solo escribe en el contexto.
+emphasize: la rama del pensamiento (L) en rojo, que no pasa por el ambiente.
+labels: el LLM elige el proximo paso, accion en A, pensamiento en L, AMBIENTE, que suma el contexto en cada rama.
+consistency: los cinco diagramas de tipos de agente (4.1, 5.2, 5.5, 5.8 y 5.11) comparten lienzo, tipografia y tratamiento de cajas; cambia solo la forma.
+animation:
+  1. Aparece el LLM elige el próximo paso según el contexto.
+  2. Se abren las dos ramas: acción en A y pensamiento en L.
+  3. La rama acción en A baja a AMBIENTE.
+  4. De AMBIENTE baja hay observación: el contexto suma la acción y la observación.
+  5. La rama pensamiento en L baja directo, sin pasar por AMBIENTE, a no hay observación: el contexto suma solo el pensamiento; el diagrama queda completo.
+-->

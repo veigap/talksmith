@@ -1,0 +1,154 @@
+<svg class="ts-anim-gan-paths" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 990 400" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
+<title>Arquitectura de una Vanilla GAN</title>
+<desc>Redibujo vectorial del diagrama del slide 15 del pptx original (AIG4B Clase 8), con las mismas piezas: el ruido z entra al Generador (G), que produce una muestra falsa; los datos reales aportan una muestra real; el Discriminador (D) recibe ambas y decide si es real o falsa; esa decisión da la pérdida de G y la pérdida de D, que vuelven para actualizar cada red. La salida del D es un veredicto, la probabilidad de que la imagen sea real; no es una bifurcación: la pérdida de G usa los veredictos sobre las generadas y la de D los veredictos sobre reales y generadas.</desc>
+<style>/* talksmith-animation */
+.ts-anim-gan-paths [data-beat]{animation:ts-anim-gan-paths-in .6s ease-out both}
+.ts-anim-gan-paths [data-beat="1"]{animation-delay:0.5s}
+.ts-anim-gan-paths [data-beat="2"]{animation-delay:1.6s}
+.ts-anim-gan-paths [data-beat="3"]{animation-delay:2.7s}
+.ts-anim-gan-paths [data-beat="4"]{animation-delay:3.8s}
+.ts-anim-gan-paths [data-beat="5"]{animation-delay:4.9s}
+.ts-anim-gan-paths [data-beat="6"]{animation-delay:6.0s}
+.ts-anim-gan-paths .path1{animation:ts-anim-gan-paths-show 6s linear 7.2s both}
+.ts-anim-gan-paths .path1 .ball{offset-path:path("M215,266 L280,266 L350,266 L405,266 L460,262 L510,220 L600,195 L690,195 L728,195 L790,195 L790,232 L790,286 L877,286 L923,286 L923,322 L923,346 L600,346 L600,242 L600,195");offset-rotate:0deg;animation:ts-anim-gan-paths-move 6s ease-in-out 7.2s both}
+.ts-anim-gan-paths .path2{animation:ts-anim-gan-paths-show 6s linear 13.8s both}
+.ts-anim-gan-paths .path2 .ball{offset-path:path("M55,125 L80,125 L120,125 L215,125 L310,125 L350,125 L405,125 L460,128 L510,170 L600,195 L690,195 L728,195 L790,195 L790,232 L790,286 L877,286 L923,286 L923,322 L923,346 L600,346 L600,242 L600,195");offset-rotate:0deg;animation:ts-anim-gan-paths-move 6s ease-in-out 13.8s both}
+.ts-anim-gan-paths .path3{animation:ts-anim-gan-paths-show 6s linear 20.4s both}
+.ts-anim-gan-paths .path3 .ball{offset-path:path("M55,125 L80,125 L120,125 L215,125 L310,125 L350,125 L405,125 L460,128 L510,170 L600,195 L690,195 L728,195 L790,195 L790,158 L790,108 L877,108 L923,108 L923,72 L923,40 L215,40 L215,80 L215,125");offset-rotate:0deg;animation:ts-anim-gan-paths-move 6s ease-in-out 20.4s both}
+@keyframes ts-anim-gan-paths-in{from{opacity:0}}
+@keyframes ts-anim-gan-paths-show{0%{opacity:0}6%,92%{opacity:1}100%{opacity:0}}
+@keyframes ts-anim-gan-paths-move{from{offset-distance:0%}to{offset-distance:100%}}
+@media (prefers-reduced-motion:reduce){.ts-anim-gan-paths *{animation:none}}
+</style>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">
+<path d="M0,0 L12,6 L0,12 z" fill="#3B3535"/>
+</marker>
+<marker id="fb" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="11" refY="6" orient="auto">
+<path d="M1,1 L11,6 L1,11" fill="none" stroke="#3B3535" stroke-width="1.8" stroke-linejoin="miter"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="990" height="400" fill="#ffffff"/>
+<!-- paths: the balls ride under every box, so a box swallows the ball while it processes it -->
+<g class="path1" opacity="0"><g class="ball"><circle r="9" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="path2" opacity="0"><g class="ball"><circle r="9" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="path3" opacity="0"><g class="ball"><circle r="9" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+
+<g data-beat="6">
+<g stroke="#3B3535" stroke-width="1.6" fill="none" stroke-dasharray="7 5" marker-end="url(#fb)">
+<path d="M923,72 V40 H215 V80"/>
+<path d="M923,322 V346 H600 V242"/>
+</g>
+<g font-size="15" font-style="italic" text-anchor="middle">
+<text x="569" y="31">actualiza G</text>
+<text x="761" y="337">actualiza D</text>
+</g>
+</g>
+
+<g stroke="#3B3535" stroke-width="1.8" fill="none" marker-end="url(#ah)">
+<g data-beat="1">
+<path d="M80,125 L120,125"/>
+<path d="M310,125 L350,125"/>
+</g>
+<g data-beat="3">
+<path d="M460,128 L510,170"/>
+</g>
+<g data-beat="2">
+<path d="M280,266 L350,266"/>
+</g>
+<g data-beat="3">
+<path d="M460,262 L510,220"/>
+</g>
+<g data-beat="4">
+<path d="M690,195 L728,195"/>
+</g>
+<g data-beat="5">
+<path d="M790,158 V108 H877"/>
+<path d="M790,232 V286 H877"/>
+</g>
+</g>
+
+<g data-beat="1">
+<rect x="30" y="100" width="50" height="50" rx="6" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<g fill="#3B3535">
+<circle cx="40" cy="110" r="2.6"/>
+<circle cx="57" cy="108" r="1.8" opacity="0.6"/>
+<circle cx="70" cy="113" r="2.4" opacity="0.8"/>
+<circle cx="47" cy="121" r="1.8" opacity="0.5"/>
+<circle cx="62" cy="124" r="2.8"/>
+<circle cx="38" cy="132" r="2.0" opacity="0.7"/>
+<circle cx="72" cy="131" r="1.8" opacity="0.5"/>
+<circle cx="52" cy="139" r="2.4" opacity="0.8"/>
+<circle cx="66" cy="142" r="2.0" opacity="0.6"/>
+<circle cx="41" cy="143" r="1.6" opacity="0.5"/>
+</g>
+<text x="55" y="174" text-anchor="middle" font-size="15">Ruido z</text>
+</g>
+
+<g data-beat="1">
+<rect x="120" y="80" width="190" height="90" rx="10" fill="#DA1B2E"/>
+<text x="215" y="121" text-anchor="middle" font-size="23" font-weight="bold" fill="#ffffff">Generador</text>
+<text x="215" y="148" text-anchor="middle" font-size="19" font-weight="bold" fill="#ffffff">(G)</text>
+</g>
+
+<g data-beat="1">
+<path d="M350,98 h110 v52 q-27.5,14 -55,0 t-55,0 z" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="405" y="119" text-anchor="middle" font-size="15">Muestra</text>
+<text x="405" y="138" text-anchor="middle" font-size="15">falsa</text>
+</g>
+
+<g data-beat="2">
+<g fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5">
+<path d="M150,236 v60 a65,15 0 0 0 130,0 v-60"/>
+<ellipse cx="215" cy="236" rx="65" ry="15"/>
+</g>
+<text x="215" y="272" text-anchor="middle" font-size="17" font-weight="bold" fill="#1F1E1E">Datos</text>
+<text x="215" y="293" text-anchor="middle" font-size="17" font-weight="bold" fill="#1F1E1E">reales</text>
+</g>
+
+<g data-beat="2">
+<path d="M350,240 h110 v52 q-27.5,14 -55,0 t-55,0 z" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="405" y="261" text-anchor="middle" font-size="15">Muestra</text>
+<text x="405" y="280" text-anchor="middle" font-size="15">real</text>
+</g>
+
+<g data-beat="3">
+<rect x="510" y="150" width="180" height="90" rx="10" fill="#F2EEEE" stroke="#3B3535" stroke-width="1.8"/>
+<text x="600" y="191" text-anchor="middle" font-size="22" font-weight="bold" fill="#1F1E1E">Discriminador</text>
+<text x="600" y="218" text-anchor="middle" font-size="19" font-weight="bold" fill="#1F1E1E">(D)</text>
+</g>
+
+<g data-beat="4">
+<rect x="728" y="158" width="124" height="74" rx="10" fill="#ffffff" stroke="#3B3535" stroke-width="1.8"/>
+<text x="790" y="184" text-anchor="middle" font-size="15" font-weight="bold" fill="#1F1E1E">Veredicto</text>
+<text x="790" y="204" text-anchor="middle" font-size="15" fill="#1F1E1E">P(real)</text>
+<text x="790" y="222" text-anchor="middle" font-size="13" fill="#6B6560">entre 0 y 1</text>
+</g>
+
+<g data-beat="5">
+<g fill="#ffffff" stroke="#3B3535" stroke-width="1.5">
+<path d="M878,72 h74 l16,16 v56 h-90 z"/>
+<path d="M952,72 v16 h16" fill="none"/>
+<path d="M878,250 h74 l16,16 v56 h-90 z"/>
+<path d="M952,250 v16 h16" fill="none"/>
+</g>
+<g text-anchor="middle" font-size="15">
+<text x="923" y="112">Pérdida</text>
+<text x="923" y="130">de G</text>
+<text x="923" y="290">Pérdida</text>
+<text x="923" y="308">de D</text>
+</g>
+</g>
+
+
+<g data-beat="5">
+<g font-size="14" font-style="italic" fill="#1F1E1E" text-anchor="end">
+<text x="872" y="100">veredictos sobre generadas</text>
+<text x="872" y="304">veredictos sobre reales y generadas</text>
+</g>
+</g>
+<!-- path captions: a band reserved below the diagram -->
+<text class="path1" opacity="0" x="495" y="388" font-size="17" font-weight="bold" fill="#DA1B2E" text-anchor="middle">1 · Entrenar D con una muestra real: tiene que decir «real»</text>
+<text class="path2" opacity="0" x="495" y="388" font-size="17" font-weight="bold" fill="#DA1B2E" text-anchor="middle">2 · Entrenar D con una falsa: tiene que decir «falsa»</text>
+<text class="path3" opacity="0" x="495" y="388" font-size="17" font-weight="bold" fill="#DA1B2E" text-anchor="middle">3 · Entrenar G: la falsa tiene que pasar por real</text>
+</svg>

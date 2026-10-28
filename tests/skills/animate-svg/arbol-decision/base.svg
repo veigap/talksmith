@@ -1,0 +1,57 @@
+<!-- talksmith-ascii-sha256: e7ffa2bf4d0b1ff05b508d711bb8d52d067fed082b7fe3549627f6adb03befd7 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 602" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#3B3535">
+<title>Cómo elegir la arquitectura</title>
+<desc>Recorrer el árbol con un caso que proponga la sala.</desc>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B3535"/></marker>
+</defs>
+<rect x="0" y="0" width="830" height="602" fill="#ffffff"/>
+<g>
+<rect x="20" y="20" width="440" height="50" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="240" y="50" text-anchor="middle" fill="#1F1E1E" font-weight="bold">¿Alcanza una llamada al LLM, con RAG o ejemplos?</text>
+<line x1="460" y1="45" x2="540" y2="45" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="500" y="37" text-anchor="middle" font-weight="bold">sí</text>
+<rect x="540" y="20" width="270" height="50" rx="8" fill="#ffffff" stroke="#3B3535" stroke-width="1.5"/>
+<text x="675" y="50" text-anchor="middle">una llamada; sin agente</text>
+</g>
+<g>
+<line x1="240" y1="70" x2="240" y2="130" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="252" y="105" font-weight="bold">no</text>
+<rect x="20" y="130" width="440" height="50" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<text x="240" y="160" text-anchor="middle" fill="#1F1E1E" font-weight="bold">¿Los pasos se conocen de antemano?</text>
+<line x1="460" y1="155" x2="540" y2="155" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="500" y="147" text-anchor="middle" font-weight="bold">sí</text>
+<rect x="540" y="130" width="270" height="50" rx="8" fill="#ffffff" stroke="#3B3535" stroke-width="1.5"/>
+<text x="675" y="160" text-anchor="middle">workflow: pasos fijos en código</text>
+</g>
+<g>
+<line x1="240" y1="180" x2="240" y2="240" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="252" y="215" font-weight="bold">no</text>
+<rect x="20" y="240" width="440" height="84" rx="8" fill="#ffffff" stroke="#3B3535" stroke-width="1.5"/>
+<text x="240" y="266" text-anchor="middle" fill="#1F1E1E" font-weight="bold">Un agente con buenas tools</text>
+<text x="240" y="288" text-anchor="middle">(ReAct; planificar o reflexionar</text>
+<text x="240" y="309" text-anchor="middle">si la tarea lo pide)</text>
+</g>
+<g>
+<line x1="240" y1="324" x2="240" y2="374" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<rect x="20" y="374" width="440" height="84" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<g text-anchor="middle" fill="#1F1E1E" font-weight="bold">
+<text x="240" y="400">¿La información no entra en un contexto, hay equipos</text>
+<text x="240" y="422">dueños de dominios distintos, o el trabajo se reparte</text>
+<text x="240" y="444">en lecturas paralelas que valen ~15× tokens?</text>
+</g>
+<line x1="460" y1="416" x2="540" y2="416" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="500" y="408" text-anchor="middle" font-weight="bold">no</text>
+<rect x="540" y="391" width="270" height="50" rx="8" fill="#ffffff" stroke="#3B3535" stroke-width="1.5"/>
+<text x="675" y="421" text-anchor="middle">quedarse con un agente</text>
+</g>
+<g>
+<line x1="240" y1="458" x2="240" y2="518" stroke="#3B3535" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="252" y="493" font-weight="bold">sí</text>
+<rect x="20" y="518" width="440" height="64" rx="8" fill="#DA1B2E"/>
+<g text-anchor="middle" fill="#FFFFFF" font-weight="bold">
+<text x="240" y="545">Multiagente: estrella, router, red,</text>
+<text x="240" y="566">pipeline, pizarra o jerarquía</text>
+</g>
+</g>
+</svg>

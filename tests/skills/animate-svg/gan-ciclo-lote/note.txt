@@ -1,0 +1,11 @@
+<!-- image-note:
+intent: un lote de entrenamiento: un error por imagen, un promedio por paso y un paso de backpropagation que actualiza una sola red.
+animation:
+  1. El lote: 3 «reales (del dataset)» con objetivo 1 y 3 «generadas por G con 3 ruidos z» con objetivo 0.
+  2. El «Discriminador» da un veredicto por imagen (0.9, 0.8, 0.7, 0.68, 0.4, 0.55).
+  3. Cada imagen tiene su error (0.11, 0.22, 0.36, 1.14, 0.51, 0.80).
+  4. «se promedian» → «error del lote (6 imágenes)» 0.52 → «un paso de backpropagation» → «actualiza solo el D».
+  5. «Paso del Generador»: solo las 3 generadas, con objetivo 1 («las reales no entran»); «Discriminador (no cambia)»; errores 0.39, 0.92, 0.60.
+  6. «se promedian» → «error del lote (3 imágenes)» 0.63 → «un paso de backpropagation» → «actualiza solo el G».
+  7. La flecha punteada «siguiente lote…» vuelve al comienzo, y el diagrama queda completo.
+-->

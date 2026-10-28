@@ -1,0 +1,24 @@
+ imagen                                                   mascara
+   |                                                         ^
+ [enc 1] ---------------- skip: concatenar ---------------> [dec 1]
+     \                                                     /
+    [enc 2] ------------- skip: concatenar ------------> [dec 2]
+        \                                               /
+       [enc 3] ---------- skip: concatenar ---------> [dec 3]
+           \                                         /
+            +-------------> [ bottleneck ] ---------+
+
+   bajando: max pooling                  subiendo: conv traspuesta
+   resolucion / 2, canales x 2           resolucion x 2, canales / 2
+
+<!-- ascii-note:
+intent: la arquitectura en U; las skip connections llevan el detalle del encoder al decoder del mismo nivel
+emphasize: las flechas horizontales de skip connection
+labels: encoder a la izquierda, decoder a la derecha, bottleneck abajo
+terms: skip, bottleneck
+animation:
+  1. La imagen entra a «enc 1» y baja por «enc 2» y «enc 3» hasta el «bottleneck»: en cada nivel se ve más chica y con más canales.
+  2. Sube por «dec 3», «dec 2» y «dec 1»: en cada nivel vuelve a crecer.
+  3. En cada nivel, la flecha «skip: concatenar» lleva el detalle del encoder al decoder del mismo nivel, justo cuando ese decoder lo necesita.
+  4. Sale la «mascara», del mismo tamaño que la imagen que entró.
+-->

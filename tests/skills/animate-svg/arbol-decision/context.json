@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/agentes-y-multiagentes — images/sc-2-1-arbol-decision.svg",
+  "slide_title": "2. Cómo elegir la arquitectura",
+  "slide_content_prose": "![Árbol de decisión para elegir la arquitectura](images/sc-2-1-arbol-decision.png)",
+  "speaker_notes": "Recorrer el árbol con un caso que proponga la sala. Lo habitual es que la mayoría de los casos se detenga en la segunda o tercera pregunta.\n\nLa tercera pregunta junta las dos restricciones de LangChain con el criterio de Anthropic. Si ninguna se cumple, repartir solo agrega llamadas y tokens.\n\nSi se llega a la última hoja, volver a la tabla de la lámina 6.10 para elegir la topología y a la 7.6 para decidir si el trabajo se puede repartir sin que los agentes se pisen.\n\n---",
+  "presentation_language": "es"
+}

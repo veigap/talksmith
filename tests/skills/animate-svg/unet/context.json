@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/segmentacion-y-stable-diffusion — the ASCII behind images/unet-en-vivo.gif; the `animation:` brief was written for this fixture",
+  "slide_title": "4. U-Net: la U y sus atajos",
+  "slide_content_prose": "- Ronneberger, Fischer y Brox (Universidad de Friburgo, 2015) la diseñaron para segmentar **células en microscopía electrónica**, con muy pocas imágenes etiquetadas.\n- **Encoder**: convoluciones + max pooling. En cada nivel la resolución se reduce a la mitad y los canales se duplican. Las features codifican cada vez mejor \"qué hay\" y pierden \"dónde está\".\n- **Decoder**: convoluciones traspuestas. La resolución se duplica en cada nivel y \"dónde\" se reconstruye.\n- **Skip connections**: la salida de cada nivel del encoder se concatena con la entrada del decoder en el mismo nivel. El decoder recibe qué es (desde abajo) y dónde está exactamente (desde el atajo).",
+  "speaker_notes": "Fusión de \"UNET: nacida en biomedicina\", \"La arquitectura en U\" y \"La clave: skip connections\". El bottleneck es la representación más comprimida y abstracta. Sin skip connections, U-Net sería un FCN más elegante: los detalles que el encoder vio antes de comprimir viajan por el atajo y el decoder los recupera, y por eso los contornos salen precisos. Es uno de los papers más citados de la última década en visión; diez años después sigue siendo la base por defecto para segmentación médica.\n\n---",
+  "presentation_language": "es"
+}

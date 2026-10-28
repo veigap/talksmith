@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/agentes-y-multiagentes — images/s5-5-1-lazo-reflexion.svg",
+  "slide_title": "5. Reflexion: intentar, evaluar, reflexionar",
+  "slide_content_prose": "Reflexion ejecuta, evalúa el resultado y, si falló, escribe una crítica en lenguaje natural que guarda como memoria para el intento siguiente. No toca los pesos del modelo.\n\n![Reflexion: actor, evaluador y auto-reflexión entre intentos](images/s5-5-1-lazo-reflexion.png)",
+  "speaker_notes": "Reflexion es el primer tipo con más de un rol de LLM. El Actor produce la trayectoria, y en los experimentos de decisión y de preguntas es un agente ReAct. El Evaluator decide si salió bien. El Self-Reflection convierte ese veredicto en una crítica escrita. Son tres llamadas al LLM con tres trabajos distintos, y ese reparto anticipa el último tipo de la sección. El Evaluator hace de crítico, como en el agente que aprende de la lámina 1.7.\n\nLos autores lo llaman refuerzo verbal: en lugar de actualizar pesos como en reinforcement learning, el agente guarda en su contexto una frase que le dice qué cambiar. El paper lo describe como un gradiente semántico.\n\nUn detalle para quien lea el paper: el pseudocódigo del Algorithm 1 dice \"while not pass or t < max trials\", que como está escrito nunca terminaría bien. La prosa aclara que el loop sigue hasta que el Evaluator aprueba, con un máximo de intentos.\n\n---",
+  "presentation_language": "es"
+}

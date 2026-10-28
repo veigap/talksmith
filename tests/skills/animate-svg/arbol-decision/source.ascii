@@ -1,0 +1,33 @@
+ ¿Alcanza una llamada al LLM, con RAG o ejemplos?
+   |-- sí --> una llamada; sin agente
+   no
+   v
+ ¿Los pasos se conocen de antemano?
+   |-- sí --> workflow: pasos fijos en código
+   no
+   v
+ Un agente con buenas tools
+ (ReAct; planificar o reflexionar
+ si la tarea lo pide)
+   |
+   v
+ ¿La información no entra en un contexto, hay equipos
+ dueños de dominios distintos, o el trabajo se reparte
+ en lecturas paralelas que valen ~15× tokens?
+   |-- no --> quedarse con un agente
+   sí
+   v
+ Multiagente: estrella, router, red,
+ pipeline, pizarra o jerarquía
+
+<!-- ascii-note:
+intent: arbol de decision que resume la clase; cada pregunta descarta la opcion mas compleja si la simple alcanza.
+emphasize: la hoja "Multiagente" en rojo, al final del camino mas largo; las salidas laterales "si" / "no" que cortan antes.
+labels: las cuatro preguntas y sus salidas.
+animation:
+  1. Aparece ¿Alcanza una llamada al LLM, con RAG o ejemplos?; la salida sí lleva a una llamada; sin agente.
+  2. no baja a ¿Los pasos se conocen de antemano?; la salida sí lleva a workflow: pasos fijos en código.
+  3. no baja a Un agente con buenas tools (ReAct; planificar o reflexionar si la tarea lo pide).
+  4. Baja a ¿La información no entra en un contexto, hay equipos dueños de dominios distintos, o el trabajo se reparte en lecturas paralelas que valen ~15× tokens?; la salida no lleva a quedarse con un agente.
+  5. sí baja a Multiagente: estrella, router, red, pipeline, pizarra o jerarquía; el diagrama queda completo.
+-->

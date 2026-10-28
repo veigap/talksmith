@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/segmentacion-y-stable-diffusion — the ASCII behind images/sam2-en-vivo.gif; the `animation:` brief was written for this fixture",
+  "slide_title": "3. SAM 2: memoria para video",
+  "slide_content_prose": "- SAM 2 (julio 2024) extiende SAM al video con un **módulo de memoria** que mantiene la segmentación coherente entre frames.\n- Cada máscara que sale pasa por un memory encoder y se guarda en un **memory bank**.\n- En el frame siguiente, la memory attention combina las features del image encoder con lo que quedó guardado. Así la máscara sigue al mismo objeto aunque se mueva.",
+  "speaker_notes": "La figura vieja de la lámina de SAM 1 era en realidad esta arquitectura de SAM 2; por eso ahora va acá, redibujada. El post de Meta sobre SAM 3 confirma que el memory bank y el memory encoder de SAM 2 son la base del tracker de SAM 3.\n\n---",
+  "presentation_language": "es"
+}

@@ -1,0 +1,10 @@
+<!-- image-note:
+intent: el ciclo de una GAN: el Generador falsifica, el Discriminador juzga muestras reales y falsas, y cada pérdida vuelve a actualizar su red.
+animation:
+  1. «Ruido z» entra al «Generador (G)», que produce la «Muestra falsa».
+  2. De «Datos reales» sale la «Muestra real».
+  3. Las dos muestras llegan al «Discriminador (D)».
+  4. D da su «Veredicto · P(real) · entre 0 y 1».
+  5. Los veredictos van a «Pérdida de G» («veredictos sobre generadas») y a «Pérdida de D» («veredictos sobre reales y generadas»).
+  6. Las flechas punteadas «actualiza G» y «actualiza D» vuelven a cada red, y el diagrama queda completo.
+-->

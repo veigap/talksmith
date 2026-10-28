@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/redes-generativas-antagonicas — images/vanilla-gan-arquitectura.svg",
+  "slide_title": "6. Arquitectura de una \"Vanilla\" GAN",
+  "slide_content_prose": "![Arquitectura de una Vanilla GAN: el Discriminador recibe muestras reales y falsas y da un veredicto, P(real) entre 0 y 1. La pérdida de G usa los veredictos sobre las generadas y actualiza G; la pérdida de D usa los veredictos sobre reales y generadas y actualiza D](images/vanilla-gan-arquitectura.svg)\n\n\n\n\n- **[¿Qué es una GAN? - Explicación sobre las redes generativas antagónicas - AWS](https://aws.amazon.com/es/what-is/gan/)**",
+  "speaker_notes": "---",
+  "presentation_language": "es"
+}

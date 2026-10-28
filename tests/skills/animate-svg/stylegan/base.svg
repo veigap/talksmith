@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1750 760" width="1750" height="760" font-family="Helvetica, Arial, sans-serif" fill="#1F1E1E">
+<title>StyleGAN: red de mapeo y red de síntesis</title>
+<desc>El ruido z pasa por la red de mapeo (8 capas) y se convierte en el estilo w. La red de síntesis arma la imagen en bloques que crecen de 4×4 a 1024×1024; el estilo w entra en cada bloque por AdaIN y cada bloque recibe además su propio ruido. Los bloques de baja resolución deciden la pose y la forma; los de alta resolución, la textura y el color.</desc>
+<defs>
+<marker id="a1F1E1E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1E1E"/></marker>
+<marker id="aDA1B2E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DA1B2E"/></marker>
+<marker id="a2E8540" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2E8540"/></marker>
+<marker id="a6B6560" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6B6560"/></marker>
+</defs>
+<rect width="1750" height="760" fill="#ffffff"/>
+<text x="300" y="46" font-size="30" fill="#6B6560" text-anchor="middle" font-weight="bold" letter-spacing="2">1 · RED DE MAPEO</text>
+<text x="1060" y="46" font-size="30" fill="#6B6560" text-anchor="middle" font-weight="bold" letter-spacing="2">2 · RED DE SÍNTESIS</text>
+<line x1="30" y1="66" x2="1720" y2="66" stroke="#D9D4CF" stroke-width="3"/>
+<g>
+<rect x="30" y="130" width="150" height="90" rx="12" fill="#ffffff" stroke="#1F1E1E" stroke-width="3"/>
+<text x="105" y="172" font-size="30" fill="#1F1E1E" text-anchor="middle" font-weight="bold">ruido z</text>
+<text x="105" y="206" font-size="22" fill="#6B6560" text-anchor="middle">512 números</text>
+<path d="M180,175 H206" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+<rect x="214" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="236" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="258" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="280" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="302" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="324" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="346" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<rect x="368" y="122" width="16" height="106" rx="3" fill="#1F1E1E"/>
+<text x="300" y="262" font-size="26" fill="#6B6560" text-anchor="middle">8 capas</text>
+</g>
+<g>
+<path d="M394,175 H420" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+<rect x="428" y="130" width="150" height="90" rx="12" fill="#DA1B2E"/>
+<text x="503" y="172" font-size="30" fill="#ffffff" text-anchor="middle" font-weight="bold">estilo w</text>
+<text x="503" y="206" font-size="22" fill="#ffffff" text-anchor="middle">512 números</text>
+</g>
+<g>
+<path d="M578,175 H1480" stroke="#DA1B2E" stroke-width="4" fill="none"/>
+<text x="1000" y="159" font-size="27" fill="#DA1B2E" text-anchor="middle" font-weight="bold">el estilo w entra en cada bloque (AdaIN)</text>
+<path d="M700,175 V340" stroke="#DA1B2E" stroke-width="3" fill="none" marker-end="url(#aDA1B2E)"/>
+</g>
+<g>
+<rect x="653.0" y="346" width="94" height="174" rx="10" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2.5"/>
+<rect x="673.0" y="446" width="54" height="54" fill="#ffffff" stroke="#1F1E1E" stroke-width="2"/>
+<text x="700" y="378" font-size="26" fill="#1F1E1E" text-anchor="middle" font-weight="bold">4×4</text>
+</g>
+<g>
+<path d="M700,590 V526" stroke="#2E8540" stroke-width="3" fill="none" marker-end="url(#a2E8540)"/>
+<path d="M860,175 V320" stroke="#DA1B2E" stroke-width="3" fill="none" marker-end="url(#aDA1B2E)"/>
+</g>
+<g>
+<rect x="803.0" y="326" width="114" height="194" rx="10" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2.5"/>
+<rect x="823.0" y="426" width="74" height="74" fill="#ffffff" stroke="#1F1E1E" stroke-width="2"/>
+<text x="860" y="358" font-size="26" fill="#1F1E1E" text-anchor="middle" font-weight="bold">8×8</text>
+</g>
+<g>
+<path d="M860,590 V526" stroke="#2E8540" stroke-width="3" fill="none" marker-end="url(#a2E8540)"/>
+<path d="M1040,175 V298" stroke="#DA1B2E" stroke-width="3" fill="none" marker-end="url(#aDA1B2E)"/>
+</g>
+<g>
+<rect x="972.0" y="304" width="136" height="216" rx="10" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2.5"/>
+<rect x="992.0" y="404" width="96" height="96" fill="#ffffff" stroke="#1F1E1E" stroke-width="2"/>
+<text x="1040" y="336" font-size="26" fill="#1F1E1E" text-anchor="middle" font-weight="bold">16×16</text>
+</g>
+<g>
+<path d="M1040,590 V526" stroke="#2E8540" stroke-width="3" fill="none" marker-end="url(#a2E8540)"/>
+</g>
+<g>
+<text x="1250" y="470" font-size="44" fill="#6B6560" text-anchor="middle" font-weight="bold">…</text>
+</g>
+<g>
+<path d="M1480,175 V244" stroke="#DA1B2E" stroke-width="3" fill="none" marker-end="url(#aDA1B2E)"/>
+</g>
+<g>
+<rect x="1385.0" y="250" width="190" height="270" rx="10" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2.5"/>
+<rect x="1405.0" y="350" width="150" height="150" fill="#ffffff" stroke="#1F1E1E" stroke-width="2"/>
+<text x="1480" y="282" font-size="26" fill="#1F1E1E" text-anchor="middle" font-weight="bold">1024×1024</text>
+</g>
+<g>
+<path d="M1480,590 V526" stroke="#2E8540" stroke-width="3" fill="none" marker-end="url(#a2E8540)"/>
+</g>
+<g>
+<path d="M747.0,480 H799.0" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+<path d="M917.0,480 H968.0" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+<path d="M1108.0,480 H1220" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+<path d="M1276,480 H1381.0" stroke="#1F1E1E" stroke-width="3" fill="none" marker-end="url(#a1F1E1E)"/>
+</g>
+<g>
+<text x="1090" y="620" font-size="26" fill="#2E8540" text-anchor="middle" font-style="italic">ruido por bloque: detalles finos (pelo, poros, pecas)</text>
+<path d="M1480,526" />
+</g>
+<g>
+<path d="M650,656 V666 H1110 V656" stroke="#6B6560" stroke-width="3" fill="none"/>
+<text x="880.0" y="698" font-size="28" fill="#1F1E1E" text-anchor="middle" font-weight="bold">capas bajas: pose y forma de la cara</text>
+<path d="M1385,656 V666 H1575 V656" stroke="#6B6560" stroke-width="3" fill="none"/>
+<text x="1480.0" y="698" font-size="28" fill="#1F1E1E" text-anchor="middle" font-weight="bold">capas altas: textura y color</text>
+<text x="1480" y="433.0" font-size="26" fill="#6B6560" text-anchor="middle" font-style="italic">la cara final</text>
+</g>
+</svg>

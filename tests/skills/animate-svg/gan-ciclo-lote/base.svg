@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 990" width="1720" height="990" font-family="Helvetica, Arial, sans-serif" fill="#1F1E1E">
+<title>Un lote de entrenamiento: un error por imagen, un promedio, un paso de backpropagation por red</title>
+<desc>Paso del Discriminador: un lote de 3 imágenes reales (objetivo 1) y 3 generadas (objetivo 0); el Discriminador da un veredicto por imagen, cada imagen tiene su error (0.11, 0.22, 0.36, 1.14, 0.51, 0.80), el promedio del lote es 0.52 y con ese número se hace backpropagation, que actualiza solo el Discriminador. Paso del Generador: solo las 3 generadas, ahora con objetivo 1; errores 0.39, 0.92, 0.60; promedio 0.63; backpropagation; actualiza solo el Generador. Después, el siguiente lote.</desc>
+<defs>
+<marker id="a1F1E1E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1E1E"/></marker>
+<marker id="aDA1B2E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DA1B2E"/></marker>
+<marker id="a1F5FAD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F5FAD"/></marker>
+<marker id="a6B6560" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6B6560"/></marker>
+</defs>
+<rect width="1720" height="990" fill="#ffffff"/>
+<text x="532.5" y="30" font-size="24" fill="#6B6560" text-anchor="middle" font-weight="bold">UN LOTE (batch) DE ENTRENAMIENTO: 3 reales + 3 generadas</text>
+<g>
+<text x="375" y="64" font-size="22" fill="#1F5FAD" text-anchor="middle" font-weight="bold">reales (del dataset)</text>
+<text x="690" y="64" font-size="22" fill="#DA1B2E" text-anchor="middle" font-weight="bold">generadas por G con 3 ruidos z</text>
+<path d="M230,86 V76 H520 V86" stroke="#1F5FAD" stroke-width="3" fill="none"/>
+<path d="M545,86 V76 H835 V86" stroke="#DA1B2E" stroke-width="3" fill="none"/>
+</g>
+<rect x="44" y="96" width="1656" height="400" rx="16" fill="#ffffff" stroke="#1F5FAD" stroke-width="4"/>
+<text x="70" y="144" font-size="32" fill="#1F5FAD" text-anchor="start" font-weight="bold">Paso del Discriminador</text>
+<text x="490" y="144" font-size="26" fill="#6B6560" text-anchor="start"></text>
+<text x="70" y="216" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">imagen</text>
+<text x="70" y="278" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">objetivo</text>
+<text x="70" y="378" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">veredicto</text>
+<text x="70" y="428" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">error</text>
+<g>
+<rect x="240" y="178" width="30" height="30" fill="#000000"/>
+<rect x="270" y="178" width="30" height="30" fill="#ffffff"/>
+<rect x="240" y="208" width="30" height="30" fill="#ffffff"/>
+<rect x="270" y="208" width="30" height="30" fill="#000000"/>
+<rect x="240" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="270" y="278" font-size="30" fill="#1F5FAD" text-anchor="middle" font-weight="bold">1</text>
+<rect x="345" y="178" width="30" height="30" fill="#191919"/>
+<rect x="375" y="178" width="30" height="30" fill="#e5e5e5"/>
+<rect x="345" y="208" width="30" height="30" fill="#ffffff"/>
+<rect x="375" y="208" width="30" height="30" fill="#000000"/>
+<rect x="345" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="375" y="278" font-size="30" fill="#1F5FAD" text-anchor="middle" font-weight="bold">1</text>
+<rect x="450" y="178" width="30" height="30" fill="#000000"/>
+<rect x="480" y="178" width="30" height="30" fill="#ffffff"/>
+<rect x="450" y="208" width="30" height="30" fill="#e5e5e5"/>
+<rect x="480" y="208" width="30" height="30" fill="#191919"/>
+<rect x="450" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="480" y="278" font-size="30" fill="#1F5FAD" text-anchor="middle" font-weight="bold">1</text>
+<rect x="555" y="178" width="30" height="30" fill="#bfbfbf"/>
+<rect x="585" y="178" width="30" height="30" fill="#000000"/>
+<rect x="555" y="208" width="30" height="30" fill="#7f7f7f"/>
+<rect x="585" y="208" width="30" height="30" fill="#3f3f3f"/>
+<rect x="555" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="585" y="278" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">0</text>
+<rect x="660" y="178" width="30" height="30" fill="#7f7f7f"/>
+<rect x="690" y="178" width="30" height="30" fill="#999999"/>
+<rect x="660" y="208" width="30" height="30" fill="#666666"/>
+<rect x="690" y="208" width="30" height="30" fill="#7f7f7f"/>
+<rect x="660" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="690" y="278" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">0</text>
+<rect x="765" y="178" width="30" height="30" fill="#323232"/>
+<rect x="795" y="178" width="30" height="30" fill="#b2b2b2"/>
+<rect x="765" y="208" width="30" height="30" fill="#cccccc"/>
+<rect x="795" y="208" width="30" height="30" fill="#4c4c4c"/>
+<rect x="765" y="178" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="795" y="278" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">0</text>
+</g>
+<g>
+<rect x="220" y="301" width="625" height="40" rx="8" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2"/>
+<text x="532.5" y="330" font-size="22" fill="#1F1E1E" text-anchor="middle" font-weight="bold">Discriminador</text>
+<text x="270" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.9</text>
+</g>
+<g>
+<rect x="252" y="431.9" width="36" height="16.1" fill="#1F5FAD"/>
+<text x="294" y="453.9314347853636" font-size="22" fill="#1F5FAD" text-anchor="start">0.11</text>
+</g>
+<g>
+<text x="375" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.8</text>
+</g>
+<g>
+<rect x="357" y="427.4" width="36" height="20.6" fill="#1F5FAD"/>
+<text x="399" y="449.3831658370401" font-size="22" fill="#1F5FAD" text-anchor="start">0.22</text>
+</g>
+<g>
+<text x="480" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.7</text>
+</g>
+<g>
+<rect x="462" y="422.2" width="36" height="25.8" fill="#1F5FAD"/>
+<text x="504" y="444.2267637854549" font-size="22" fill="#1F5FAD" text-anchor="start">0.36</text>
+</g>
+<g>
+<text x="585" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.68</text>
+</g>
+<g>
+<rect x="567" y="392.0" width="36" height="56.0" fill="#DA1B2E"/>
+<text x="609" y="414.0" font-size="22" fill="#DA1B2E" text-anchor="start">1.14</text>
+</g>
+<g>
+<text x="690" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.4</text>
+</g>
+<g>
+<rect x="672" y="416.3" width="36" height="31.7" fill="#DA1B2E"/>
+<text x="714" y="438.27413447416177" font-size="22" fill="#DA1B2E" text-anchor="start">0.51</text>
+</g>
+<g>
+<text x="795" y="378" font-size="30" fill="#1F1E1E" text-anchor="middle">0.55</text>
+</g>
+<g>
+<rect x="777" y="405.2" width="36" height="42.8" fill="#DA1B2E"/>
+<text x="819" y="427.1651031112834" font-size="22" fill="#DA1B2E" text-anchor="start">0.80</text>
+</g>
+<g>
+<path d="M248,452 V460 H817 V452" stroke="#6B6560" stroke-width="3" fill="none"/>
+<text x="532.5" y="490" font-size="22" fill="#6B6560" text-anchor="middle" font-style="italic">se promedian</text>
+<path d="M817,460 H1055 V412" stroke="#6B6560" stroke-width="3" fill="none" marker-end="url(#a6B6560)"/>
+<rect x="920" y="284" width="270" height="124" rx="12" fill="#ffffff" stroke="#1F1E1E" stroke-width="3"/>
+<text x="1055" y="320" font-size="21" fill="#6B6560" text-anchor="middle">error del lote (6 imágenes)</text>
+<text x="1055" y="380" font-size="52" fill="#1F1E1E" text-anchor="middle" font-weight="bold">0.52</text>
+<path d="M1192,346 H1238" stroke="#1F5FAD" stroke-width="4" fill="none" marker-end="url(#a1F5FAD)"/>
+<rect x="1246" y="284" width="210" height="124" rx="12" fill="#ffffff" stroke="#1F5FAD" stroke-width="3"/>
+<text x="1351" y="334" font-size="24" fill="#1F5FAD" text-anchor="middle" font-weight="bold">un paso de</text>
+<text x="1351" y="368" font-size="24" fill="#1F5FAD" text-anchor="middle" font-weight="bold">backpropagation</text>
+<path d="M1458,346 H1498" stroke="#1F5FAD" stroke-width="4" fill="none" marker-end="url(#a1F5FAD)"/>
+<rect x="1506" y="284" width="170" height="124" rx="12" fill="#1F5FAD"/>
+<text x="1591" y="338" font-size="26" fill="#ffffff" text-anchor="middle" font-weight="bold">actualiza</text>
+<text x="1591" y="374" font-size="26" fill="#ffffff" text-anchor="middle" font-weight="bold">solo el D</text>
+</g>
+<g>
+<rect x="44" y="516" width="1656" height="400" rx="16" fill="#ffffff" stroke="#DA1B2E" stroke-width="4"/>
+<text x="70" y="564" font-size="32" fill="#DA1B2E" text-anchor="start" font-weight="bold">Paso del Generador</text>
+<text x="490" y="564" font-size="26" fill="#6B6560" text-anchor="start"></text>
+<text x="70" y="636" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">imagen</text>
+<text x="70" y="698" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">objetivo</text>
+<text x="70" y="798" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">veredicto</text>
+<text x="70" y="848" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">error</text>
+<rect x="240" y="598" width="30" height="30" fill="#000000" opacity="0.25"/>
+<rect x="270" y="598" width="30" height="30" fill="#ffffff" opacity="0.25"/>
+<rect x="240" y="628" width="30" height="30" fill="#ffffff" opacity="0.25"/>
+<rect x="270" y="628" width="30" height="30" fill="#000000" opacity="0.25"/>
+<rect x="240" y="598" width="60" height="60" fill="none" stroke="#C9C3BE" stroke-width="2.5"/>
+<rect x="345" y="598" width="30" height="30" fill="#191919" opacity="0.25"/>
+<rect x="375" y="598" width="30" height="30" fill="#e5e5e5" opacity="0.25"/>
+<rect x="345" y="628" width="30" height="30" fill="#ffffff" opacity="0.25"/>
+<rect x="375" y="628" width="30" height="30" fill="#000000" opacity="0.25"/>
+<rect x="345" y="598" width="60" height="60" fill="none" stroke="#C9C3BE" stroke-width="2.5"/>
+<rect x="450" y="598" width="30" height="30" fill="#000000" opacity="0.25"/>
+<rect x="480" y="598" width="30" height="30" fill="#ffffff" opacity="0.25"/>
+<rect x="450" y="628" width="30" height="30" fill="#e5e5e5" opacity="0.25"/>
+<rect x="480" y="628" width="30" height="30" fill="#191919" opacity="0.25"/>
+<rect x="450" y="598" width="60" height="60" fill="none" stroke="#C9C3BE" stroke-width="2.5"/>
+<rect x="555" y="598" width="30" height="30" fill="#bfbfbf"/>
+<rect x="585" y="598" width="30" height="30" fill="#000000"/>
+<rect x="555" y="628" width="30" height="30" fill="#7f7f7f"/>
+<rect x="585" y="628" width="30" height="30" fill="#3f3f3f"/>
+<rect x="555" y="598" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="585" y="698" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">1</text>
+<rect x="660" y="598" width="30" height="30" fill="#7f7f7f"/>
+<rect x="690" y="598" width="30" height="30" fill="#999999"/>
+<rect x="660" y="628" width="30" height="30" fill="#666666"/>
+<rect x="690" y="628" width="30" height="30" fill="#7f7f7f"/>
+<rect x="660" y="598" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="690" y="698" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">1</text>
+<rect x="765" y="598" width="30" height="30" fill="#323232"/>
+<rect x="795" y="598" width="30" height="30" fill="#b2b2b2"/>
+<rect x="765" y="628" width="30" height="30" fill="#cccccc"/>
+<rect x="795" y="628" width="30" height="30" fill="#4c4c4c"/>
+<rect x="765" y="598" width="60" height="60" fill="none" stroke="#1F1E1E" stroke-width="2.5"/>
+<text x="795" y="698" font-size="30" fill="#DA1B2E" text-anchor="middle" font-weight="bold">1</text>
+<text x="375.0" y="698" font-size="24" fill="#C9C3BE" text-anchor="middle" font-style="italic">las reales no entran</text>
+<rect x="535" y="721" width="310" height="40" rx="8" fill="#F2EEEE" stroke="#1F1E1E" stroke-width="2"/>
+<text x="690.0" y="750" font-size="22" fill="#1F1E1E" text-anchor="middle" font-weight="bold">Discriminador (no cambia)</text>
+<text x="585" y="798" font-size="30" fill="#1F1E1E" text-anchor="middle">0.68</text>
+<rect x="567" y="841.1" width="36" height="26.9" fill="#DA1B2E"/>
+<text x="609" y="863.1073910921442" font-size="22" fill="#DA1B2E" text-anchor="start">0.39</text>
+<text x="690" y="798" font-size="30" fill="#1F1E1E" text-anchor="middle">0.4</text>
+<rect x="672" y="820.6" width="36" height="47.4" fill="#DA1B2E"/>
+<text x="714" y="842.6168341629599" font-size="22" fill="#DA1B2E" text-anchor="start">0.92</text>
+<text x="795" y="798" font-size="30" fill="#1F1E1E" text-anchor="middle">0.55</text>
+<rect x="777" y="832.9" width="36" height="35.1" fill="#DA1B2E"/>
+<text x="819" y="854.9141332489653" font-size="22" fill="#DA1B2E" text-anchor="start">0.60</text>
+</g>
+<g>
+<path d="M563,872 V880 H817 V872" stroke="#6B6560" stroke-width="3" fill="none"/>
+<text x="690.0" y="910" font-size="22" fill="#6B6560" text-anchor="middle" font-style="italic">se promedian</text>
+<path d="M817,880 H1055 V832" stroke="#6B6560" stroke-width="3" fill="none" marker-end="url(#a6B6560)"/>
+<rect x="920" y="704" width="270" height="124" rx="12" fill="#ffffff" stroke="#1F1E1E" stroke-width="3"/>
+<text x="1055" y="740" font-size="21" fill="#6B6560" text-anchor="middle">error del lote (3 imágenes)</text>
+<text x="1055" y="800" font-size="52" fill="#1F1E1E" text-anchor="middle" font-weight="bold">0.63</text>
+<path d="M1192,766 H1238" stroke="#DA1B2E" stroke-width="4" fill="none" marker-end="url(#aDA1B2E)"/>
+<rect x="1246" y="704" width="210" height="124" rx="12" fill="#ffffff" stroke="#DA1B2E" stroke-width="3"/>
+<text x="1351" y="754" font-size="24" fill="#DA1B2E" text-anchor="middle" font-weight="bold">un paso de</text>
+<text x="1351" y="788" font-size="24" fill="#DA1B2E" text-anchor="middle" font-weight="bold">backpropagation</text>
+<path d="M1458,766 H1498" stroke="#DA1B2E" stroke-width="4" fill="none" marker-end="url(#aDA1B2E)"/>
+<rect x="1506" y="704" width="170" height="124" rx="12" fill="#DA1B2E"/>
+<text x="1591" y="758" font-size="26" fill="#ffffff" text-anchor="middle" font-weight="bold">actualiza</text>
+<text x="1591" y="794" font-size="26" fill="#ffffff" text-anchor="middle" font-weight="bold">solo el G</text>
+</g>
+<g>
+<path d="M1600,916 V968 H22 V81 H224" stroke="#6B6560" stroke-width="3" fill="none" stroke-dasharray="12 9" marker-end="url(#a6B6560)"/>
+<text x="860" y="952" font-size="24" fill="#6B6560" text-anchor="middle" font-style="italic">siguiente lote: nuevas imágenes reales y nuevos ruidos z, miles de veces</text>
+</g>
+</svg>

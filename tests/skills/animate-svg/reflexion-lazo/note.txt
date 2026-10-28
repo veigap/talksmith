@@ -1,0 +1,13 @@
+<!-- ascii-note:
+intent: el lazo largo de Reflexion, entre intentos completos; tres roles LLM distintos (Actor, Evaluator, Self-Reflection) y una memoria de reflexiones.
+emphasize: la caja Self-Reflection en rojo; la flecha de la memoria que vuelve al Actor para el intento siguiente.
+labels: Actor, Evaluator, Self-Reflection, memoria, intento k / k+1, Respuesta.
+consistency: mismo lienzo y tratamiento de cajas que 4.1 y 5.2.
+animation:
+  1. intento k entra al Actor (LLM, tipo ReAct).
+  2. El Actor produce la trayectoria, que baja al Evaluator: ¿pasó? (tests, heurística o LLM).
+  3. no: la flecha baja a Self-Reflection (LLM), que escribe la crítica.
+  4. La crítica baja a memoria: 1 a 3 reflexiones previas.
+  5. La flecha intento k+1 vuelve de memoria al Actor: se dibuja una vuelta; en cada vuelta la memoria suma una reflexión y guarda de 1 a 3.
+  6. sí: el Evaluator aprueba, la flecha baja a Respuesta y el lazo termina; el diagrama queda completo.
+-->

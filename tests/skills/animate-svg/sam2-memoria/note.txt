@@ -1,0 +1,12 @@
+<!-- ascii-note:
+intent: el loop de memoria de SAM 2; la máscara de cada frame se guarda y condiciona el frame siguiente
+emphasize: el memory bank que cierra el loop
+labels: frame t entra a la izquierda, mascara t sale a la derecha
+terms: image encoder, memory attention, mask decoder, prompt encoder, memory encoder, memory bank
+animation:
+  1. «frame t» pasa por «image encoder», «memory attention» y «mask decoder», y sale «mascara t».
+  2. La máscara entra al «memory encoder» y queda guardada en el «memory bank».
+  3. Llega el frame siguiente: «memory attention» lee del «memory bank» lo que se guardó de los anteriores.
+  4. Unos frames seguidos: el objeto se mueve y la máscara lo sigue, cada vez condicionada por la memoria.
+  5. En un frame, el «prompt encoder» corrige con un clic, y la corrección viaja por la memoria a los frames que siguen.
+-->

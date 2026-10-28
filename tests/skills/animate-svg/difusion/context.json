@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/segmentacion-y-stable-diffusion — the ASCII behind images/difusion-en-vivo.gif; the `animation:` brief was written for this fixture",
+  "slide_title": "1. La idea de difusión: agregar y quitar ruido",
+  "slide_content_prose": "- Difusión viene de la física: una gota de tinta en un vaso de agua se dispersa hasta volverse uniforme.\n- **Forward** (entrenamiento): a una imagen real le agregamos un poco de ruido gaussiano en cada paso, durante miles de pasos, hasta que queda ruido puro.\n- **Reverse** (inferencia): la red hace el camino inverso. Arranca de ruido puro y quita ruido paso a paso, guiada por la condición c.\n- La red aprende una sola cosa: dado un latente ruidoso y un timestep, **predecir qué ruido fue agregado**. Con esa predicción, el ruido se puede restar.",
+  "speaker_notes": "Diferencia con las GANs: no hay dos redes compitiendo. Una sola red aprende a desruidizar, es más estable de entrenar, no tiene mode collapse y da más diversidad. Imagen para decir: Stable Diffusion talla la imagen, arranca de un bloque de ruido y saca lo que sobra hasta dejar la figura.\n\n---",
+  "presentation_language": "es"
+}

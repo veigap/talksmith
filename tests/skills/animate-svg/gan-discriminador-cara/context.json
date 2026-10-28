@@ -1,0 +1,7 @@
+{
+  "source": "talksmith-ing/talks/redes-generativas-antagonicas — images/discriminador-cara.svg",
+  "slide_title": "10. Pongamos todo junto del Discriminador",
+  "slide_content_prose": "- **Cuando la cara prototipo pasa por la red completa:**\n- **σ(1) = 0.73 → \"Estoy un 73% seguro de que esto es real\"**\n- **Como 0.73 > 0.5, clasifica correctamente la imagen como real ✓**\n\n- **Cuando la imagen de ruido pasa por la misma red:**\n- **σ(−1.5) = 0.18 → \"Estoy solo un 18% seguro de que esto sea real\"**\n- **Como 0.18 < 0.5, clasifica correctamente la imagen como falsa ✓**\n\n![La cara prototipo pasa por la red del Discriminador y sale σ(1) = 0.73, marcado en el gráfico de la sigmoide](images/discriminador-cara.svg)\n\n\n\n![La imagen de ruido pasa por la misma red: 0.25 − 1 − 0.5 + 0.75 + b = −1.5, y sale σ(−1.5) = 0.18, marcado en el gráfico de la sigmoide](images/discriminador-ruido.svg)",
+  "speaker_notes": "---",
+  "presentation_language": "es"
+}

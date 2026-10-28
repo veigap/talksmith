@@ -1,0 +1,31 @@
+ seed --> latente ruidoso 64x64x4
+                 |
+                 v
+        +-------------------------------------+
+        |  U-Net predice el ruido             |<--- embedding del prompt
+        |  (latente, timestep t, embedding)   |
+        +-------------------------------------+
+                 |
+                 v
+        +-------------------------------------+
+        |  scheduler resta el ruido           |
+        |  -> latente un poco mas limpio      |
+        +-------------------------------------+
+                 |
+                 +----> repetir ~50 veces (t baja) --+
+                 |                                   |
+                 |<----------------------------------+
+                 v
+        [ VAE decoder ] --> imagen 512x512x3
+
+<!-- ascii-note:
+intent: el loop de inferencia de Stable Diffusion; U-Net predice ruido, el scheduler lo resta, ~50 veces, y el VAE decodifica
+emphasize: el loop de ~50 repeticiones
+labels: dimensiones del latente y de la imagen
+terms: seed, scheduler, timestep
+animation:
+  1. «seed» da el «latente ruidoso 64x64x4».
+  2. La U-Net, con el «embedding del prompt», predice el ruido, y el «scheduler» lo resta: el latente queda un poco más limpio.
+  3. El loop gira: t baja vuelta a vuelta, un contador llega a ~50 y el latente pasa de ruido a una imagen reconocible.
+  4. El «VAE decoder» devuelve la «imagen 512x512x3».
+-->

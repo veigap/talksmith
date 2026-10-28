@@ -1,0 +1,9 @@
+<!-- image-note:
+intent: la pasada hacia adelante de la cara prototipo por el Discriminador, hasta su veredicto en la curva sigmoide.
+animation:
+  1. La imagen 2×2 (1, 0 / 0, 1).
+  2. Los píxeles entran como x₁…x₄.
+  3. Los pesos +1, −1, −1, +1 llevan cada entrada a σ, que calcula «w·x + b» con «b = −1».
+  4. Sale «σ(1) = 0.73».
+  5. El punto 0.73 se marca en la curva «σ(x) = 1/(1 + e^−x)», y el diagrama queda completo.
+-->
