@@ -13,6 +13,20 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.5.1] — 2026-10-28
+
+No re-init needed.
+
+### Changed
+
+- **The animated diagram is a separate file; the original stays untouched.** The animation pass
+  no longer rewrites the approved diagram: it writes the animated version beside it
+  (`<name>.anim.svg`, with its own `.anim.png`), and the slide points at the animated one. The
+  approved still is always there to compare against or fall back to — dropping an animation
+  that did not come out clean is just deleting its file, and re-rendering a diagram retires its
+  old animation so a slide never shows the motion of a drawing that has changed. Cleaning up
+  unused images keeps the original as long as its animated version is in use.
+
 ## [1.5.0] — 2026-10-28
 
 No re-init needed.

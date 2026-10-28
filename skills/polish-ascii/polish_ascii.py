@@ -403,11 +403,22 @@ def stamp_svg_digest(svg_path: Path, digest: str) -> None:
     svg_path.write_text(text)
 
 
+# The animated version of a render (`animate-svg`) sits beside its base as `<stem>.anim.svg` +
+# `<stem>.anim.png`; the base is never touched. It belongs to the base's set — `gc` retires both
+# together, reuse carries both to a renumbered stem — but it is never a render in its own right.
+ANIM = ".anim"
+
+
 def _companions(images_dir: Path, stem: str) -> tuple[Path, ...]:
     """Every file one rendered diagram owns, as `gc` and render reuse must both see it."""
     crit = images_dir / ".critique"
     return (images_dir / f"{stem}.svg", images_dir / f"{stem}.png", images_dir / f"{stem}.ascii",
-            crit / f"{stem}.png", crit / f"{stem}.md")
+            crit / f"{stem}.png", crit / f"{stem}.md",
+            images_dir / f"{stem}{ANIM}.svg", images_dir / f"{stem}{ANIM}.png", crit / f"{stem}{ANIM}.png")
+
+
+def _is_anim(p: Path) -> bool:
+    return p.name.endswith(f"{ANIM}.svg")
 
 
 def _stamped_svg_index(images_dir: Path) -> dict[str, list[Path]]:
@@ -420,6 +431,8 @@ def _stamped_svg_index(images_dir: Path) -> dict[str, list[Path]]:
     """
     index: dict[str, list[Path]] = {}
     for p in sorted(images_dir.glob("*.svg")):
+        if _is_anim(p):                         # an animation is never a donor render
+            continue
         d = read_svg_digest(p)
         if d:
             index.setdefault(d, []).append(p)
@@ -545,6 +558,11 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         svg_basename = render["svg_basename"]
         if not svg_basename.endswith(".svg"):
             svg_basename = f"{svg_basename}.svg"
+        # An animated version, when the animation pass produced one, is what the slide shows; the
+        # base stays beside it untouched.
+        anim = f"{svg_basename[:-4]}{ANIM}.svg"
+        if (final_path.parent / "images" / anim).is_file():
+            svg_basename = anim
         alt = render.get("alt") or b["slide_id"]
         start_idx = b["ascii"]["start_line"] - 1
         end_idx = b["ascii"]["end_line"] - 1
@@ -895,7 +913,7 @@ def _generated_diagram_stems(images_dir: Path) -> set[str]:
     for p in images_dir.glob("*.ascii"):
         stems.add(p.stem)
     for p in images_dir.glob("*.svg"):
-        if read_svg_digest(p) is not None:      # carries talksmith-ascii-sha256 → we drew it
+        if not _is_anim(p) and read_svg_digest(p) is not None:   # stamped → we drew it
             stems.add(p.stem)
     return stems
 

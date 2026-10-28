@@ -1,6 +1,6 @@
 ---
 name: talksmith:animate-svg
-description: Evolve one finished, static diagram SVG into its animated version, from the note's `animation:` brief and the slide's context. The model reads the diagram and its subject and authors the motion itself; a checker enforces only the deck's playback contract and captures frames for the blind critic. Dispatched by the diagram-illustrator after a diagram's static render is approved (Step 6), or directly on a hand-authored diagram SVG that carries a note.
+description: Evolve one finished, static diagram SVG into its animated version, from the note's `animation:` brief and the slide's context. The model reads the diagram and its subject and authors the motion itself; a checker enforces only the deck's playback contract and captures frames for the blind critic. Writes the animated version beside the base (`<stem>.anim.svg`), never over it. Dispatched by the diagram-illustrator after a diagram's static render is approved (Step 6), or directly on a hand-authored diagram SVG that carries a note.
 ---
 
 # talksmith:animate-svg — evolve a finished diagram into its animation
@@ -15,31 +15,35 @@ The only fixed part is the deck's **playback contract** below: the few propertie
 
 | Input | Required? | Meaning |
 |---|---|---|
-| `svg_path` | yes | The finished static SVG — for an ASCII diagram, the render the critic approved. Edited in place. |
+| `svg_path` | yes | The finished static SVG — for an ASCII diagram, the render the critic approved. **Read-only:** the base is never edited. |
 | `note` | yes | The diagram's whole note, verbatim. Its `animation:` section is the brief (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*); `animation: loop` on the key line asks for a cycle. |
 | `slide_title`, `slide_content_prose`, `speaker_notes`, `presentation_language` | recommended | What the slide says around the diagram — the point the animation serves, and the language of every word it adds. |
 | `ascii_file` | when there is one | The `.ascii` sidecar — passed to the checker so it reads the note's mode from the same bytes the render did. |
 | `previous_defects` | on a revision | The critic's defects on the last attempt, verbatim. |
 
+## The base and the animated version
+
+The base stays exactly as approved, and the animation is a **sibling**: `<stem>.svg` / `<stem>.png` are the still, `<stem>.anim.svg` / `<stem>.anim.png` the animated version and its own still. The slide points at the animated version — for an ASCII diagram `polish-ascii cleanup` writes that ref whenever `<stem>.anim.svg` exists; for a hand-drawn one, point its image ref at `images/<stem>.anim.png` yourself. Keeping the base means an animation that does not work costs nothing (delete the `.anim.*` files and the slide shows the still), a re-animation always starts from what was approved, and the critic always has the approved still to compare against.
+
 ## Process
 
-1. **Keep the approved still.** Copy `svg_path` to `<svg parent>/.critique/<basename>.static.svg` before touching it, and rasterize that copy to `.critique/<basename>.static.png` (`rasterize.py … --width 1600`) — the critic's reference for what the animation changed. If you return `failed`, copy it back: an animation that did not work never costs the slide its approved diagram. **On a revision** (`previous_defects` given) that copy already exists and is still the approved still — leave it alone, start from your previous animated SVG, and fix what the defects name.
+1. **Start the animated copy.** Copy `<stem>.svg` to `<stem>.anim.svg` beside it and work only on that. Make sure `.critique/<stem>.png` — the critic's view of the approved still — exists; rasterize the base to it (`rasterize.py … --width 1600`) if it does not. **On a revision** (`previous_defects` given) the copy already exists: start from it and fix what the defects name.
 2. **Read** the SVG, the note and the slide. Decide what the motion is for, then what moves.
-3. **Evolve the SVG in place.** Add one `<style>` right after `<title>`/`<desc>`, add `class="ts-anim-<basename>"` to the root, and add whatever elements the animation needs. Two kinds of addition, and the difference matters:
+3. **Evolve `<stem>.anim.svg`.** Add one `<style>` right after `<title>`/`<desc>`, add `class="ts-anim-<stem>"` to the root, and add whatever elements the animation needs. Two kinds of addition, and the difference matters:
    - **narration** — anything that only exists to tell the motion (a token, a caption, a highlight) — starts at `opacity="0"` and appears only through the animation, so the still never shows it;
-   - **content** — something that belongs to the diagram (an image a block produces, a value it outputs) — is visible at rest, because it is now part of the still. It must be as correct as the rest of the diagram; the critic will judge it in the still too.
+   - **content** — something that belongs to the diagram (an image a block produces, a value it outputs) — is visible at rest, because it is now part of the animated version's still. It must be as correct as the rest of the diagram; the critic will judge it in the still too.
 
-   Leave the approved drawing alone beyond what the animation needs.
+   Leave the approved drawing alone beyond what the animation needs. Drop a `talksmith-ascii-sha256` stamp if the copy carried one — that stamp marks the base as a render, and the animated version is not one.
 4. **Check the contract and capture frames:**
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/animate-svg/check_animation.py <svg_path> --ascii <ascii_file> \
-       --frames <svg parent>/.critique/<basename>/        # no sidecar: [--loop]
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/animate-svg/check_animation.py <stem>.anim.svg --ascii <ascii_file> \
+       --frames <images>/.critique/<stem>.anim/        # no sidecar: [--loop]
    ```
 
    A defect here is mechanical and yours to fix now — fix it and run again (twice at most) rather than handing it to the critic. `frames: failed` (no Chrome) is not a defect: the critic will judge the still only.
-5. **Refresh the still's companions** — the still can have changed (content added, viewBox grown to make room): run [`ascii-to-svg`](../ascii-to-svg/SKILL.md)'s `validate_svg.py`, both `rasterize.py` PNGs and `audit_aspect.py` exactly as its steps 6–9 do.
-6. **Return** one line: `animated: <svg_path> · animation: ok[, loop] · frames: <dir> (<n> frames) · png_deliverable: <path> · png_critique: <path> · aspect_audit: <ok|defect: …>` — or `failed: <reason>` with the still restored.
+5. **Give the animated version its companions** — its still can differ from the base (content added, viewBox grown to make room): run [`ascii-to-svg`](../ascii-to-svg/SKILL.md)'s `validate_svg.py`, both `rasterize.py` PNGs (`<stem>.anim.png`, `.critique/<stem>.anim.png`) and `audit_aspect.py` on `<stem>.anim.svg`, exactly as its steps 6–9 do.
+6. **Return** one line: `animated: <stem>.anim.svg · animation: ok[, loop] · frames: <dir> (<n> frames) · png_deliverable: <stem>.anim.png · png_critique: <path> · aspect_audit: <ok|defect: …>` — or `failed: <reason>` after deleting the `.anim.*` files, which leaves the slide on its approved still.
 
 You do not critique your own animation, for the reason the critic exists: you would verify it against the CSS you remember writing, not against what plays.
 
@@ -49,7 +53,7 @@ What the deck needs, and why — this is the whole of what is fixed:
 
 | | Rule | Why |
 |---|---|---|
-| 1 | One `<style>` marked `/* talksmith-animation */`; every selector starts with `.ts-anim-<basename>`, every `@keyframes` name with `ts-anim-<basename>-` | The deck inlines every SVG into one page, so an unscoped rule or keyframe reaches — or is overwritten by — another diagram's. |
+| 1 | One `<style>` marked `/* talksmith-animation */`; every selector starts with `.ts-anim-<stem>`, every `@keyframes` name with `ts-anim-<stem>-` | The deck inlines every SVG into one page, so an unscoped rule or keyframe reaches — or is overwritten by — another diagram's. |
 | 2 | CSS animations only — no SMIL (`<animate*>`, `<set>`), no `<script>`, no `on*` handlers | The deck stops animations off the present slide, in print and with animations off, and back replays them, through `animation: none` and `getAnimations()` — which reach CSS animations only. |
 | 3 | Plays once unless the note says `animation: loop` | A diagram that cycles forever competes with the presenter. |
 | 4 | Every animated rule holds its end (`both` or `forwards`) | A finished animation that does not hold drops out of `getAnimations()`, and back-to-replay finds nothing on exactly the slide where it is done. |

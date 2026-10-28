@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Build a visual gallery of the animate-svg reference cases: output/index.html.
 
+Reads the layout the pass leaves: `<case>.svg` (the base, untouched) beside `<case>.anim.svg` (the
+animated version the slide points at); a dropped attempt, kept for review, is
+`.critique/<case>.dropped.svg`.
+
 Run:  python3 tests/skills/animate-svg/build_gallery.py   (then open output/index.html)
 
 One card per case that has been run: the animated SVG playing (with a replay button), the approved
@@ -35,12 +39,12 @@ def _brief(note: str) -> list[str]:
 def main() -> int:
     cards = []
     for case in sorted(p for p in HERE.iterdir() if p.is_dir() and (p / "note.txt").is_file()):
-        anim, still = OUT / f"{case.name}.svg", OUT / ".critique" / f"{case.name}.static.svg"
+        still, anim = OUT / f"{case.name}.svg", OUT / f"{case.name}.anim.svg"
         dropped = OUT / ".critique" / f"{case.name}.dropped.svg"
+        label = "Animated — what the slide shows (&lt;stem&gt;.anim.svg)"
         if not anim.is_file():
-            continue
-        label = "Animated"
-        if dropped.is_file() and "ts-anim-" not in anim.read_text(encoding="utf-8"):
+            if not dropped.is_file():
+                continue
             anim, label = dropped, "Dropped attempt — not shipped; the slide keeps the still"
         ctx = json.loads((case / "context.json").read_text(encoding="utf-8"))
         verdict = OUT / ".critique" / f"{case.name}.verdict.txt"
@@ -54,7 +58,7 @@ def main() -> int:
     <button class="replay" type="button">↻ Replay</button></header>
   <div class="pair">
     <figure class="anim"><figcaption>{label}</figcaption>{_inline(anim, f"a-{case.name}-")}</figure>
-    <figure class="still"><figcaption>Approved still</figcaption>{_inline(still, f"s-{case.name}-") if still.is_file() else "<p>—</p>"}</figure>
+    <figure class="still"><figcaption>Base — the approved still, untouched (&lt;stem&gt;.svg)</figcaption>{_inline(still, f"s-{case.name}-") if still.is_file() else "<p>—</p>"}</figure>
   </div>
   <details><summary>Brief and critique</summary><ol>{steps}</ol><pre>{html.escape(v)}</pre></details>
 </section>""")

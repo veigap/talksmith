@@ -333,7 +333,9 @@ def _vector_twin(p: Path) -> Path | None:
 
     The provenance test is the same one `polish-ascii gc` uses, and it is what keeps this safe: a
     presenter's own `chart.png` is never swapped for an unrelated `chart.svg` that happens to share
-    a stem, because neither proof exists for it.
+    a stem, because neither proof exists for it. An animated version (`<stem>.anim.svg`,
+    `animate-svg`) proves itself by its `talksmith-animation` style instead — the stamp stays on
+    its base.
     """
     if p.suffix.lower() not in (".png", ".jpg", ".jpeg"):
         return None
@@ -343,9 +345,12 @@ def _vector_twin(p: Path) -> Path | None:
     if p.with_suffix(".ascii").is_file():
         return twin
     try:
-        return twin if "talksmith-ascii-sha256" in twin.read_text(encoding="utf-8")[:400] else None
+        text = twin.read_text(encoding="utf-8")
     except OSError:
         return None
+    if "talksmith-ascii-sha256" in text[:400]:
+        return twin
+    return twin if twin.stem.endswith(".anim") and "/* talksmith-animation */" in text else None
 
 
 # ── video media ──────────────────────────────────────────────────────────────────────────────

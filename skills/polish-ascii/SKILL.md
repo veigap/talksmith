@@ -23,7 +23,7 @@ The diagram-illustrator picks templates and dispatches `talksmith:ascii-to-svg` 
 
 A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup). **`apply` does not stamp** — if you use it after rendering SVGs by hand, run `stamp-renders` yourself or the next pass re-renders everything.
 
-A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references. It is **non-destructive by default** (lists only); `--apply` **moves** the files — `.critique/<stem>.md` too — into `images/.trash/<YYYYMMDD-HHMMSS>/`, keeping their relative layout so a restore is one `mv` (nothing else globs into `.trash/`; delete the folder once sure). Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
+A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references — an animated version (`<stem>.anim.svg` / `.anim.png`) goes with its base, and a ref to the animated version keeps the base alive. It is **non-destructive by default** (lists only); `--apply` **moves** the files — `.critique/<stem>.md` too — into `images/.trash/<YYYYMMDD-HHMMSS>/`, keeping their relative layout so a restore is one `mv` (nothing else globs into `.trash/`; delete the folder once sure). Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md           # list
@@ -190,6 +190,8 @@ For each block with `render` non-null:
    -->
    ```
    Any `-->` inside `<ascii.payload>` (e.g. `A --> B` arrows) is escaped to `--&gt;` in the echo, so it can't close the `<!-- ascii-source: … -->` comment early and leak the rest of the diagram into the visible body. The `.ascii` sidecar keeps the exact, un-escaped source; this echo is provenance only.
+
+   **When the block has an animated version** (`images/<stem>.anim.svg`, written by [`animate-svg`](../animate-svg/SKILL.md) beside its untouched base), the ref names it instead — `images/<stem>.anim.svg`: the slide shows the animation, and the base stays as the approved still.
 
    Do **not** modify the note region (lines `note.start_line` … `note.end_line`). It stays where it was, directly after the new image reference + `ascii-source` echo.
 

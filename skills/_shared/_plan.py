@@ -110,9 +110,12 @@ def read_json_arg(value: str) -> Any:
 def referenced_stems(final_text: str) -> set[str]:
     """Every `images/<name>` basename referenced by final.md, extension stripped → stem.
 
-    This is `gc`'s live set: a generated file whose stem is absent here is orphaned.
+    This is `gc`'s live set: a generated file whose stem is absent here is orphaned. A ref to an
+    animated version (`<stem>.anim.*`) keeps its base `<stem>` alive too — the base is the approved
+    still the animation was evolved from, and it stays.
     """
-    return {IMG_EXT_RE.sub("", m.group(1).rsplit("/", 1)[-1]) for m in IMG_REF_RE.finditer(final_text)}
+    stems = {IMG_EXT_RE.sub("", m.group(1).rsplit("/", 1)[-1]) for m in IMG_REF_RE.finditer(final_text)}
+    return stems | {s[:-len(".anim")] for s in stems if s.endswith(".anim")}
 
 
 # ── gc: list, then (with --apply) move to a recoverable trash ───────────────

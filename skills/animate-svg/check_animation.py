@@ -282,7 +282,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"failed: animation: {e}")
             return 2
 
-    scope = "ts-anim-" + (re.sub(r"[^a-z0-9-]+", "-", a.svg.stem.lower()).strip("-") or "svg")
+    stem = a.svg.stem[:-len(".anim")] if a.svg.stem.endswith(".anim") else a.svg.stem   # x.anim.svg → x
+    scope = "ts-anim-" + (re.sub(r"[^a-z0-9-]+", "-", stem.lower()).strip("-") or "svg")
     animated, defects = check(text, root, scope, mode)
     if defects:
         print("animation: defect: " + "; ".join(dict.fromkeys(defects)))
