@@ -13,6 +13,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.4.0] — 2026-10-28
+
+No re-init needed.
+
+### Added
+
+- **Process diagrams animate.** The `ascii-note` under an ASCII diagram gains an `animation:`
+  section: numbered beats, in the order the process runs, saying what appears, moves or lights
+  up, named by the diagram's own labels and ending on the diagram as drawn. The editor writes it
+  in the same edit as the ASCII for every diagram of an algorithm, a process or a sequence of
+  steps (static structure — hierarchy, anatomy, comparison — needs none), and the composer flags
+  a process diagram without one as `[major]`. At Step 6 the renderer turns the beats into an
+  **animated SVG**: in the HTML deck the beats arrive one after another each time the slide is
+  presented, and replay when you come back to it. The PDF, the `.pptx`, the print view and a
+  deck with animations toggled off all show the complete, static diagram, and so do the PNGs
+  the critic reviews. A mis-tagged animation is caught mechanically and sent back for revision
+  like any other render defect.
+
 ## [1.3.2] — 2026-10-20
 
 No re-init needed.

@@ -120,6 +120,9 @@ intent: <one line — what this diagram is trying to show>
 emphasize: <the ONE box/arrow/label that should pop — the diagram's single focal element>
 labels: <if axes/legend/units exist, list them>
 terms: <optional — terms of art kept in another language on purpose, comma-separated: tools, loop>
+animation:
+  1. <first beat — what appears, moves or lights up, named by its ASCII label>
+  2. <next beat, in the order the process runs>
 -->
 ```
 
@@ -131,12 +134,20 @@ Hard rules for the editor when *producing* ASCII:
 
 Downstream extractors key on the `ascii` tag **alone** — there is no payload heuristic and no fallback tier, so an untagged fence is never rendered no matter what it draws ([`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
 
-The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines, plus `terms:` when needed) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent, and to the blind critic as the diagram's intent.
+The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines, plus `terms:` and `animation:` when needed) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent, and to the blind critic as the diagram's intent.
 - **`emphasize:` names exactly one element.** The single-accent rule is [`diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md)'s (one focal element per diagram); a note naming two produces two red elements the critic then has to wave through. If two things genuinely compete, the diagram is making two points — pick one, or split the slide.
 - **`terms:` declares deliberate foreign-language terms** (e.g. `tools`, `loop` kept in English in a Spanish deck because the slide prose uses them). The critic flags any label not in the presentation language *unless* it is listed here — so list every term of art the diagram keeps, or it will be "translated" away from the slide's prose.
 - **No slide numbers or cross-references in the note** (`"same layout as ReAct (3.2)"`). The note is part of the render digest, so a renumbering that only rewrites such a reference re-renders a diagram whose drawing did not change. Name the other diagram by its subject, not its position.
+- **`animation:` describes how the diagram unfolds — required on every diagram of an algorithm, a process, or a sequence of steps.** `intent:` says *what* the diagram shows; `animation:` says *in what order it happens*. Whoever draws the ASCII writes it in the same edit, because the order is in their head when they draw — never left for a later pass. It is required when the diagram's meaning is an order of events: a pipeline, an algorithm, a loop, state transitions, a request/response exchange, a numbered procedure. Omit it for static structure (hierarchy, anatomy, comparison, map), where nothing happens in sequence. When you touch an existing process diagram that lacks one, add it.
+  - **One numbered beat per line, in the order the process runs.** Each beat names what it touches by the ASCII's own labels — the box that appears, the arrow that carries data, the element that lights up — and never introduces anything the ASCII does not draw.
+  - **The last beat leaves the diagram complete as drawn.** The rendered SVG is the end state; the animation is the path to it.
+  - **A loop says so:** which arrow returns, how many passes are shown, what changes on each pass, what ends it.
+  - **3–8 beats.** More means the diagram is carrying two processes — split it.
+  - **Describe the process, not the delivery** — no seconds, clicks, or "the presenter points at" cues (those belong to nobody's note).
+  - It is exempt from the terse-note budget — beats are what it costs. It is part of the note and so of the render digest: editing it re-renders the diagram.
+  - **It is what the diagram plays.** At Step 6 the renderer turns the beats into an animated SVG that runs beat by beat when its slide is presented in the HTML deck; the PDF and `.pptx` keep the complete, static diagram ([`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) → *Animation*). So a beat is something the audience will watch arrive — write it as one.
 
-**An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
+**An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing — and always when it needs an `animation:`.
 
 An ASCII block in a slide that has **no** Markdown image reference is treated as render-driving — the diagram-illustrator renders it to SVG in Step 6 (from `final.md`) and the editor inlines the result in `final.md`. An ASCII block in a slide that **does** have a Markdown image reference is documentation-only (see *Optional ASCII alongside an image link* above) and is bypassed by every Step-6 pipeline stage.
 

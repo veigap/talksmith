@@ -28,7 +28,7 @@ If the scope target doesn't exist in `draft.md`, return: `failed: scope <scope> 
 4. **One idea per slide** (`principles.md`). Flag slides making two or more independent points — propose a split.
 5. **No walls of bullets** (`principles.md`). Flag 6+ dense bullets — propose a visual or a split.
 6. **Words don't duplicate narration** (Mayer's redundancy). Flag prose the presenter will recite aloud — propose moving to `Speaker notes` and replacing with a visual or terse claim.
-7. **Image-first when concept has shape** (`principles.md`). Flag bullet slides whose content has structure (flow, hierarchy, comparison, before/after) — propose an ASCII diagram.
+7. **Image-first when concept has shape** (`principles.md`). Flag bullet slides whose content has structure (flow, hierarchy, comparison, before/after) — propose an ASCII diagram. Flag `[major]` an ASCII diagram of an algorithm, process or sequence of steps whose `ascii-note` has no `animation:` section (rule: [`editor.md`](editor.md) → *ASCII diagrams*).
 8. **Narrative arc** (scope `agenda` or `full`). Is there a hook, tension, resolution? Sections > ~8 slides?
 9. **Learnings violations.** Check every `learnings.md` entry whose surface is in scope. These are stronger defaults than `principles.md`.
 

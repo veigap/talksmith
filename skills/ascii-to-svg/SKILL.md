@@ -28,7 +28,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 |---|---|---|
 | `ascii_block` | Mode A | the fenced block's payload, verbatim |
 | `ascii_file` | Mode B | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.ascii` |
-| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis; `terms:` lists terms of art to keep verbatim (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*). |
+| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis; `terms:` lists terms of art to keep verbatim; `animation:` beats become the diagram's animation (see *Animation* below) (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*). |
 | `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.svg`. In Mode B, if omitted, the skill defaults to the sibling SVG path (same basename as `ascii_file`, `.svg` extension). |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
 | `slide_content_prose` | recommended | the `### Content` body — used for subtitles, panel headings, in-panel callouts. Pass an empty string for sparse-context slides; the skill falls back to minimal labelling. |
@@ -86,7 +86,17 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    - `W` is free. `0 0 680 H` is a common choice for moderate aspects, not a rule — very wide art needs a larger `W` to leave legible height (a 6.7:1 diagram at W=680 gets ~102 units of height, too little for three rows of text).
    - **There is no useful self-check you can run in your head** — any "would the raster match" arithmetic derives from the viewBox and confirms itself by construction. The real check is mechanical and runs in step 9.
 
+   **Tag the beats when the note has an `animation:` section** — the one animation step that is yours; the motion itself is not (see *Animation* below). Wrap what each numbered beat brings in as `<g data-beat="N">`, N being the beat's number in the note: the box, its label, and the arrow that arrives at it go in the same group. An element already on screen that the beat *lights up* rather than introduces gets `data-beat="N" data-beat-effect="pulse"` instead. Elements no beat names stay untagged — they are there from the start. Every beat from 1 to the note's last gets at least one element; never nest a tagged group inside another, never tag the root `<svg>`, `<defs>` or a `<marker>` (a marker follows its path's group). Draw everything fully visible — no `opacity:0`, no `visibility`, no CSS animation, SMIL or script of your own.
+
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
+
+   **If you tagged beats, animate it** — before validating, so validation sees the final file:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/animate_svg.py <output_path> --ascii <ascii_file>   # Mode A: --beats <N>
+   ```
+
+   It checks the tags against the note's beat count and injects the animation. `animation: <N> beats` / `animation: none` → carry the line into the step-10 report. Exit 1 (`animation: defect: …`) leaves the file static and complete; report the line verbatim — like an aspect-audit defect it is a revision input, not a failure.
 
    **Then validate it against the aspect-ratio contract** by running [`validate_svg.py`](validate_svg.py) on the file you just wrote:
 
@@ -141,11 +151,17 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    Pass the tool's line through **verbatim** — it proposes a corrected viewBox that is a pure crop, precise enough that the re-render usually lands in one pass. Do **not** apply the suggestion yourself: whitespace is sometimes intentional, and reframing the presenter's diagram isn't this skill's call.
 
 10. **Return** a one-line report:
-    - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
+    - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · animation: <none|N beats|defect: …> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
     - On skip: `skipped: <reason>`
     - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_deliverable: <reason>` — without the PNG the Step-7 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
 
-    An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the diagram-illustrator can act on it in the next iteration.
+    An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the diagram-illustrator can act on it in the next iteration. The same holds for an `animation` defect.
+
+## Animation
+
+A diagram whose note has an `animation:` section ships as an **animated SVG**: its beats fade in one after another (a `pulse` beat scales an element that is already there), and the last beat leaves the diagram exactly as drawn. The work is split so that nothing about the motion is model-authored: you tag the beats (step 5), [`animate_svg.py`](animate_svg.py) owns everything else — timing, keyframes, the scope class that keeps one diagram's timings off another once the deck inlines them all into one page, the structural checks. Its docstring is the reference.
+
+**The still state is the end state.** The animation is CSS whose keyframes start from hidden; the elements themselves stay fully visible. So everything that does not play it draws the complete diagram with no special case: cairosvg ignores the keyframes (the deliverable PNG, the critic's PNG and the aspect audit all see every beat), and the deck plays the beats only on the slide being presented — restarting on each entry — and never in the PDF, the `.pptx`, the print view or with the deck's animations toggled off ([`theme.css`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/templates/html/theme.css) → *Animated diagrams*). Opened on its own, the `.svg` plays once on load.
 
 ## Rasterizer — cairosvg, required, no fallback
 

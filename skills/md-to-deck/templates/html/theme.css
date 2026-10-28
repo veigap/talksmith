@@ -238,6 +238,14 @@ html.deck-ui .reveal .controls .navigate-left,html.deck-ui .reveal .controls .na
    a cropping design has to carry it itself. */
 .d-column>.smedia .imgph.has :is(img,video,iframe),.d-bleed>.smedia .imgph.has :is(img,video,iframe){
   width:100%;height:100%;max-height:none;object-fit:cover}
+/* Animated diagrams. The SVG carries its own beats (`ascii-to-svg/animate_svg.py`); the deck only
+   decides when they play. Off the present slide the animation is removed, so it starts over each
+   time the slide is entered rather than having played out at page load. Off as well with the
+   animations toggle off and in the print view — and so in the PDF and the `.pptx`, which are
+   measured from it. With no animation the diagram is its static, complete end state. */
+.reveal .slides section:not(.present) svg [data-beat],
+:root[data-deck-anim=off] svg [data-beat],
+html.print-pdf svg [data-beat],.reveal-print svg [data-beat]{animation:none!important}
 .d-column>.smedia .imgph.svg svg,.d-bleed>.smedia .imgph.svg svg{
   width:100%;height:100%;max-height:none}
 .big{font-size:calc(6.2cqw*var(--fit,1));font-weight:800;color:var(--ink);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}

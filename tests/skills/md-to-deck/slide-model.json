@@ -732,8 +732,8 @@
         }
       ],
       "media": {
-        "src": "images/pipeline.svg",
-        "alt": "The Talksmith pipeline diagram"
+        "src": "images/pipeline-animated.svg",
+        "alt": "The Talksmith pipeline diagram, animated step by step"
       },
       "design": "split-left"
     },

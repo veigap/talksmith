@@ -198,13 +198,16 @@ def rasterize_svgs(svgs: dict[str, str], sizes: dict[str, tuple[float, float]],
             '<div style="position:absolute;left:%dpx;top:%dpx;width:%dpx;height:%dpx;color:%s">%s</div>'
             % (x, y, w, h, svgs[k].get("color") or "#000", svgs[k]["svg"])
             for k, x, y, w, h in page)
-        # Two things the wrapper carries. `svg{width:100%;height:100%}` lets each glyph scale to
+        # Three things the wrapper carries. `svg{width:100%;height:100%}` lets each glyph scale to
         # its cell — `_svg()` strips width/height and keeps the viewBox precisely so it can. And
         # `color` is not decoration: the icons are inlined with `fill="currentColor"`, so a cell
-        # without it rasterizes the whole icon set black where the deck draws it red.
+        # without it rasterizes the whole icon set black where the deck draws it red. And an
+        # animated diagram's beats would play here, outside the deck's own off-switch, and be
+        # captured half-drawn — the `.pptx` keeps the static, complete diagram.
         html = ('<!doctype html><meta charset="utf-8">'
                 '<style>html,body{margin:0;background:transparent}'
-                'div>svg{width:100%;height:100%;display:block}</style>' + cells)
+                'div>svg{width:100%;height:100%;display:block}'
+                '[data-beat]{animation:none!important}</style>' + cells)
         src = workdir / ("sprite-%d.html" % n)
         png = workdir / ("sprite-%d.png" % n)
         src.write_text(html, encoding="utf-8")

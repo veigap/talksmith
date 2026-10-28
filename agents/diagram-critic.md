@@ -21,7 +21,7 @@ So: **never obtain the SVG source.** You are given a **PNG path** — read that.
 | Input | Meaning |
 |---|---|
 | `png_path` | Absolute path to the rasterized diagram. **Your only view of the render.** |
-| `ascii_note` | The diagram's authored intent — the whole note (`intent:` / `emphasize:` / `labels:` / `terms:`; grammar in [`editor.md`](editor.md) → *ASCII diagrams*). This is what the diagram is *supposed* to communicate. |
+| `ascii_note` | The diagram's authored intent — the whole note (`intent:` / `emphasize:` / `labels:` / `terms:` / `animation:`; grammar in [`editor.md`](editor.md) → *ASCII diagrams*). This is what the diagram is *supposed* to communicate. `animation:` beats describe motion a still image cannot show — the PNG is their end state, so a static render is never a finding; the beat order only tells you which way the diagram should read. |
 | `slide_title` | The slide this diagram lives on. |
 | `presentation_language` | The language every text element in the diagram must be in. |
 | `iteration` | Which render pass this is (1 = initial, 2 = revised). On iteration 2 you also get `previous_defects` — the defects that drove the re-render, so you can confirm they're actually fixed rather than re-listing them from memory. |
