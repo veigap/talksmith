@@ -64,8 +64,8 @@ _PARTIAL = {"image-full": {"highlights": {"source"}}}
 #
 # Read as text, not imported: this audit is stdlib-only and CLI-safe, and importing `html_style`
 # to reach `_TMPL` would drag `jinja2` in as a hard dependency of a preflight check.
-_HTML = Path(__file__).resolve().parent.parent
-_TPL_DIR = _HTML / "templates" / "html"
+_HTML = Path(__file__).resolve().parent.parent          # md-to-deck/scripts/ — html_style.py lives here
+_TPL_DIR = _HTML.parent / "templates" / "html"
 # Both access forms, because both are load-bearing. A template normally reads `s.field`, but
 # a field whose name collides with a dict method — `items`, `keys`, `values`, `get` — must be
 # read as `s['field']` or Jinja hands back the bound method instead of the content. Matching

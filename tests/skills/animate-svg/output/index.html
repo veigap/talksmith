@@ -630,17 +630,24 @@ still: [#11] &#x27;tools&#x27;, &#x27;workflow&#x27;, &#x27;router&#x27;, &#x27;
 .ts-anim-difusion .sb1{animation:ts-anim-difusion-in 0.6s ease-out 11.8s both,ts-anim-difusion-out 0.6s ease-in 17.0s forwards}
 .ts-anim-difusion .sb2{animation:ts-anim-difusion-in 0.6s ease-out 12.6s both,ts-anim-difusion-out 0.6s ease-in 17.0s forwards}
 .ts-anim-difusion .sb3{animation:ts-anim-difusion-in 0.6s ease-out 13.4s both,ts-anim-difusion-out 0.6s ease-in 17.0s forwards}
-.ts-anim-difusion .tk1 .mv{offset-path:path("M56.0,80.0 L570.0,80.0");offset-rotate:0deg}
-.ts-anim-difusion .tk2 .mv{offset-path:path("M570.0,246.0 L56.0,246.0");offset-rotate:0deg}
-.ts-anim-difusion .sw .mv{offset-path:path("M313.0,320 L313.0,263");offset-rotate:0deg}
+.ts-anim-difusion .tk1 .mv{}
+.ts-anim-difusion .tk2 .mv{}
+.ts-anim-difusion .sw .mv{}
 @keyframes ts-anim-difusion-in{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-difusion-out{from{opacity:1}to{opacity:0}}
 @keyframes ts-anim-difusion-dim{from{opacity:1}to{opacity:.12}}
 @keyframes ts-anim-difusion-undim{from{opacity:.12}to{opacity:1}}
-@keyframes ts-anim-difusion-fwd{0%{offset-distance:0%}25%{offset-distance:23.0%}50%{offset-distance:61.5%}75%{offset-distance:80.7%}100%{offset-distance:100%}}
-@keyframes ts-anim-difusion-rev{0%{offset-distance:0%}25%{offset-distance:38.5%}50%{offset-distance:50.0%}75%{offset-distance:77.0%}100%{offset-distance:100%}}
-@keyframes ts-anim-difusion-rise{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes ts-anim-difusion-fwd{0%{}25%{}50%{}75%{}100%{}}
+@keyframes ts-anim-difusion-rev{0%{}25%{}50%{}75%{}100%{}}
+@keyframes ts-anim-difusion-rise{from{}to{}}
 @media (prefers-reduced-motion:reduce){.ts-anim-difusion *{animation:none}}
+
+.ts-anim-difusion .ts-anim-difusion-w1{animation:ts-anim-difusion-w1 4s linear 0.8s 1 normal both}
+@keyframes ts-anim-difusion-w1{0.00%{transform:translate(56.0px,80.0px)}25.00%{transform:translate(174.2px,80.0px)}50.00%{transform:translate(372.1px,80.0px)}100.00%{transform:translate(570.0px,80.0px)}}
+.ts-anim-difusion .ts-anim-difusion-w2{animation:ts-anim-difusion-w2 4s linear 6.2s 1 normal both}
+@keyframes ts-anim-difusion-w2{0.00%{transform:translate(570.0px,246.0px)}25.00%{transform:translate(372.1px,246.0px)}50.00%{transform:translate(313.0px,246.0px)}75.00%{transform:translate(174.2px,246.0px)}100.00%{transform:translate(56.0px,246.0px)}}
+.ts-anim-difusion .ts-anim-difusion-w3{animation:ts-anim-difusion-w3 0.8s linear 7.4s 1 normal both}
+@keyframes ts-anim-difusion-w3{0.00%{transform:translate(313.0px,320.0px)}18.33%{transform:translate(313.0px,316.1px)}40.00%{transform:translate(313.0px,301.1px)}71.67%{transform:translate(313.0px,272.5px)}90.00%{transform:translate(313.0px,264.1px)}100.00%{transform:translate(313.0px,263.0px)}}
 </style>
 <defs>
 <marker id="a-difusion-ah" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" viewBox="0 0 11 11" refX="11" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 z" fill="#3B3535"/></marker>
@@ -657,7 +664,7 @@ still: [#11] &#x27;tools&#x27;, &#x27;workflow&#x27;, &#x27;router&#x27;, &#x27;
 <g class="s4"><g stroke="#3B3535" stroke-width="1.8" fill="none" marker-end="url(#a-difusion-ah)"><path d="M488,80.0 L534,80.0"/></g></g>
 <g class="s3" fill="#3B3535"><circle cx="462" cy="80.0" r="2.6"/><circle cx="471" cy="80.0" r="2.6"/><circle cx="480" cy="80.0" r="2.6"/></g>
 <g class="s2" fill="#3B3535"><circle cx="264" cy="80.0" r="2.6"/><circle cx="273" cy="80.0" r="2.6"/><circle cx="282" cy="80.0" r="2.6"/></g>
-<g class="tk1" opacity="0"><g class="mv"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="tk1" opacity="0"><g class="ts-anim-difusion-w1"><g class="mv"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g></g>
 <use xlink:href="#a-difusion-mont" x="20" y="44"/><rect x="20" y="44" width="72" height="72" fill="none" stroke="#D8D2CE" stroke-width="1.5"/><text x="47.5" y="136" font-size="17" font-style="italic" fill="#1F1E1E">x</text><text x="57.5" y="140" font-size="12" fill="#1F1E1E">0</text><text x="56.0" y="156" text-anchor="middle" font-size="13">imagen limpia</text>
 <g class="s1"><use xlink:href="#a-difusion-mont" x="138" y="44"/><g opacity="0.3"><use xlink:href="#a-difusion-noise" x="138" y="44"/></g><rect x="138" y="44" width="72" height="72" fill="none" stroke="#D8D2CE" stroke-width="1.5"/><text x="165.5" y="136" font-size="17" font-style="italic" fill="#1F1E1E">x</text><text x="175.5" y="140" font-size="12" fill="#1F1E1E">1</text></g>
 <g class="s2"><use xlink:href="#a-difusion-mont" x="336" y="44"/><g opacity="0.62"><use xlink:href="#a-difusion-noise" x="336" y="44"/></g><rect x="336" y="44" width="72" height="72" fill="none" stroke="#D8D2CE" stroke-width="1.5"/><text x="365.5" y="136" font-size="17" font-style="italic" fill="#1F1E1E">x</text><text x="375.5" y="140" font-size="12" fill="#1F1E1E">t</text></g>
@@ -670,7 +677,7 @@ still: [#11] &#x27;tools&#x27;, &#x27;workflow&#x27;, &#x27;router&#x27;, &#x27;
 <g class="t2" fill="#3B3535"><circle cx="264" cy="246.0" r="2.6"/><circle cx="273" cy="246.0" r="2.6"/><circle cx="282" cy="246.0" r="2.6"/></g>
 <g class="t1"><g stroke="#3B3535" stroke-width="1.8" fill="none" marker-end="url(#a-difusion-ah)"><path d="M398,282 L398,344"/></g></g>
 <g class="t2"><g stroke="#3B3535" stroke-width="1.8" fill="none" marker-end="url(#a-difusion-ah)"><path d="M313.0,344 L313.0,247.0"/></g><text x="305.0" y="338" text-anchor="end" font-size="13" font-style="italic">resta el ruido estimado</text></g>
-<g class="tk2" opacity="0"><g class="mv"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="tk2" opacity="0"><g class="ts-anim-difusion-w2"><g class="mv"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g></g>
 <g class="rv"><use xlink:href="#a-difusion-noise" x="534" y="210"/><rect x="534" y="210" width="72" height="72" fill="none" stroke="#D8D2CE" stroke-width="1.5"/><text x="561.5" y="302" font-size="17" font-style="italic" fill="#1F1E1E">x</text><text x="571.5" y="306" font-size="12" fill="#1F1E1E">T</text><text x="570.0" y="322" text-anchor="middle" font-size="13">ruido puro</text></g>
 <g class="dm"><g class="t1"><use xlink:href="#a-difusion-mont" x="336" y="210"/><g opacity="0.62"><use xlink:href="#a-difusion-noise" x="336" y="210"/></g><rect x="336" y="210" width="72" height="72" fill="none" stroke="#D8D2CE" stroke-width="1.5"/></g></g>
 <g class="t1"><text x="365.5" y="302" font-size="17" font-style="italic" fill="#1F1E1E">x</text><text x="375.5" y="306" font-size="12" fill="#1F1E1E">t</text></g>
@@ -684,7 +691,7 @@ still: [#11] &#x27;tools&#x27;, &#x27;workflow&#x27;, &#x27;router&#x27;, &#x27;
 <g class="rv"><g stroke="#3B3535" stroke-width="1.8" fill="none" marker-end="url(#a-difusion-ah)"><path d="M480,374.0 L440,374.0"/></g><rect x="220" y="344" width="220" height="60" rx="10" fill="#DA1B2E"/><text x="330.0" y="371" text-anchor="middle" font-size="17" font-weight="bold" fill="#ffffff">predictor de ruido</text><text x="330.0" y="391" text-anchor="middle" font-size="15" fill="#ffffff">condicionado en c</text><rect x="480" y="336" width="200" height="76" rx="10" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/><text x="580.0" y="357" text-anchor="middle" font-size="15" font-weight="bold" fill="#1F1E1E">condición c</text><text x="580.0" y="374" text-anchor="middle" font-size="13">(el prompt)</text><rect x="490" y="383" width="180" height="21" rx="10.5" fill="#ffffff" stroke="#D8D2CE" stroke-width="1.2"/><g class="pold"><text x="580.0" y="398" text-anchor="middle" font-size="13" fill="#1F1E1E">«montañas al atardecer»</text></g></g>
 <text class="pnew" opacity="0" x="580.0" y="398" text-anchor="middle" font-size="13" fill="#1F1E1E">«un velero en el mar»</text>
 <g class="ring" opacity="0" fill="none" stroke="#DA1B2E" stroke-width="2.5"><rect x="486" y="379" width="188" height="29" rx="14.5"/><rect x="530" y="206" width="80" height="80" rx="3"/></g>
-<g class="sw" opacity="0"><g class="mv"><use xlink:href="#a-difusion-noise" transform="translate(-9,-9) scale(0.25)"/><rect x="-9" y="-9" width="18" height="18" fill="none" stroke="#3B3535" stroke-width="1.2"/></g></g>
+<g class="sw" opacity="0"><g class="ts-anim-difusion-w3"><g class="mv"><use xlink:href="#a-difusion-noise" transform="translate(-9,-9) scale(0.25)"/><rect x="-9" y="-9" width="18" height="18" fill="none" stroke="#3B3535" stroke-width="1.2"/></g></g></g>
 <text class="cap1" opacity="0" x="680" y="32" text-anchor="end" font-size="14" font-weight="bold" fill="#DA1B2E">1 · cada paso agrega un poco de ruido gaussiano</text>
 <text class="cap2" opacity="0" x="680" y="196" text-anchor="end" font-size="14" font-weight="bold" fill="#DA1B2E">2 · en cada paso se resta el ruido estimado</text>
 <text class="cap3" opacity="0" x="680" y="196" text-anchor="end" font-size="14" font-weight="bold" fill="#DA1B2E">3 · otro prompt: el mismo ruido termina en otra imagen</text>
@@ -754,21 +761,40 @@ still: [#11] &#x27;prompt&#x27; is English and not in terms:</pre></details>
 .ts-anim-gan-ciclo-lote [data-beat="12"]{animation-duration:.8s;animation-delay:16.0s}
 .ts-anim-gan-ciclo-lote .dD{animation:ts-anim-gan-ciclo-lote-show 2.4s linear 3.8s both}
 .ts-anim-gan-ciclo-lote .dG{animation:ts-anim-gan-ciclo-lote-show 2.4s linear 12.0s both}
-.ts-anim-gan-ciclo-lote .dD .dot{offset-rotate:0deg;animation:ts-anim-gan-ciclo-lote-flow 2.4s ease-in-out 3.8s both}
-.ts-anim-gan-ciclo-lote .dG .dot{offset-rotate:0deg;animation:ts-anim-gan-ciclo-lote-flow 2.4s ease-in-out 12.0s both}
-.ts-anim-gan-ciclo-lote .dD1{offset-path:path("M270,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dD2{offset-path:path("M375,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dD3{offset-path:path("M480,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dD4{offset-path:path("M585,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dD5{offset-path:path("M690,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dD6{offset-path:path("M795,440 V462 H1055 V396")}
-.ts-anim-gan-ciclo-lote .dG1{offset-path:path("M585,860 V882 H1055 V816")}
-.ts-anim-gan-ciclo-lote .dG2{offset-path:path("M690,860 V882 H1055 V816")}
-.ts-anim-gan-ciclo-lote .dG3{offset-path:path("M795,860 V882 H1055 V816")}
+.ts-anim-gan-ciclo-lote .dD .dot{animation:ts-anim-gan-ciclo-lote-flow 2.4s ease-in-out 3.8s both}
+.ts-anim-gan-ciclo-lote .dG .dot{animation:ts-anim-gan-ciclo-lote-flow 2.4s ease-in-out 12.0s both}
+.ts-anim-gan-ciclo-lote .dD1{}
+.ts-anim-gan-ciclo-lote .dD2{}
+.ts-anim-gan-ciclo-lote .dD3{}
+.ts-anim-gan-ciclo-lote .dD4{}
+.ts-anim-gan-ciclo-lote .dD5{}
+.ts-anim-gan-ciclo-lote .dD6{}
+.ts-anim-gan-ciclo-lote .dG1{}
+.ts-anim-gan-ciclo-lote .dG2{}
+.ts-anim-gan-ciclo-lote .dG3{}
 @keyframes ts-anim-gan-ciclo-lote-in{from{opacity:0}}
 @keyframes ts-anim-gan-ciclo-lote-show{0%{opacity:0}5%,57%{opacity:1}61%,100%{opacity:0}}
-@keyframes ts-anim-gan-ciclo-lote-flow{0%{offset-distance:0%}60%,100%{offset-distance:100%}}
+@keyframes ts-anim-gan-ciclo-lote-flow{0%{}60%,100%{}}
 @media (prefers-reduced-motion:reduce){.ts-anim-gan-ciclo-lote *{animation:none}}
+
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w1{animation:ts-anim-gan-ciclo-lote-w1 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w1{0.00%{transform:translate(270.0px,440.0px)}1.67%{transform:translate(270.0px,441.3px)}3.33%{transform:translate(270.0px,445.2px)}5.00%{transform:translate(270.0px,451.9px)}6.67%{transform:translate(270.0px,461.3px)}8.33%{transform:translate(281.7px,462.0px)}10.00%{transform:translate(297.0px,462.0px)}11.67%{transform:translate(315.3px,462.0px)}13.33%{transform:translate(336.5px,462.0px)}15.00%{transform:translate(360.8px,462.0px)}16.67%{transform:translate(387.9px,462.0px)}18.33%{transform:translate(417.8px,462.0px)}20.00%{transform:translate(450.3px,462.0px)}21.67%{transform:translate(485.3px,462.0px)}23.33%{transform:translate(522.4px,462.0px)}25.00%{transform:translate(561.3px,462.0px)}26.67%{transform:translate(601.5px,462.0px)}33.33%{transform:translate(767.5px,462.0px)}35.00%{transform:translate(807.7px,462.0px)}36.67%{transform:translate(846.6px,462.0px)}38.33%{transform:translate(883.7px,462.0px)}40.00%{transform:translate(918.7px,462.0px)}41.67%{transform:translate(951.2px,462.0px)}43.33%{transform:translate(981.1px,462.0px)}45.00%{transform:translate(1008.2px,462.0px)}46.67%{transform:translate(1032.5px,462.0px)}48.33%{transform:translate(1053.7px,462.0px)}50.00%{transform:translate(1055.0px,445.0px)}51.67%{transform:translate(1055.0px,429.7px)}53.33%{transform:translate(1055.0px,417.3px)}55.00%{transform:translate(1055.0px,407.9px)}56.67%{transform:translate(1055.0px,401.2px)}58.33%{transform:translate(1055.0px,397.3px)}60.00%{transform:translate(1055.0px,396.0px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w2{animation:ts-anim-gan-ciclo-lote-w2 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w2{0.00%{transform:translate(375.0px,440.0px)}1.67%{transform:translate(375.0px,441.1px)}3.33%{transform:translate(375.0px,444.6px)}5.00%{transform:translate(375.0px,450.4px)}6.67%{transform:translate(375.0px,458.8px)}8.33%{transform:translate(382.7px,462.0px)}10.00%{transform:translate(396.1px,462.0px)}11.67%{transform:translate(412.2px,462.0px)}13.33%{transform:translate(430.9px,462.0px)}15.00%{transform:translate(452.2px,462.0px)}16.67%{transform:translate(476.1px,462.0px)}18.33%{transform:translate(502.4px,462.0px)}20.00%{transform:translate(531.0px,462.0px)}21.67%{transform:translate(561.8px,462.0px)}23.33%{transform:translate(594.4px,462.0px)}25.00%{transform:translate(628.6px,462.0px)}26.67%{transform:translate(664.0px,462.0px)}33.33%{transform:translate(810.0px,462.0px)}35.00%{transform:translate(845.4px,462.0px)}36.67%{transform:translate(879.6px,462.0px)}38.33%{transform:translate(912.2px,462.0px)}40.00%{transform:translate(943.0px,462.0px)}41.67%{transform:translate(971.6px,462.0px)}43.33%{transform:translate(997.9px,462.0px)}45.00%{transform:translate(1021.8px,462.0px)}46.67%{transform:translate(1043.1px,462.0px)}48.33%{transform:translate(1055.0px,455.2px)}50.00%{transform:translate(1055.0px,439.1px)}51.67%{transform:translate(1055.0px,425.7px)}53.33%{transform:translate(1055.0px,414.8px)}55.00%{transform:translate(1055.0px,406.4px)}56.67%{transform:translate(1055.0px,400.6px)}58.33%{transform:translate(1055.0px,397.1px)}60.00%{transform:translate(1055.0px,396.0px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w3{animation:ts-anim-gan-ciclo-lote-w3 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w3{0.00%{transform:translate(480.0px,440.0px)}1.67%{transform:translate(480.0px,441.0px)}3.33%{transform:translate(480.0px,444.0px)}5.00%{transform:translate(480.0px,449.0px)}6.67%{transform:translate(480.0px,456.2px)}8.33%{transform:translate(483.6px,462.0px)}10.00%{transform:translate(495.2px,462.0px)}11.67%{transform:translate(509.1px,462.0px)}13.33%{transform:translate(525.2px,462.0px)}15.00%{transform:translate(543.6px,462.0px)}16.67%{transform:translate(564.2px,462.0px)}18.33%{transform:translate(587.0px,462.0px)}20.00%{transform:translate(611.7px,462.0px)}21.67%{transform:translate(638.2px,462.0px)}23.33%{transform:translate(666.4px,462.0px)}25.00%{transform:translate(695.9px,462.0px)}26.67%{transform:translate(726.5px,462.0px)}33.33%{transform:translate(852.5px,462.0px)}35.00%{transform:translate(883.1px,462.0px)}36.67%{transform:translate(912.6px,462.0px)}38.33%{transform:translate(940.8px,462.0px)}40.00%{transform:translate(967.3px,462.0px)}41.67%{transform:translate(992.0px,462.0px)}43.33%{transform:translate(1014.8px,462.0px)}45.00%{transform:translate(1035.4px,462.0px)}46.67%{transform:translate(1053.8px,462.0px)}48.33%{transform:translate(1055.0px,447.1px)}50.00%{transform:translate(1055.0px,433.2px)}51.67%{transform:translate(1055.0px,421.6px)}53.33%{transform:translate(1055.0px,412.2px)}55.00%{transform:translate(1055.0px,405.0px)}56.67%{transform:translate(1055.0px,400.0px)}58.33%{transform:translate(1055.0px,397.0px)}60.00%{transform:translate(1055.0px,396.0px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w4{animation:ts-anim-gan-ciclo-lote-w4 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w4{0.00%{transform:translate(585.0px,440.0px)}1.67%{transform:translate(585.0px,440.8px)}3.33%{transform:translate(585.0px,443.3px)}5.00%{transform:translate(585.0px,447.6px)}6.67%{transform:translate(585.0px,453.6px)}8.33%{transform:translate(585.0px,461.5px)}10.00%{transform:translate(594.3px,462.0px)}11.67%{transform:translate(606.0px,462.0px)}13.33%{transform:translate(619.6px,462.0px)}15.00%{transform:translate(635.1px,462.0px)}16.67%{transform:translate(652.4px,462.0px)}18.33%{transform:translate(671.5px,462.0px)}20.00%{transform:translate(692.3px,462.0px)}21.67%{transform:translate(714.7px,462.0px)}23.33%{transform:translate(738.4px,462.0px)}25.00%{transform:translate(763.2px,462.0px)}28.33%{transform:translate(815.3px,462.0px)}33.33%{transform:translate(895.0px,462.0px)}35.00%{transform:translate(920.8px,462.0px)}36.67%{transform:translate(945.6px,462.0px)}38.33%{transform:translate(969.3px,462.0px)}40.00%{transform:translate(991.7px,462.0px)}41.67%{transform:translate(1012.5px,462.0px)}43.33%{transform:translate(1031.6px,462.0px)}45.00%{transform:translate(1048.9px,462.0px)}46.67%{transform:translate(1055.0px,452.6px)}48.33%{transform:translate(1055.0px,439.0px)}50.00%{transform:translate(1055.0px,427.3px)}51.67%{transform:translate(1055.0px,417.5px)}53.33%{transform:translate(1055.0px,409.6px)}55.00%{transform:translate(1055.0px,403.6px)}56.67%{transform:translate(1055.0px,399.3px)}58.33%{transform:translate(1055.0px,396.8px)}60.00%{transform:translate(1055.0px,396.0px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w5{animation:ts-anim-gan-ciclo-lote-w5 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w5{0.00%{transform:translate(690.0px,440.0px)}1.67%{transform:translate(690.0px,440.7px)}3.33%{transform:translate(690.0px,442.7px)}5.00%{transform:translate(690.0px,446.2px)}6.67%{transform:translate(690.0px,451.1px)}8.33%{transform:translate(690.0px,457.5px)}10.00%{transform:translate(693.4px,462.0px)}11.67%{transform:translate(702.9px,462.0px)}13.33%{transform:translate(713.9px,462.0px)}15.00%{transform:translate(726.5px,462.0px)}16.67%{transform:translate(740.6px,462.0px)}18.33%{transform:translate(756.1px,462.0px)}20.00%{transform:translate(773.0px,462.0px)}21.67%{transform:translate(791.1px,462.0px)}23.33%{transform:translate(810.4px,462.0px)}25.00%{transform:translate(830.5px,462.0px)}33.33%{transform:translate(937.6px,462.0px)}35.00%{transform:translate(958.5px,462.0px)}36.67%{transform:translate(978.6px,462.0px)}38.33%{transform:translate(997.9px,462.0px)}40.00%{transform:translate(1016.0px,462.0px)}41.67%{transform:translate(1032.9px,462.0px)}43.33%{transform:translate(1048.4px,462.0px)}45.00%{transform:translate(1055.0px,454.5px)}46.67%{transform:translate(1055.0px,441.9px)}48.33%{transform:translate(1055.0px,430.9px)}50.00%{transform:translate(1055.0px,421.4px)}51.67%{transform:translate(1055.0px,413.5px)}53.33%{transform:translate(1055.0px,407.1px)}55.00%{transform:translate(1055.0px,402.2px)}56.67%{transform:translate(1055.0px,398.7px)}58.33%{transform:translate(1055.0px,396.7px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w6{animation:ts-anim-gan-ciclo-lote-w6 2.4s linear 3.8s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w6{0.00%{transform:translate(795.0px,440.0px)}1.67%{transform:translate(795.0px,440.5px)}3.33%{transform:translate(795.0px,442.1px)}5.00%{transform:translate(795.0px,444.7px)}6.67%{transform:translate(795.0px,448.5px)}8.33%{transform:translate(795.0px,453.4px)}10.00%{transform:translate(795.0px,459.5px)}11.67%{transform:translate(799.8px,462.0px)}13.33%{transform:translate(808.3px,462.0px)}15.00%{transform:translate(817.9px,462.0px)}16.67%{transform:translate(828.8px,462.0px)}18.33%{transform:translate(840.7px,462.0px)}20.00%{transform:translate(853.7px,462.0px)}21.67%{transform:translate(867.6px,462.0px)}23.33%{transform:translate(882.4px,462.0px)}26.67%{transform:translate(913.9px,462.0px)}33.33%{transform:translate(980.1px,462.0px)}36.67%{transform:translate(1011.6px,462.0px)}38.33%{transform:translate(1026.4px,462.0px)}40.00%{transform:translate(1040.3px,462.0px)}41.67%{transform:translate(1053.3px,462.0px)}43.33%{transform:translate(1055.0px,451.8px)}45.00%{transform:translate(1055.0px,440.9px)}46.67%{transform:translate(1055.0px,431.3px)}48.33%{transform:translate(1055.0px,422.8px)}50.00%{transform:translate(1055.0px,415.5px)}51.67%{transform:translate(1055.0px,409.4px)}53.33%{transform:translate(1055.0px,404.5px)}55.00%{transform:translate(1055.0px,400.7px)}56.67%{transform:translate(1055.0px,398.1px)}58.33%{transform:translate(1055.0px,396.5px)}100.00%{transform:translate(1055.0px,396.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w7{animation:ts-anim-gan-ciclo-lote-w7 2.4s linear 12s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w7{0.00%{transform:translate(585.0px,860.0px)}1.67%{transform:translate(585.0px,860.8px)}3.33%{transform:translate(585.0px,863.3px)}5.00%{transform:translate(585.0px,867.6px)}6.67%{transform:translate(585.0px,873.6px)}8.33%{transform:translate(585.0px,881.5px)}10.00%{transform:translate(594.3px,882.0px)}11.67%{transform:translate(606.0px,882.0px)}13.33%{transform:translate(619.6px,882.0px)}15.00%{transform:translate(635.1px,882.0px)}16.67%{transform:translate(652.4px,882.0px)}18.33%{transform:translate(671.5px,882.0px)}20.00%{transform:translate(692.3px,882.0px)}21.67%{transform:translate(714.7px,882.0px)}23.33%{transform:translate(738.4px,882.0px)}25.00%{transform:translate(763.2px,882.0px)}28.33%{transform:translate(815.3px,882.0px)}33.33%{transform:translate(895.0px,882.0px)}35.00%{transform:translate(920.8px,882.0px)}36.67%{transform:translate(945.6px,882.0px)}38.33%{transform:translate(969.3px,882.0px)}40.00%{transform:translate(991.7px,882.0px)}41.67%{transform:translate(1012.5px,882.0px)}43.33%{transform:translate(1031.6px,882.0px)}45.00%{transform:translate(1048.9px,882.0px)}46.67%{transform:translate(1055.0px,872.6px)}48.33%{transform:translate(1055.0px,859.0px)}50.00%{transform:translate(1055.0px,847.3px)}51.67%{transform:translate(1055.0px,837.5px)}53.33%{transform:translate(1055.0px,829.6px)}55.00%{transform:translate(1055.0px,823.6px)}56.67%{transform:translate(1055.0px,819.3px)}58.33%{transform:translate(1055.0px,816.8px)}60.00%{transform:translate(1055.0px,816.0px)}100.00%{transform:translate(1055.0px,816.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w8{animation:ts-anim-gan-ciclo-lote-w8 2.4s linear 12s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w8{0.00%{transform:translate(690.0px,860.0px)}1.67%{transform:translate(690.0px,860.7px)}3.33%{transform:translate(690.0px,862.7px)}5.00%{transform:translate(690.0px,866.2px)}6.67%{transform:translate(690.0px,871.1px)}8.33%{transform:translate(690.0px,877.5px)}10.00%{transform:translate(693.4px,882.0px)}11.67%{transform:translate(702.9px,882.0px)}13.33%{transform:translate(713.9px,882.0px)}15.00%{transform:translate(726.5px,882.0px)}16.67%{transform:translate(740.6px,882.0px)}18.33%{transform:translate(756.1px,882.0px)}20.00%{transform:translate(773.0px,882.0px)}21.67%{transform:translate(791.1px,882.0px)}23.33%{transform:translate(810.4px,882.0px)}25.00%{transform:translate(830.5px,882.0px)}33.33%{transform:translate(937.6px,882.0px)}35.00%{transform:translate(958.5px,882.0px)}36.67%{transform:translate(978.6px,882.0px)}38.33%{transform:translate(997.9px,882.0px)}40.00%{transform:translate(1016.0px,882.0px)}41.67%{transform:translate(1032.9px,882.0px)}43.33%{transform:translate(1048.4px,882.0px)}45.00%{transform:translate(1055.0px,874.5px)}46.67%{transform:translate(1055.0px,861.9px)}48.33%{transform:translate(1055.0px,850.9px)}50.00%{transform:translate(1055.0px,841.4px)}51.67%{transform:translate(1055.0px,833.5px)}53.33%{transform:translate(1055.0px,827.1px)}55.00%{transform:translate(1055.0px,822.2px)}56.67%{transform:translate(1055.0px,818.7px)}58.33%{transform:translate(1055.0px,816.7px)}100.00%{transform:translate(1055.0px,816.0px)}}
+.ts-anim-gan-ciclo-lote .ts-anim-gan-ciclo-lote-w9{animation:ts-anim-gan-ciclo-lote-w9 2.4s linear 12s 1 normal both}
+@keyframes ts-anim-gan-ciclo-lote-w9{0.00%{transform:translate(795.0px,860.0px)}1.67%{transform:translate(795.0px,860.5px)}3.33%{transform:translate(795.0px,862.1px)}5.00%{transform:translate(795.0px,864.7px)}6.67%{transform:translate(795.0px,868.5px)}8.33%{transform:translate(795.0px,873.4px)}10.00%{transform:translate(795.0px,879.5px)}11.67%{transform:translate(799.8px,882.0px)}13.33%{transform:translate(808.3px,882.0px)}15.00%{transform:translate(817.9px,882.0px)}16.67%{transform:translate(828.8px,882.0px)}18.33%{transform:translate(840.7px,882.0px)}20.00%{transform:translate(853.7px,882.0px)}21.67%{transform:translate(867.6px,882.0px)}23.33%{transform:translate(882.4px,882.0px)}26.67%{transform:translate(913.9px,882.0px)}33.33%{transform:translate(980.1px,882.0px)}36.67%{transform:translate(1011.6px,882.0px)}38.33%{transform:translate(1026.4px,882.0px)}40.00%{transform:translate(1040.3px,882.0px)}41.67%{transform:translate(1053.3px,882.0px)}43.33%{transform:translate(1055.0px,871.8px)}45.00%{transform:translate(1055.0px,860.9px)}46.67%{transform:translate(1055.0px,851.3px)}48.33%{transform:translate(1055.0px,842.8px)}50.00%{transform:translate(1055.0px,835.5px)}51.67%{transform:translate(1055.0px,829.4px)}53.33%{transform:translate(1055.0px,824.5px)}55.00%{transform:translate(1055.0px,820.7px)}56.67%{transform:translate(1055.0px,818.1px)}58.33%{transform:translate(1055.0px,816.5px)}100.00%{transform:translate(1055.0px,816.0px)}}
 </style>
 <defs>
 <marker id="a-gan-ciclo-lote-a1F1E1E" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1E1E"/></marker>
@@ -786,7 +812,7 @@ still: [#11] &#x27;prompt&#x27; is English and not in terms:</pre></details>
 </g>
 <rect x="44" y="96" width="1656" height="400" rx="16" fill="#ffffff" stroke="#1F5FAD" stroke-width="4"/>
 <text x="70" y="144" font-size="32" fill="#1F5FAD" text-anchor="start" font-weight="bold">Paso del Discriminador</text>
-<text x="490" y="144" font-size="26" fill="#6B6560" text-anchor="start"></text>
+<text x="490" y="144" font-size="26" fill="#6B6560" text-anchor="start"/>
 <text x="70" y="216" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">imagen</text>
 <text x="70" y="278" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">objetivo</text>
 <text data-beat="1" x="70" y="378" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">veredicto</text>
@@ -878,12 +904,12 @@ still: [#11] &#x27;prompt&#x27; is English and not in terms:</pre></details>
 <text data-beat="3" x="532.5" y="490" font-size="22" fill="#6B6560" text-anchor="middle" font-style="italic">se promedian</text>
 <path data-beat="3" d="M817,460 H1055 V412" stroke="#6B6560" stroke-width="3" fill="none" marker-end="url(#a-gan-ciclo-lote-a6B6560)"/>
 <g class="dD" opacity="0">
-<g class="dot dD1"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dD2"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dD3"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dD4"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dD5"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dD6"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
+<g class="ts-anim-gan-ciclo-lote-w1"><g class="dot dD1"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w2"><g class="dot dD2"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w3"><g class="dot dD3"><circle r="7" fill="#1F5FAD" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w4"><g class="dot dD4"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w5"><g class="dot dD5"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w6"><g class="dot dD6"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
 </g>
 <rect data-beat="3" x="920" y="284" width="270" height="124" rx="12" fill="#ffffff" stroke="#1F1E1E" stroke-width="3"/>
 <text data-beat="3" x="1055" y="320" font-size="21" fill="#6B6560" text-anchor="middle">error del lote (6 imágenes)</text>
@@ -900,7 +926,7 @@ still: [#11] &#x27;prompt&#x27; is English and not in terms:</pre></details>
 <g>
 <rect data-beat="6" x="44" y="516" width="1656" height="400" rx="16" fill="#ffffff" stroke="#DA1B2E" stroke-width="4"/>
 <text data-beat="6" x="70" y="564" font-size="32" fill="#DA1B2E" text-anchor="start" font-weight="bold">Paso del Generador</text>
-<text x="490" y="564" font-size="26" fill="#6B6560" text-anchor="start"></text>
+<text x="490" y="564" font-size="26" fill="#6B6560" text-anchor="start"/>
 <text data-beat="6" x="70" y="636" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">imagen</text>
 <text data-beat="6" x="70" y="698" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">objetivo</text>
 <text data-beat="7" x="70" y="798" font-size="24" fill="#6B6560" text-anchor="start" font-style="italic">veredicto</text>
@@ -956,9 +982,9 @@ still: [#11] &#x27;prompt&#x27; is English and not in terms:</pre></details>
 <text data-beat="9" x="690.0" y="910" font-size="22" fill="#6B6560" text-anchor="middle" font-style="italic">se promedian</text>
 <path data-beat="9" d="M817,880 H1055 V832" stroke="#6B6560" stroke-width="3" fill="none" marker-end="url(#a-gan-ciclo-lote-a6B6560)"/>
 <g class="dG" opacity="0">
-<g class="dot dG1"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dG2"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
-<g class="dot dG3"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g>
+<g class="ts-anim-gan-ciclo-lote-w7"><g class="dot dG1"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w8"><g class="dot dG2"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
+<g class="ts-anim-gan-ciclo-lote-w9"><g class="dot dG3"><circle r="7" fill="#DA1B2E" stroke="#ffffff" stroke-width="2"/></g></g>
 </g>
 <rect data-beat="9" x="920" y="704" width="270" height="124" rx="12" fill="#ffffff" stroke="#1F1E1E" stroke-width="3"/>
 <text data-beat="9" x="1055" y="740" font-size="21" fill="#6B6560" text-anchor="middle">error del lote (3 imágenes)</text>
@@ -1207,32 +1233,46 @@ still: [#6] saturated blue and solid red outside the palette · [#8] &#x27;las r
 .ts-anim-gan-discriminador-cara [data-beat="v"]{animation-duration:1.0s;animation-timing-function:linear}
 .ts-anim-gan-discriminador-cara [data-beat="h"]{animation-duration:0.4s;animation-timing-function:linear}
 .ts-anim-gan-discriminador-cara .tka{animation:ts-anim-gan-discriminador-cara-show .3s ease-out 1.6s both}
-.ts-anim-gan-discriminador-cara .tka .mv{offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 2.0s linear 1.9s both}
+.ts-anim-gan-discriminador-cara .tka .mv{animation:ts-anim-gan-discriminador-cara-move 2.0s linear 1.9s both}
 .ts-anim-gan-discriminador-cara .draw{animation:ts-anim-gan-discriminador-cara-show .1s linear 1.9s both}
-.ts-anim-gan-discriminador-cara .tka1 .mv{offset-path:path("M145,515 L145,422 C165,170 400,170 724.7,216.3 L780,230")}
+.ts-anim-gan-discriminador-cara .tka1 .mv{}
 .ts-anim-gan-discriminador-cara .draw .d1{stroke-dasharray:100 100;animation:ts-anim-gan-discriminador-cara-draw 1.65s linear 2.12s both}
-.ts-anim-gan-discriminador-cara .tka2 .mv{offset-path:path("M315,515 L315,422 C385,320 580,370 724.9,405.4 L780,420")}
+.ts-anim-gan-discriminador-cara .tka2 .mv{}
 .ts-anim-gan-discriminador-cara .draw .d2{stroke-dasharray:100 100;animation:ts-anim-gan-discriminador-cara-draw 1.49s linear 2.22s both}
-.ts-anim-gan-discriminador-cara .tka3 .mv{offset-path:path("M145,685 L145,778 C205,1000 520,890 734.8,644.3 L780,610")}
+.ts-anim-gan-discriminador-cara .tka3 .mv{}
 .ts-anim-gan-discriminador-cara .draw .d3{stroke-dasharray:100 100;animation:ts-anim-gan-discriminador-cara-draw 1.66s linear 2.11s both}
-.ts-anim-gan-discriminador-cara .tka4 .mv{offset-path:path("M315,685 L315,778 C305,970 520,780 723.2,795.1 L780,800")}
+.ts-anim-gan-discriminador-cara .tka4 .mv{}
 .ts-anim-gan-discriminador-cara .draw .d4{stroke-dasharray:100 100;animation:ts-anim-gan-discriminador-cara-draw 1.52s linear 2.20s both}
 .ts-anim-gan-discriminador-cara .tkb1{animation:ts-anim-gan-discriminador-cara-show .1s linear 6.0s both}
-.ts-anim-gan-discriminador-cara .tkb1 .mv{offset-path:path("M780,230 L1280,600");offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 1.1s ease-in-out 6.0s both}
+.ts-anim-gan-discriminador-cara .tkb1 .mv{animation:ts-anim-gan-discriminador-cara-path5 1.1s linear 6s 1 normal both}
 .ts-anim-gan-discriminador-cara .tkb2{animation:ts-anim-gan-discriminador-cara-show .1s linear 7.3s both}
-.ts-anim-gan-discriminador-cara .tkb2 .mv{offset-path:path("M780,420 L1280,600");offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 1.1s ease-in-out 7.3s both}
+.ts-anim-gan-discriminador-cara .tkb2 .mv{animation:ts-anim-gan-discriminador-cara-path6 1.1s linear 7.3s 1 normal both}
 .ts-anim-gan-discriminador-cara .tkb3{animation:ts-anim-gan-discriminador-cara-show .1s linear 8.6s both}
-.ts-anim-gan-discriminador-cara .tkb3 .mv{offset-path:path("M780,610 L1280,600");offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 1.1s ease-in-out 8.6s both}
+.ts-anim-gan-discriminador-cara .tkb3 .mv{animation:ts-anim-gan-discriminador-cara-path7 1.1s linear 8.6s 1 normal both}
 .ts-anim-gan-discriminador-cara .tkb4{animation:ts-anim-gan-discriminador-cara-show .1s linear 9.9s both}
-.ts-anim-gan-discriminador-cara .tkb4 .mv{offset-path:path("M780,800 L1280,600");offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 1.1s ease-in-out 9.9s both}
+.ts-anim-gan-discriminador-cara .tkb4 .mv{animation:ts-anim-gan-discriminador-cara-path8 1.1s linear 9.9s 1 normal both}
 .ts-anim-gan-discriminador-cara .tr{animation:ts-anim-gan-discriminador-cara-blink 1.6s linear 15.4s both}
-.ts-anim-gan-discriminador-cara .tr .mv{offset-path:path("M1906.7,408 L1906.7,258.8");offset-rotate:0deg;animation:ts-anim-gan-discriminador-cara-move 1s linear 15.6s both}
+.ts-anim-gan-discriminador-cara .tr .mv{animation:ts-anim-gan-discriminador-cara-path9 1s linear 15.6s 1 normal both}
 @keyframes ts-anim-gan-discriminador-cara-in{from{opacity:0}}
 @keyframes ts-anim-gan-discriminador-cara-show{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-gan-discriminador-cara-blink{0%{opacity:0}12%,85%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-gan-discriminador-cara-move{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes ts-anim-gan-discriminador-cara-move{from{}to{}}
 @keyframes ts-anim-gan-discriminador-cara-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-gan-discriminador-cara *{animation:none}}
+@keyframes ts-anim-gan-discriminador-cara-path5{0.00%{transform:translate(780.0px,230.0px)}3.33%{transform:translate(781.1px,230.8px)}6.67%{transform:translate(784.3px,233.2px)}10.00%{transform:translate(789.9px,237.3px)}13.33%{transform:translate(797.8px,243.1px)}16.67%{transform:translate(808.1px,250.8px)}20.00%{transform:translate(820.8px,260.2px)}23.33%{transform:translate(836.1px,271.5px)}26.67%{transform:translate(853.7px,284.5px)}30.00%{transform:translate(873.7px,299.3px)}33.33%{transform:translate(895.9px,315.8px)}36.67%{transform:translate(920.1px,333.6px)}40.00%{transform:translate(945.9px,352.8px)}46.67%{transform:translate(1001.3px,393.8px)}56.67%{transform:translate(1086.8px,457.1px)}61.67%{transform:translate(1127.2px,486.9px)}65.00%{transform:translate(1152.3px,505.5px)}68.33%{transform:translate(1175.5px,522.6px)}71.67%{transform:translate(1196.6px,538.3px)}75.00%{transform:translate(1215.4px,552.2px)}78.33%{transform:translate(1231.9px,564.4px)}81.67%{transform:translate(1245.9px,574.7px)}85.00%{transform:translate(1257.4px,583.3px)}88.33%{transform:translate(1266.5px,590.0px)}91.67%{transform:translate(1273.2px,595.0px)}95.00%{transform:translate(1277.6px,598.2px)}98.33%{transform:translate(1279.7px,599.8px)}100.00%{transform:translate(1280.0px,600.0px)}}
+@keyframes ts-anim-gan-discriminador-cara-path6{0.00%{transform:translate(780.0px,420.0px)}3.33%{transform:translate(781.1px,420.4px)}6.67%{transform:translate(784.3px,421.6px)}10.00%{transform:translate(789.9px,423.6px)}13.33%{transform:translate(797.8px,426.4px)}16.67%{transform:translate(808.1px,430.1px)}20.00%{transform:translate(820.8px,434.7px)}23.33%{transform:translate(836.1px,440.2px)}26.67%{transform:translate(853.7px,446.5px)}30.00%{transform:translate(873.7px,453.7px)}33.33%{transform:translate(895.9px,461.7px)}36.67%{transform:translate(920.1px,470.4px)}40.00%{transform:translate(945.9px,479.7px)}46.67%{transform:translate(1001.3px,499.7px)}56.67%{transform:translate(1086.8px,530.5px)}61.67%{transform:translate(1127.2px,545.0px)}65.00%{transform:translate(1152.3px,554.0px)}68.33%{transform:translate(1175.5px,562.4px)}71.67%{transform:translate(1196.6px,570.0px)}75.00%{transform:translate(1215.4px,576.8px)}78.33%{transform:translate(1231.9px,582.7px)}81.67%{transform:translate(1245.9px,587.7px)}85.00%{transform:translate(1257.4px,591.9px)}88.33%{transform:translate(1266.5px,595.1px)}91.67%{transform:translate(1273.2px,597.6px)}95.00%{transform:translate(1277.6px,599.1px)}98.33%{transform:translate(1279.7px,599.9px)}100.00%{transform:translate(1280.0px,600.0px)}}
+@keyframes ts-anim-gan-discriminador-cara-path7{0.00%{transform:translate(780.0px,610.0px)}3.33%{transform:translate(781.1px,610.0px)}6.67%{transform:translate(784.3px,609.9px)}10.00%{transform:translate(789.9px,609.8px)}13.33%{transform:translate(797.8px,609.6px)}16.67%{transform:translate(808.1px,609.4px)}20.00%{transform:translate(820.8px,609.2px)}23.33%{transform:translate(836.1px,608.9px)}26.67%{transform:translate(853.7px,608.5px)}30.00%{transform:translate(873.7px,608.1px)}33.33%{transform:translate(895.9px,607.7px)}36.67%{transform:translate(920.1px,607.2px)}40.00%{transform:translate(945.9px,606.7px)}46.67%{transform:translate(1001.3px,605.6px)}56.67%{transform:translate(1086.8px,603.9px)}61.67%{transform:translate(1127.2px,603.1px)}65.00%{transform:translate(1152.3px,602.6px)}68.33%{transform:translate(1175.5px,602.1px)}71.67%{transform:translate(1196.6px,601.7px)}75.00%{transform:translate(1215.4px,601.3px)}78.33%{transform:translate(1231.9px,601.0px)}81.67%{transform:translate(1245.9px,600.7px)}85.00%{transform:translate(1257.4px,600.5px)}88.33%{transform:translate(1266.5px,600.3px)}91.67%{transform:translate(1273.2px,600.1px)}95.00%{transform:translate(1277.6px,600.0px)}98.33%{transform:translate(1279.7px,600.0px)}100.00%{transform:translate(1280.0px,600.0px)}}
+@keyframes ts-anim-gan-discriminador-cara-path8{0.00%{transform:translate(780.0px,800.0px)}3.33%{transform:translate(781.1px,799.6px)}6.67%{transform:translate(784.3px,798.3px)}10.00%{transform:translate(789.9px,796.1px)}13.33%{transform:translate(797.8px,792.9px)}16.67%{transform:translate(808.1px,788.8px)}20.00%{transform:translate(820.8px,783.7px)}23.33%{transform:translate(836.1px,777.6px)}26.67%{transform:translate(853.7px,770.5px)}30.00%{transform:translate(873.7px,762.5px)}33.33%{transform:translate(895.9px,753.6px)}36.67%{transform:translate(920.1px,744.0px)}40.00%{transform:translate(945.9px,733.6px)}46.67%{transform:translate(1001.3px,711.5px)}56.67%{transform:translate(1086.8px,677.3px)}61.67%{transform:translate(1127.2px,661.1px)}65.00%{transform:translate(1152.3px,651.1px)}68.33%{transform:translate(1175.5px,641.8px)}71.67%{transform:translate(1196.6px,633.4px)}75.00%{transform:translate(1215.4px,625.8px)}78.33%{transform:translate(1231.9px,619.3px)}81.67%{transform:translate(1245.9px,613.7px)}85.00%{transform:translate(1257.4px,609.0px)}88.33%{transform:translate(1266.5px,605.4px)}91.67%{transform:translate(1273.2px,602.7px)}95.00%{transform:translate(1277.6px,601.0px)}98.33%{transform:translate(1279.7px,600.1px)}100.00%{transform:translate(1280.0px,600.0px)}}
+@keyframes ts-anim-gan-discriminador-cara-path9{0.00%{transform:translate(1906.7px,408.0px)}100.00%{transform:translate(1906.7px,258.8px)}}
+
+.ts-anim-gan-discriminador-cara .ts-anim-gan-discriminador-cara-w1{animation:ts-anim-gan-discriminador-cara-w1 2s linear 1.9s 1 normal both}
+@keyframes ts-anim-gan-discriminador-cara-w1{0.00%{transform:translate(145.0px,515.0px)}10.00%{transform:translate(145.0px,429.3px)}11.67%{transform:translate(145.6px,415.1px)}15.00%{transform:translate(149.5px,386.8px)}18.33%{transform:translate(155.8px,359.0px)}20.00%{transform:translate(160.0px,345.3px)}21.67%{transform:translate(165.0px,332.0px)}23.33%{transform:translate(170.9px,319.0px)}25.00%{transform:translate(177.6px,306.3px)}26.67%{transform:translate(185.2px,294.3px)}28.33%{transform:translate(193.6px,282.8px)}30.00%{transform:translate(202.9px,271.9px)}31.67%{transform:translate(213.0px,261.8px)}33.33%{transform:translate(223.9px,252.5px)}35.00%{transform:translate(235.3px,244.1px)}36.67%{transform:translate(247.4px,236.4px)}38.33%{transform:translate(259.9px,229.5px)}40.00%{transform:translate(272.8px,223.4px)}43.33%{transform:translate(299.5px,213.3px)}46.67%{transform:translate(327.0px,205.7px)}50.00%{transform:translate(355.0px,200.2px)}53.33%{transform:translate(383.3px,196.4px)}58.33%{transform:translate(426.0px,193.4px)}65.00%{transform:translate(483.1px,193.0px)}75.00%{transform:translate(568.6px,197.8px)}93.33%{transform:translate(724.6px,216.3px)}100.00%{transform:translate(780.0px,230.0px)}}
+.ts-anim-gan-discriminador-cara .ts-anim-gan-discriminador-cara-w2{animation:ts-anim-gan-discriminador-cara-w2 2s linear 1.9s 1 normal both}
+@keyframes ts-anim-gan-discriminador-cara-w2{0.00%{transform:translate(315.0px,515.0px)}15.00%{transform:translate(315.0px,427.6px)}16.67%{transform:translate(317.4px,418.6px)}20.00%{transform:translate(330.1px,404.0px)}23.33%{transform:translate(345.1px,391.7px)}26.67%{transform:translate(361.8px,381.8px)}30.00%{transform:translate(379.7px,374.2px)}33.33%{transform:translate(398.3px,368.7px)}36.67%{transform:translate(417.3px,364.9px)}41.67%{transform:translate(446.3px,362.0px)}48.33%{transform:translate(485.1px,361.8px)}56.67%{transform:translate(533.5px,366.0px)}73.33%{transform:translate(629.1px,382.8px)}100.00%{transform:translate(780.0px,420.0px)}}
+.ts-anim-gan-discriminador-cara .ts-anim-gan-discriminador-cara-w3{animation:ts-anim-gan-discriminador-cara-w3 2s linear 1.9s 1 normal both}
+@keyframes ts-anim-gan-discriminador-cara-w3{0.00%{transform:translate(145.0px,685.0px)}10.00%{transform:translate(145.0px,772.9px)}11.67%{transform:translate(147.7px,787.2px)}13.33%{transform:translate(152.6px,801.0px)}15.00%{transform:translate(158.5px,814.4px)}16.67%{transform:translate(165.5px,827.3px)}18.33%{transform:translate(173.6px,839.5px)}20.00%{transform:translate(182.9px,850.8px)}21.67%{transform:translate(193.3px,861.1px)}23.33%{transform:translate(204.8px,870.2px)}25.00%{transform:translate(217.2px,878.0px)}26.67%{transform:translate(230.3px,884.5px)}28.33%{transform:translate(244.0px,889.6px)}30.00%{transform:translate(258.2px,893.4px)}31.67%{transform:translate(272.6px,896.1px)}33.33%{transform:translate(287.2px,897.6px)}35.00%{transform:translate(301.8px,898.0px)}36.67%{transform:translate(316.5px,897.6px)}38.33%{transform:translate(331.1px,896.4px)}41.67%{transform:translate(360.0px,891.7px)}45.00%{transform:translate(388.5px,884.7px)}48.33%{transform:translate(416.3px,875.7px)}51.67%{transform:translate(443.6px,864.9px)}56.67%{transform:translate(483.4px,846.2px)}61.67%{transform:translate(521.8px,824.8px)}68.33%{transform:translate(570.9px,792.8px)}75.00%{transform:translate(617.6px,757.4px)}83.33%{transform:translate(672.6px,709.1px)}91.67%{transform:translate(723.8px,656.7px)}93.33%{transform:translate(733.6px,645.7px)}100.00%{transform:translate(780.0px,610.0px)}}
+.ts-anim-gan-discriminador-cara .ts-anim-gan-discriminador-cara-w4{animation:ts-anim-gan-discriminador-cara-w4 2s linear 1.9s 1 normal both}
+@keyframes ts-anim-gan-discriminador-cara-w4{0.00%{transform:translate(315.0px,685.0px)}18.33%{transform:translate(314.9px,800.4px)}20.00%{transform:translate(315.9px,810.9px)}21.67%{transform:translate(317.6px,821.2px)}23.33%{transform:translate(320.6px,831.3px)}25.00%{transform:translate(325.0px,840.8px)}26.67%{transform:translate(331.2px,849.2px)}28.33%{transform:translate(339.2px,856.0px)}30.00%{transform:translate(348.6px,860.6px)}31.67%{transform:translate(358.8px,863.3px)}33.33%{transform:translate(369.2px,864.3px)}35.00%{transform:translate(379.7px,864.3px)}38.33%{transform:translate(400.5px,861.9px)}43.33%{transform:translate(431.3px,855.0px)}66.67%{transform:translate(572.1px,813.1px)}75.00%{transform:translate(623.3px,801.6px)}81.67%{transform:translate(664.8px,795.9px)}86.67%{transform:translate(696.3px,794.2px)}90.00%{transform:translate(717.3px,794.7px)}100.00%{transform:translate(780.0px,800.0px)}}
 </style>
 <defs><marker id="a-gan-discriminador-cara-ah-1F1E1E-30" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="30" markerHeight="30" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1E1E"/></marker><marker id="a-gan-discriminador-cara-ah-DA1B2E-34" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="34" markerHeight="34" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DA1B2E"/></marker><marker id="a-gan-discriminador-cara-ah-1F5FAD-26" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="26" markerHeight="26" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F5FAD"/></marker><marker id="a-gan-discriminador-cara-ah-2E8540-26" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="26" markerHeight="26" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2E8540"/></marker><marker id="a-gan-discriminador-cara-ah-3B3535-22" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="22" markerHeight="22" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B3535"/></marker><marker id="a-gan-discriminador-cara-ah-3B3535-22s" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="22" markerHeight="22" markerUnits="userSpaceOnUse" orient="auto"><path d="M10,0 L0,5 L10,10 z" fill="#3B3535"/></marker></defs>
 <rect x="0" y="0" width="2160" height="990" fill="#ffffff"/>
@@ -1273,10 +1313,10 @@ still: [#6] saturated blue and solid red outside the palette · [#8] &#x27;las r
 <path d="M315.0,628.0 C305.0,820.0 520.0,630.0 723.2,645.1" stroke="#1F1E1E" stroke-width="5" fill="none" stroke-linecap="round" marker-end="url(#a-gan-discriminador-cara-ah-1F1E1E-30)"/>
 </g>
 </g>
-<g class="tka tka1" opacity="0"><g class="mv"><circle r="26" fill="#1F1E1E" stroke="#ffffff" stroke-width="3"/><text y="11" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text></g></g>
-<g class="tka tka2" opacity="0"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g>
-<g class="tka tka3" opacity="0"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g>
-<g class="tka tka4" opacity="0"><g class="mv"><circle r="26" fill="#1F1E1E" stroke="#ffffff" stroke-width="3"/><text y="11" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text></g></g>
+<g class="tka tka1" opacity="0"><g class="ts-anim-gan-discriminador-cara-w1"><g class="mv"><circle r="26" fill="#1F1E1E" stroke="#ffffff" stroke-width="3"/><text y="11" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text></g></g></g>
+<g class="tka tka2" opacity="0"><g class="ts-anim-gan-discriminador-cara-w2"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g></g>
+<g class="tka tka3" opacity="0"><g class="ts-anim-gan-discriminador-cara-w3"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g></g>
+<g class="tka tka4" opacity="0"><g class="ts-anim-gan-discriminador-cara-w4"><g class="mv"><circle r="26" fill="#1F1E1E" stroke="#ffffff" stroke-width="3"/><text y="11" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text></g></g></g>
 <g class="tkb1" opacity="0"><g class="mv"><circle r="26" fill="#1F1E1E" stroke="#ffffff" stroke-width="3"/><text y="11" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text></g></g>
 <g class="tkb2" opacity="0"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g>
 <g class="tkb3" opacity="0"><g class="mv"><circle r="26" fill="#ffffff" stroke="#1F1E1E" stroke-width="4"/><text y="11" font-size="32" font-weight="bold" fill="#1F1E1E" text-anchor="middle">0</text></g></g>
@@ -1475,27 +1515,27 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 .ts-anim-gan-vanilla .d{animation:ts-anim-gan-vanilla-d 6.0s ease-in-out 5.6s both}
 .ts-anim-gan-vanilla .c3{animation:ts-anim-gan-vanilla-c3 6.0s ease-in-out 5.6s both}
 .ts-anim-gan-vanilla .lg{animation:ts-anim-gan-vanilla-lg 6.0s ease-in-out 5.6s both}
-.ts-anim-gan-vanilla .t3f{offset-path:path("M440,126 L460,128 L510,170 L530,181");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t3f 6.0s linear 5.6s both}
-.ts-anim-gan-vanilla .t3r{offset-path:path("M440,262 L460,262 L510,220 L530,209");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t3r 6.0s linear 5.6s both}
+.ts-anim-gan-vanilla .t3f{animation:ts-anim-gan-vanilla-path1 6s linear 5.6s 1 normal both}
+.ts-anim-gan-vanilla .t3r{animation:ts-anim-gan-vanilla-path2 6s linear 5.6s 1 normal both}
 .ts-anim-gan-vanilla .dr1{animation:ts-anim-gan-vanilla-dr1 6.0s ease-in-out 5.6s both}
 .ts-anim-gan-vanilla .av{animation:ts-anim-gan-vanilla-av 6.0s ease-in-out 5.6s both}
 .ts-anim-gan-vanilla .v{animation:ts-anim-gan-vanilla-v 6.0s ease-in-out 5.6s both}
 .ts-anim-gan-vanilla .c4{animation:ts-anim-gan-vanilla-c4 6.0s ease-in-out 5.6s both}
-.ts-anim-gan-vanilla .t4f{offset-path:path("M580,195 L750,195");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t4f 6.0s linear 5.6s both}
-.ts-anim-gan-vanilla .t4r{offset-path:path("M580,195 L750,195");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t4r 6.0s linear 5.6s both}
+.ts-anim-gan-vanilla .t4f{animation:ts-anim-gan-vanilla-path3 6s linear 5.6s 1 normal both}
+.ts-anim-gan-vanilla .t4r{animation:ts-anim-gan-vanilla-path4 6s linear 5.6s 1 normal both}
 .ts-anim-gan-vanilla .al{animation:ts-anim-gan-vanilla-al 3.6s ease-in-out 11.6s both}
 .ts-anim-gan-vanilla .lo{animation:ts-anim-gan-vanilla-lo 3.6s ease-in-out 11.6s both}
 .ts-anim-gan-vanilla .c5{animation:ts-anim-gan-vanilla-c5 3.6s ease-in-out 11.6s both}
-.ts-anim-gan-vanilla .t5g{offset-path:path("M790,180 L790,108 L900,108");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t5g 3.6s linear 11.6s both}
-.ts-anim-gan-vanilla .t5f{offset-path:path("M790,210 L790,286 L900,286");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t5f 3.6s linear 11.6s both}
-.ts-anim-gan-vanilla .t5r{offset-path:path("M790,210 L790,286 L900,286");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t5r 3.6s linear 11.6s both}
+.ts-anim-gan-vanilla .t5g{animation:ts-anim-gan-vanilla-path5 3.6s linear 11.6s 1 normal both}
+.ts-anim-gan-vanilla .t5f{animation:ts-anim-gan-vanilla-path6 3.6s linear 11.6s 1 normal both}
+.ts-anim-gan-vanilla .t5r{animation:ts-anim-gan-vanilla-path7 3.6s linear 11.6s 1 normal both}
 .ts-anim-gan-vanilla .lb{animation:ts-anim-gan-vanilla-lb 3.6s ease-in-out 11.6s both}
 .ts-anim-gan-vanilla .fb{animation:ts-anim-gan-vanilla-fb 4.0s ease-in-out 15.2s both}
 .ts-anim-gan-vanilla .c6{animation:ts-anim-gan-vanilla-c6 4.0s ease-in-out 15.2s both}
 .ts-anim-gan-vanilla .lg3{animation:ts-anim-gan-vanilla-lg3 4.0s ease-in-out 15.2s both}
 .ts-anim-gan-vanilla .lgo{animation:ts-anim-gan-vanilla-lgo 4.0s linear 15.2s forwards}
-.ts-anim-gan-vanilla .t6g{offset-path:path("M923,100 L923,40 L215,40 L215,110");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t6g 4.0s linear 15.2s both}
-.ts-anim-gan-vanilla .t6d{offset-path:path("M923,290 L923,346 L600,346 L600,215");offset-rotate:0deg;animation:ts-anim-gan-vanilla-t6d 4.0s linear 15.2s both}
+.ts-anim-gan-vanilla .t6g{animation:ts-anim-gan-vanilla-path8 4s linear 15.2s 1 normal both}
+.ts-anim-gan-vanilla .t6d{animation:ts-anim-gan-vanilla-path9 4s linear 15.2s 1 normal both}
 .ts-anim-gan-vanilla .gr{animation:ts-anim-gan-vanilla-gr 4.0s ease-in-out 15.2s both}
 .ts-anim-gan-vanilla .dr2{animation:ts-anim-gan-vanilla-dr2 4.0s ease-in-out 15.2s both}
 @keyframes ts-anim-gan-vanilla-n{0%,3.57%{opacity:0}10.71%,100%{opacity:1}}
@@ -1512,30 +1552,30 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 @keyframes ts-anim-gan-vanilla-d{0%,1.67%{opacity:0}8.33%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-c3{0%,1.67%{opacity:0}6.67%,53.33%{opacity:1}56.67%,100%{opacity:0}}
 @keyframes ts-anim-gan-vanilla-lg{0%,6.67%{opacity:0}11.67%,100%{opacity:1}}
-@keyframes ts-anim-gan-vanilla-t3f{0%,11.67%{opacity:0;offset-distance:0%}13.33%{opacity:1}33.33%{opacity:1}35.00%,100%{opacity:0;offset-distance:100%}}
-@keyframes ts-anim-gan-vanilla-t3r{0%,11.67%{opacity:0;offset-distance:0%}13.33%{opacity:1}33.33%{opacity:1}35.00%,100%{opacity:0;offset-distance:100%}}
 @keyframes ts-anim-gan-vanilla-dr1{0%,35.00%{opacity:0}38.33%,53.33%{opacity:1}56.67%,100%{opacity:0}}
 @keyframes ts-anim-gan-vanilla-av{0%,56.67%{opacity:0}61.67%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-v{0%,56.67%{opacity:0}61.67%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-c4{0%,56.67%{opacity:0}60.00%,96.67%{opacity:1}100.00%,100%{opacity:0}}
-@keyframes ts-anim-gan-vanilla-t4f{0%,60.83%{opacity:0;offset-distance:0%}62.50%{opacity:1}75.83%{opacity:1}77.50%,100%{opacity:0;offset-distance:100%}}
-@keyframes ts-anim-gan-vanilla-t4r{0%,63.67%{opacity:0;offset-distance:0%}65.33%{opacity:1}78.67%{opacity:1}80.33%,100%{opacity:0;offset-distance:100%}}
 @keyframes ts-anim-gan-vanilla-al{0%,2.78%{opacity:0}11.11%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-lo{0%,2.78%{opacity:0}11.11%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-c5{0%,2.78%{opacity:0}8.33%,94.44%{opacity:1}100.00%,100%{opacity:0}}
-@keyframes ts-anim-gan-vanilla-t5g{0%,13.89%{opacity:0;offset-distance:0%}16.67%{opacity:1}55.56%{opacity:1}58.33%,100%{opacity:0;offset-distance:100%}}
-@keyframes ts-anim-gan-vanilla-t5f{0%,13.89%{opacity:0;offset-distance:0%}16.67%{opacity:1}55.56%{opacity:1}58.33%,100%{opacity:0;offset-distance:100%}}
-@keyframes ts-anim-gan-vanilla-t5r{0%,22.22%{opacity:0;offset-distance:0%}25.00%{opacity:1}63.89%{opacity:1}66.67%,100%{opacity:0;offset-distance:100%}}
 @keyframes ts-anim-gan-vanilla-lb{0%,63.89%{opacity:0}72.22%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-fb{0%,2.50%{opacity:0}10.00%,100%{opacity:1}}
 @keyframes ts-anim-gan-vanilla-c6{0%,2.50%{opacity:0}7.50%,90.00%{opacity:1}100.00%,100%{opacity:0}}
 @keyframes ts-anim-gan-vanilla-lg3{0%,2.50%{opacity:0}10.00%,90.00%{opacity:1}100.00%,100%{opacity:0}}
 @keyframes ts-anim-gan-vanilla-lgo{0%,90.00%{opacity:1}100.00%,100%{opacity:0}}
-@keyframes ts-anim-gan-vanilla-t6g{0%,10.00%{opacity:0;offset-distance:0%}12.50%{opacity:1}40.00%{opacity:1}42.50%,100%{opacity:0;offset-distance:100%}}
-@keyframes ts-anim-gan-vanilla-t6d{0%,10.00%{opacity:0;offset-distance:0%}12.50%{opacity:1}40.00%{opacity:1}42.50%,100%{opacity:0;offset-distance:100%}}
 @keyframes ts-anim-gan-vanilla-gr{0%,42.50%{opacity:0}47.50%,67.50%{opacity:1}72.50%,100%{opacity:0}}
 @keyframes ts-anim-gan-vanilla-dr2{0%,42.50%{opacity:0}47.50%,67.50%{opacity:1}72.50%,100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-gan-vanilla *{animation:none}}
+@keyframes ts-anim-gan-vanilla-path1{0.00%{transform:translate(440.0px,126.0px);opacity:0}11.67%{transform:translate(440.0px,126.0px);opacity:0}13.33%{transform:translate(447.7px,126.8px);opacity:1}15.00%{transform:translate(455.4px,127.5px);opacity:1}16.67%{transform:translate(462.4px,130.0px);opacity:1}30.00%{transform:translate(509.7px,169.8px);opacity:1}33.33%{transform:translate(523.2px,177.3px);opacity:0.998004}35.00%{transform:translate(530.0px,181.0px);opacity:0}100.00%{transform:translate(530.0px,181.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path2{0.00%{transform:translate(440.0px,262.0px);opacity:0}11.67%{transform:translate(440.0px,262.0px);opacity:0}13.33%{transform:translate(447.7px,262.0px);opacity:1}15.00%{transform:translate(455.4px,262.0px);opacity:1}16.67%{transform:translate(462.4px,260.0px);opacity:1}30.00%{transform:translate(509.7px,220.2px);opacity:1}33.33%{transform:translate(523.2px,212.7px);opacity:0.998004}35.00%{transform:translate(530.0px,209.0px);opacity:0}100.00%{transform:translate(530.0px,209.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path3{0.00%{transform:translate(580.0px,195.0px);opacity:0}60.00%{transform:translate(580.0px,195.0px);opacity:0}61.67%{transform:translate(588.5px,195.0px);opacity:0.500998}63.33%{transform:translate(605.5px,195.0px);opacity:1}75.00%{transform:translate(724.5px,195.0px);opacity:1}76.67%{transform:translate(741.5px,195.0px);opacity:0.499002}78.33%{transform:translate(750.0px,195.0px);opacity:0}100.00%{transform:translate(750.0px,195.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path4{0.00%{transform:translate(580.0px,195.0px);opacity:0}63.33%{transform:translate(580.0px,195.0px);opacity:0}65.00%{transform:translate(593.6px,195.0px);opacity:0.801205}66.67%{transform:translate(610.6px,195.0px);opacity:1}78.33%{transform:translate(729.6px,195.0px);opacity:1}80.00%{transform:translate(746.6px,195.0px);opacity:0.198795}81.67%{transform:translate(750.0px,195.0px);opacity:0}100.00%{transform:translate(750.0px,195.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path5{0.00%{transform:translate(790.0px,180.0px);opacity:0}13.33%{transform:translate(790.0px,180.0px);opacity:0}15.00%{transform:translate(790.0px,175.5px);opacity:0.399281}16.67%{transform:translate(790.0px,168.6px);opacity:0.998801}30.00%{transform:translate(790.0px,114.0px);opacity:1}31.67%{transform:translate(790.8px,108.0px);opacity:1}55.00%{transform:translate(886.4px,108.0px);opacity:1}56.67%{transform:translate(893.2px,108.0px);opacity:0.600481}58.33%{transform:translate(900.0px,108.0px);opacity:0}100.00%{transform:translate(900.0px,108.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path6{0.00%{transform:translate(790.0px,210.0px);opacity:0}13.33%{transform:translate(790.0px,210.0px);opacity:0}15.00%{transform:translate(790.0px,214.6px);opacity:0.399281}16.67%{transform:translate(790.0px,221.6px);opacity:0.998801}31.67%{transform:translate(790.0px,284.4px);opacity:1}33.33%{transform:translate(795.4px,286.0px);opacity:1}55.00%{transform:translate(886.1px,286.0px);opacity:1}56.67%{transform:translate(893.0px,286.0px);opacity:0.600481}58.33%{transform:translate(900.0px,286.0px);opacity:0}100.00%{transform:translate(900.0px,286.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path7{0.00%{transform:translate(790.0px,210.0px);opacity:0}21.67%{transform:translate(790.0px,210.0px);opacity:0}23.33%{transform:translate(790.0px,214.7px);opacity:0.40048}25.00%{transform:translate(790.0px,221.6px);opacity:1}40.00%{transform:translate(790.0px,284.4px);opacity:1}41.67%{transform:translate(795.4px,286.0px);opacity:1}63.33%{transform:translate(886.0px,286.0px);opacity:1}65.00%{transform:translate(893.0px,286.0px);opacity:0.600719}66.67%{transform:translate(900.0px,286.0px);opacity:0.00119904}100.00%{transform:translate(900.0px,286.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path8{0.00%{transform:translate(923.0px,100.0px);opacity:0}10.00%{transform:translate(923.0px,100.0px);opacity:3.33067e-15}11.67%{transform:translate(923.0px,57.0px);opacity:0.666667}13.33%{transform:translate(897.1px,40.0px);opacity:1}38.33%{transform:translate(252.4px,40.0px);opacity:1}40.00%{transform:translate(215.0px,45.5px);opacity:1}41.67%{transform:translate(215.0px,88.5px);opacity:0.333333}43.33%{transform:translate(215.0px,110.0px);opacity:0}100.00%{transform:translate(215.0px,110.0px);opacity:0}}
+@keyframes ts-anim-gan-vanilla-path9{0.00%{transform:translate(923.0px,290.0px);opacity:0}10.00%{transform:translate(923.0px,290.0px);opacity:3.33067e-15}11.67%{transform:translate(923.0px,316.2px);opacity:0.666667}13.33%{transform:translate(923.0px,342.3px);opacity:1}15.00%{transform:translate(900.5px,346.0px);opacity:1}33.33%{transform:translate(612.8px,346.0px);opacity:1}35.00%{transform:translate(600.0px,332.7px);opacity:1}40.00%{transform:translate(600.0px,254.2px);opacity:1}41.67%{transform:translate(600.0px,228.1px);opacity:0.333333}43.33%{transform:translate(600.0px,215.0px);opacity:0}100.00%{transform:translate(600.0px,215.0px);opacity:0}}
 </style>
 <defs>
 <marker id="a-gan-vanilla-ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">
@@ -1856,10 +1896,10 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 .ts-anim-pipeline-sd .tke{animation:ts-anim-pipeline-sd-on .01s 2.19s both}
 .ts-anim-pipeline-sd .tkb{animation:ts-anim-pipeline-sd-on .01s 5.39s both,ts-anim-pipeline-sd-off .01s 9.19s forwards}
 .ts-anim-pipeline-sd .tkc{animation:ts-anim-pipeline-sd-on .01s 9.19s both,ts-anim-pipeline-sd-off .1s 11.85s forwards}
-.ts-anim-pipeline-sd .tka .mv{offset-path:path("M202,62 H518 V222 H288 V62");offset-rotate:0deg;animation:ts-anim-pipeline-sd-a 3.20s linear 2.2s both}
-.ts-anim-pipeline-sd .tke .mv{offset-path:path("M788,62 H518");offset-rotate:0deg;animation:ts-anim-pipeline-sd-e 1.60s linear 2.2s both}
-.ts-anim-pipeline-sd .tkb .mv{offset-path:path("M288,62 H518 V222 H288 V62 H518 V222 H288 V62 H518 V222 H288 V62");offset-rotate:0deg;animation:ts-anim-pipeline-sd-b 3.60s linear 5.6s both}
-.ts-anim-pipeline-sd .tkc .mv{offset-path:path("M288,62 H518 V222 H883 V372");offset-rotate:0deg;animation:ts-anim-pipeline-sd-c 2.80s linear 9.4s both}
+.ts-anim-pipeline-sd .tka .mv{animation:ts-anim-pipeline-sd-path1 3.2s linear 2.2s 1 normal both}
+.ts-anim-pipeline-sd .tke .mv{animation:ts-anim-pipeline-sd-path2 1.6s linear 2.2s 1 normal both}
+.ts-anim-pipeline-sd .tkb .mv{animation:ts-anim-pipeline-sd-path3 3.6s linear 5.6s 1 normal both}
+.ts-anim-pipeline-sd .tkc .mv{animation:ts-anim-pipeline-sd-path4 2.8s linear 9.4s 1 normal both}
 .ts-anim-pipeline-sd .c1{animation:ts-anim-pipeline-sd-on .3s 5.05s both,ts-anim-pipeline-sd-off .1s 7.2s forwards}
 .ts-anim-pipeline-sd .c2{animation:ts-anim-pipeline-sd-on .1s 7.2s both,ts-anim-pipeline-sd-off .1s 8.1s forwards}
 .ts-anim-pipeline-sd .c3{animation:ts-anim-pipeline-sd-on .1s 8.1s both,ts-anim-pipeline-sd-off .1s 9.0s forwards}
@@ -1869,11 +1909,11 @@ still: [A3] the two bottom curves cross, so which pixel feeds x3 and x4 is uncle
 @keyframes ts-anim-pipeline-sd-in{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-pipeline-sd-on{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-pipeline-sd-off{from{opacity:1}to{opacity:0}}
-@keyframes ts-anim-pipeline-sd-a{0.00%{offset-distance:0.00%}25.00%{offset-distance:13.79%}29.69%{offset-distance:18.39%}32.81%{offset-distance:36.78%}42.19%{offset-distance:36.78%}45.31%{offset-distance:41.38%}54.69%{offset-distance:50.57%}56.25%{offset-distance:55.17%}64.06%{offset-distance:55.17%}68.75%{offset-distance:73.56%}75.00%{offset-distance:78.16%}100.00%{offset-distance:100.00%}}
-@keyframes ts-anim-pipeline-sd-e{0.00%{offset-distance:0.00%}50.00%{offset-distance:31.48%}59.38%{offset-distance:40.74%}68.75%{offset-distance:100.00%}100.00%{offset-distance:100.00%}}
-@keyframes ts-anim-pipeline-sd-b{0.00%{offset-distance:0.00%}25.00%{offset-distance:0.00%}50.00%{offset-distance:33.33%}75.00%{offset-distance:66.67%}100.00%{offset-distance:100.00%}}
-@keyframes ts-anim-pipeline-sd-c{0.00%{offset-distance:0.00%}8.93%{offset-distance:7.73%}14.29%{offset-distance:29.83%}25.00%{offset-distance:34.25%}28.57%{offset-distance:38.67%}35.71%{offset-distance:43.09%}42.86%{offset-distance:43.09%}46.43%{offset-distance:60.77%}50.00%{offset-distance:66.85%}55.36%{offset-distance:72.93%}60.71%{offset-distance:83.43%}69.64%{offset-distance:83.43%}73.21%{offset-distance:86.74%}75.00%{offset-distance:88.95%}82.14%{offset-distance:93.37%}100.00%{offset-distance:100.00%}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-sd *{animation:none}}
+@keyframes ts-anim-pipeline-sd-path1{0.00%{transform:translate(202.0px,62.0px)}25.00%{transform:translate(321.4px,62.0px)}28.33%{transform:translate(349.7px,62.0px)}30.00%{transform:translate(377.1px,62.0px)}31.67%{transform:translate(462.2px,62.0px)}33.33%{transform:translate(518.0px,64.5px)}41.67%{transform:translate(518.0px,64.5px)}43.33%{transform:translate(518.0px,79.1px)}45.00%{transform:translate(518.0px,100.4px)}46.67%{transform:translate(518.0px,115.9px)}53.33%{transform:translate(518.0px,172.4px)}55.00%{transform:translate(518.0px,191.9px)}56.67%{transform:translate(516.2px,222.0px)}63.33%{transform:translate(516.2px,222.0px)}65.00%{transform:translate(484.3px,222.0px)}68.33%{transform:translate(371.1px,222.0px)}70.00%{transform:translate(349.0px,222.0px)}75.00%{transform:translate(317.1px,222.0px)}78.33%{transform:translate(291.9px,222.0px)}80.00%{transform:translate(288.0px,213.3px)}100.00%{transform:translate(288.0px,62.0px)}}
+@keyframes ts-anim-pipeline-sd-path2{0.00%{transform:translate(788.0px,62.0px)}50.00%{transform:translate(703.0px,62.0px)}58.33%{transform:translate(680.8px,62.0px)}60.00%{transform:translate(667.4px,62.0px)}68.33%{transform:translate(525.1px,62.0px)}70.00%{transform:translate(518.0px,62.0px)}100.00%{transform:translate(518.0px,62.0px)}}
+@keyframes ts-anim-pipeline-sd-path3{0.00%{transform:translate(288.0px,62.0px)}25.00%{transform:translate(288.0px,62.0px)}31.67%{transform:translate(496.0px,62.0px)}33.33%{transform:translate(518.0px,92.0px)}36.67%{transform:translate(518.0px,196.0px)}38.33%{transform:translate(492.0px,222.0px)}43.33%{transform:translate(336.1px,222.0px)}45.00%{transform:translate(288.0px,218.1px)}50.00%{transform:translate(288.0px,62.1px)}56.67%{transform:translate(496.0px,62.0px)}58.33%{transform:translate(518.0px,92.0px)}61.67%{transform:translate(518.0px,196.0px)}63.33%{transform:translate(492.0px,222.0px)}68.33%{transform:translate(336.0px,222.0px)}70.00%{transform:translate(288.0px,218.0px)}75.00%{transform:translate(288.1px,62.0px)}81.67%{transform:translate(496.1px,62.0px)}83.33%{transform:translate(518.0px,92.1px)}86.67%{transform:translate(518.0px,196.0px)}88.33%{transform:translate(492.0px,222.0px)}93.33%{transform:translate(336.0px,222.0px)}95.00%{transform:translate(288.0px,218.0px)}100.00%{transform:translate(288.0px,62.0px)}}
+@keyframes ts-anim-pipeline-sd-path4{0.00%{transform:translate(288.0px,62.0px)}8.33%{transform:translate(353.3px,62.0px)}10.00%{transform:translate(397.9px,62.0px)}11.67%{transform:translate(460.1px,62.0px)}13.33%{transform:translate(518.0px,66.3px)}15.00%{transform:translate(518.0px,104.6px)}25.00%{transform:translate(518.0px,142.0px)}28.33%{transform:translate(518.0px,179.3px)}30.00%{transform:translate(518.0px,190.0px)}35.00%{transform:translate(518.0px,218.0px)}36.67%{transform:translate(518.0px,222.0px)}41.67%{transform:translate(518.0px,222.0px)}43.33%{transform:translate(539.2px,222.0px)}45.00%{transform:translate(613.9px,222.0px)}46.67%{transform:translate(681.6px,222.0px)}50.00%{transform:translate(733.0px,222.0px)}55.00%{transform:translate(784.3px,222.0px)}56.67%{transform:translate(811.2px,222.0px)}60.00%{transform:translate(870.4px,222.0px)}61.67%{transform:translate(883.0px,222.0px)}68.33%{transform:translate(883.0px,222.0px)}70.00%{transform:translate(883.0px,225.1px)}73.33%{transform:translate(883.0px,253.4px)}75.00%{transform:translate(883.0px,272.0px)}81.67%{transform:translate(883.0px,309.3px)}83.33%{transform:translate(883.0px,316.0px)}100.00%{transform:translate(883.0px,372.0px)}}
 </style>
 <defs>
 <marker id="a-pipeline-sd-ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3B3535"/></marker>
@@ -3870,14 +3910,15 @@ still: [#11] &#x27;embedding&#x27;, &#x27;prompt&#x27;, &#x27;decoder&#x27; are 
 .ts-anim-react-bifurcacion .b5b{animation:ts-anim-react-bifurcacion-in .5s ease-out 7.6s both}
 .ts-anim-react-bifurcacion .b5c{animation:ts-anim-react-bifurcacion-in .5s ease-out 8.4s both}
 .ts-anim-react-bifurcacion .amb-on{animation:ts-anim-react-bifurcacion-pulse 2s linear 3.3s both}
-.ts-anim-react-bifurcacion .tok-a{offset-path:path("M140,204 V267");offset-rotate:0deg;animation:ts-anim-react-bifurcacion-into 2s linear 2.7s both}
-.ts-anim-react-bifurcacion .tok-o{offset-path:path("M140,267 V332");offset-rotate:0deg;animation:ts-anim-react-bifurcacion-out 2s linear 4.4s both}
-.ts-anim-react-bifurcacion .tok-l{offset-path:path("M480,204 V332");offset-rotate:0deg;animation:ts-anim-react-bifurcacion-out 2.2s linear 7.0s both}
+.ts-anim-react-bifurcacion .tok-a{animation:ts-anim-react-bifurcacion-path1 2s linear 2.7s 1 normal both}
+.ts-anim-react-bifurcacion .tok-o{animation:ts-anim-react-bifurcacion-path2 2s linear 4.4s 1 normal both}
+.ts-anim-react-bifurcacion .tok-l{animation:ts-anim-react-bifurcacion-path3 2.2s linear 7s 1 normal both}
 @keyframes ts-anim-react-bifurcacion-in{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-react-bifurcacion-pulse{0%{opacity:0}20%,70%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-react-bifurcacion-into{0%{offset-distance:0%;opacity:0}8%{opacity:1}60%{offset-distance:100%;opacity:1}100%{offset-distance:100%;opacity:0}}
-@keyframes ts-anim-react-bifurcacion-out{0%{offset-distance:0%;opacity:0}4%{opacity:1}65%{offset-distance:100%;opacity:1}100%{offset-distance:100%;opacity:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-react-bifurcacion *{animation:none}}
+@keyframes ts-anim-react-bifurcacion-path1{0.00%{transform:translate(140.0px,204.0px);opacity:0}6.67%{transform:translate(140.0px,211.0px);opacity:0.833333}8.33%{transform:translate(140.0px,212.8px);opacity:1}60.00%{transform:translate(140.0px,267.0px);opacity:1}100.00%{transform:translate(140.0px,267.0px);opacity:0}}
+@keyframes ts-anim-react-bifurcacion-path2{0.00%{transform:translate(140.0px,267.0px);opacity:0}3.33%{transform:translate(140.0px,270.3px);opacity:0.833333}5.00%{transform:translate(140.0px,272.0px);opacity:1}65.00%{transform:translate(140.0px,332.0px);opacity:1}100.00%{transform:translate(140.0px,332.0px);opacity:0}}
+@keyframes ts-anim-react-bifurcacion-path3{0.00%{transform:translate(480.0px,204.0px);opacity:0}3.33%{transform:translate(480.0px,210.6px);opacity:0.833333}5.00%{transform:translate(480.0px,213.8px);opacity:1}65.00%{transform:translate(480.0px,332.0px);opacity:1}100.00%{transform:translate(480.0px,332.0px);opacity:0}}
 </style>
 <defs>
 <marker id="a-react-bifurcacion-ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">
@@ -4010,14 +4051,11 @@ still: [A13] bottom margin tighter than the others</pre></details>
 .ts-anim-reflexion-lazo .b5{animation:ts-anim-reflexion-lazo-in .5s ease-out 7.1s both}
 .ts-anim-reflexion-lazo .b6{animation:ts-anim-reflexion-lazo-in .5s ease-out 17.3s both}
 .ts-anim-reflexion-lazo .ball1{animation:ts-anim-reflexion-lazo-in 0.15s ease-out 0.8s forwards,ts-anim-reflexion-lazo-out 0.1s ease-in 10.1s forwards}
-.ts-anim-reflexion-lazo .ball1 .mv{offset-path:path("M100,55 L320,55 L320,185 L430,185 L430,325 L430,455 L600,455 L600,55 L320,55");offset-rotate:0deg;animation:ts-anim-reflexion-lazo-lap1 9.2s ease-in-out 0.8s both}
-@keyframes ts-anim-reflexion-lazo-lap1{0%{offset-distance:0%}9.78%{offset-distance:13.92%}18.48%{offset-distance:13.92%}27.17%{offset-distance:22.15%}35.87%{offset-distance:22.15%}45.65%{offset-distance:37.97%}56.52%{offset-distance:37.97%}64.13%{offset-distance:46.2%}73.91%{offset-distance:46.2%}100%{offset-distance:100%}}
+.ts-anim-reflexion-lazo .ball1 .mv{animation:ts-anim-reflexion-lazo-path1 9.2s linear 0.8s 1 normal both}
 .ts-anim-reflexion-lazo .ball2{animation:ts-anim-reflexion-lazo-in 0.15s ease-out 10.0s forwards,ts-anim-reflexion-lazo-out 0.1s ease-in 16.1s forwards}
-.ts-anim-reflexion-lazo .ball2 .mv{offset-path:path("M320,55 L320,185 L430,185 L430,325 L430,455 L600,455 L600,55 L320,55");offset-rotate:0deg;animation:ts-anim-reflexion-lazo-lap2 6.0s ease-in-out 10.0s both}
-@keyframes ts-anim-reflexion-lazo-lap2{0%{offset-distance:0%}8.33%{offset-distance:0%}18.33%{offset-distance:9.56%}26.67%{offset-distance:9.56%}38.33%{offset-distance:27.94%}50%{offset-distance:27.94%}58.33%{offset-distance:37.5%}70%{offset-distance:37.5%}100%{offset-distance:100%}}
+.ts-anim-reflexion-lazo .ball2 .mv{animation:ts-anim-reflexion-lazo-path2 6s linear 10s 1 normal both}
 .ts-anim-reflexion-lazo .ball3{animation:ts-anim-reflexion-lazo-in 0.15s ease-out 16.0s forwards,ts-anim-reflexion-lazo-out 0.1s ease-in 18.8s forwards}
-.ts-anim-reflexion-lazo .ball3 .mv{offset-path:path("M320,55 L320,185 L230,185 L230,310");offset-rotate:0deg;animation:ts-anim-reflexion-lazo-lap3 2.6s ease-in-out 16.0s both}
-@keyframes ts-anim-reflexion-lazo-lap3{0%{offset-distance:0%}19.23%{offset-distance:0%}42.31%{offset-distance:37.68%}69.23%{offset-distance:37.68%}100%{offset-distance:100%}}
+.ts-anim-reflexion-lazo .ball3 .mv{animation:ts-anim-reflexion-lazo-path3 2.6s linear 16s 1 normal both}
 .ts-anim-reflexion-lazo .rA{animation:ts-anim-reflexion-lazo-in 0.2s ease-out 1.6s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 2.5s forwards,ts-anim-reflexion-lazo-in 0.2s ease-out 9.9s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 10.5s forwards,ts-anim-reflexion-lazo-in 0.2s ease-out 15.9s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 16.5s forwards}
 .ts-anim-reflexion-lazo .rE{animation:ts-anim-reflexion-lazo-in 0.2s ease-out 3.2s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 4.1s forwards,ts-anim-reflexion-lazo-in 0.2s ease-out 11.0s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 11.6s forwards,ts-anim-reflexion-lazo-in 0.2s ease-out 17.0s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 17.8s forwards}
 .ts-anim-reflexion-lazo .rS{animation:ts-anim-reflexion-lazo-in 0.2s ease-out 4.9s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 6.0s forwards,ts-anim-reflexion-lazo-in 0.2s ease-out 12.2s forwards,ts-anim-reflexion-lazo-out 0.2s ease-in 13.0s forwards}
@@ -4035,6 +4073,9 @@ still: [A13] bottom margin tighter than the others</pre></details>
 @keyframes ts-anim-reflexion-lazo-in{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-reflexion-lazo-out{from{opacity:1}to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-reflexion-lazo *{animation:none}}
+@keyframes ts-anim-reflexion-lazo-path1{0.00%{transform:translate(100.0px,55.0px)}1.67%{transform:translate(112.9px,55.0px)}3.33%{transform:translate(153.3px,55.0px)}5.00%{transform:translate(214.2px,55.0px)}6.67%{transform:translate(273.5px,55.0px)}8.33%{transform:translate(310.3px,55.0px)}10.00%{transform:translate(319.9px,55.0px)}18.33%{transform:translate(319.9px,55.0px)}20.00%{transform:translate(320.0px,63.0px)}21.67%{transform:translate(320.0px,91.4px)}23.33%{transform:translate(320.0px,133.0px)}25.00%{transform:translate(320.0px,168.2px)}26.67%{transform:translate(320.0px,184.1px)}28.33%{transform:translate(320.0px,185.0px)}35.00%{transform:translate(320.0px,185.0px)}36.67%{transform:translate(323.2px,185.0px)}38.33%{transform:translate(352.8px,185.0px)}40.00%{transform:translate(412.0px,185.0px)}41.67%{transform:translate(430.0px,239.0px)}43.33%{transform:translate(430.0px,296.0px)}45.00%{transform:translate(430.0px,322.8px)}46.67%{transform:translate(430.0px,324.9px)}56.67%{transform:translate(430.0px,325.0px)}58.33%{transform:translate(430.0px,340.1px)}60.00%{transform:translate(430.0px,380.4px)}61.67%{transform:translate(430.0px,426.5px)}63.33%{transform:translate(430.0px,452.1px)}65.00%{transform:translate(430.0px,455.0px)}73.33%{transform:translate(430.0px,455.0px)}75.00%{transform:translate(432.8px,455.0px)}76.67%{transform:translate(448.7px,455.0px)}78.33%{transform:translate(479.4px,455.0px)}80.00%{transform:translate(525.3px,455.0px)}81.67%{transform:translate(586.4px,455.0px)}83.33%{transform:translate(600.0px,393.9px)}85.00%{transform:translate(600.0px,308.3px)}86.67%{transform:translate(600.0px,216.2px)}88.33%{transform:translate(600.0px,123.1px)}90.00%{transform:translate(579.7px,55.0px)}91.67%{transform:translate(500.8px,55.0px)}93.33%{transform:translate(434.8px,55.0px)}95.00%{transform:translate(383.6px,55.0px)}96.67%{transform:translate(347.7px,55.0px)}98.33%{transform:translate(326.7px,55.0px)}100.00%{transform:translate(320.0px,55.0px)}}
+@keyframes ts-anim-reflexion-lazo-path2{0.00%{transform:translate(320.0px,55.0px)}8.33%{transform:translate(320.0px,55.0px)}10.00%{transform:translate(320.0px,62.3px)}11.67%{transform:translate(320.0px,85.2px)}15.00%{transform:translate(320.0px,154.9px)}16.67%{transform:translate(320.0px,177.7px)}18.33%{transform:translate(320.0px,185.0px)}26.67%{transform:translate(320.0px,185.0px)}28.33%{transform:translate(330.2px,185.0px)}30.00%{transform:translate(362.4px,185.0px)}31.67%{transform:translate(414.6px,185.0px)}33.33%{transform:translate(430.0px,230.4px)}35.00%{transform:translate(430.0px,282.6px)}36.67%{transform:translate(430.0px,314.8px)}38.33%{transform:translate(430.0px,325.0px)}50.00%{transform:translate(430.0px,325.0px)}51.67%{transform:translate(430.0px,335.6px)}53.33%{transform:translate(430.0px,368.2px)}55.00%{transform:translate(430.0px,411.9px)}56.67%{transform:translate(430.0px,444.4px)}58.33%{transform:translate(430.0px,455.0px)}70.00%{transform:translate(430.0px,455.0px)}71.67%{transform:translate(435.1px,455.0px)}73.33%{transform:translate(450.8px,455.0px)}75.00%{transform:translate(477.7px,455.0px)}76.67%{transform:translate(516.2px,455.0px)}78.33%{transform:translate(566.2px,455.0px)}80.00%{transform:translate(600.0px,428.0px)}81.67%{transform:translate(600.0px,357.9px)}83.33%{transform:translate(600.0px,280.8px)}86.67%{transform:translate(600.0px,119.2px)}88.33%{transform:translate(587.1px,55.0px)}90.00%{transform:translate(517.0px,55.0px)}91.67%{transform:translate(456.2px,55.0px)}93.33%{transform:translate(406.2px,55.0px)}95.00%{transform:translate(367.7px,55.0px)}96.67%{transform:translate(340.8px,55.0px)}98.33%{transform:translate(325.1px,55.0px)}100.00%{transform:translate(320.0px,55.0px)}}
+@keyframes ts-anim-reflexion-lazo-path3{0.00%{transform:translate(320.0px,55.0px)}20.00%{transform:translate(320.0px,55.3px)}21.67%{transform:translate(320.0px,57.9px)}23.33%{transform:translate(320.0px,63.3px)}25.00%{transform:translate(320.0px,71.8px)}26.67%{transform:translate(320.0px,83.1px)}28.33%{transform:translate(320.0px,97.0px)}33.33%{transform:translate(320.0px,144.1px)}35.00%{transform:translate(320.0px,157.8px)}36.67%{transform:translate(320.0px,169.0px)}38.33%{transform:translate(320.0px,177.2px)}40.00%{transform:translate(320.0px,182.4px)}41.67%{transform:translate(320.0px,184.8px)}70.00%{transform:translate(319.7px,185.0px)}71.67%{transform:translate(317.4px,185.0px)}73.33%{transform:translate(312.4px,185.0px)}75.00%{transform:translate(304.6px,185.0px)}76.67%{transform:translate(294.1px,185.0px)}78.33%{transform:translate(280.8px,185.0px)}80.00%{transform:translate(265.1px,185.0px)}81.67%{transform:translate(247.2px,185.0px)}83.33%{transform:translate(230.0px,187.1px)}86.67%{transform:translate(230.0px,226.9px)}88.33%{transform:translate(230.0px,245.7px)}90.00%{transform:translate(230.0px,262.6px)}91.67%{transform:translate(230.0px,277.3px)}93.33%{transform:translate(230.0px,289.3px)}95.00%{transform:translate(230.0px,298.5px)}96.67%{transform:translate(230.0px,305.0px)}98.33%{transform:translate(230.0px,308.8px)}100.00%{transform:translate(230.0px,310.0px)}}
 </style>
 <defs>
 <marker id="a-reflexion-lazo-ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">
@@ -4178,77 +4219,77 @@ still: [#11] &#x27;Evaluator&#x27;, &#x27;Self-Reflection&#x27; are English and 
 <title>3. SAM 2: memoria para video</title>
 <desc>SAM 2 extiende SAM al video con un módulo de memoria: el frame t pasa por image encoder, memory attention y mask decoder y sale la máscara t; el memory encoder la codifica y la guarda en el memory bank, y memory attention la combina con el frame siguiente. El prompt encoder aporta clics, cajas o máscaras al mask decoder.</desc>
 <style>/* talksmith-animation */
-.ts-anim-sam2-memoria .t1 .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t1m 3.00s linear 0.60s both}
+.ts-anim-sam2-memoria .t1 .tok{animation:ts-anim-sam2-memoria-path1 3s linear 0.6s 1 normal both}
 .ts-anim-sam2-memoria .t1{animation:ts-anim-sam2-memoria-t1 3.00s linear 0.60s both}
 .ts-anim-sam2-memoria .hie0{animation:ts-anim-sam2-memoria-hie0 0.65s linear 0.91s both}
 .ts-anim-sam2-memoria .hma1{animation:ts-anim-sam2-memoria-hma1 0.76s linear 1.72s both}
 .ts-anim-sam2-memoria .hmd2{animation:ts-anim-sam2-memoria-hmd2 0.64s linear 2.63s both}
 .ts-anim-sam2-memoria .m1{animation:ts-anim-sam2-memoria-m1 3.20s linear 3.60s both}
-.ts-anim-sam2-memoria .s1 .tok{offset-path:path("M755,60 V290 H470");offset-rotate:0deg;animation:ts-anim-sam2-memoria-s1m 2.00s linear 4.20s both}
+.ts-anim-sam2-memoria .s1 .tok{animation:ts-anim-sam2-memoria-path2 2s linear 4.2s 1 normal both}
 .ts-anim-sam2-memoria .s1{animation:ts-anim-sam2-memoria-s1 2.00s linear 4.20s both}
 .ts-anim-sam2-memoria .hme3{animation:ts-anim-sam2-memoria-hme3 0.44s linear 4.98s both}
 .ts-anim-sam2-memoria .hbk4{animation:ts-anim-sam2-memoria-hbk4 0.34s linear 6.16s both}
 .ts-anim-sam2-memoria .tile1{animation:ts-anim-sam2-memoria-in 0.4s ease-out 6.20s both}
-.ts-anim-sam2-memoria .t2 .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t2m 4.00s linear 7.00s both}
+.ts-anim-sam2-memoria .t2 .tok{animation:ts-anim-sam2-memoria-path3 4s linear 7s 1 normal both}
 .ts-anim-sam2-memoria .t2{animation:ts-anim-sam2-memoria-t2 4.00s linear 7.00s both}
 .ts-anim-sam2-memoria .hie5{animation:ts-anim-sam2-memoria-hie5 0.56s linear 7.27s both}
 .ts-anim-sam2-memoria .hma6{animation:ts-anim-sam2-memoria-hma6 2.06s linear 7.97s both}
 .ts-anim-sam2-memoria .hmd7{animation:ts-anim-sam2-memoria-hmd7 0.56s linear 10.16s both}
-.ts-anim-sam2-memoria .r2 .tok{offset-path:path("M460,290 V60");offset-rotate:0deg;animation:ts-anim-sam2-memoria-r2m 1.30s linear 8.30s both}
+.ts-anim-sam2-memoria .r2 .tok{animation:ts-anim-sam2-memoria-path4 1.3s linear 8.3s 1 normal both}
 .ts-anim-sam2-memoria .r2{animation:ts-anim-sam2-memoria-r2 1.30s linear 8.30s both}
 .ts-anim-sam2-memoria .hbk8{animation:ts-anim-sam2-memoria-hbk8 0.45s linear 8.20s both}
 .ts-anim-sam2-memoria .m2{animation:ts-anim-sam2-memoria-m2 2.50s linear 11.00s both}
-.ts-anim-sam2-memoria .s2 .tok{offset-path:path("M755,60 V290 H470");offset-rotate:0deg;animation:ts-anim-sam2-memoria-s2m 1.70s linear 11.30s both}
+.ts-anim-sam2-memoria .s2 .tok{animation:ts-anim-sam2-memoria-path5 1.7s linear 11.3s 1 normal both}
 .ts-anim-sam2-memoria .s2{animation:ts-anim-sam2-memoria-s2 1.70s linear 11.30s both}
 .ts-anim-sam2-memoria .hme9{animation:ts-anim-sam2-memoria-hme9 0.37s linear 11.97s both}
 .ts-anim-sam2-memoria .hbk10{animation:ts-anim-sam2-memoria-hbk10 0.33s linear 12.97s both}
 .ts-anim-sam2-memoria .tile2{animation:ts-anim-sam2-memoria-in 0.4s ease-out 13.00s both}
-.ts-anim-sam2-memoria .t3 .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t3m 2.80s linear 13.70s both}
+.ts-anim-sam2-memoria .t3 .tok{animation:ts-anim-sam2-memoria-path6 2.8s linear 13.7s 1 normal both}
 .ts-anim-sam2-memoria .t3{animation:ts-anim-sam2-memoria-t3 2.80s linear 13.70s both}
 .ts-anim-sam2-memoria .hie11{animation:ts-anim-sam2-memoria-hie11 0.43s linear 13.91s both}
 .ts-anim-sam2-memoria .hma12{animation:ts-anim-sam2-memoria-hma12 1.38s linear 14.44s both}
 .ts-anim-sam2-memoria .hmd13{animation:ts-anim-sam2-memoria-hmd13 0.38s linear 15.92s both}
-.ts-anim-sam2-memoria .r3 .tok{offset-path:path("M460,290 V60");offset-rotate:0deg;animation:ts-anim-sam2-memoria-r3m 0.80s linear 14.70s both}
+.ts-anim-sam2-memoria .r3 .tok{animation:ts-anim-sam2-memoria-path7 0.8s linear 14.7s 1 normal both}
 .ts-anim-sam2-memoria .r3{animation:ts-anim-sam2-memoria-r3 0.80s linear 14.70s both}
 .ts-anim-sam2-memoria .hbk14{animation:ts-anim-sam2-memoria-hbk14 0.45s linear 14.60s both}
 .ts-anim-sam2-memoria .m3{animation:ts-anim-sam2-memoria-m3 2.20s linear 16.50s both}
-.ts-anim-sam2-memoria .s3 .tok{offset-path:path("M755,60 V290 H470");offset-rotate:0deg;animation:ts-anim-sam2-memoria-s3m 1.50s linear 16.70s both}
+.ts-anim-sam2-memoria .s3 .tok{animation:ts-anim-sam2-memoria-path8 1.5s linear 16.7s 1 normal both}
 .ts-anim-sam2-memoria .s3{animation:ts-anim-sam2-memoria-s3 1.50s linear 16.70s both}
 .ts-anim-sam2-memoria .hme15{animation:ts-anim-sam2-memoria-hme15 0.33s linear 17.29s both}
 .ts-anim-sam2-memoria .hbk16{animation:ts-anim-sam2-memoria-hbk16 0.33s linear 18.17s both}
 .ts-anim-sam2-memoria .tile3{animation:ts-anim-sam2-memoria-in 0.4s ease-out 18.20s both}
-.ts-anim-sam2-memoria .t4 .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t4m 2.80s linear 18.90s both}
+.ts-anim-sam2-memoria .t4 .tok{animation:ts-anim-sam2-memoria-path9 2.8s linear 18.9s 1 normal both}
 .ts-anim-sam2-memoria .t4{animation:ts-anim-sam2-memoria-t4 2.80s linear 18.90s both}
 .ts-anim-sam2-memoria .hie17{animation:ts-anim-sam2-memoria-hie17 0.43s linear 19.11s both}
 .ts-anim-sam2-memoria .hma18{animation:ts-anim-sam2-memoria-hma18 1.38s linear 19.64s both}
 .ts-anim-sam2-memoria .hmd19{animation:ts-anim-sam2-memoria-hmd19 0.38s linear 21.12s both}
-.ts-anim-sam2-memoria .r4 .tok{offset-path:path("M460,290 V60");offset-rotate:0deg;animation:ts-anim-sam2-memoria-r4m 0.80s linear 19.90s both}
+.ts-anim-sam2-memoria .r4 .tok{animation:ts-anim-sam2-memoria-path10 0.8s linear 19.9s 1 normal both}
 .ts-anim-sam2-memoria .r4{animation:ts-anim-sam2-memoria-r4 0.80s linear 19.90s both}
 .ts-anim-sam2-memoria .hbk20{animation:ts-anim-sam2-memoria-hbk20 0.45s linear 19.80s both}
 .ts-anim-sam2-memoria .m4w{animation:ts-anim-sam2-memoria-m4w 2.90s linear 21.70s both}
 .ts-anim-sam2-memoria .click{animation:ts-anim-sam2-memoria-click 4.30s linear 22.60s both}
 .ts-anim-sam2-memoria .hpe21{animation:ts-anim-sam2-memoria-hpe21 1.30s linear 22.70s both}
-.ts-anim-sam2-memoria .p4 .tok{offset-path:path("M640,180 V60");offset-rotate:0deg;animation:ts-anim-sam2-memoria-p4m 1.00s linear 23.00s both}
+.ts-anim-sam2-memoria .p4 .tok{animation:ts-anim-sam2-memoria-path11 1s linear 23s 1 normal both}
 .ts-anim-sam2-memoria .p4{animation:ts-anim-sam2-memoria-p4 1.00s linear 23.00s both}
-.ts-anim-sam2-memoria .t4b .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t4bm 0.60s linear 24.00s both}
+.ts-anim-sam2-memoria .t4b .tok{animation:ts-anim-sam2-memoria-path12 0.6s linear 24s 1 normal both}
 .ts-anim-sam2-memoria .t4b{animation:ts-anim-sam2-memoria-t4b 0.60s linear 24.00s both}
 .ts-anim-sam2-memoria .hmd22{animation:ts-anim-sam2-memoria-hmd22 0.45s linear 23.85s both}
 .ts-anim-sam2-memoria .m4{animation:ts-anim-sam2-memoria-m4 2.30s linear 24.60s both}
-.ts-anim-sam2-memoria .s4 .tok{offset-path:path("M755,60 V290 H470");offset-rotate:0deg;animation:ts-anim-sam2-memoria-s4m 1.50s linear 24.90s both}
+.ts-anim-sam2-memoria .s4 .tok{animation:ts-anim-sam2-memoria-path13 1.5s linear 24.9s 1 normal both}
 .ts-anim-sam2-memoria .s4{animation:ts-anim-sam2-memoria-s4 1.50s linear 24.90s both}
 .ts-anim-sam2-memoria .hme23{animation:ts-anim-sam2-memoria-hme23 0.33s linear 25.49s both}
 .ts-anim-sam2-memoria .hbk24{animation:ts-anim-sam2-memoria-hbk24 0.33s linear 26.37s both}
 .ts-anim-sam2-memoria .tile4{animation:ts-anim-sam2-memoria-in 0.4s ease-out 26.40s both}
-.ts-anim-sam2-memoria .t5 .tok{offset-path:path("M68,60 H858");offset-rotate:0deg;animation:ts-anim-sam2-memoria-t5m 2.80s linear 27.10s both}
+.ts-anim-sam2-memoria .t5 .tok{animation:ts-anim-sam2-memoria-path14 2.8s linear 27.1s 1 normal both}
 .ts-anim-sam2-memoria .t5{animation:ts-anim-sam2-memoria-t5 2.80s linear 27.10s both}
 .ts-anim-sam2-memoria .hie25{animation:ts-anim-sam2-memoria-hie25 0.43s linear 27.31s both}
 .ts-anim-sam2-memoria .hma26{animation:ts-anim-sam2-memoria-hma26 1.38s linear 27.84s both}
 .ts-anim-sam2-memoria .hmd27{animation:ts-anim-sam2-memoria-hmd27 0.38s linear 29.32s both}
-.ts-anim-sam2-memoria .r5 .tok{offset-path:path("M460,290 V60");offset-rotate:0deg;animation:ts-anim-sam2-memoria-r5m 0.80s linear 28.10s both}
+.ts-anim-sam2-memoria .r5 .tok{animation:ts-anim-sam2-memoria-path15 0.8s linear 28.1s 1 normal both}
 .ts-anim-sam2-memoria .r5{animation:ts-anim-sam2-memoria-r5 0.80s linear 28.10s both}
 .ts-anim-sam2-memoria .hbk28{animation:ts-anim-sam2-memoria-hbk28 0.45s linear 28.00s both}
 .ts-anim-sam2-memoria .m5{animation:ts-anim-sam2-memoria-in 0.4s ease-out 29.90s both}
-.ts-anim-sam2-memoria .s5 .tok{offset-path:path("M755,60 V290 H470");offset-rotate:0deg;animation:ts-anim-sam2-memoria-s5m 1.60s linear 30.20s both}
+.ts-anim-sam2-memoria .s5 .tok{animation:ts-anim-sam2-memoria-path16 1.6s linear 30.2s 1 normal both}
 .ts-anim-sam2-memoria .s5{animation:ts-anim-sam2-memoria-s5 1.60s linear 30.20s both}
 .ts-anim-sam2-memoria .hme29{animation:ts-anim-sam2-memoria-hme29 0.35s linear 30.83s both}
 .ts-anim-sam2-memoria .hbk30{animation:ts-anim-sam2-memoria-hbk30 0.33s linear 31.77s both}
@@ -4266,72 +4307,56 @@ still: [#11] &#x27;Evaluator&#x27;, &#x27;Self-Reflection&#x27; are English and 
 .ts-anim-sam2-memoria .c5b{animation:ts-anim-sam2-memoria-c5b 4.30s linear 22.60s both}
 .ts-anim-sam2-memoria .c6{animation:ts-anim-sam2-memoria-c6 7.10s linear 26.90s both}
 @keyframes ts-anim-sam2-memoria-in{from{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t1m{0.00%{offset-distance:0.00%}50.00%{offset-distance:49.62%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t1{0%{opacity:0}4.00%,96.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hie0{0%{opacity:0}23.06%,76.94%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hma1{0%{opacity:0}19.75%,80.25%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd2{0%{opacity:0}23.41%,76.59%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-m1{0%{opacity:0}7.81%,92.19%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-s1m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-s1{0%{opacity:0}6.00%,94.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hme3{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk4{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t2m{0.00%{offset-distance:0.00%}32.50%{offset-distance:49.62%}67.50%{offset-distance:49.62%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t2{0%{opacity:0}3.00%,97.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hie5{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hma6{0%{opacity:0}7.29%,92.71%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd7{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-r2m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-r2{0%{opacity:0}9.23%,90.77%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk8{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-m2{0%{opacity:0}10.00%,90.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-s2m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-s2{0%{opacity:0}7.06%,92.94%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hme9{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk10{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t3m{0.00%{offset-distance:0.00%}35.71%{offset-distance:49.62%}67.86%{offset-distance:49.62%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t3{0%{opacity:0}4.29%,95.71%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hie11{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hma12{0%{opacity:0}10.86%,89.14%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd13{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-r3m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-r3{0%{opacity:0}15.00%,85.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk14{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-m3{0%{opacity:0}11.36%,88.64%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-s3m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-s3{0%{opacity:0}8.00%,92.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hme15{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk16{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t4m{0.00%{offset-distance:0.00%}35.71%{offset-distance:49.62%}67.86%{offset-distance:49.62%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t4{0%{opacity:0}4.29%,95.71%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hie17{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hma18{0%{opacity:0}10.86%,89.14%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd19{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-r4m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-r4{0%{opacity:0}15.00%,85.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk20{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-m4w{0%{opacity:0}8.62%,91.38%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-click{0%{opacity:0}5.81%,94.19%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hpe21{0%{opacity:0}11.54%,88.46%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-p4m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-p4{0%{opacity:0}12.00%,88.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t4bm{0.00%{offset-distance:78.10%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t4b{0%{opacity:0}20.00%,80.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd22{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-m4{0%{opacity:0}10.87%,89.13%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-s4m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-s4{0%{opacity:0}8.00%,92.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hme23{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk24{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-t5m{0.00%{offset-distance:0.00%}35.71%{offset-distance:49.62%}67.86%{offset-distance:49.62%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-t5{0%{opacity:0}4.29%,95.71%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hie25{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hma26{0%{opacity:0}10.86%,89.14%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hmd27{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-r5m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-r5{0%{opacity:0}15.00%,85.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk28{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-sam2-memoria-s5m{0.00%{offset-distance:0.00%}100.00%{offset-distance:100.00%}}
 @keyframes ts-anim-sam2-memoria-s5{0%{opacity:0}7.50%,92.50%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hme29{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-hbk30{0%{opacity:0}25.00%,75.00%{opacity:1}100%{opacity:0}}
@@ -4347,6 +4372,22 @@ still: [#11] &#x27;Evaluator&#x27;, &#x27;Self-Reflection&#x27; are English and 
 @keyframes ts-anim-sam2-memoria-c5b{0%{opacity:0}6.98%,93.02%{opacity:1}100%{opacity:0}}
 @keyframes ts-anim-sam2-memoria-c6{0%{opacity:0}4.23%,95.77%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-sam2-memoria *{animation:none}}
+@keyframes ts-anim-sam2-memoria-path1{0.00%{transform:translate(68.0px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path2{0.00%{transform:translate(755.0px,60.0px)}43.33%{transform:translate(755.0px,283.2px)}45.00%{transform:translate(753.2px,290.0px)}100.00%{transform:translate(470.0px,290.0px)}}
+@keyframes ts-anim-sam2-memoria-path3{0.00%{transform:translate(68.0px,60.0px)}31.67%{transform:translate(449.9px,60.0px)}33.33%{transform:translate(460.0px,60.0px)}66.67%{transform:translate(460.0px,60.0px)}68.33%{transform:translate(470.2px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path4{0.00%{transform:translate(460.0px,290.0px)}100.00%{transform:translate(460.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path5{0.00%{transform:translate(755.0px,60.0px)}43.33%{transform:translate(755.0px,283.2px)}45.00%{transform:translate(753.2px,290.0px)}100.00%{transform:translate(470.0px,290.0px)}}
+@keyframes ts-anim-sam2-memoria-path6{0.00%{transform:translate(68.0px,60.0px)}35.00%{transform:translate(452.2px,60.0px)}36.67%{transform:translate(460.0px,60.0px)}66.67%{transform:translate(460.0px,60.0px)}68.33%{transform:translate(465.9px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path7{0.00%{transform:translate(460.0px,290.0px)}100.00%{transform:translate(460.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path8{0.00%{transform:translate(755.0px,60.0px)}43.33%{transform:translate(755.0px,283.2px)}45.00%{transform:translate(753.2px,290.0px)}100.00%{transform:translate(470.0px,290.0px)}}
+@keyframes ts-anim-sam2-memoria-path9{0.00%{transform:translate(68.0px,60.0px)}35.00%{transform:translate(452.2px,60.0px)}36.67%{transform:translate(460.0px,60.0px)}66.67%{transform:translate(460.0px,60.0px)}68.33%{transform:translate(465.9px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path10{0.00%{transform:translate(460.0px,290.0px)}100.00%{transform:translate(460.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path11{0.00%{transform:translate(640.0px,180.0px)}100.00%{transform:translate(640.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path12{0.00%{transform:translate(685.0px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path13{0.00%{transform:translate(755.0px,60.0px)}43.33%{transform:translate(755.0px,283.2px)}45.00%{transform:translate(753.2px,290.0px)}100.00%{transform:translate(470.0px,290.0px)}}
+@keyframes ts-anim-sam2-memoria-path14{0.00%{transform:translate(68.0px,60.0px)}35.00%{transform:translate(452.2px,60.0px)}36.67%{transform:translate(460.0px,60.0px)}66.67%{transform:translate(460.0px,60.0px)}68.33%{transform:translate(465.9px,60.0px)}100.00%{transform:translate(858.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path15{0.00%{transform:translate(460.0px,290.0px)}100.00%{transform:translate(460.0px,60.0px)}}
+@keyframes ts-anim-sam2-memoria-path16{0.00%{transform:translate(755.0px,60.0px)}43.33%{transform:translate(755.0px,283.2px)}45.00%{transform:translate(753.2px,290.0px)}100.00%{transform:translate(470.0px,290.0px)}}
 </style>
 <defs><marker id="a-sam2-memoria-ah" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" viewBox="0 0 11 11" refX="11" refY="5.5" orient="auto"><path d="M0,0 L11,5.5 L0,11 z" fill="#3B3535"/></marker></defs>
 <rect width="930" height="354" fill="#ffffff"/>
@@ -4758,9 +4799,9 @@ still: [#6] the green &#x27;ruido por bloque&#x27; arrows and caption are outsid
 .ts-anim-unet .line2{animation:ts-anim-unet-draw2 1.4s ease-in-out 8.5s both}
 .ts-anim-unet .line1{animation:ts-anim-unet-draw1 1.4s ease-in-out 11.4s both}
 .ts-anim-unet .dot{offset-rotate:0deg}
-.ts-anim-unet .dot3{offset-path:path("M344,420 H596");animation:ts-anim-unet-move 1.4s ease-in-out 5.6s both,ts-anim-unet-carry 1.9s linear 5.6s both}
-.ts-anim-unet .dot2{offset-path:path("M284,304 H656");animation:ts-anim-unet-move 1.4s ease-in-out 8.5s both,ts-anim-unet-carry 1.9s linear 8.5s both}
-.ts-anim-unet .dot1{offset-path:path("M224,188 H716");animation:ts-anim-unet-move 1.4s ease-in-out 11.4s both,ts-anim-unet-carry 1.9s linear 11.4s both}
+.ts-anim-unet .dot3{animation:ts-anim-unet-path1 1.4s linear 5.6s 1 normal both, ts-anim-unet-carry 1.9s linear 5.6s both}
+.ts-anim-unet .dot2{animation:ts-anim-unet-path2 1.4s linear 8.5s 1 normal both, ts-anim-unet-carry 1.9s linear 8.5s both}
+.ts-anim-unet .dot1{animation:ts-anim-unet-path3 1.4s linear 11.4s 1 normal both, ts-anim-unet-carry 1.9s linear 11.4s both}
 .ts-anim-unet .src3{animation:ts-anim-unet-flash 1.4s linear 5.6s both}
 .ts-anim-unet .src2{animation:ts-anim-unet-flash 1.4s linear 8.5s both}
 .ts-anim-unet .src1{animation:ts-anim-unet-flash 1.4s linear 11.4s both}
@@ -4768,12 +4809,14 @@ still: [#6] the green &#x27;ruido por bloque&#x27; arrows and caption are outsid
 @keyframes ts-anim-unet-on{from{opacity:0}to{opacity:1}}
 @keyframes ts-anim-unet-off{to{opacity:0}}
 @keyframes ts-anim-unet-carry{0%{opacity:0}5%,74%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-unet-move{from{offset-distance:0%}to{offset-distance:100%}}
 @keyframes ts-anim-unet-draw3{from{stroke-dasharray:0 252}to{stroke-dasharray:252 0}}
 @keyframes ts-anim-unet-draw2{from{stroke-dasharray:0 372}to{stroke-dasharray:372 0}}
 @keyframes ts-anim-unet-draw1{from{stroke-dasharray:0 492}to{stroke-dasharray:492 0}}
 @keyframes ts-anim-unet-flash{0%,100%{fill:#6B6560}12%,88%{fill:#DA1B2E}}
 @media (prefers-reduced-motion:reduce){.ts-anim-unet *{animation:none}}
+@keyframes ts-anim-unet-path1{0.00%{transform:translate(344.0px,420.0px)}5.00%{transform:translate(345.2px,420.0px)}10.00%{transform:translate(349.0px,420.0px)}15.00%{transform:translate(355.4px,420.0px)}20.00%{transform:translate(364.6px,420.0px)}25.00%{transform:translate(376.5px,420.0px)}30.00%{transform:translate(391.2px,420.0px)}35.00%{transform:translate(408.4px,420.0px)}43.33%{transform:translate(441.4px,420.0px)}60.00%{transform:translate(512.4px,420.0px)}66.67%{transform:translate(537.6px,420.0px)}71.67%{transform:translate(554.0px,420.0px)}76.67%{transform:translate(567.7px,420.0px)}81.67%{transform:translate(578.8px,420.0px)}86.67%{transform:translate(587.1px,420.0px)}91.67%{transform:translate(592.6px,420.0px)}96.67%{transform:translate(595.5px,420.0px)}100.00%{transform:translate(596.0px,420.0px)}}
+@keyframes ts-anim-unet-path2{0.00%{transform:translate(284.0px,304.0px)}3.33%{transform:translate(284.8px,304.0px)}6.67%{transform:translate(287.2px,304.0px)}10.00%{transform:translate(291.3px,304.0px)}13.33%{transform:translate(297.2px,304.0px)}16.67%{transform:translate(304.9px,304.0px)}20.00%{transform:translate(314.4px,304.0px)}23.33%{transform:translate(325.7px,304.0px)}26.67%{transform:translate(338.8px,304.0px)}30.00%{transform:translate(353.7px,304.0px)}33.33%{transform:translate(370.2px,304.0px)}38.33%{transform:translate(397.7px,304.0px)}46.67%{transform:translate(448.7px,304.0px)}58.33%{transform:translate(522.5px,304.0px)}63.33%{transform:translate(551.8px,304.0px)}66.67%{transform:translate(569.8px,304.0px)}70.00%{transform:translate(586.3px,304.0px)}73.33%{transform:translate(601.2px,304.0px)}76.67%{transform:translate(614.3px,304.0px)}80.00%{transform:translate(625.6px,304.0px)}83.33%{transform:translate(635.1px,304.0px)}86.67%{transform:translate(642.8px,304.0px)}90.00%{transform:translate(648.7px,304.0px)}93.33%{transform:translate(652.8px,304.0px)}96.67%{transform:translate(655.2px,304.0px)}100.00%{transform:translate(656.0px,304.0px)}}
+@keyframes ts-anim-unet-path3{0.00%{transform:translate(224.0px,188.0px)}3.33%{transform:translate(225.0px,188.0px)}6.67%{transform:translate(228.3px,188.0px)}10.00%{transform:translate(233.7px,188.0px)}13.33%{transform:translate(241.5px,188.0px)}16.67%{transform:translate(251.6px,188.0px)}20.00%{transform:translate(264.2px,188.0px)}23.33%{transform:translate(279.2px,188.0px)}26.67%{transform:translate(296.5px,188.0px)}30.00%{transform:translate(316.2px,188.0px)}33.33%{transform:translate(338.0px,188.0px)}36.67%{transform:translate(361.8px,188.0px)}41.67%{transform:translate(400.5px,188.0px)}56.67%{transform:translate(525.9px,188.0px)}61.67%{transform:translate(565.6px,188.0px)}65.00%{transform:translate(590.3px,188.0px)}68.33%{transform:translate(613.1px,188.0px)}71.67%{transform:translate(633.9px,188.0px)}75.00%{transform:translate(652.5px,188.0px)}78.33%{transform:translate(668.6px,188.0px)}81.67%{transform:translate(682.4px,188.0px)}85.00%{transform:translate(693.8px,188.0px)}88.33%{transform:translate(702.7px,188.0px)}91.67%{transform:translate(709.3px,188.0px)}95.00%{transform:translate(713.6px,188.0px)}98.33%{transform:translate(715.7px,188.0px)}100.00%{transform:translate(716.0px,188.0px)}}
 </style>
 <defs>
 <marker id="a-unet-ah" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" viewBox="0 0 12 12" refX="12" refY="6" orient="auto">

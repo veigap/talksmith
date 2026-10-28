@@ -231,7 +231,7 @@ failed the build when the emitted deck disagreed. It was needed because the deck
 an LLM that could pick something other than what the model said. The render now emits the
 template the model names, so the check has nothing left to disagree with; what remains worth
 watching is whether the *classification* was any good, which is
-[`template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py)
+[`template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/audits/template_diversity.py)
 and the [`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md).
 
 ---

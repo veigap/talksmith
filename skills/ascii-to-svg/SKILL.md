@@ -28,7 +28,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 |---|---|---|
 | `ascii_block` | Mode A | the fenced block's payload, verbatim |
 | `ascii_file` | Mode B | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.ascii` |
-| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis; `terms:` lists terms of art to keep verbatim; an `animation:` section is not yours — draw the complete, static diagram, and the [`animate-svg`](../animate-svg/SKILL.md) pass evolves it afterwards (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*). |
+| `ascii_note` | optional (Mode A only) | the captured `<!-- ascii-note: ... -->` if available. In Mode B the skill parses it from the sidecar; in Mode A you can pass it explicitly. The `intent:` / `emphasize:` / `labels:` lines drive per-diagram emphasis; `terms:` lists terms of art to keep verbatim; any other line belongs to a later stage — draw the complete, static diagram (grammar: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*). |
 | `output_path` | yes | absolute path, e.g. `talks/<Talk>/images/s1-2-1-cuatro-senales.svg`. In Mode B, if omitted, the skill defaults to the sibling SVG path (same basename as `ascii_file`, `.svg` extension). |
 | `slide_title` | yes | from the slide's H2 heading (prefix-stripped) |
 | `slide_content_prose` | recommended | the `### Content` body — used for subtitles, panel headings, in-panel callouts. Pass an empty string for sparse-context slides; the skill falls back to minimal labelling. |
@@ -86,14 +86,14 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    - `W` is free. `0 0 680 H` is a common choice for moderate aspects, not a rule — very wide art needs a larger `W` to leave legible height (a 6.7:1 diagram at W=680 gets ~102 units of height, too little for three rows of text).
    - **There is no useful self-check you can run in your head** — any "would the raster match" arithmetic derives from the viewBox and confirms itself by construction. The real check is mechanical and runs in step 9.
 
-   **Draw against the critic's checklist.** The blind critic judges the render against items 1–11 and the diagram checklist A1–A13 in [`diagram-critic.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) — every one a defect a real talk shipped. Apply the same list while drawing; it is cheaper to avoid an `[A4]` crossing than to spend the block's one revision on it.
+   **Draw against the critic's checklist.** The blind critic judges the render against items 1–11 and the diagram checklist A1–A12 in [`diagram-critic.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) — every one a defect a real talk shipped. Apply the same list while drawing; it is cheaper to avoid an `[A4]` crossing than to spend the block's one revision on it.
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
 
-   **Then validate it against the aspect-ratio contract** by running [`validate_svg.py`](validate_svg.py) on the file you just wrote:
+   **Then validate it against the aspect-ratio contract** by running [`validate_svg.py`](scripts/validate_svg.py) on the file you just wrote:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/validate_svg.py <output_path>
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/validate_svg.py <output_path>
    ```
 
    The validator checks the same contract spelled out in step 5 and rewrites the file in place when it can auto-repair:
@@ -105,10 +105,10 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
 7. **Rasterize a deliverable PNG companion** at `<output_path with .png extension>` (same directory, same basename). This is the **build deliverable** the Step-7 PPTX renderer consumes (it loads images via PIL, which cannot decode SVG). Every render produces both files (diagram-illustrator's *Output contract*); [`md-to-deck`](../md-to-deck/SKILL.md)'s prereqs stop the build if the `.png` a `final.md` ref points at is missing.
 
-   **Always rasterize through [`rasterize.py`](rasterize.py). Never call `cairosvg` (or anything else) inline.**
+   **Always rasterize through [`rasterize.py`](scripts/rasterize.py). Never call `cairosvg` (or anything else) inline.**
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py <output_path> \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/rasterize.py <output_path> \
        -o <output_path with .png> --width <viewBox_w * 2>
    ```
 
@@ -119,7 +119,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 8. **Rasterize a critique-companion PNG.** Same script, different width and destination — write to `<output_path parent>/.critique/<basename>.png` (the script creates `.critique/` if missing):
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py <output_path> \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/rasterize.py <output_path> \
        -o <parent>/.critique/<basename>.png --width 1600
    ```
 
@@ -127,10 +127,10 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
    If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the diagram-illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
 
-9. **Aspect audit — the one defect no critique can see.** Run [`audit_aspect.py`](audit_aspect.py) against the SVG and the deliverable PNG from step 7:
+9. **Aspect audit — the one defect no critique can see.** Run [`audit_aspect.py`](scripts/audit_aspect.py) against the SVG and the deliverable PNG from step 7:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/audit_aspect.py <output_path> \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/audit_aspect.py <output_path> \
        --png <output_path with .png>
    ```
 
@@ -149,13 +149,9 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
 
     An `aspect_audit` defect is **not** a failure — the render succeeded and the SVG is on disk; the frame is wrong. Report it on the success line so the diagram-illustrator can act on it in the next iteration.
 
-## Animation is a later pass, not this skill
-
-This skill draws the **static** diagram, complete, even when the note has an `animation:` section — the still is what the PDF, the `.pptx` and every PNG show, so it must stand on its own. Animating it is [`talksmith:animate-svg`](../animate-svg/SKILL.md)'s job: once this render is approved, the diagram-illustrator hands the finished SVG to that pass, which evolves it.
-
 ## Rasterizer — cairosvg, required, no fallback
 
-[`rasterize.py`](rasterize.py) uses **`cairosvg`**, and nothing else. `qlmanage` was the documented macOS fallback and has been removed on measured evidence:
+[`rasterize.py`](scripts/rasterize.py) uses **`cairosvg`**, and nothing else. `qlmanage` was the documented macOS fallback and has been removed on measured evidence:
 
 - **It letterboxes.** `qlmanage -t -s N` does not render N wide — it fits the art into an N × N square and pads the short axis with *opaque* white. A 640×360 SVG came back as a 1200×1200 PNG with white bands. That square went into the deck, and the PPTX slot (sized from the viewBox, correctly 16:9) got a 1:1 image.
 - **It disagrees with cairosvg.** Even cropped back to the viewBox ratio, its geometry diverges — on one of this repo's own fixtures the cropped qlmanage output placed the ink 100px away from cairosvg's at identical dimensions.
@@ -175,7 +171,7 @@ If `rasterize.py` reports `cairosvg unavailable`, that is the real message and i
 **Ask before the batch, not during it.** `rasterize.py --check` answers "can this interpreter rasterize?" on its own — exit 0 ready, exit 2 with the install hint above:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py --check
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/rasterize.py --check
 ```
 
 Rasterizing is the *last* step of a render, so without this the answer arrived halfway through a batch, with SVGs already on disk and no PNG beside any of them — and the interpreter that matters is the one actually running the step, which on a machine with several is not always the one where `cairosvg` was installed (`--check` prints which one it used). The diagram-illustrator runs it once before dispatching.

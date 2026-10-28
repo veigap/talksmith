@@ -29,7 +29,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-AUDIT = ROOT / "skills" / "md-to-deck" / "audits" / "block_coverage.py"
+AUDIT = ROOT / "skills" / "md-to-deck" / "scripts" / "audits" / "block_coverage.py"
 
 HEAD = """---
 presentation: Prueba
@@ -127,7 +127,7 @@ MODEL_SHARED = {"template": "statement", "section": "Cómo fallan", "title": "C�
                 "highlights": [{"kind": "important",
                                 "body": "Ojo: la mayoría de los fallos son de especificación."}],
                 "notes": "Notas de la lámina, que el modelo sí lleva."}
-NOTES_AUDIT = ROOT / "skills" / "md-to-deck" / "audits" / "notes_coverage.py"
+NOTES_AUDIT = ROOT / "skills" / "md-to-deck" / "scripts" / "audits" / "notes_coverage.py"
 
 
 def _model(*slides):

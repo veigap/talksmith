@@ -35,13 +35,13 @@ The mechanical steps (from the repo root):
 
 ```bash
 T=/tmp/ts-fixture && mkdir -p $T
-python3 skills/polish-ascii/polish_ascii.py scan tests/skills/ascii-to-svg/final.md \
+python3 skills/polish-ascii/scripts/polish_ascii.py scan tests/skills/ascii-to-svg/final.md \
     --language Spanish > $T/plan.json
-python3 skills/polish-ascii/polish_ascii.py annotate-renders --plan $T/plan.json \
+python3 skills/polish-ascii/scripts/polish_ascii.py annotate-renders --plan $T/plan.json \
     --renders tests/skills/ascii-to-svg/renders.json -o $T/plan.annotated.json
-python3 skills/polish-ascii/polish_ascii.py extract \
+python3 skills/polish-ascii/scripts/polish_ascii.py extract \
     --final tests/skills/ascii-to-svg/final.md --plan $T/plan.annotated.json
-python3 skills/polish-ascii/polish_ascii.py prepare-render-args \
+python3 skills/polish-ascii/scripts/polish_ascii.py prepare-render-args \
     --plan $T/plan.annotated.json --out-dir $T/args --repo-root "$(pwd)"
 ```
 
@@ -50,7 +50,7 @@ Then the renders themselves — one subagent per `$T/args/<slide_id>.json`, each
 blind [`diagram-critic`](../../../agents/diagram-critic.md). Finally:
 
 ```bash
-python3 skills/polish-ascii/polish_ascii.py stamp-renders \
+python3 skills/polish-ascii/scripts/polish_ascii.py stamp-renders \
     --final tests/skills/ascii-to-svg/final.md --plan $T/plan.annotated.json
 ```
 
@@ -68,8 +68,8 @@ the input. Don't run `cleanup` against it.
 These run in milliseconds and catch the things judgement is bad at:
 
 ```bash
-python3 skills/ascii-to-svg/validate_svg.py  tests/skills/ascii-to-svg/images/<name>.svg
-python3 skills/ascii-to-svg/audit_aspect.py  tests/skills/ascii-to-svg/images/<name>.svg \
+python3 skills/ascii-to-svg/scripts/validate_svg.py  tests/skills/ascii-to-svg/images/<name>.svg
+python3 skills/ascii-to-svg/scripts/audit_aspect.py  tests/skills/ascii-to-svg/images/<name>.svg \
     --png tests/skills/ascii-to-svg/images/<name>.png
 ```
 

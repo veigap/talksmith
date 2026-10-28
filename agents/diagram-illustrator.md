@@ -19,7 +19,7 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 
 ## The loop
 
-0. **Preflight the rasterizer — once, before anything.** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py --check`. Exit 2 means this interpreter cannot produce the PNG half of any render: stop and report the hint it prints, rather than discovering it after a batch of SVGs is already on disk with no PNG beside them. Costs one call per Step 6.
+0. **Preflight the rasterizer — once, before anything.** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/rasterize.py --check`. Exit 2 means this interpreter cannot produce the PNG half of any render: stop and report the hint it prints, rather than discovering it after a batch of SVGs is already on disk with no PNG beside them. Costs one call per Step 6.
 1. **Scan.** Invoke `polish-ascii scan talks/<Talk>/final.md --language <profile language>` → JSON inventory of every ASCII block + trailing `ascii-note` with exact line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, `presentation_language`) extracted mechanically. The diagram-illustrator never re-parses `final.md` for context.
 2. **Eyeball the scan (optional).** `polish-ascii inspect-intents --plan <plan.json>` prints one row per block (`slide_id | slide_title | intent`) — useful when authoring slugs across many blocks.
 3. **Author the renders map (judgement-only).** Write a JSON file `{<slide_id>: {"svg_basename": "<slide-id>-<n>-<short-description>.svg", "alt": "<caption>"}, ...}` covering every block whose `documentation_only` is `false`. Slug per the *Output filename convention* below (derived from `ascii-note → intent`, then `context.slide_title`, then `### Content` heading — all of which are in the plan). Documentation-only blocks are omitted; the skill zeroes them out automatically.
@@ -36,8 +36,7 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
    b. **Critic wave — a blind critic per render. Never critique it yourself, and never let the renderer.** Whoever authored the SVG's XML is structurally unable to critique it — they'd "verify" by arithmetic on remembered coordinates, true by construction and proving nothing (full rationale: [`diagram-critic.md`](diagram-critic.md) → *The blind-critique rule*). You don't open the SVG to judge it either: you don't need it, and staying out of it keeps you from second-guessing the verdict. Launch **one [`diagram-critic`](diagram-critic.md) subagent per rendered block** — it has no XML in its context and `tools: Read`, so pixels are all it can reach. Pass exactly:
 
       - `png_path` — the absolute critique-PNG path the block subagent returned (`images/.critique/<basename>.png`). **Only this.** Never pass, mention, or hint at the `.svg` path; passing it re-contaminates the critic and forfeits the entire point of the split.
-      - The still is always judged first, as a still — an animation is added only after it passes (8f).
-      - `ascii_note` — the block's **whole** note, verbatim from the plan (`note.payload`) — `intent:` / `emphasize:` / `labels:` / `terms:` / `animation:`. Do not trim it to a subset: `terms:` is how the critic knows which foreign-language labels are deliberate.
+      - `ascii_note` — the block's **whole** note, verbatim from the plan (`note.payload`) — `intent:` / `emphasize:` / `labels:` / `terms:`. Do not trim it to a subset: `terms:` is how the critic knows which foreign-language labels are deliberate.
       - `slide_title`, `presentation_language` — from the args file.
       - `iteration` — 1 or 2. On iteration 2, also pass `previous_defects` (the iteration-1 list) so the critic can confirm they're actually fixed instead of recalling them.
 
@@ -60,12 +59,6 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
    d. **Persist the critique log.** As each block leaves the loop (clean *or* unresolved), write its companion at `talks/<Talk>/images/.critique/<basename>.md` capturing every iteration — the critic's verdict verbatim, the directives the block subagent composed from it, the final outcome. Format below in *Critique-log companion*. The file is the audit trail of the polish session; future re-runs append to it rather than overwriting.
 
    e. **Cap.** If the **second** iteration still has defects, record the block as `unresolved` with the surviving defect list in the critique log + the run report. Move on — do not loop forever, and do not talk yourself into a third pass. The presenter can review unresolved blocks and decide whether to accept, edit by hand, or re-run Step 6 after editing the ASCII. Two passes is deliberate: historically half the blocks land clean on the first pass, nearly all the rest land on the second, and a third pass mostly re-litigates subjective nits at ~95 s of model time apiece.
-
-   f. **Animation wave — only for an approved diagram whose note has an `animation:` section.** Once a block leaves the loop `rendered` (clean), dispatch a block subagent that invokes [`talksmith:animate-svg`](../skills/animate-svg/SKILL.md) with the SVG path, the block's whole note, its `ascii_file`, and the slide context from its args file. That pass leaves the approved SVG untouched and writes the animated version beside it, `<stem>.anim.svg` + `<stem>.anim.png` — the model authors the motion; nothing about it is decided here — and returns its frames directory. `cleanup` (step 11) points the slide at the animated version whenever it exists. Then run a critic exactly as in 8b, in its *Animation mode*: pass `frame_paths` (the directory's `frame-*.png`, in order), `contact_sheet` (`contact.png`) and `approved_still` (`.critique/<stem>.png`, the base's critique PNG) in place of `png_path` — if the pass reported `frames: failed`, pass the animated version's critique PNG (`.critique/<stem>.anim.png`) as `png_path` instead. Its `defects:` go back to `animate-svg` once, verbatim, as `previous_defects`, and a second critic judges the result — the same two-pass cap as the still. Its `still:` lines are about the approved diagram, which the pass may not touch: record them in the critique log and the run report for the presenter, and never count them against the animation.
-
-      **An animation that does not come out clean is dropped, not shipped.** If the second critique still has defects, or `animate-svg` returns `failed`, delete the animated version (`<stem>.anim.svg`, `<stem>.anim.png`, `.critique/<stem>.anim.png`) and record `animation: unresolved` with the defects in the critique log: the base was never touched, so the slide keeps the diagram that passed, static. An `unresolved` still is never animated — motion on top of a defective drawing compounds it.
-
-      **A re-render invalidates the animation.** Before a block's render wave (8a), delete any `<stem>.anim.*` it has: it was evolved from the drawing being replaced, and `cleanup` would otherwise point the slide at an animation of a diagram that no longer exists. The animation wave makes a fresh one from the new base.
 
    **Dispatch — waves of 5, in the foreground (mandatory, no presenter prompt).** Every step above is a wave: send up to **five** `Agent` calls **in a single message, each with `run_in_background: false`** — five block subagents in 8a/8c, five critics in 8b. Calls in one message run concurrently, and a foreground call does not return until it has finished — so the wave is parallel *and* the turn cannot end while any of it is out. Take one group of up to five args files through render → critic → revision → critic, persist and verify each block (below), then start the next group, until the queue drains.
 
@@ -95,7 +88,7 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 9. **Stamp the renders — mandatory, never skip.** Once every batch has completed, run:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py stamp-renders --final <final.md> --plan <plan.annotated.json>
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py stamp-renders --final <final.md> --plan <plan.annotated.json>
    ```
 
    This writes each SVG's `<!-- talksmith-ascii-sha256: … -->` stamp — the **only** signal `prepare-render-args` consults on the next pass to decide what to re-render (see *Idempotency* under *Operating principles*). An unstamped SVG re-renders every pass forever (minutes instead of sub-seconds), so never skip this; it is cheap, idempotent, and safe to re-run.
@@ -107,14 +100,14 @@ Use the `Presentation language` from `config/profile.md` (in context) for all SV
 10. **Rasterize any external SVGs referenced from `final.md`** — the diagram-illustrator owns *all* SVG → PNG conversion in the Talk, not just its own ASCII renders. After the ASCII loop completes, walk `final.md` for any `![alt](<path>.svg)` references that point at corpus or external assets (i.e. SVGs the diagram-illustrator did **not** produce in steps 1–8 — typically icons embedded in a chat export, or vector graphics downloaded by the librarian). For each, generate a `.png` companion next to the source SVG:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/rasterize.py <in.svg> \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/scripts/rasterize.py <in.svg> \
        -o <out.png> --width <2 × intrinsic_w>
    ```
 
    Always go through `rasterize.py` — never call `cairosvg` inline and never substitute another tool; `cairosvg unavailable` is a hard failure (install cairo per its error text; no fallback, by design — see [`ascii-to-svg`](../skills/ascii-to-svg/SKILL.md) → *Rasterizer*). Keep the source `.svg` on disk alongside the PNG. The diagram-illustrator does **not** rewrite `final.md` references — that's the editor's Step 6(b) job. Non-SVG raster formats (`.webp`, `.avif`, `.heic`) are the editor's responsibility, not the diagram-illustrator's.
 
 11. **Hand off to editor for cleanup.** Tell the editor to invoke `polish-ascii cleanup --final <final.md> --plan <plan.annotated.json>` — this rewrites the ASCII fences in `final.md` to image refs and `<!-- ascii-source: -->` echoes, leaving the post-fence `ascii-note` comments in place. The diagram-illustrator never writes `final.md` directly.
-12. Aggregate per-block render results for the final report. Include how many diagrams were animated and how many animations were dropped (`animation: unresolved`), external-SVG rasterization counts (`external SVGs rasterized: N`) alongside the ASCII-render counts. Reference critique-log companion paths for any `unresolved` block so the presenter can read the audit trail.
+12. Aggregate per-block render results for the final report. Include external-SVG rasterization counts (`external SVGs rasterized: N`) alongside the ASCII-render counts. Reference critique-log companion paths for any `unresolved` block so the presenter can read the audit trail.
 
 ## Critique-log companion
 

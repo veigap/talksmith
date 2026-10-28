@@ -41,8 +41,8 @@ Mirrors polish-ascii; the image-illustrator role owns the judgement steps.
 A **`gc`** subcommand (sibling of `polish-ascii gc`) prunes **orphaned generated aside triplets** — `<stem>.png` + `.imgprompt` + `.imgstamp` no longer referenced by `final.md` after renumbering. **Non-destructive by default** (lists only); `--apply` moves them into a recoverable `images/.trash/<YYYYMMDD-HHMMSS>/` (shared with `polish-ascii gc`). A stem is a candidate **only when proven generated** (a `.imgprompt` sidecar or `.imgstamp` exists), so presenter-owned images are never deletion targets.
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final talks/<Talk>/final.md           # list
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/scripts/polish_images.py gc --final talks/<Talk>/final.md           # list
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/scripts/polish_images.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
 ```
 
 ## Idempotency — why a companion `.imgstamp`, not an in-file stamp

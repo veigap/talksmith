@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
+_SKILL = _HERE.parent                     # md-to-deck/: templates/, vendor/, icons/ live here
 sys.path.insert(0, str(_HERE))
 from icon_fetch import (fetch_icon, fetch_catalog, bundled_icon,  # noqa: E402
                         _slug as _icon_slug)
@@ -479,7 +480,7 @@ except ImportError as _e:  # noqa: E402
     ) from None
 
 _ENV = Environment(
-    loader=FileSystemLoader(str(_HERE / "templates" / "html")),
+    loader=FileSystemLoader(str(_SKILL / "templates" / "html")),
     autoescape=select_autoescape(enabled_extensions=("j2", "html"), default=True),
     trim_blocks=True, lstrip_blocks=True)
 _CUR_CACHE = None                          # bound per render so templates can call icon()/chip()
@@ -626,7 +627,7 @@ def section_agenda(sections, active: int, heading: str = "") -> str:
 
 # The bundled fallback is a neutral, unbranded placeholder — the plugin ships no institution
 # branding. A subject repo supplies its own logo (see resolution order below).
-_BUNDLED_LOGO = _HERE.parent.parent / "config" / "pptx-styles" / "placeholder-logo.png"
+_BUNDLED_LOGO = _SKILL.parent.parent / "config" / "pptx-styles" / "placeholder-logo.png"
 
 
 def _cover_logo(fm: dict, talk_root) -> str:
@@ -1091,11 +1092,11 @@ def render_model_slide(slide: dict, cache, talk_root=None, asset_dir=None, lang=
 
 # The theme stylesheet lives in its own file (static CSS, no interpolation) — read at import,
 # like the vendored reveal.css and the fonts. Edit templates/html/theme.css, not this string.
-CSS = (_HERE / "templates" / "html" / "theme.css").read_text(encoding="utf-8")
+CSS = (_SKILL / "templates" / "html" / "theme.css").read_text(encoding="utf-8")
 
 # The working-directory landing page (build_index.py) — layout only; it layers on CSS above, so
 # the tokens, the fonts and the light/dark button are shared with the deck rather than restated.
-INDEX_CSS = (_HERE / "templates" / "html" / "index.css").read_text(encoding="utf-8")
+INDEX_CSS = (_SKILL / "templates" / "html" / "index.css").read_text(encoding="utf-8")
 
 # ---- export path (`?export=…`) -------------------------------------------------------------
 # The geometry harvester: under `?export=…` it walks the laid-out print view and parks a JSON
@@ -1104,7 +1105,7 @@ INDEX_CSS = (_HERE / "templates" / "html" / "index.css").read_text(encoding="utf
 # `.replace` is a hard requirement, not caution: an inline <script> block ends at the first
 # closing script tag *anywhere* in its text, comments included, and the browser then reports a
 # syntax error on the leftover markup while the harvester silently never registers.
-HARVEST_JS = ((_HERE / "templates" / "html" / "harvest.js")
+HARVEST_JS = ((_SKILL / "templates" / "html" / "harvest.js")
               .read_text(encoding="utf-8").replace("</scr" + "ipt", "<\\/scr" + "ipt"))
 
 # A `.pptx` cannot portably embed a font, so the exported deck names fonts every machine has.
@@ -1385,7 +1386,7 @@ Reveal.initialize({
 def _vendor(name: str, pkg: str = "reveal") -> str:
     """Read a vendored asset (inlined so the deck is self-contained + offline): Reveal.js by
     default, `pkg="highlight"` for the highlight.js bundle the code panels are coloured by."""
-    return (_HERE / "vendor" / pkg / name).read_text(encoding="utf-8")
+    return (_SKILL / "vendor" / pkg / name).read_text(encoding="utf-8")
 
 
 # IBM Plex Sans/Mono — vendored woff2, inlined as @font-face data-URIs (the Artifact CSP blocks
@@ -1405,7 +1406,7 @@ def _fonts_css() -> str:
     import base64
     out = []
     for family, weight, fn in _FONT_FACES:
-        p = _HERE / "vendor" / "fonts" / fn
+        p = _SKILL / "vendor" / "fonts" / fn
         if not p.is_file():
             continue
         b64 = base64.b64encode(p.read_bytes()).decode("ascii")
@@ -1630,7 +1631,7 @@ window.addEventListener('click', function(e){
 # its dark variant), discovered here and inlined by page() — add a style by adding a file.
 # Layout is untouched because every component reads the tokens. Same contract as the theme
 # toggle: `?deck-style=` URL param, localStorage, button. Cycle order = sorted filenames.
-_STYLES_DIR = _HERE / "templates" / "html" / "styles"
+_STYLES_DIR = _SKILL / "templates" / "html" / "styles"
 _STYLE_FILES = sorted(_STYLES_DIR.glob("*.css")) if _STYLES_DIR.is_dir() else []
 STYLE_CSS = "\n".join(p.read_text(encoding="utf-8") for p in _STYLE_FILES)
 _STYLES = ["default"] + [p.stem for p in _STYLE_FILES]

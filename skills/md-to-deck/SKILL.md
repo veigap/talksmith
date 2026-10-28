@@ -9,14 +9,14 @@ This skill turns a Talk's cleaned `final.md` into a presentation. There is **one
 **two exports measured from it**:
 
 - **RENDER — the HTML deck.** A styled **HTML / Reveal.js** deck built by code
-  ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)) from the structured
+  ([`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/build_html.py)) from the structured
   `slide-model.json`. Needs only Python + `jinja2`. This is also the **live in-progress view**
   (from `draft.md`, `--draft`) the orchestrator auto-fires at Step 5.5. **It is the deliverable
   and the source of truth for how a slide looks.**
 - **EXPORT — PDF and `.pptx`, on request.** Both are *derived from the rendered deck*, not
   re-specified: a headless browser lays the deck out and
-  [`export_pdf.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pdf.py) prints it, while
-  [`export_pptx.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pptx.py) measures the
+  [`export_pdf.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/export_pdf.py) prints it, while
+  [`export_pptx.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/export_pptx.py) measures the
   laid-out page and rebuilds it as native PowerPoint shapes — real, editable text, not pictures
   of slides. Needs Chrome (or any Chromium); the `.pptx` also needs `python-pptx` and Pillow.
 
@@ -116,7 +116,7 @@ The judgment is the LLM's, against a fixed field contract. Write to
 > paragraph breaks. So do not strip marks while decomposing, and do not flatten a URL to plain
 > text — a citation that arrives as an address must leave as a working link. The contract, and the
 > `[title](url)`-over-bare-URL preference, live in the schema's *Inline markup survives* rule; the
-> grammar itself is implemented once in [`html_style.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/html_style.py)
+> grammar itself is implemented once in [`html_style.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/html_style.py)
 > (`_inline_md`) and styled once in `templates/html/theme.css`. **Block** markdown inside a field
 > (headings, lists, tables) is *not* resolved — structure belongs to the model's fields. The one
 > field excluded from all of it is `code`, whose bytes are the content.
@@ -133,8 +133,8 @@ consume a model left over from a prior source. Right after writing the model, **
 source digest so the render step can prove freshness:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py stamp --talk talks/<Talk>          # final.md → slide-model.json
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py stamp --talk talks/<Talk> --draft  # draft.md → slide-model.draft.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/model_freshness.py stamp --talk talks/<Talk>          # final.md → slide-model.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/model_freshness.py stamp --talk talks/<Talk> --draft  # draft.md → slide-model.draft.json
 ```
 
 This writes a `_source` block (`{file, sha256, bytes}`) into the model. **If FILL fails, stop the
@@ -145,12 +145,13 @@ LLM's, so it can slip; this is the mechanical catch, run on the model alone (no 
 it is the only thing standing between a bad FILL and a shipped deck):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/degenerate_enum.py output/slide-model.json
-# was the template chosen, or defaulted into? distribution + fallback + anchoring runs
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py output/slide-model.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/preflight.py --talk talks/<Talk>           # the deliverable model
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/preflight.py --talk talks/<Talk> --draft   # the live view
 ```
 
-`degenerate_enum` and the two coverage preflights below all check the **internal consistency of a
+[`preflight.py`](scripts/preflight.py) runs every audit below in order, keeps each one's own output, and exits 1 if any **blocking** one failed (`degenerate_enum`, `template_diversity` on a `fallback`, `text_coverage --strict-notes`) — the rest are advisory lists to fix before the deliverable render. `--draft` runs only the two shape audits, warn-only. Each audit stays runnable on its own (`scripts/audits/<name>.py`) when you want just one. What each checks, and why:
+
+`degenerate_enum` and the coverage preflights below all check the **internal consistency of a
 choice already made**. `template_diversity` asks the other question — *was a richer template
 available and passed over?* — which nothing used to ask, and which matters most here: the render
 itself never second-guesses a model, so a choice nobody re-examined ships straight to the deck. It
@@ -172,23 +173,16 @@ whose `_choice` names fewer than two candidates.
 > the composition rollup — read that line before the template table. **Diversity is not
 the goal** — a deck genuinely made of labeled sets *is* mostly `concept-breakdown`, and forcing
 variety classifies slides into templates their content can't support. The finding says *re-examine
-this*, and Step 1.6 is what re-examines it. Pass `--warn-only` for the `--draft` live view.
+this*, and Step 1.6 is what re-examines it. (The preflight passes `--warn-only` for the `--draft` live view.)
 
-Alongside it, four **coverage preflights** catch content that would silently vanish. None needs a rendered deck, so they guard every mode — `the render` included (advisory by default, `--strict` to fail):
+Alongside it, the **coverage preflights** catch content that would silently vanish. None needs a rendered deck, so they guard every mode — the render included:
 
-```bash
-# fields the chosen template will ignore (e.g. an image on a `divider`, a second image on `content-image`)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/field_coverage.py output/slide-model.json
-# image refs in final.md that never made it into the model (a slide would render with no image)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py final.md output/slide-model.json
-# lines of final.md the model does not carry — the content the deck will simply never show
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/text_coverage.py final.md output/slide-model.json --strict-notes
-# `### Speaker notes` blocks and callouts that never reached their slide's model entry
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/notes_coverage.py output/slide-model.json --source final.md
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/block_coverage.py output/slide-model.json --source final.md
-```
+- `field_coverage` — fields the chosen template will ignore (an image on a `divider`, a second image on `content-image`);
+- `image_coverage` — image refs in `final.md` that never made it into the model (a slide would render with no image);
+- `text_coverage` — lines of `final.md` the model does not carry: the content the deck will simply never show;
+- `notes_coverage`, `block_coverage` — `### Speaker notes` blocks and callouts that never reached their slide's model entry.
 
-`field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`; decoration the FILL leaves out — icons, card frames, transcribed formulas — is waived by the slide's own `_omitted` trace, listed on every run, and a rendered icon-sized raster or per-item formula strip is flagged `[decoration?]`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — skip it, and the three below, for the `--draft` live view (which fills from `draft.md`).
+`field_coverage` flags a **misclassification** (the field belongs, the template doesn't render it → re-classify the slide). `image_coverage` flags a **dropped image ref** (re-add it to the model, or waive an intentional omission with `<!-- deck-omit: <path> -->` in `final.md`; decoration the FILL leaves out — icons, card frames, transcribed formulas — is waived by the slide's own `_omitted` trace, listed on every run, and a rendered icon-sized raster or per-item formula strip is flagged `[decoration?]`). Both are advisory (exit 0 + a stderr list) so an in-progress `--draft` model isn't blocked; surface the list and fix before the deliverable render. `image_coverage` reads `final.md` — like the three below, it does not run in the preflight's `--draft` mode (the live view fills from `draft.md`).
 
 `text_coverage` is the one that enforces the schema's hardest rule, **[*Never drop content*](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md)**: every load-bearing line of `final.md` has to be translated into the model, and an LLM decomposition drops clauses silently — the model stays valid, every other audit stays green, and the slide ships missing the sentence that disambiguated it. A line counts as present when any five consecutive words of it survive anywhere in the model. The `_choice` trace is excluded from the search on purpose: its rationale quotes the source, so counting it would let the classification alibi the drop.
 
@@ -205,8 +199,8 @@ A non-zero exit from `degenerate_enum` is a FILL failure, not a render failure: 
 was filled with a **single** item, which renders as a stray grid cell — the tell of a
 misclassification (a lead + one point is `single-point`, per the catalog's `labeled_items == 1`
 rule). Surface the FAIL line, **re-classify that slide in the model**, and re-check before
-rendering. Skip with `--warn-only` only for the `--draft` live view, where an in-progress model is
-expected to be incomplete.
+rendering. Only the `--draft` live view runs it warn-only, where an in-progress model is expected
+to be incomplete.
 
 **Step 1.6 — CLASSIFY-REVIEW (the independent critique, LLM).** The deterministic checks above can
 only spot *shapes* — a one-item enum, an ignored field, a template holding half the deck. They
@@ -234,8 +228,8 @@ catalog rule it applied. Then:
 | `format` | Set the `concept-breakdown` `format` the critic gives. No re-decomposition — the fields are the same. |
 | `weak-trace` | The pick stands but the trace doesn't support it. Rewrite that slide's `_choice` with the walk you can actually defend; if you can't, it was a `reclassify` the critic was too generous about. |
 
-Re-run `degenerate_enum` + `template_diversity` + `field_coverage` after applying any change — a
-re-classification moves fields, and moved fields are exactly what those audits check. **One pass
+Re-run the preflight after applying any change — a re-classification moves fields, and moved
+fields are exactly what those audits check. **One pass
 only:** re-dispatching critics over the slides you just edited buys little and risks churning a
 slide between two defensible templates. Report the counts in the render log
 (`N confirmed, M re-classified, K format, J weak-trace`) and surface any `reclassify` you chose not
@@ -245,12 +239,12 @@ to apply, with the reason.
 live view re-renders on every review; the critique belongs to the deliverable render, where the
 classification is what ships.
 
-**Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py)
+**Step 2 — RENDER (mechanical, deterministic).** [`build_html.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/build_html.py)
 loads the model and maps each slide's fields onto its Jinja template — no parsing, no classification:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk>          # output/slide-model.json → deliverable
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_html.py --talk talks/<Talk> --draft  # output/slide-model.draft.json → live view
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/build_html.py --talk talks/<Talk>          # output/slide-model.json → deliverable
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/build_html.py --talk talks/<Talk> --draft  # output/slide-model.draft.json → live view
 ```
 
 **The explicit form** — `--model <path> --talk-root <dir> -o <out.html>` — renders an arbitrary
@@ -309,7 +303,7 @@ looks the same across HTML and PPTX. (The `.pptx` is measured from the rendered 
   command for that interpreter. Verify any candidate up front with `<python> -c "import jinja2"`.
 - **Is the deck on disk still current?** One cheap check — a hash, no FILL, no LLM:
   ```
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py rendered --talk talks/<Talk>
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/model_freshness.py rendered --talk talks/<Talk>
   ```
   Exit `0` current · `3` stale · `4` can't tell · `2` nothing rendered. Every render copies the
   model's `_source` binding into `output/html/.render.json`, so this compares the rendered deck
@@ -321,7 +315,7 @@ looks the same across HTML and PPTX. (The `.pptx` is measured from the rendered 
   resolves anything by editing the source (which re-fills the model) and re-rendering.
 - **Landing page.** Every `the render` render (deliverable *and* Step-5.5 live view) also rewrites
   `index.html` **at the working-directory root** — a card per rendered Talk, linking to its deck
-  ([`build_index.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/build_index.py)). A deck buried at
+  ([`build_index.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/build_index.py)). A deck buried at
   `talks/<Talk>/output/html/index.html` is unfindable and unshareable; the root page is the one link
   the presenter keeps. The whole set is re-scanned on every render, so it self-heals if deleted and
   older Talks keep their cards; each render leaves a `output/html/.render.json` stamp (mode + deck
@@ -341,8 +335,8 @@ Neither re-derives anything: they lay the finished deck out in a headless browse
 it draws.
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pdf.py  --talk talks/<Talk> [--style <skin>] [--theme dark]
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pptx.py --talk talks/<Talk> [--style <skin>] [--theme dark]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/export_pdf.py  --talk talks/<Talk> [--style <skin>] [--theme dark]
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/export_pptx.py --talk talks/<Talk> [--style <skin>] [--theme dark]
 ```
 
 Each prints its output path on stdout and its progress on stderr, the same contract as

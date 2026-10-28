@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-AUDIT = ROOT / "skills" / "md-to-deck" / "audits" / "degenerate_enum.py"
+AUDIT = ROOT / "skills" / "md-to-deck" / "scripts" / "audits" / "degenerate_enum.py"
 
 
 def _slide(template, **fields):

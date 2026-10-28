@@ -187,7 +187,7 @@ Per-round loop:
 
 1. **Detect unstamped bullets.**
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/find_open_notes.py talks/<Talk>/draft.md
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/find_open_notes.py talks/<Talk>/draft.md
    ```
    Returns `line / location / text` per unstamped bullet.
 
@@ -196,20 +196,20 @@ Per-round loop:
 3. **For each non-conflicting unstamped bullet:**
    a. **Stamp.**
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py stamp \
           --draft talks/<Talk>/draft.md --line <N>
       ```
       Bullets found by `find-open` are the presenter's, so the default origin is right. **When *you* add a bullet to a `Presenter feedback` block** to log a change you made on your own initiative, stamp it `--origin editor`. That keeps your change log out of the cross-Talk backlog — step (d) refuses to mirror it, and step 4 stops counting it as pending.
    b. **Apply the content fix.** Read **only** the slide pointed at by `location` from the detection step. Edit Content / Sources / Speaker notes / structure as the bullet implies. Every rewritten line of presentation prose follows the *Anti-slop authoring standard* (top of this file) — a feedback fix that introduces a slop pattern is a defect. A fix that touches a number re-runs the *Numeric fidelity standard* on it **and on everything derived from it elsewhere in the Talk** — the new value is worth nothing if a stale copy of the old one survives two slides later. Move dropped content to `# Cut material` (the only end-of-file write the editor still performs by hand). If the bullet can't be resolved, **skip** the close step — leave it `[open]` and continue. Step 6 (c) will rescue it.
    c. **Close** with the resolution wording.
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py close \
           --draft talks/<Talk>/draft.md --line <N> \
           --resolution "<one-line summary of what changed>"
       ```
    d. **Mirror** to the backlog with editor-chosen tags (reuse existing tags from prior entries before inventing new ones — see `${CLAUDE_PLUGIN_ROOT}/schemas/feedback-backlog.md` → *Tagging vocabulary*).
       ```bash
-      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
+      python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py mirror-row \
           --draft talks/<Talk>/draft.md \
           --backlog config/feedback-backlog.md \
           --line <N> --expect-text "<the bullet's verbatim>" --tags "<csv>"
@@ -218,7 +218,7 @@ Per-round loop:
 
 4. **Sanity check at end of round.**
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py find-closed-unmirrored \
        --draft talks/<Talk>/draft.md \
        --backlog config/feedback-backlog.md
    ```
@@ -244,13 +244,13 @@ Anti-slop is **not** a Step-6 pass. The prose in `final.md` was authored under t
 
 ```bash
 # 1) editor: capture every fenced ASCII block + trailing ascii-note (line ranges) in final.md
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py scan talks/<Talk>/final.md > /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py scan talks/<Talk>/final.md > /tmp/<Talk>.plan.json
 
 # 2) diagram-illustrator: annotate each block with render = {svg_basename, alt}
 #    (svg_basename slug derivation lives in ${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md → Output filename convention)
 
 # 3) diagram-illustrator: write .ascii sidecars (NOT final.md yet)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py extract --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
 
 # 4) diagram-illustrator: per-sidecar render loop — once per .ascii file, invoke talksmith:ascii-to-svg
 #    in Mode B (ascii_file: <path>) so the skill reads source + note straight from the sidecar.
@@ -263,7 +263,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --fina
 #     missing as failed. Never trust the illustrator's word alone: its turn has been cut short.
 
 # 5) editor: rewrite final.md fences (NOT sidecars again)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.plan.json
 ```
 
 The `apply` subcommand (sidecars + cleanup in one shot) exists for quick passes where rendering happened out of band — prefer the staged `extract` → render → `cleanup` flow for normal Step 6.
@@ -272,7 +272,7 @@ The per-block transform — fence → image ref + `<!-- ascii-source: -->` echo,
 
 (a′) **Rewrite generated-aside directives.** After the [`image-illustrator`](image-illustrator.md) has generated every aside (Step 6 step 1b), rewrite each `<!-- generate-image: … -->` directive in `final.md` to an `<!-- aside: … -->` ref via the sibling [`talksmith:polish-images`](../skills/polish-images/SKILL.md) skill — the same staged shape, `cleanup` being the editor's stage:
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/polish_images.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.img-plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-images/scripts/polish_images.py cleanup --final talks/<Talk>/final.md --plan /tmp/<Talk>.img-plan.json
 ```
 The skill owns the rewrite (directive → `<!-- aside: <side> ![alt](images/<basename>.png) -->` + `<!-- generate-source: -->` echo). A directive with no generated image (mis-authored, or the session had no image capability) is left in place untouched and reported — never rewritten to a broken ref. Do **not** re-implement this inline. Directives the image-illustrator flagged as conflicting (slide already has an image) are skipped by the skill.
 
@@ -290,7 +290,7 @@ Once the audit completes, any surviving forbidden-extension ref in `final.md` is
 
 (c) **Rescue `[open]` feedback (from `final.md`).** Run [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) `rescue-open`:
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-open \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py rescue-open \
     --final talks/<Talk>/final.md
 ```
 The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "<verbatim>"` under `# Open questions` (creating the section before `# Cut material` if missing), and skips entries already present. `[closed]` bullets and raw un-stamped bullets are ignored. (`draft.md` retains the full feedback log verbatim — this rescue only mutates `final.md`.)
@@ -298,7 +298,7 @@ The skill walks every `[open]` bullet in `final.md`, appends `- <location> — "
 (d) **Strip `Presenter feedback` fields (from `final.md`).** This is deterministic, not a hand-edit — delegate it to the [`talksmith:feedback-cycle`](../skills/feedback-cycle/SKILL.md) skill's `strip_feedback.py`, which removes both authored forms at every level (Thesis, Agenda, Section, Slide) — H3 (`### Presenter feedback`) and paragraph (`**Presenter feedback:**`) — **and guarantees a blank line before every `---` slide boundary**, so a strip can never leave `text\n---` for Markdown to misread as a setext-H2 underline (the bug this replaces):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/strip_feedback.py talks/<Talk>/final.md
 ```
 
 Do **not** hand-strip these blocks — the blank-line-before-boundary guard is load-bearing and lives in the script + its test, not in operator memory.
@@ -308,7 +308,7 @@ Do **not** hand-strip these blocks — the blank-line-before-boundary guard is l
 1. **Promote.** Append a new entry to `config/learnings.md` in its existing format (rule, why, where it applies, evidence, date). Generate a stable entry id (incrementing integer or next slug — match the file's convention). Return the entry id.
 2. **Move.** Never by hand — a hand Move has only ever copied, leaving promoted rows in the backlog to be counted again. Write one selector per contributing row (`{"talk", "feedback"}`, plus `date`/`location` for a note pasted on two slides) and run, once per learning:
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py move \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py move \
        --backlog config/feedback-backlog.md --processed config/feedback-processed.md \
        --rows <selectors.json> --promoted-to <entry id>
    ```

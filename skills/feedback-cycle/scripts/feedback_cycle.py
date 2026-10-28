@@ -28,7 +28,7 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_shared"))   # skills/_shared
 from _write import atomic_write_lines  # noqa: E402  (shared atomic file write)
 from typing import Any
 

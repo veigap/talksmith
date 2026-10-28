@@ -13,7 +13,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "feedback-cycle"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "feedback-cycle" / "scripts"))
 from strip_feedback import strip_feedback  # noqa: E402
 
 

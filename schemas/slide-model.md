@@ -20,7 +20,7 @@ deliverable; `draft.md` → live in-progress view).
 > step from the *current* source on **every** render; a renderer must never consume a model left
 > over from a prior source. To make that enforceable, FILL stamps the model with a top-level
 > **`_source`** block — `{"file": "final.md", "sha256": "<hex>", "bytes": <n>}` (via
-> [`model_freshness.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/model_freshness.py) `stamp`).
+> [`model_freshness.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/model_freshness.py) `stamp`).
 > Before rendering, the digest is re-checked against the live source; a mismatch or a missing stamp
 > is a **stale model** and the render refuses rather than silently using it. `_source` is metadata,
 > not slide content — renderers ignore it. (`slide-model.draft.json` is stamped the same way from
@@ -333,7 +333,7 @@ synthesized cover:
 
 **`_choice` is metadata, like `_source`** — `build_html.py` and the PPTX renderer read fields by
 name and never see it, so it costs nothing at render. It exists to be *read*: by
-[`audits/template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/template_diversity.py),
+[`audits/template_diversity.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/audits/template_diversity.py),
 whose `[no-alternative]` finding is exactly "fewer than two candidates", and by the
 [`slide-classifier-critic`](${CLAUDE_PLUGIN_ROOT}/agents/slide-classifier-critic.md), which re-runs
 the walk independently and checks each rejection against the catalog.
@@ -403,7 +403,7 @@ delivery order):**" block (drop each item's "— description" tail and any "(~N 
   `"_omitted": [{"src": "images/slide-05-1.png", "reason": "icon"}]` — `reason` is exactly
   `icon` (mapped to an item's `icon`, or dropped), `frame`, or `formula`. `_omitted` is metadata
   like `_choice`: the renderers never read it, and
-  [`audits/image_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/audits/image_coverage.py)
+  [`audits/image_coverage.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/audits/image_coverage.py)
   accepts it as the waiver for that ref **and lists every one by reason**, so an omission is
   visible rather than silent; any other `reason` waives nothing. It is the fill's counterpart of
   the author's `<!-- deck-omit: <path> -->` in `final.md` — the fill never edits `final.md`, and

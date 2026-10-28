@@ -25,7 +25,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(_ROOT / "skills" / "_shared"))
-sys.path.insert(0, str(_ROOT / "skills" / "md-to-deck"))
+sys.path.insert(0, str(_ROOT / "skills" / "md-to-deck" / "scripts"))
 from test_render_reuse import _DIAGRAM, _check, _plan, _render, _run  # noqa: E402
 import test_render_reuse as base  # noqa: E402
 from _plan import referenced_stems  # noqa: E402

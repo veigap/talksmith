@@ -27,7 +27,7 @@ import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(_ROOT / "skills" / "polish-images"))
+sys.path.insert(0, str(_ROOT / "skills" / "polish-images" / "scripts"))
 from polish_images import STAMP_SUFFIX, main  # noqa: E402
 
 failures = 0

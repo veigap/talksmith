@@ -26,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SKILL = ROOT / "skills" / "md-to-deck"
-sys.path.insert(0, str(SKILL))
+sys.path.insert(0, str(SKILL / "scripts"))
 
 import _chrome  # noqa: E402
 
@@ -54,7 +54,7 @@ def main() -> int:
             {"deck": {"title": "Fit visibility", "lang": "en"}, "slides": slides}), encoding="utf-8")
         out = td / "out" / "index.html"
         out.parent.mkdir()
-        subprocess.run([sys.executable, str(SKILL / "build_html.py"), "--model",
+        subprocess.run([sys.executable, str(SKILL / "scripts" / "build_html.py"), "--model",
                         str(td / "slide-model.json"), "--talk-root", str(td), "-o", str(out)],
                        check=True, capture_output=True)
         # section index = slide index + 1: the deck opens with its generated cover

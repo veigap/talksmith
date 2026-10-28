@@ -20,7 +20,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "md-to-deck"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "md-to-deck" / "scripts"))
 from build_html import _retired_shapes  # noqa: E402
 
 RESULTS: list[tuple[str, bool]] = []

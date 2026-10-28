@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_shared"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_shared"))   # skills/_shared
 from _context import (  # noqa: E402  (shared slide-context scanner)
     COMMENT_CLOSE,
     H2_SLIDE,

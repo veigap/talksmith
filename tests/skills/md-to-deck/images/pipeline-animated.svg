@@ -7,11 +7,11 @@
 .ts-anim-pipeline-animated .phase1{animation-delay:.5s}
 .ts-anim-pipeline-animated .phase3{animation-delay:2.7s}
 .ts-anim-pipeline-animated .run{animation:ts-anim-pipeline-animated-show 3.5s linear 3.9s both}
-.ts-anim-pipeline-animated .run .ball{offset-path:path("M110 180 H530");offset-rotate:0deg;animation:ts-anim-pipeline-animated-move 3.5s ease-in-out 3.9s both}
+.ts-anim-pipeline-animated .run .ball{animation:ts-anim-pipeline-animated-path1 3.5s linear 3.9s 1 normal both}
 @keyframes ts-anim-pipeline-animated-in{from{opacity:0}}
 @keyframes ts-anim-pipeline-animated-show{0%{opacity:0}8%,90%{opacity:1}100%{opacity:0}}
-@keyframes ts-anim-pipeline-animated-move{from{offset-distance:0%}to{offset-distance:100%}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-animated *{animation:none}}
+@keyframes ts-anim-pipeline-animated-path1{0.00%{transform:translate(110.0px,180.0px)}3.33%{transform:translate(110.9px,180.0px)}6.67%{transform:translate(113.6px,180.0px)}10.00%{transform:translate(118.3px,180.0px)}13.33%{transform:translate(124.9px,180.0px)}16.67%{transform:translate(133.6px,180.0px)}20.00%{transform:translate(144.3px,180.0px)}23.33%{transform:translate(157.1px,180.0px)}26.67%{transform:translate(171.9px,180.0px)}30.00%{transform:translate(188.7px,180.0px)}33.33%{transform:translate(207.3px,180.0px)}36.67%{transform:translate(227.7px,180.0px)}41.67%{transform:translate(260.7px,180.0px)}58.33%{transform:translate(379.3px,180.0px)}63.33%{transform:translate(412.3px,180.0px)}66.67%{transform:translate(432.7px,180.0px)}70.00%{transform:translate(451.3px,180.0px)}73.33%{transform:translate(468.1px,180.0px)}76.67%{transform:translate(482.9px,180.0px)}80.00%{transform:translate(495.7px,180.0px)}83.33%{transform:translate(506.4px,180.0px)}86.67%{transform:translate(515.1px,180.0px)}90.00%{transform:translate(521.7px,180.0px)}93.33%{transform:translate(526.4px,180.0px)}96.67%{transform:translate(529.1px,180.0px)}100.00%{transform:translate(530.0px,180.0px)}}
 </style>
   <rect width="640" height="360" fill="#FFFFFF"/>
   <g class="run" opacity="0"><circle class="ball" r="9" fill="#DA1B2E" stroke="#FFFFFF" stroke-width="2"/></g>

@@ -25,8 +25,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-RASTERIZE = ROOT / "skills" / "ascii-to-svg" / "rasterize.py"
-AUDIT = ROOT / "skills" / "ascii-to-svg" / "audit_aspect.py"
+RASTERIZE = ROOT / "skills" / "ascii-to-svg" / "scripts" / "rasterize.py"
+AUDIT = ROOT / "skills" / "ascii-to-svg" / "scripts" / "audit_aspect.py"
 
 # A thin strip of art marooned in a tall canvas: viewBox says 1.78:1, the ink says ~9:1.
 # This is the production defect — declared 2.30:1 around art that wanted 2.91:1 — in

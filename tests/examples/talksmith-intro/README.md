@@ -14,7 +14,7 @@ The deck is committed at [`output/html/index.html`](output/html/index.html) — 
 2. **FILL** — `draft.md` decomposed into [`output/slide-model.json`](output/slide-model.json): per slide, the template and its required fields (see [`schemas/slide-model.md`](../../../schemas/slide-model.md)). This is the semantic step an LLM performs.
 3. **RENDER** (mechanical, deterministic) —
    ```bash
-   python3 ../../../skills/md-to-deck/build_html.py \
+   python3 ../../../skills/md-to-deck/scripts/build_html.py \
      --model output/slide-model.json --talk-root . -o output/html/index.html
    ```
 

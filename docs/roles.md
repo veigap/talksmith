@@ -8,21 +8,23 @@ Talksmith ships a **Presenter Agent**: an orchestrator that drives the [eight-st
 
 ## The eight roles
 
-Five do the work of building a Talk:
+Six do the work of building a Talk:
 
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `research/corpus/`, one record per source with a companion `<source-stem>/images/` folder so the corpus is self-contained. Preserves; does not compress. Runs in Step 3.
 - **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone in Step 4.
 - **Editor** — the muscle. Keeps `draft.md`, `final.md`, and `memory.md` current: bootstraps the file, transcribes decisions, drafts prose from corpus records, applies feedback, then in Step 6 copies `draft.md` → `final.md` and cleans it for delivery.
 - **Diagram-Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during Polish (Step 6).
+- **Diagram-Animator** — the second stage of a diagram: once the still is approved, gives every diagram whose note asks for it an animated version, written beside the untouched still and shown only in the HTML deck. An animation that does not come out clean is dropped, and the slide keeps its still.
 - **Image-Illustrator** — its sibling in the same step: turns `<!-- generate-image: … -->` directives into atmospheric aside imagery. Degrades gracefully when the session has no image generation, so it never blocks a build.
 
 One curates across Talks:
 
 - **Global-Librarian** — cross-Talk curator. On Step 8 promotion, curates reusable, topic-organized knowledge from the finalized Talk into a shared `knowledge-library/` at the repo root. Curation, not 1-to-1 copy.
 
-And two are **critics, dispatched by the work itself rather than by the orchestrator** — each deliberately kept blind to everything except the one artifact it judges, because a critic that can see the pattern starts confirming it:
+And three are **critics, dispatched by the work itself rather than by the orchestrator** — each deliberately kept blind to everything except the one artifact it judges, because a critic that can see the pattern starts confirming it:
 
 - **Diagram-Critic** — reviews one rendered diagram from the **PNG alone**, never the SVG source, and reports what the eye actually sees. Dispatched per render by the Diagram-Illustrator.
+- **Animation-Critic** — judges one animation from **frames alone**, never the SVG or its CSS: whether it shows what the note's brief asks, follows the animation practices, and makes the slide's point better than the still. Dispatched per animation pass by the Diagram-Animator.
 - **Slide-Classifier-Critic** — re-runs the template catalog's discriminator walk on **one slide's source**, blind to every other slide's classification, and confirms or overturns the template the render's fill step chose. Dispatched per content slide by the `md-to-deck` skill.
 
 Role specs live under [`agents/`](../agents/) and are dispatched as Claude Code subagents from [`orchestrator.md`](../orchestrator.md), the full operating spec loaded at session start by the [`talksmith-orch.md`](../talksmith-orch.md) stub.

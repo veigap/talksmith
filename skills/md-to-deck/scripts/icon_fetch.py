@@ -37,7 +37,7 @@ CDN = "https://cdn.jsdelivr.net/npm/@material-symbols/svg-{weight}/{style}/{name
 # render real glyphs with no network and an empty cache, so a curated set covering the seed map,
 # the neutral fallbacks and the common concepts ships in the repo. Consulted only *after* the
 # cache and the network, so an online render still picks any icon in the full catalog.
-BUNDLED_DIR = Path(__file__).resolve().parent / "icons"
+BUNDLED_DIR = Path(__file__).resolve().parents[1] / "icons"
 # The full Material Symbols catalog metadata (icon name + English search tags + categories +
 # popularity) — the source of truth for content-matched icon selection, instead of a hardcoded map.
 CATALOG_URL = "https://fonts.google.com/metadata/icons?incomplete=true"

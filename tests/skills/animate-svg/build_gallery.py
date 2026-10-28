@@ -22,7 +22,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "output"
-sys.path.insert(0, str(HERE.parents[2] / "skills" / "md-to-deck"))
+sys.path.insert(0, str(HERE.parents[2] / "skills" / "md-to-deck" / "scripts"))
 from html_style import _ns_svg_ids  # noqa: E402  (the deck's own id namespacing for inlined SVG)
 
 

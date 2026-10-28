@@ -26,7 +26,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-AUDIT = ROOT / "skills" / "md-to-deck" / "audits" / "text_coverage.py"
+AUDIT = ROOT / "skills" / "md-to-deck" / "scripts" / "audits" / "text_coverage.py"
 
 SRC = """---
 presentation: Prueba

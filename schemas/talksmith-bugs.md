@@ -96,7 +96,7 @@ Append-only, newest at the bottom. One entry per distinct defect:
   date: 2026-08-25
   talk: agentes-2026
   step: 6 (Polish)
-  where: skills/polish-ascii/polish_ascii.py — cleanup pass
+  where: skills/polish-ascii/scripts/polish_ascii.py — cleanup pass
   what: cleanup left the ASCII fence in place for a block whose SVG rendered fine
   context: block s3-2-1 in talks/agentes-2026/final.md; sidecar and SVG both on disk,
     stamp written; 21 other blocks in the same run were rewritten correctly

@@ -18,8 +18,8 @@ import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
-_CLI = _ROOT / "skills" / "feedback-cycle" / "feedback_cycle.py"
-sys.path.insert(0, str(_ROOT / "skills" / "feedback-cycle"))
+_CLI = _ROOT / "skills" / "feedback-cycle" / "scripts" / "feedback_cycle.py"
+sys.path.insert(0, str(_ROOT / "skills" / "feedback-cycle" / "scripts"))
 from feedback_cycle import CLOSED_BULLET, OPEN_BULLET, _origin_of  # noqa: E402
 
 _DRAFT = '''# 1. Sección

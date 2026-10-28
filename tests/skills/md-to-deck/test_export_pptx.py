@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 SKILL = ROOT / "skills" / "md-to-deck"
 FIXTURE = ROOT / "tests" / "skills" / "md-to-deck"
-sys.path.insert(0, str(SKILL))
+sys.path.insert(0, str(SKILL / "scripts"))
 
 THEME = SKILL / "templates" / "html" / "theme.css"
 HARVEST = SKILL / "templates" / "html" / "harvest.js"

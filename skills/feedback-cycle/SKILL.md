@@ -19,7 +19,7 @@ Plus two Step-6 helpers:
 7. **Strip** every `Presenter feedback` field out of `final.md` at Step 6 (d) — `strip_feedback.py` — removing both authored forms (H3 / paragraph) and **guaranteeing a blank line before every `---` slide boundary** so a strip can never fuse two slides into a setext-H2 heading. Deterministic; the Editor never hand-strips these blocks.
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/strip_feedback.py talks/<Talk>/final.md [--dry-run]
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/strip_feedback.py talks/<Talk>/final.md [--dry-run]
    ```
 
 And one Step-8 helper:
@@ -42,8 +42,8 @@ The LLM Editor calls these as CLI subcommands and **only authors three things pe
 Scans `draft.md` for bullets inside `### Presenter feedback` blocks that don't yet carry `[open]` or `[closed]`. Returns line number, slide/section location, and verbatim text.
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/find_open_notes.py <draft_path>
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/find_open_notes.py <draft_path> --format tsv
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/find_open_notes.py <draft_path>
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/find_open_notes.py <draft_path> --format tsv
 ```
 
 Output (human):
@@ -59,7 +59,7 @@ Read-only — never modifies the file.
 ### `stamp` — mark a bullet `[open]`
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py stamp \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py stamp \
   --draft talks/<Talk>/draft.md --line N [--date YYYY-MM-DD]
 ```
 
@@ -70,7 +70,7 @@ Rewrites a single bullet (by line number) from `- "feedback"` to `- [open] YYYY-
 ### `close` — flip `[open]` → `[closed]` with a resolution
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py close \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py close \
   --draft talks/<Talk>/draft.md --line N --resolution "<text>"
 ```
 
@@ -79,7 +79,7 @@ Flips the bullet to `[closed]` (keeping the original date **and the origin quali
 ### `mirror-row` — append the closed bullet to `feedback-backlog.md`
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py mirror-row \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py mirror-row \
   --draft talks/<Talk>/draft.md --backlog config/feedback-backlog.md \
   --line N --expect-text "<verbatim>" [--tags "tag1,tag2"]
 ```
@@ -93,7 +93,7 @@ Writes one fully-formed row to `feedback-backlog.md` with talk folder, date, loc
 ### `find-closed-unmirrored` — sanity check at end of round
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py find-closed-unmirrored \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py find-closed-unmirrored \
   --draft talks/<Talk>/draft.md --backlog config/feedback-backlog.md \
   [--format json|human]
 ```
@@ -105,7 +105,7 @@ Returns the list of `[closed]` bullets in `draft.md` that don't yet have a match
 ### `rescue-open` — *(Step 6 (c), against `final.md`)*
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py rescue-open \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py rescue-open \
   --final talks/<Talk>/final.md [--dry-run]
 ```
 
@@ -116,7 +116,7 @@ This subcommand runs against `final.md`, not `draft.md` — the `--final` flag i
 ### `move` — *(Step 8, Move pass)*
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/feedback_cycle.py move \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py move \
   --backlog config/feedback-backlog.md --processed config/feedback-processed.md \
   --rows <selectors.json | -> --promoted-to <learning id> [--promoted-at YYYY-MM-DD] [--dry-run]
 ```

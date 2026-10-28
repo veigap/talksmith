@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for `skills/ingest/fetch.py` — image collection, HTTP-error captures, all-or-nothing folders.
+"""Tests for `skills/ingest/scripts/fetch.py` — image collection, HTTP-error captures, all-or-nothing folders.
 
 Run:  python3 tests/skills/ingest/test_fetch.py
 
@@ -25,8 +25,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
-_CLI = _ROOT / "skills" / "ingest" / "fetch.py"
-sys.path.insert(0, str(_ROOT / "skills" / "ingest"))
+_CLI = _ROOT / "skills" / "ingest" / "scripts" / "fetch.py"
+sys.path.insert(0, str(_ROOT / "skills" / "ingest" / "scripts"))
 import fetch as F  # noqa: E402
 
 _RESULTS: list[tuple[str, bool]] = []

@@ -29,7 +29,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "skills" / "md-to-deck"))
+sys.path.insert(0, str(ROOT / "skills" / "md-to-deck" / "scripts"))
 
 CIRCLE = 'circle cx="480" cy="-480" r="360"'      # the placeholder that must never come back
 

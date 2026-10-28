@@ -32,8 +32,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SKILL = ROOT / "skills" / "md-to-deck"
-sys.path.insert(0, str(SKILL))
-sys.path.insert(0, str(SKILL / "audits"))
+sys.path.insert(0, str(SKILL / "scripts"))
+sys.path.insert(0, str(SKILL / "scripts" / "audits"))
 
 
 class _NoNetwork(socket.socket):

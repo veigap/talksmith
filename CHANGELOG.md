@@ -13,6 +13,41 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.6.0] — 2026-10-28
+
+No re-init needed.
+
+### Added
+
+- **Animation is its own stage, after the drawing.** Drawing a diagram and animating it are now
+  two separate stages with separate roles. The diagram illustrator and its critic draw and
+  judge the still, and know nothing about animation. A new **diagram animator** then gives
+  every approved diagram whose note asks for it an animated version, and a new **animation
+  critic** judges it — blind, from frames, against the approved still. An animation that does
+  not come out clean is dropped, and the slide keeps its still.
+- **One place for every animation rule.** `animate-svg/PRACTICES.md` lists, with the reason and
+  the real defect behind each one, where an animation's files live, what the deck needs to play
+  it, and how motion must read — things arriving in order, arrows arriving with what they
+  carry, captions one at a time, nothing covering a label. The animator loads it before
+  writing a keyframe; the critic holds the frames to it. New lessons are added there.
+
+### Changed
+
+- The animation contract is no longer checked by a script after the fact; it is part of the
+  practices the animator follows and the critic judges.
+- The checks run on a deck's model before rendering are now one command that runs all seven
+  and reports once, instead of seven commands to remember and re-run after every fix.
+- Every skill's scripts now live in a `scripts/` folder inside the skill, apart from its
+  instructions and assets. Nothing changes for presenters; any note or command that ran a
+  plugin script by its old path needs the `scripts/` segment added.
+
+### Fixed
+
+- **Moving elements now follow their paths in Safari.** Animated balls and tokens rode their
+  arrows in Chrome but drifted off them in Safari, which places CSS motion paths wrongly on
+  diagrams. Motion is now written in a form every browser plays the same, and the existing
+  animated diagrams were converted.
+
 ## [1.5.1] — 2026-10-28
 
 No re-init needed.

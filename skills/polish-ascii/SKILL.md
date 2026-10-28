@@ -26,8 +26,8 @@ A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 toget
 A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind after a major re-architecture / renumbering — old `<stem>.svg` / `<stem>.png` / `<stem>.ascii` (plus the `.critique/<stem>.png` companion) that `final.md` no longer references — an animated version (`<stem>.anim.svg` / `.anim.png`) goes with its base, and a ref to the animated version keeps the base alive. It is **non-destructive by default** (lists only); `--apply` **moves** the files — `.critique/<stem>.md` too — into `images/.trash/<YYYYMMDD-HHMMSS>/`, keeping their relative layout so a restore is one `mv` (nothing else globs into `.trash/`; delete the folder once sure). Crucially, a stem is a candidate **only when it is proven generated** — a digest-stamped `.svg` or a `.ascii` sidecar exists — so a presenter-owned image (a plain `.png` with no sidecar/stamp) is *never* a deletion target, even if unreferenced. Run it after a big restructuring pass, review the dry-run list, then `--apply`:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md           # list
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py gc --final talks/<Talk>/final.md           # list
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
 ```
 
 ## When to use
@@ -96,20 +96,20 @@ A block with `"documentation_only": true` is **also skipped automatically** — 
 
 ```bash
 # Phase 1 — scan
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     scan talks/<Talk>/final.md --language Spanish > /tmp/plan.json
 
 # Phase 2 — eyeball (optional) and author a renders map
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py inspect-intents --plan /tmp/plan.json
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py inspect-intents --plan /tmp/plan.json
 #   diagram-illustrator writes /tmp/renders.json:
 #     {"s1-2-1": {"svg_basename": "s1-2-1-cuatro-senales.svg", "alt": "Cuatro señales"}, ...}
 
 # Phase 3 — annotate the plan, write sidecars, fan args out for parallel rendering
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     annotate-renders --plan /tmp/plan.json --renders /tmp/renders.json -o /tmp/plan.annotated.json
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     extract --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     prepare-render-args --plan /tmp/plan.annotated.json \
         --out-dir /tmp/ts-args --repo-root "$(pwd)"
 
@@ -117,11 +117,11 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
 
 # Phase 5 — stamp the renders (MANDATORY: this is what lets the *next* pass skip
 #           unchanged blocks; skip it and every pass re-renders everything, forever)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     stamp-renders --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 
 # Phase 6 — cleanup
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/scripts/polish_ascii.py \
     cleanup --final talks/<Talk>/final.md --plan /tmp/plan.annotated.json
 ```
 

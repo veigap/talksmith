@@ -23,7 +23,7 @@ templates, their conformance patterns and a per-format effort matrix. They exist
 criterion had to be written a second time in EMU units and then verified by five OOXML audits.
 
 The `.pptx` is now *measured* from the rendered HTML deck
-([`export_pptx.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/export_pptx.py)), so a slide's geometry
+([`export_pptx.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/scripts/export_pptx.py)), so a slide's geometry
 has exactly one definition — [`theme.css`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/templates/html/theme.css) —
 and the exporter cannot disagree with it. The per-format matrix went with them: there is one
 render path, and a matrix with one row is a sentence.

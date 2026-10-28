@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(_ROOT / "skills" / "polish-ascii"))
+sys.path.insert(0, str(_ROOT / "skills" / "polish-ascii" / "scripts"))
 from polish_ascii import scan  # noqa: E402
 
 _HEAD = "---\ntitle: t\n---\n\n# 1. Sección\n"

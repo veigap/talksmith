@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "ascii-to-svg"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "skills" / "ascii-to-svg" / "scripts"))
 from validate_svg import validate  # noqa: E402
 
 

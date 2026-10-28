@@ -7,7 +7,7 @@ description: Fetch a web page (HTML + best-effort Markdown extraction + referenc
 
 This skill downloads one web page and stores it under the active Talk's `research/web/<folder-name>/` so the [`librarian`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md) picks it up in Step 3 (Corpus) alongside articles and chat exports.
 
-The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python script (no `requests`, no `beautifulsoup4`, no external deps). The skill is the orchestration wrapper: it locates the active Talk, runs the script, surfaces errors back to the orchestrator.
+The actual fetch is performed by [`fetch.py`](scripts/fetch.py) — a stdlib-only Python script (no `requests`, no `beautifulsoup4`, no external deps). The skill is the orchestration wrapper: it locates the active Talk, runs the script, surfaces errors back to the orchestrator.
 
 ## When to use
 
@@ -21,7 +21,7 @@ The actual fetch is performed by [`fetch.py`](fetch.py) — a stdlib-only Python
 |---|---|---|
 | `url` | yes | Presenter (free-text — there's no useful context to propose candidates from). Must be `http://` or `https://`. |
 | `talk_path` | yes | The orchestrator (active Talk path, e.g. `talks/gen-models-bio/`). |
-| `folder_name` | optional | Defaults to a slugified `<URL-host>-<first-path-segment>` — see [`fetch.py`](fetch.py) `_default_folder_name` + `_slugify` for the canonical definition (lowercase, non-alphanumeric → `-`, 80-char cap). Override when the presenter wants a more meaningful name (e.g. `transformer-paper-google` instead of `arxiv-org-abs`). |
+| `folder_name` | optional | Defaults to a slugified `<URL-host>-<first-path-segment>` — see [`fetch.py`](scripts/fetch.py) `_default_folder_name` + `_slugify` for the canonical definition (lowercase, non-alphanumeric → `-`, 80-char cap). Override when the presenter wants a more meaningful name (e.g. `transformer-paper-google` instead of `arxiv-org-abs`). |
 
 ## Output
 
@@ -43,7 +43,7 @@ The folder appears **all at once or not at all**: it is assembled in a hidden si
 2. **Run the fetcher:**
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ingest/fetch.py \
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ingest/scripts/fetch.py \
      <url> \
      --talk-path talks/<Talk>/ \
      [--folder-name <slug>] \

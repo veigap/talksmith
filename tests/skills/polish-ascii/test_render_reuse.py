@@ -30,7 +30,7 @@ import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(_ROOT / "skills" / "polish-ascii"))
+sys.path.insert(0, str(_ROOT / "skills" / "polish-ascii" / "scripts"))
 from polish_ascii import main, read_svg_digest  # noqa: E402
 
 _DIAGRAM = "```ascii\n+-------+    +-------+\n| input | -> | model |\n+-------+    +-------+\n```\n" \
