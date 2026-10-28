@@ -86,6 +86,8 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    - `W` is free. `0 0 680 H` is a common choice for moderate aspects, not a rule — very wide art needs a larger `W` to leave legible height (a 6.7:1 diagram at W=680 gets ~102 units of height, too little for three rows of text).
    - **There is no useful self-check you can run in your head** — any "would the raster match" arithmetic derives from the viewBox and confirms itself by construction. The real check is mechanical and runs in step 9.
 
+   **Draw against the critic's checklist.** The blind critic judges the render against items 1–11 and the diagram checklist A1–A13 in [`diagram-critic.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) — every one a defect a real talk shipped. Apply the same list while drawing; it is cheaper to avoid an `[A4]` crossing than to spend the block's one revision on it.
+
    **Tag the beats when the note has an `animation:` section** — the one animation step that is yours; the motion itself is not (see *Animation* below). Wrap what each numbered beat brings in as `<g data-beat="N">`, N being the beat's number in the note: the box, its label, and the arrow that arrives at it go in the same group. An element already on screen that the beat *lights up* rather than introduces gets `data-beat="N" data-beat-effect="pulse"` instead. Elements no beat names stay untagged — they are there from the start. Every beat from 1 to the note's last gets at least one element; never nest a tagged group inside another, never tag the root `<svg>`, `<defs>` or a `<marker>` (a marker follows its path's group). Draw everything fully visible — no `opacity:0`, no `visibility`, no CSS animation, SMIL or script of your own — and keep `opacity` / `transform` off the tagged element itself (put them on a child): the animation drives those two on the tag.
 
 6. **Write the SVG** to `output_path`. Create the parent directory if it doesn't exist (`mkdir -p`). Overwrite if the file already exists — idempotency is the caller's concern, not this skill's.
@@ -93,10 +95,11 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    **If you tagged beats, animate it** — before validating, so validation sees the final file:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/animate_svg.py <output_path> --ascii <ascii_file>   # Mode A: --beats <N> [--loop]
+   python3 ${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/animate_svg.py <output_path> --ascii <ascii_file> \
+       --frames <output_path parent>/.critique/<basename>/        # Mode A: --beats <N> [--loop]
    ```
 
-   It checks the tags against the note's beat count and injects the animation. `animation: <N> beats` / `animation: none` → carry the line into the step-10 report. Exit 1 (`animation: defect: …`) leaves the file static and complete; report the line verbatim — like an aspect-audit defect it is a revision input, not a failure.
+   It checks the tags against the note's beat count, injects the animation, and rasterizes one frame per beat plus a contact sheet into the frames directory — the critic's view of the animation (step 8). `animation: <N> beats · frames: <dir>` / `animation: none` → carry the line into the step-10 report. Exit 1 (`animation: defect: …`) leaves the file static and complete; report the line verbatim — like an aspect-audit defect it is a revision input, not a failure.
 
    **Then validate it against the aspect-ratio contract** by running [`validate_svg.py`](validate_svg.py) on the file you just wrote:
 
@@ -131,7 +134,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
        -o <parent>/.critique/<basename>.png --width 1600
    ```
 
-   This PNG is **not** referenced from `final.md`, **not** consumed by the Step-7 PPTX renderer, and **distinct from the deliverable PNG in step 7**. It exists for exactly one reader: the blind [`diagram-critic`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) subagent, whose only view of the render this is. Get its shape wrong and the critique is performed on a diagram that doesn't exist.
+   This PNG is **not** referenced from `final.md`, **not** consumed by the Step-7 PPTX renderer, and **distinct from the deliverable PNG in step 7**. For an animated diagram the per-beat frames from step 6 sit beside it in `.critique/<basename>/`. They exist for exactly one reader: the blind [`diagram-critic`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-critic.md) subagent, whose only view of the render this is. Get its shape wrong and the critique is performed on a diagram that doesn't exist.
 
    If it fails, still report the SVG as `rendered` but add `png_critique: failed` to the report — no pixels means the critique loop is blind for that block (the diagram-illustrator records it `unresolved`), but the SVG itself is intact. Never delete the SVG because a PNG step failed.
 
@@ -151,7 +154,7 @@ The agent must pass the following in the skill invocation prompt. **Two input mo
    Pass the tool's line through **verbatim** — it proposes a corrected viewBox that is a pure crop, precise enough that the re-render usually lands in one pass. Do **not** apply the suggestion yourself: whitespace is sometimes intentional, and reframing the presenter's diagram isn't this skill's call.
 
 10. **Return** a one-line report:
-    - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · animation: <none|N beats|defect: …> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
+    - On success: `rendered: <output_path> · svg_validation: <ok|N fix(es)> · animation: <none|N beats · frames: <dir>|defect: …> · png_deliverable: <path> · png_critique: <path|failed> · aspect_audit: <ok|defect: …> · directives_applied: <count> · deviations: <none|description>`
     - On skip: `skipped: <reason>`
     - On failure: `failed: <reason>` — and do **not** write a broken SVG. Validation failures from step 6 (unfixable viewBox) surface here as `failed: svg_validation: <error>` and must delete (or never have written) the broken file. Deliverable-PNG failures from step 7 surface as `failed: png_deliverable: <reason>` — without the PNG the Step-7 PPTX renderer cannot consume the asset, so the render is incomplete; the SVG bytes may stay on disk but the report must not declare success.
 

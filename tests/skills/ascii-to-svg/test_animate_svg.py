@@ -140,6 +140,20 @@ def main() -> int:
             im = Image.open(png).convert("RGB")
             _check("cairosvg draws the complete diagram (both beats)",
                    im.getpixel((100, 100)) == (242, 238, 238) and im.getpixel((480, 100)) == (218, 27, 46))
+
+            # The critic's frames: one per beat, cumulative, the last one the complete diagram.
+            fdir = tmp / "frames"
+            fdir.mkdir()
+            (fdir / "beat-9.png").write_bytes(b"stale")
+            animate([str(svg), "--beats", "2", "--frames", str(fdir)])
+            names = sorted(p.name for p in fdir.iterdir())
+            _check("frames: beat-0..beat-2 + contact sheet, stale frames cleared",
+                   names == ["beat-0.png", "beat-1.png", "beat-2.png", "contact.png"], str(names))
+            px = lambda n, x: Image.open(fdir / f"beat-{n}.png").convert("RGB").getpixel((x, 266))
+            _check("beat-0 holds neither box, beat-1 only the first, beat-2 both",
+                   px(0, 300) == px(0, 1300) == (255, 255, 255)
+                   and px(1, 300) == (242, 238, 238) and px(1, 1300) == (255, 255, 255)
+                   and px(2, 1300) == (218, 27, 46))
         else:
             print("SKIP  cairosvg end-state check (this interpreter cannot rasterize)")
 

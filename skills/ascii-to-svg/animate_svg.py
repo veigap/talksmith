@@ -2,7 +2,7 @@
 """Turn a rendered diagram's beat tags into its animation.
 
 Usage:
-    python3 animate_svg.py <svg> [--ascii <sidecar.ascii> | --beats N [--loop]]
+    python3 animate_svg.py <svg> [--ascii <sidecar.ascii> | --beats N [--loop]] [--frames <dir>]
 
 The renderer's only animation work is *tagging*: it wraps the elements each beat of the
 `ascii-note`'s `animation:` section brings in as `<g data-beat="N">` (or marks an element that is
@@ -33,6 +33,12 @@ diagram applies to all of them. Every selector here hangs off `ts-anim-<stem>` o
 diagram's beat timings can never reach another's — a looping diagram's per-beat keyframes are
 named after it too.
 
+`--frames <dir>` also rasterizes the diagram as it stands after each beat — `beat-0.png` (what
+the slide opens on, before beat 1) through `beat-N.png` (complete, the same picture as the static
+render) — plus `contact.png`, the frames side by side. They are for one reader: the blind
+`diagram-critic`, which judges the order things arrive in from these pixels alone, never the SVG.
+A `pulse` beat introduces nothing, so its frame matches the previous one.
+
 Exit codes: 0 = animated, or nothing to animate (`animation: none`); 1 = a tagging defect — the
 file is left untouched (static and complete) and the line goes back to the renderer as a defect,
 like an aspect-audit one; 2 = the SVG could not be read or parsed.
@@ -42,8 +48,12 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import contextlib
+import io
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 LEAD = 0.5         # s before beat 1 — lets the slide transition land first
 STEP = 1.1         # s between beats
@@ -197,6 +207,58 @@ def apply(svg_text: str, scope: str, n: int, loop: bool = False) -> str:
     return out[:m.end()] + "\n" + block + out[m.end():]
 
 
+def _prune(el: ET.Element, k: int) -> None:
+    """Drop every element that has not arrived yet at beat k (a pulse is already on screen)."""
+    for ch in list(el):
+        raw = ch.get("data-beat", "")
+        if raw.isdigit() and int(raw) > k and ch.get("data-beat-effect", "appear") != "pulse":
+            el.remove(ch)
+        else:
+            _prune(ch, k)
+
+
+def write_frames(svg_text: str, n: int, out_dir: Path, width: int = 1600) -> str:
+    """Rasterize beat-0 … beat-n and the contact sheet into out_dir; returns the report fragment."""
+    import rasterize as R
+    if R._load_cairosvg() is None:
+        return "frames: failed (cairosvg unavailable)"
+    for ns, uri in (("", "http://www.w3.org/2000/svg"), ("xlink", "http://www.w3.org/1999/xlink")):
+        ET.register_namespace(ns, uri)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in [*out_dir.glob("beat-*.png"), out_dir / "contact.png"]:
+        old.unlink(missing_ok=True)          # a revision with fewer beats must not leave strays
+    pngs = []
+    for k in range(n + 1):
+        root = ET.fromstring(svg_text)
+        _prune(root, k)
+        tmp = out_dir / f".beat-{k}.svg"
+        tmp.write_text(ET.tostring(root, encoding="unicode"), encoding="utf-8")
+        png = out_dir / f"beat-{k}.png"
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = R.rasterize(tmp, png, width)
+        tmp.unlink(missing_ok=True)
+        if code:
+            return f"frames: failed (beat {k} did not rasterize)"
+        pngs.append(png)
+    try:
+        from PIL import Image, ImageDraw
+        thumbs = [Image.open(p).convert("RGB") for p in pngs]
+        tw = 480
+        thumbs = [t.resize((tw, round(t.height * tw / t.width))) for t in thumbs]
+        per_row, gap, th = min(4, len(thumbs)), 16, max(t.height for t in thumbs)
+        rows = -(-len(thumbs) // per_row)
+        sheet = Image.new("RGB", (per_row * (tw + gap) + gap, rows * (th + gap + 20) + gap), "#D8D2CE")
+        draw = ImageDraw.Draw(sheet)
+        for i, t in enumerate(thumbs):
+            x, y = gap + (i % per_row) * (tw + gap), gap + (i // per_row) * (th + gap + 20)
+            draw.text((x, y), f"beat {i}", fill="#1F1E1E")
+            sheet.paste(t, (x, y + 20))
+        sheet.save(out_dir / "contact.png")
+    except Exception as e:                   # the frames alone still serve the critic
+        return f"frames: {out_dir} (no contact sheet: {e})"
+    return f"frames: {out_dir}"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("svg", type=Path)
@@ -204,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--ascii", type=Path, help="the block's .ascii sidecar — its note's beat count is the expectation")
     g.add_argument("--beats", type=int, help="the note's beat count, when there is no sidecar (Mode A)")
     ap.add_argument("--loop", action="store_true", help="with --beats: the note says `animation: loop`")
+    ap.add_argument("--frames", type=Path, help="also rasterize each beat + a contact sheet here, for the critic")
     a = ap.parse_args(argv)
 
     try:
@@ -243,7 +306,10 @@ def main(argv: list[str] | None = None) -> int:
     new = apply(text, scope, top, loop)
     if new != text:
         a.svg.write_text(new, encoding="utf-8")
-    print(f"animation: {top} beats" + (", loop" if loop else "") if top else "animation: none")
+    line = f"animation: {top} beats" + (", loop" if loop else "") if top else "animation: none"
+    if top and a.frames is not None:
+        line += " · " + write_frames(new, top, a.frames)
+    print(line)
     return 0
 
 

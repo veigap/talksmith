@@ -13,6 +13,24 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.4.2] — 2026-10-28
+
+No re-init needed.
+
+### Added
+
+- **The diagram critic reviews animations, and checks every diagram against thirteen more
+  rules.** An animated diagram is now judged as it plays: the critic gets one frame per beat
+  (what the slide opens on, then each beat's arrival, ending on the complete diagram) plus a
+  contact sheet, still pixels only and never the SVG, and checks that things arrive in the order
+  the process runs — nothing before what produces it, one stage per beat. Every diagram, animated
+  or not, is also held to the A1–A13 checklist that came out of a real talk's review: exact and
+  consistent dimensions, arrows from the right source, no line through a block or label,
+  symmetric drawings of symmetric architectures, recognizable pictograms, correct concepts
+  (trained vs frozen parts marked), legends for colour-coded classes, simulated values labelled,
+  one colour scale per quantity, plain non-anthropomorphic captions, and a legible, balanced,
+  complete picture. The renderer draws against the same list.
+
 ## [1.4.1] — 2026-10-28
 
 No re-init needed.
