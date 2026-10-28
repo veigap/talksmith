@@ -36,12 +36,16 @@ def main() -> int:
     cards = []
     for case in sorted(p for p in HERE.iterdir() if p.is_dir() and (p / "note.txt").is_file()):
         anim, still = OUT / f"{case.name}.svg", OUT / ".critique" / f"{case.name}.static.svg"
+        dropped = OUT / ".critique" / f"{case.name}.dropped.svg"
         if not anim.is_file():
             continue
+        label = "Animated"
+        if dropped.is_file() and "ts-anim-" not in anim.read_text(encoding="utf-8"):
+            anim, label = dropped, "Dropped attempt — not shipped; the slide keeps the still"
         ctx = json.loads((case / "context.json").read_text(encoding="utf-8"))
         verdict = OUT / ".critique" / f"{case.name}.verdict.txt"
         v = verdict.read_text(encoding="utf-8").strip() if verdict.is_file() else "not critiqued yet"
-        status = "ok" if v.lower().startswith("clean") else "pending" if v.lower().startswith(("pending", "not critiqued")) else "issues"
+        status = "ok" if v.lower().startswith("clean") else "dropped" if v.lower().startswith("dropped") else "pending" if v.lower().startswith(("pending", "not critiqued")) else "issues"
         steps = "".join(f"<li>{html.escape(s)}</li>" for s in _brief((case / "note.txt").read_text(encoding="utf-8")))
         cards.append(f"""
 <section class="card" id="{case.name}">
@@ -49,7 +53,7 @@ def main() -> int:
     <span class="badge {status}">{html.escape(v.splitlines()[0][:60])}</span>
     <button class="replay" type="button">↻ Replay</button></header>
   <div class="pair">
-    <figure class="anim"><figcaption>Animated</figcaption>{_inline(anim, f"a-{case.name}-")}</figure>
+    <figure class="anim"><figcaption>{label}</figcaption>{_inline(anim, f"a-{case.name}-")}</figure>
     <figure class="still"><figcaption>Approved still</figcaption>{_inline(still, f"s-{case.name}-") if still.is_file() else "<p>—</p>"}</figure>
   </div>
   <details><summary>Brief and critique</summary><ol>{steps}</ol><pre>{html.escape(v)}</pre></details>
@@ -66,7 +70,7 @@ main{{max-width:1500px;margin:0 auto;padding:16px}}
 .card header{{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}}
 .card h2{{font-size:17px;margin:0}} .title{{color:var(--muted)}}
 .badge{{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bg)}}
-.badge.ok{{background:#E3F1E6;color:#1E5B2C}} .badge.issues{{background:#F9D2D6;color:#8A1020}}
+.badge.ok{{background:#E3F1E6;color:#1E5B2C}} .badge.issues{{background:#F9D2D6;color:#8A1020}} .badge.dropped{{background:#E8E2DE;color:#3B3535}}
 .replay{{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 10px;cursor:pointer}}
 .pair{{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-top:10px}}
 @media (max-width:900px){{.pair{{grid-template-columns:1fr}}}}
