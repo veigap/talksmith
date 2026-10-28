@@ -34,3 +34,8 @@ tests/skills/*/images/.critique/
 __pycache__/
 *.pyc
 .claude/settings.local.json
+
+# Outputs of the animate-diagram reference scripts when run in place
+skills/animate-diagram/examples/*.gif
+skills/animate-diagram/examples/*.png
+skills/animate-diagram/examples/.critique/

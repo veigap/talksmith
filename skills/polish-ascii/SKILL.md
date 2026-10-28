@@ -14,12 +14,12 @@ The diagram-illustrator picks templates and dispatches `talksmith:ascii-to-svg` 
 1. **`scan`** — read `final.md` once, emit JSON inventory of every ASCII block + trailing `ascii-note` with line ranges, **plus the per-block `context` bundle** (`slide_title`, `slide_content_prose`, `speaker_notes`, `section_title`, `section_goal`, `talk_thesis`, optional `presentation_language` when `--language` is passed). After `scan`, no consumer should need to re-parse `final.md` for slide context.
 2. **`inspect-intents`** *(optional)* — eyeball the scan as a 3-column table (`slide_id | slide_title | intent`) before authoring slugs. Pure read; no mutation.
 3. **Diagram-Illustrator authors a renders map** (judgement-only) — `{slide_id: {svg_basename, alt}}` JSON keyed by `slide_id`, with the slug per the *Output filename convention* in [`${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) (derived from `ascii-note → intent`, slide title, etc.). Skip documentation-only blocks — `annotate-renders` zeros them out automatically.
-4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr.
+4. **`annotate-renders`** — merge the renders map into the scan plan, emitting an annotated plan with `render: {svg_basename, alt}` set per block (and `render: null` for documentation-only / unmapped blocks). Reports missing slide_ids on stderr. `--animations all|no-training|none` decides which blocks animate (`render.animate`) — see *Animated blocks* below.
 5. **`extract`** — write `.ascii` sidecars per the annotated plan. `final.md` is **not** modified at this stage. After this step every diagram lives on disk as a self-describing `.ascii` file (source + note).
 6. **`prepare-render-args`** *(parallel fan-out)* — emit one `<slide_id>.json` args file per renderable block under `--out-dir`, each containing the full context bundle expected by `talksmith:ascii-to-svg` Mode B (`ascii_file`, `output_path`, slide/section/thesis context, `presentation_language`, optional `repo_root`). Subagents read their args file and dispatch one render each. **A block gets no args file when a stamped SVG with its digest already exists** — at the planned basename, *or under any other name in `images/`*: a renumbered slide changes the basename but not the drawing, so the stamped render (SVG, deliverable PNG, `.critique/` PNG and log, the log's H1 renamed) is **copied** to the new stem and counted as reused. Every donor is read before any destination is written (`relocate_staged` in [`_shared/_plan.py`](../_shared/_plan.py), shared with `polish-images`), so a renumbering chain (2 → 3 while 3 → 4) or a swap hands each slide its own drawing. Filenames never decide, in either direction.
-7. **Per-sidecar render** — invoke [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the args file. Easily parallelizable across subagents.
+7. **Per-sidecar render** — invoke the renderer each args file names (`"renderer"`): [`talksmith:animate-diagram`](../animate-diagram/SKILL.md) for an animated block, otherwise [`talksmith:ascii-to-svg`](../ascii-to-svg/SKILL.md) **once per `.ascii` file** in Mode B (`ascii_file: <path>`). The skill reads ASCII source + note from the sidecar; the caller passes the rest of the context bundle straight from the args file. Easily parallelizable across subagents.
 8. **`stamp-renders`** *(mandatory — never skip)* — stamp each rendered SVG with the SHA-256 digest of the ASCII it was drawn from. This is what makes step 6 (`prepare-render-args`) able to skip unchanged blocks on the **next** pass: it is the one and only signal consulted, so an unstamped SVG re-renders every time, forever. Run once after **all** renders complete, before `cleanup`. Blocks whose render failed have no SVG on disk and are skipped + reported on stderr — they correctly re-render next pass. An SVG that is **older than its `.ascii` sidecar and stamped from other ASCII** is an old drawing still waiting for (or having failed) its re-render: it is **not** stamped, and is reported — stamping it would mark the old picture current forever. `--only <slide_id …>` stamps just the named blocks, for when those renders land later.
-9. **`cleanup`** — rewrite `final.md` fences to image references, leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
+9. **`cleanup`** — rewrite `final.md` fences to image references (`.svg`, or `.gif` for an animated block, which `both` follows with a companion slide), leaving the post-fence `ascii-note` HTML comments in place. Sidecars are not touched.
 
 A single-pass `apply` subcommand exists for quick passes (does steps 5 + 9 together, skipping the per-sidecar render — useful when you've already rendered SVGs separately and just want to finish the cleanup). **`apply` does not stamp** — if you use it after rendering SVGs by hand, run `stamp-renders` yourself or the next pass re-renders everything.
 
@@ -29,6 +29,17 @@ A **`gc`** subcommand prunes **orphaned generated diagram triplets** left behind
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md           # list
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py gc --final talks/<Talk>/final.md --apply   # move to images/.trash/<timestamp>/
 ```
+
+## Animated blocks — the `animate:` field
+
+The note's `animate: inference | training | both | no` line (authoring rules: [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) → *ASCII diagrams*) routes a block to [`talksmith:animate-diagram`](../animate-diagram/SKILL.md). Absent or `no` = static, so a Talk written before the field existed renders exactly as before. The mechanics, stage by stage:
+
+- **`scan`** reports each block's `animate` (`inference` · `training` · `both` · `null`), and `animate_invalid: <value>` for anything else (rendered static, warned by `annotate-renders`).
+- **`annotate-renders --animations <policy>`** — the presenter's one answer at Polish entry: `all` (honor every `animate:`; default), `no-training` (`both` → `inference`: no companion slides), `none` (everything static — also the degrade when no interpreter has numpy/matplotlib/Pillow). A renders-map entry may carry `"animate"` (overrides the note; `"no"` falls a failed animation back to static) and, for every block that ends up `both`, **must** carry `"training": {"basename", "title", "alt"?, "notes"?}` — the companion slide's stem and words; without it the command exits 2. The effective mode lands in `render.animate` (`render.training` for `both`).
+- **`prepare-render-args`** writes one args file per *render*: `<slide_id>.json` (`"renderer": "animate-diagram"`, `"kind": "inference"` or `"training"`) and, for `both`, `<slide_id>.training.json` (the companion, `"kind": "training"`, `"companion": {title, notes}`). Static blocks get `"renderer": "ascii-to-svg"`. **Idempotency** is the same rule with the stamp in a different file: an animation is reused when its generator `images/.anim/<stem>.py` carries `# talksmith-ascii-sha256: <digest>` of the current ASCII + note (minus the `animate:` line) **salted with the kind**, and its GIF and PNG exist; a current script whose outputs are gone — or **empty**: a 0-byte file always counts as missing — gets `"rerun": true` (run it, no LLM, no critique); the same digest under another stem is copied across (GIF, PNG, script, critique sheet and log). **The `animate:` line is excluded from every digest** — it routes, it doesn't draw — so switching a block's route never invalidates the other route's stamp. **One route per stem:** both routes write `<stem>.png`, so when a block switches route the other route's files (and the now-ambiguous PNG) move to `images/.trash/<ts>/` — a reused SVG then reports `needs-png` for re-rasterizing. `--only <slide_id …>` limits the fan-out (the fallback of one block to static).
+- **`stamp-renders`** stamps each animation's generator script — only when its GIF and PNG are on disk and non-empty — with the same staleness guard as an SVG.
+- **`cleanup`** writes `![alt](images/<stem>.gif)` + the usual `ascii-source` echo, and for `both` inserts the companion slide at the end of the block's slide (before the next `---` or heading): `---`, `## <title>`, `### Content` with `![alt](images/<training-stem>.gif)`, and `### Speaker notes` with `notes`. The heading is unnumbered on purpose — the deck reads every H2 as a slide, and a number would collide with the slide after it.
+- **`gc`** counts a stem with a generator script in `images/.anim/` as generated, and moves its GIF, script and critique frames with the rest.
 
 ## When to use
 
@@ -86,7 +97,7 @@ The plan JSON has this shape:
 
 `render` is added by the diagram-illustrator (judgement: template choice, slug, alt) before `extract` / `cleanup` / `apply` is invoked.
 
-A block with `"render": null` is skipped (not rewritten, no sidecar).
+A block with `"render": null` is skipped (not rewritten, no sidecar). `render` may also carry `animate` and `training` (see *Animated blocks*).
 
 A block with `"documentation_only": true` is **also skipped automatically** — the slide already carries a Markdown image reference, so any ASCII in that slide is treated as inline visual aid for the source reader and bypassed by every Step-6 stage (no render, no sidecar, no fence rewrite). The flag is set by `scan` based on the surrounding slide content; the diagram-illustrator does not need to annotate it.
 
@@ -198,9 +209,9 @@ Blocks are processed bottom-up so line numbers stay valid through the pass. The 
 ## Boundaries
 
 - Reads `final.md`; in `scan` it is read-only; in `apply` / `cleanup` it is rewritten atomically.
-- Writes only under `talks/<Talk>/images/` (sidecars, reused-render copies, `gc`'s `.trash/`) and to `final.md` itself.
+- Writes only under `talks/<Talk>/images/` (sidecars, reused-render copies, `gc`'s `.trash/`, and the other route's files a route switch retires to `.trash/`) and to `final.md` itself.
 - Never reads or writes `draft.md`.
-- Does **not** render SVGs — that's `talksmith:ascii-to-svg`.
+- Does **not** render SVGs or animations — that's `talksmith:ascii-to-svg` / `talksmith:animate-diagram`.
 - Does **not** assign `svg_basename` — the diagram-illustrator does (filename convention spec in `${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md`).
 - Does **not** strip `Presenter feedback` (Step 6 (d)) or consolidate non-ASCII image refs (Step 6 (b)) — those remain editor responsibilities.
 

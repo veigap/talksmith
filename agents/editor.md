@@ -120,6 +120,7 @@ intent: <one line — what this diagram is trying to show>
 emphasize: <the ONE box/arrow/label that should pop — the diagram's single focal element>
 labels: <if axes/legend/units exist, list them>
 terms: <optional — terms of art kept in another language on purpose, comma-separated: tools, loop>
+animate: <optional — inference | training | both | no>
 -->
 ```
 
@@ -131,9 +132,10 @@ Hard rules for the editor when *producing* ASCII:
 
 Downstream extractors key on the `ascii` tag **alone** — there is no payload heuristic and no fallback tier, so an untagged fence is never rendered no matter what it draws ([`diagram-illustrator.md`](diagram-illustrator.md) → *Detection rule*).
 
-The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines, plus `terms:` when needed) and factual. The diagram-illustrator forwards it to `talksmith:ascii-to-svg` so the SVG can be labelled, colored, and laid out with intent, and to the blind critic as the diagram's intent.
+The note is for the **rendering pass**, not the reader of `draft.md` — keep it terse (≤ 4 short lines, plus `terms:` and `animate:` when needed) and factual. The diagram-illustrator forwards it to the renderer (`talksmith:ascii-to-svg`, or `talksmith:animate-diagram` for an animated block) so the drawing can be labelled, colored, and laid out with intent, and to the blind critic as the diagram's intent.
 - **`emphasize:` names exactly one element.** The single-accent rule is [`diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md)'s (one focal element per diagram); a note naming two produces two red elements the critic then has to wave through. If two things genuinely compete, the diagram is making two points — pick one, or split the slide.
 - **`terms:` declares deliberate foreign-language terms** (e.g. `tools`, `loop` kept in English in a Spanish deck because the slide prose uses them). The critic flags any label not in the presentation language *unless* it is listed here — so list every term of art the diagram keeps, or it will be "translated" away from the slide's prose.
+- **`animate:` proposes an animation instead of a still** — default it on, by intent, whenever you author a diagram whose intent is a **process, pipeline, architecture, algorithm, data flow or training procedure**: `inference` for one that runs (data in, blocks applied in order, result out); `training` when the diagram *is* a training procedure; **`both` for every model the talk explains** — the slide gets the inference animation and a companion slide right after it gets the training one. Omit it (or `no`) for static concepts — hierarchies, taxonomies, comparisons, timelines, a single picture. It is a proposal, not a decision: the presenter answers once at Polish entry (animations, animations without the training slides, or stills), and Polish renders accordingly — so write it freely. What an animation must show, and the rules it is checked against, are [`animate-diagram`](${CLAUDE_PLUGIN_ROOT}/skills/animate-diagram/SKILL.md)'s; your job is the ASCII it is drawn from: every block, arrow and **exact dimension** (`64×64×4`, `77×768`) the animation should show must be in the ASCII or the slide prose, because the animation may not invent them. The line is routing, not content: changing it never re-renders a drawing whose ASCII is unchanged.
 - **No slide numbers or cross-references in the note** (`"same layout as ReAct (3.2)"`). The note is part of the render digest, so a renumbering that only rewrites such a reference re-renders a diagram whose drawing did not change. Name the other diagram by its subject, not its position.
 
 **An ASCII block without an `ascii-note` is valid** (the renderer falls back to slide title + Content + Speaker notes); add one whenever the diagram has a non-obvious intent or a specific element worth emphasizing.
@@ -247,7 +249,9 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/polish-ascii/polish_ascii.py extract --fina
 
 # 4′) editor: before cleanup, check the renders are on disk — for every svg_basename the annotated
 #     plan declares (it already ends in .svg; <stem> = svg_basename minus .svg), both <stem>.svg
-#     AND <stem>.png must exist under talks/<Talk>/images/. If any is missing, dispatch
+#     AND <stem>.png must exist under talks/<Talk>/images/ — <stem>.gif AND <stem>.png for an
+#     animated block (render.animate set), and also under render.training.basename for `both`.
+#     A 0-byte file counts as missing (an interrupted write once left empty GIFs). If any is missing, dispatch
 #     the diagram-illustrator again for the rest (at most twice), then report what is still
 #     missing as failed. Never trust the illustrator's word alone: its turn has been cut short.
 
@@ -267,12 +271,13 @@ The skill owns the rewrite (directive → `<!-- aside: <side> ![alt](images/<bas
 
 (b) **Consolidate image refs (in `final.md`) AND enforce Keynote-safe raster-only extensions.** Walk every `![alt](path)` in `final.md`. If `path` already starts with `images/`, leave the prefix. For any other local path, **copy** (never move) the file into `talks/<Talk>/images/<basename>` and rewrite the reference. On filename collision with different content, append `-2`, `-3`, … Skip remote URLs — leave those untouched.
 
-**After consolidation, audit every ref's extension.** `final.md` must reference only `.png` or `.jpg`/`.jpeg`. Forbidden extensions: **`.svg`, `.webp`, `.avif`, `.heic`** — Keynote refuses to embed WebP and refuses to render embedded SVG as media (both surface as empty placeholder boxes on `.pptx` import); other modern formats are similarly inconsistent across PowerPoint / Google Slides import paths. Fix per source type:
+**After consolidation, audit every ref's extension.** `final.md` must reference only `.png` or `.jpg`/`.jpeg` — or `.gif` with a `<stem>.png` sibling (below). Forbidden extensions: **`.svg`, `.webp`, `.avif`, `.heic`** — Keynote refuses to embed WebP and refuses to render embedded SVG as media (both surface as empty placeholder boxes on `.pptx` import); other modern formats are similarly inconsistent across PowerPoint / Google Slides import paths. Fix per source type:
 
 - **Diagram-Illustrator-produced SVGs** (rendered in stage 4 above) have a deliverable `<stem>.png` companion at `images/<stem>.png` per the ascii-to-svg skill's *PNG companion* contract. Rewrite the `images/<stem>.svg` reference to `images/<stem>.png`. The `.svg` stays on disk as source-of-truth; the `<!-- ascii-source: ... -->` and `<!-- ascii-note: ... -->` comments are preserved.
 - **External SVG sources** — the diagram-illustrator already rasterized these to `.png` companions in its Step 6 step 9 (per [`diagram-illustrator.md`](diagram-illustrator.md)). The editor only **rewrites the ref** from `.svg` → `.png` here; no rasterization. If a `.svg` ref exists with no `.png` sibling on disk, surface as `unresolved: diagram-illustrator missed external SVG <path>` — do **not** rasterize from the editor (single-owner contract: all SVG → PNG lives with the diagram-illustrator).
 - **External WebP / AVIF / HEIC sources** (typically corpus images — a `.webp` downloaded by the librarian) are rasterized to PNG at the same basename here, before the reference is rewritten. These are *not* SVG-generation territory so they stay with the editor. Recipes: `Image.open('<in.webp>').save('<out.png>', 'PNG')` (Pillow) or `cwebp`/`sips`/`magick` CLI. Keep the original file alongside the PNG for traceability.
 - **Refs already pointing to `.png`/`.jpg`** pass through unchanged.
+- **Animated diagrams — a `.gif` ref with its `<stem>.png` beside it — stay `.gif`.** `cleanup` writes them that way on purpose: the HTML deck plays the GIF, and the PDF and `.pptx` exports put the PNG (the animation's final frame, the complete diagram) in its place ([`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) → *Animated diagrams*). **Never** rewrite one to `.png` — that freezes the animation in every format. A `.gif` from the corpus with no `<stem>.png` beside it gets one here: its **last** frame, `Image.open(p); p.seek(p.n_frames - 1); p.convert('RGB').save('<stem>.png')` (Pillow).
 - **Video refs — `.webm`, `.mp4`, `.m4v`, `.mov`, `.ogv`, and YouTube links — are exempt from this audit entirely.** They are consolidated into `images/` like any other local asset (a YouTube link is a remote URL, so it is skipped), and then left alone: there is nothing to rasterize, and the reason for the raster-only rule doesn't apply to them. The HTML deck plays a video ref (autostarting when its slide comes up — see [`slide-model.md`](${CLAUDE_PLUGIN_ROOT}/schemas/slide-model.md) → *`design` + `media`*); the `.pptx` path can't, and says so per slide at Step 7 rather than failing here. **Never** "fix" a video ref by swapping it for a still — if the presenter wants one for the `.pptx`, that is their call to make at Step 7.
 
 Once the audit completes, any surviving forbidden-extension ref in `final.md` is a Step 6 failure — surface it to the orchestrator before continuing to (c). The Step 7 `md-to-deck` pre-flight enforces the same rule as a backstop.

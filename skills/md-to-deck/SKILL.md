@@ -126,6 +126,8 @@ The judgment is the LLM's, against a fixed field contract. Write to
 > markup**; silently substituting the `.png` companion downgrades the diagram to a raster and is a
 > render defect. (The `.pptx` export rasterizes SVG itself, from the rendered deck — no raster ref
 > is ever needed in the model.)
+> The same holds for a `.gif`: it is an animated diagram, and the render needs the GIF to play it
+> (see *Animated diagrams* under EXPORT for how the exports get its still).
 
 **`slide-model.json` is a generated artifact, refreshed every render — never a hand-maintained
 file.** FILL always runs from the *current* source immediately before RENDER; a renderer must never
@@ -363,6 +365,14 @@ that buys, concretely:
 - **Fonts are substituted in the browser, before layout** (`_EXPORT_FONT_CSS`), so the deck's fit
   pass measures the same metrics PowerPoint will re-wrap with. See *Rules* below.
 - **The roadmap still navigates:** `#sec-N` anchors become real slide jumps.
+
+**Animated diagrams.** A `.gif` ref with a `<stem>.png` beside it is an animated diagram from
+[`talksmith:animate-diagram`](${CLAUDE_PLUGIN_ROOT}/skills/animate-diagram/SKILL.md): the PNG is its
+final frame, the complete diagram. The HTML deck plays the GIF and carries the PNG with it
+(`data-still`); the print view both exports ride swaps the PNG in, so the PDF prints and the
+`.pptx` embeds the finished diagram — never a frozen GIF, whose first frame is the animation's
+empty start. A GIF with no PNG beside it exports its last frame. Mechanism:
+[`html_style.py`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/html_style.py) → *animated diagrams*.
 
 Known limits, reported as warnings rather than hidden: video and YouTube embeds become a dark
 poster (a `.pptx` cannot play them); a missing image's placeholder is approximated as a flat fill;

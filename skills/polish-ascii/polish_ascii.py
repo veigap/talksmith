@@ -5,7 +5,8 @@ Subcommands:
   scan              <final.md> [--format json|human]
   inspect-intents   --plan <plan.json|->
   annotate-renders  --plan <plan.json|-> --renders <renders.json|-> [-o <out.json|->]
-  prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>]
+                    [--animations all|no-training|none]
+  prepare-render-args --plan <plan.json|-> --out-dir <dir> [--repo-root <path>] [--only <ids>]
   extract           --final <final.md> --plan <plan.json|-> [--dry-run]
   stamp-renders     --final <final.md> --plan <plan.json|-> [--only <ids>] [--dry-run]
   gc                --final <final.md> [--apply]
@@ -47,7 +48,7 @@ from _context import (  # noqa: E402  (shared slide-context scanner)
 from _plan import (  # noqa: E402  (shared plan-file plumbing)
     IMG_REF_RE,
     add_plan_args, add_scan_args, load_plan, read_json_arg, referenced_stems, relocate_staged, run_gc,
-    scan_final_path, write_json,
+    scan_final_path, trash_dir, write_json,
 )
 
 # The ONLY fence that holds a renderable diagram. A fence with any other info string — a real
@@ -89,6 +90,48 @@ def _render_hint_above(lines: list[str], fence_open_line: int) -> str | None:
 
 _SOURCE_OPEN = "<!-- ascii-source:"
 
+# ── animated diagrams: the note's `animate:` field ───────────────────────────
+# `animate: inference | training | both | no` routes a block to `talksmith:animate-diagram` (a GIF
+# plus its final-frame PNG) instead of `talksmith:ascii-to-svg`. Absent or `no` = a static SVG, so
+# every Talk written before the field existed renders exactly as before. `both` adds a companion
+# slide carrying the training animation, right after the block's slide (see `cleanup`).
+ANIMATE_MODES = ("inference", "training", "both")
+_ANIMATE_NO = ("no", "none", "static", "off")
+_ANIMATE_LINE = re.compile(r"^[ \t]*animate[ \t]*:[ \t]*([A-Za-z-]*)[ \t]*$", re.IGNORECASE | re.MULTILINE)
+# What the presenter's one Polish-entry answer allows (`annotate-renders --animations`).
+ANIMATION_POLICIES = ("all", "no-training", "none")
+ANIM_DIR = ".anim"          # images/.anim/<stem>.py — the generator script, the animation's source
+
+
+def note_animate(note_payload: str | None) -> tuple[str | None, str | None]:
+    """`(mode, invalid)` from a note's `animate:` line — mode in ANIMATE_MODES or None."""
+    m = _ANIMATE_LINE.search(note_payload or "")
+    if not m:
+        return None, None
+    v = m.group(1).strip().lower()
+    if v in ANIMATE_MODES:
+        return v, None
+    if v in _ANIMATE_NO:
+        return None, None
+    return None, v or "(empty)"
+
+
+def _strip_animate(note_payload: str | None) -> str | None:
+    """The note without its `animate:` line — what every render digest is taken over.
+
+    Whether a diagram animates is routing, not content: switching `inference` → `both` must not
+    re-render the inference GIF, and switching to static must find an SVG drawn from the same
+    ASCII. Each route keeps its own stamp (the SVG's, the generator script's), so dropping the
+    line from the digest is what lets either be reused when the presenter changes their mind.
+    A note without the line (every note written before it existed) hashes exactly as before.
+    """
+    if note_payload is None:
+        return None
+    return _ANIMATE_STRIP.sub("", note_payload)
+
+
+_ANIMATE_STRIP = re.compile(r"^[ \t]*animate[ \t]*:[^\n]*(?:\n|$)", re.IGNORECASE | re.MULTILINE)
+
 
 def _rendered_inventory(lines: list[str], images_dir: Path) -> list[dict[str, Any]]:
     """The diagrams a **previous** pass already rendered — the `<!-- ascii-source: … -->` echo the
@@ -122,13 +165,19 @@ def _rendered_inventory(lines: list[str], images_dir: Path) -> list[dict[str, An
             # the `.png` deliverable the PPTX path needs — and the stamp only ever lives in the
             # SVG. Ask for the SVG by stem, whichever one the slide happens to reference.
             svg = images_dir / (Path(stem).stem + ".svg") if stem else None
-            out.append({
+            entry = {
                 "start_line": start + 1, "end_line": end + 1,
                 "image_ref": stem,
                 "svg_present": bool(svg and svg.is_file()),
                 "stamped": bool(svg and svg.is_file() and read_svg_digest(svg)),
                 "payload": "\n".join(payload),
-            })
+            }
+            if stem.lower().endswith(".gif"):
+                # An animated diagram: its "drawing" is the GIF, its stamp is in the generator.
+                gif, script = images_dir / stem, images_dir / ANIM_DIR / (Path(stem).stem + ".py")
+                entry.update(animated=True, svg_present=_nonempty(gif),
+                             stamped=bool(script.is_file() and read_script_digest(script)))
+            out.append(entry)
         i += 1
     return out
 
@@ -204,7 +253,8 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                                     "end_line": note_end,
                                     "payload": note_payload,
                                 }
-                        blocks.append({
+                        animate, animate_invalid = note_animate(note["payload"] if note else None)
+                        block = {
                             "slide_id": slide_id,
                             "ascii": {
                                 "start_line": fence_open_line,
@@ -215,7 +265,11 @@ def scan(final_path: Path, presentation_language: str | None = None) -> dict[str
                             "render": None,
                             "render_hint": render_hint,   # force | documentation-only | None
                             "documentation_only": False,  # filled by _annotate_documentation_only below
-                        })
+                            "animate": animate,           # inference | training | both | None (as authored)
+                        }
+                        if animate_invalid:
+                            block["animate_invalid"] = animate_invalid
+                        blocks.append(block)
                 in_fence = False
                 fence_lang = None
                 buf = []
@@ -327,9 +381,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
             unstamped = [r for r in rendered if r["svg_present"] and not r["stamped"]]
             print(f"  ℹ  {len(rendered)} block(s) already rendered (`ascii-source` echo) — not re-rendered by this pass")
             for r in missing:
-                print(f"     ⚠  line {r['start_line']}: {r['image_ref'] or '(no image ref)'} — SVG missing from images/")
+                what = "GIF" if r.get("animated") else "SVG"
+                print(f"     ⚠  line {r['start_line']}: {r['image_ref'] or '(no image ref)'} — {what} missing (or empty) in images/")
             for r in unstamped:
-                print(f"     ⚠  line {r['start_line']}: {r['image_ref']} — SVG carries no digest stamp; edits to its ASCII will not be noticed")
+                what = "generator script" if r.get("animated") else "SVG"
+                print(f"     ⚠  line {r['start_line']}: {r['image_ref']} — {what} carries no digest stamp; edits to its ASCII will not be noticed")
         if result["blocks"]:
             print()
         for b in result["blocks"]:
@@ -342,6 +398,10 @@ def cmd_scan(args: argparse.Namespace) -> int:
                 flags.append("doc-only")
             if b.get("render_hint"):
                 flags.append(f"hint:{b['render_hint']}")
+            if b.get("animate"):
+                flags.append(f"anim:{b['animate']}")
+            if b.get("animate_invalid"):
+                flags.append(f"anim?:{b['animate_invalid']}")
             tag_part = f"  [{', '.join(flags)}]" if flags else ""
             print(f"  {b['slide_id']:<10} lines {a['start_line']}–{a['end_line']} ({ascii_lines} ASCII lines)   {note_part}{tag_part}")
     else:
@@ -373,9 +433,41 @@ def ascii_digest(ascii_payload: str, note_payload: str | None) -> str:
     """SHA-256 of exactly what `ascii-to-svg` reads: the sidecar (payload + ascii-note).
 
     The note carries the render intent, so a changed note must re-render just as a changed
-    diagram does — hashing the sidecar rather than the payload alone gets that for free.
+    diagram does — hashing the sidecar rather than the payload alone gets that for free. The
+    note's `animate:` line alone is left out (`_strip_animate`): it routes, it doesn't draw.
     """
-    return hashlib.sha256(build_sidecar_content(ascii_payload, note_payload).encode()).hexdigest()
+    return hashlib.sha256(build_sidecar_content(ascii_payload, _strip_animate(note_payload)).encode()).hexdigest()
+
+
+def anim_digest(ascii_payload: str, note_payload: str | None, kind: str) -> str:
+    """The digest an animation's generator script is stamped with: the sidecar, as above, salted
+    with the animation kind — an inference and a training animation of one block are two
+    different drawings, and must never be taken for each other by the reuse index."""
+    body = build_sidecar_content(ascii_payload, _strip_animate(note_payload)) + f"\nanimate:{kind}\n"
+    return hashlib.sha256(body.encode()).hexdigest()
+
+
+# The animation's stamp lives in its generator script (`images/.anim/<stem>.py`): text, like the
+# SVG, and the source the GIF and PNG are derived from — a stamped script with a missing GIF is
+# re-run, not re-authored.
+SCRIPT_HASH_RE = re.compile(rf"^#\s*{SVG_HASH_MARKER}:\s*([0-9a-f]{{64}})\s*$", re.MULTILINE)
+
+
+def read_script_digest(script: Path) -> str | None:
+    try:
+        m = SCRIPT_HASH_RE.search(script.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError):
+        return None
+    return m.group(1) if m else None
+
+
+def stamp_script_digest(script: Path, digest: str) -> None:
+    """Write `# talksmith-ascii-sha256: <digest>` on the line after the shebang (or first)."""
+    lines = [ln for ln in script.read_text(encoding="utf-8").split("\n")
+             if not SCRIPT_HASH_RE.fullmatch(ln)]
+    at = 1 if lines and lines[0].startswith("#!") else 0
+    lines.insert(at, f"# {SVG_HASH_MARKER}: {digest}")
+    script.write_text("\n".join(lines), encoding="utf-8")
 
 
 def read_svg_digest(svg_path: Path) -> str | None:
@@ -404,10 +496,62 @@ def stamp_svg_digest(svg_path: Path, digest: str) -> None:
 
 
 def _companions(images_dir: Path, stem: str) -> tuple[Path, ...]:
-    """Every file one rendered diagram owns, as `gc` and render reuse must both see it."""
+    """Every file one rendered diagram owns, as `gc` and render reuse must both see it — either
+    route's (an SVG, or an animation's GIF, generator script and sampled critique frames)."""
     crit = images_dir / ".critique"
+    frames = tuple(sorted((crit / f"{stem}.frames").glob("*.png")))
     return (images_dir / f"{stem}.svg", images_dir / f"{stem}.png", images_dir / f"{stem}.ascii",
-            crit / f"{stem}.png", crit / f"{stem}.md")
+            crit / f"{stem}.png", crit / f"{stem}.md",
+            images_dir / f"{stem}.gif", images_dir / ANIM_DIR / f"{stem}.py") + frames
+
+
+def _nonempty(p: Path) -> bool:
+    """A finished output, not a placeholder: present AND non-empty. An interrupted write once left
+    GIFs at 0 bytes under their real names; `exists()` took them for renders, and nothing ever
+    regenerated them. The generator now writes atomically, and every check here asks this."""
+    try:
+        return p.is_file() and p.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def _anim_files(images_dir: Path, stem: str) -> tuple[Path, ...]:
+    """What an animation owns and carries to a new stem on reuse: GIF, final-frame PNG, the
+    generator script, and the critique sheet + log (the sampled frames are scratch)."""
+    crit = images_dir / ".critique"
+    return (images_dir / f"{stem}.gif", images_dir / f"{stem}.png",
+            images_dir / ANIM_DIR / f"{stem}.py", crit / f"{stem}.png", crit / f"{stem}.md")
+
+
+def _stamped_anim_index(images_dir: Path) -> dict[str, list[Path]]:
+    """digest → every stamped generator script under `images/.anim/` (the SVG index's twin)."""
+    index: dict[str, list[Path]] = {}
+    for p in sorted((images_dir / ANIM_DIR).glob("*.py")):
+        d = read_script_digest(p)
+        if d:
+            index.setdefault(d, []).append(p)
+    return index
+
+
+def _retire(images_dir: Path, files: list[Path], holder: list[Path]) -> list[Path]:
+    """Move the *other* route's files for a stem into `images/.trash/<ts>/` (recoverable).
+
+    A stem renders as an SVG or as an animation, and both routes write `<stem>.png` — the SVG's
+    raster or the animation's final frame. When a block switches route (the presenter answered
+    differently this time, or animation fell back to static) the PNG on disk belongs to the
+    route it is leaving, and a reuse would ship it. Retiring the leftovers keeps one route's
+    files per stem; `holder` carries the one trash folder this pass uses.
+    """
+    present = [f for f in files if f.exists()]
+    if not present:
+        return []
+    if not holder:
+        holder.append(trash_dir(images_dir))
+    for f in present:
+        to = holder[0] / f.relative_to(images_dir)
+        to.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(f, to)
+    return present
 
 
 def _stamped_svg_index(images_dir: Path) -> dict[str, list[Path]]:
@@ -440,8 +584,8 @@ def _reuse_log(src: Path, dst: Path, staged: Path) -> str | None:
 
 
 def _reused_files(images_dir: Path, stem: str) -> tuple[Path, ...]:
-    """What a reused render carries to its new stem: every companion but the `.ascii` (`extract`'s)."""
-    return tuple(p for p in _companions(images_dir, stem) if p.suffix != ".ascii")
+    """What a reused SVG render carries to its new stem: SVG, PNG, critique PNG and log."""
+    return _companions(images_dir, stem)[:2] + _companions(images_dir, stem)[3:5]
 
 
 def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int, int, list[dict[str, Any]]]:
@@ -523,6 +667,34 @@ def _assert_plan_fresh(final_path: Path, plan: dict[str, Any]) -> None:
             raise SystemExit(code)
 
 
+def _insert_companion(lines: list[str], after: int, tr: dict[str, Any]) -> None:
+    """Insert the training-animation slide right after the slide holding line `after`.
+
+    `animate: both` means the block's own slide plays the inference animation and a NEW slide —
+    the one the presenter accepted at Polish entry — plays the training one. It goes at the end
+    of the source slide: before the next `---` separator or H1/H2 outside a fence, or at EOF.
+    The heading is unnumbered (`## <title>`): the deck reads every H2 as a slide, and numbering
+    it would collide with the slide after. Several companions in one slide land in block order,
+    because blocks are rewritten bottom-up and each insertion stops at the previous one's `---`.
+    """
+    in_fence = False
+    j = after
+    while j < len(lines):
+        ln = lines[j]
+        if FENCE_OPEN.match(ln) or FENCE_CLOSE.match(ln):
+            in_fence = not in_fence
+        elif not in_fence and (ln.strip() == "---" or H1_OR_H2.match(ln)):
+            break
+        j += 1
+    stem = tr["basename"][:-4] if tr["basename"].endswith((".gif", ".svg")) else tr["basename"]
+    block = ([""] if j and lines[j - 1].strip() else []) + [
+        "---", "", f"## {tr['title']}", "", "### Content", "",
+        f"![{tr.get('alt') or tr['title']}](images/{stem}.gif)", ""]
+    if tr.get("notes"):
+        block += ["### Speaker notes", "", tr["notes"], ""]
+    lines[j:j] = block
+
+
 def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tuple[int, int]:
     """Rewrite final.md fences. Returns (rewritten, skipped_no_render)."""
     blocks = plan.get("blocks") or []
@@ -545,6 +717,8 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         svg_basename = render["svg_basename"]
         if not svg_basename.endswith(".svg"):
             svg_basename = f"{svg_basename}.svg"
+        if render.get("animate"):
+            svg_basename = svg_basename[:-4] + ".gif"   # the slide plays the animation
         alt = render.get("alt") or b["slide_id"]
         start_idx = b["ascii"]["start_line"] - 1
         end_idx = b["ascii"]["end_line"] - 1
@@ -569,6 +743,8 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         ]
         lines[start_idx:end_idx + 1] = rewrite_lines
         rewritten += 1
+        if render.get("animate") == "both" and render.get("training"):
+            _insert_companion(lines, start_idx + len(rewrite_lines), render["training"])
 
     if not dry_run and rewritten:
         new_text = line_endings.join(lines)
@@ -624,9 +800,27 @@ def cmd_inspect_intents(args: argparse.Namespace) -> int:
         flags = []
         if b.get("documentation_only"):
             flags.append("doc-only")
+        if b.get("animate"):
+            flags.append(f"anim:{b['animate']}")
         flag_part = f"  [{','.join(flags)}]" if flags else ""
         print(f"{sid:<10} | {title:<50} | {intent}{flag_part}")
     return 0
+
+
+def _effective_animate(authored: str | None, override: str | None, policy: str) -> str | None:
+    """The route a block actually takes: the renders-map override if given (the illustrator
+    proposing animation for a note that predates the field, or falling a failed animation back
+    to static with `"no"`), else the note's own `animate:` — then capped by the presenter's one
+    Polish-entry answer: `none` = all static, `no-training` = no companion slides."""
+    mode = authored
+    if override is not None:
+        o = str(override).strip().lower()
+        mode = o if o in ANIMATE_MODES else None
+    if policy == "none" or mode is None:
+        return None
+    if policy == "no-training" and mode == "both":
+        return "inference"
+    return mode
 
 
 def cmd_annotate_renders(args: argparse.Namespace) -> int:
@@ -638,8 +832,11 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
 
     missing: list[str] = []
     bad: list[tuple[str, str]] = []
+    need_training: list[str] = []
+    animated = 0
     annotated = 0
     skipped_doc = 0
+    policy = args.animations
     for b in plan.get("blocks", []):
         sid = b.get("slide_id", "")
         if b.get("documentation_only"):
@@ -662,6 +859,8 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
         # `<stem>.png.svg`: a sidecar under the wrong name, a dead image ref in `final.md`, and a
         # `stamp-renders` that then found no SVG and silently stamped nothing, so the next pass would
         # re-render everything. Caught on a real Talk.
+        if basename.endswith(".gif"):          # an animated block may be named by its GIF
+            basename = basename[:-4]
         if not basename.endswith(".svg"):
             if "." in Path(basename).name:
                 bad.append((sid, basename))
@@ -669,6 +868,17 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
                 continue
             basename = f"{basename}.svg"
         b["render"] = {"svg_basename": basename, "alt": entry.get("alt") or ""}
+        mode = _effective_animate(b.get("animate"), entry.get("animate"), policy)
+        if mode:
+            b["render"]["animate"] = mode
+            animated += 1
+        if mode == "both":
+            tr = entry.get("training") or {}
+            if not (tr.get("basename") and tr.get("title")):
+                need_training.append(sid)
+                b["render"] = None
+                continue
+            b["render"]["training"] = {k: tr[k] for k in ("basename", "title", "alt", "notes") if tr.get(k)}
         annotated += 1
 
     out_text = json.dumps(plan, indent=2, ensure_ascii=False) + "\n"
@@ -677,9 +887,19 @@ def cmd_annotate_renders(args: argparse.Namespace) -> int:
     else:
         sys.stdout.write(out_text)
 
-    print(f"annotated {annotated} block(s); skipped {skipped_doc} documentation-only", file=sys.stderr)
+    print(f"annotated {annotated} block(s) ({animated} animated, --animations {policy}); "
+          f"skipped {skipped_doc} documentation-only", file=sys.stderr)
     if missing:
         print(f"  ⚠  {len(missing)} block(s) had no render entry (set to render: null): {', '.join(missing)}", file=sys.stderr)
+    invalid = [b["slide_id"] for b in plan.get("blocks", []) if b.get("animate_invalid")]
+    if invalid:
+        print(f"  ⚠  {len(invalid)} note(s) carry an unrecognized `animate:` value (rendered static): "
+              f"{', '.join(invalid)} — valid: inference, training, both, no", file=sys.stderr)
+    if need_training:
+        print(f"error: {len(need_training)} block(s) animate `both` but their render entry has no "
+              f"`training: {{basename, title}}` — the companion training slide needs a file name "
+              f"and a heading: {', '.join(need_training)}", file=sys.stderr)
+        return 2
     if bad:
         print(f"error: {len(bad)} render entr(ies) name a file that is not an SVG. `svg_basename` is "
               f"the rendered SVG — bare stem or `.svg`, nothing else. (The `.png` deliverable is "
@@ -744,23 +964,96 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
             print(f"  {sid} → {p}", file=sys.stderr)
         return 2
 
+    only = {i for v in (args.only or []) for i in v.split(",") if i}
     written = 0
     reused = 0
+    reruns = 0
     relocated: list[tuple[str, Path, Path]] = []
     moves: list[tuple[tuple[Path, ...], tuple[Path, ...]]] = []
+    retire: list[Path] = []
+    needs_png: list[tuple[str, str]] = []
     index = _stamped_svg_index(images_dir)          # the pre-pass state; every decision reads it
+    aindex = _stamped_anim_index(images_dir)
+
+    def context_payload(b: dict) -> dict[str, Any]:
+        ctx = b.get("context") or {}
+        out = {"slide_id": b.get("slide_id", ""), "talk_rel": talk_rel}
+        for k in ("slide_title", "slide_content_prose", "speaker_notes", "section_title",
+                  "section_goal", "talk_thesis", "presentation_language"):
+            out[k] = ctx.get(k, "")
+        if repo_root:
+            out["repo_root"] = str(repo_root)
+        return out
+
     for b in renderables:
         sid = b.get("slide_id", "")
+        if only and sid not in only:
+            continue
         basename = b["render"]["svg_basename"]
         if not basename.endswith(".svg"):
             basename = f"{basename}.svg"
         stem = basename[:-4]
+        note = (b.get("note") or {}).get("payload")
+        mode = b["render"].get("animate")
+        if mode:
+            # ── animated route: one output per kind (`both` = inference here + training on the
+            #    companion slide). The other route's leftovers for each stem are retired first.
+            outs = [(mode if mode != "both" else "inference", stem, sid)]
+            if mode == "both":
+                tstem = b["render"]["training"]["basename"]
+                tstem = tstem[:-4] if tstem.endswith((".gif", ".svg")) else tstem
+                outs.append(("training", tstem, f"{sid}.training"))
+            for kind, ostem, key in outs:
+                svg_left = images_dir / f"{ostem}.svg"
+                png_suspect = svg_left.exists()           # then <stem>.png is the SVG's raster
+                if png_suspect:
+                    retire += [svg_left, images_dir / f"{ostem}.png"]
+                script = images_dir / ANIM_DIR / f"{ostem}.py"
+                gif, png = images_dir / f"{ostem}.gif", images_dir / f"{ostem}.png"
+                digest = anim_digest(b["ascii"]["payload"], note, kind)
+                rerun = False
+                if script.exists() and read_script_digest(script) == digest:
+                    if _nonempty(gif) and _nonempty(png) and not png_suspect:
+                        reused += 1
+                        continue
+                    rerun = True                          # the source is current; re-run it
+                else:
+                    donors = [q for q in aindex.get(digest, []) if q != script
+                              and _nonempty(q.parent.parent / f"{q.stem}.gif")
+                              and _nonempty(q.parent.parent / f"{q.stem}.png")]
+                    if donors:
+                        moves.append((_anim_files(images_dir, donors[0].stem), _anim_files(images_dir, ostem)))
+                        relocated.append((key, donors[0], gif))
+                        reused += 1
+                        continue
+                payload = {"renderer": "animate-diagram", "kind": kind, "rerun": rerun,
+                           "ascii_file": str(images_dir / f"{stem}.ascii"),
+                           "script_path": str(script), "gif_path": str(gif), "png_path": str(png),
+                           "frames_dir": str(images_dir / ".critique" / f"{ostem}.frames"),
+                           "contact_sheet": str(images_dir / ".critique" / f"{ostem}.png"),
+                           "ascii_file_rel": f"images/{stem}.ascii",
+                           "script_path_rel": f"images/{ANIM_DIR}/{ostem}.py",
+                           "gif_path_rel": f"images/{ostem}.gif", "png_path_rel": f"images/{ostem}.png",
+                           **context_payload(b)}
+                if kind == "training" and mode == "both":
+                    tr = b["render"]["training"]
+                    payload["companion"] = {"title": tr["title"], "notes": tr.get("notes", "")}
+                (out_dir / f"{key}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+                written += 1
+                reruns += rerun
+            continue
+        # ── static route: the SVG. An animation's leftovers under this stem are retired first.
+        svg_path = images_dir / basename
+        anim_left = [images_dir / f"{stem}.gif", images_dir / ANIM_DIR / f"{stem}.py"]
+        if any(f.exists() for f in anim_left):
+            retire += anim_left + [images_dir / f"{stem}.png"]
         # Idempotency, in full: an SVG is reused iff it was stamped with the digest of the
         # ASCII we are about to render. Nothing else is consulted — not the filename, not
         # the fence form, not the sidecar (already overwritten by `extract` by now).
-        svg_path = images_dir / basename
-        digest = ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload"))
+        digest = ascii_digest(b["ascii"]["payload"], note)
         if svg_path.exists() and read_svg_digest(svg_path) == digest:
+            if any(f.exists() for f in anim_left) or not _nonempty(images_dir / f"{stem}.png"):
+                needs_png.append((sid, f"{stem}.png"))
             reused += 1
             continue
         # Same digest under another name (the slide was renumbered): copy it across instead of
@@ -776,40 +1069,41 @@ def cmd_prepare_render_args(args: argparse.Namespace) -> int:
             relocated.append((sid, donor, svg_path))
             reused += 1
             continue
-        ctx = b.get("context") or {}
-        payload: dict[str, Any] = {
+        payload = {
+            "renderer": "ascii-to-svg",
             "ascii_file": str(images_dir / f"{stem}.ascii"),
             "output_path": str(images_dir / basename),
             # Talk-root-relative twins (mount-portable — see anchoring note above). `talk_rel` is the
             # Talk dir relative to repo_root, so the worker resolves <its repo_root>/<talk_rel>/<*_rel>.
             "ascii_file_rel": f"images/{stem}.ascii",
             "output_path_rel": f"images/{basename}",
-            "talk_rel": talk_rel,
-            "slide_title": ctx.get("slide_title", ""),
-            "slide_content_prose": ctx.get("slide_content_prose", ""),
-            "speaker_notes": ctx.get("speaker_notes", ""),
-            "section_title": ctx.get("section_title", ""),
-            "section_goal": ctx.get("section_goal", ""),
-            "talk_thesis": ctx.get("talk_thesis", ""),
-            "presentation_language": ctx.get("presentation_language", ""),
+            **context_payload(b),
         }
-        if repo_root:
-            payload["repo_root"] = str(repo_root)
         (out_dir / f"{sid}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
         written += 1
+    # Retire before copying in — but never a file some other block is about to reuse.
+    donor_files = {f for srcs, _ in moves for f in srcs}
+    retired = _retire(images_dir, [f for f in dict.fromkeys(retire) if f not in donor_files], [])
     relocate_staged(images_dir, moves, rewrite=_reuse_log)
 
-    print(f"wrote args for {written} block(s) to {out_dir}", file=sys.stderr)
+    print(f"wrote args for {written} render(s) to {out_dir}"
+          + (f" ({reruns} re-run of a current animation script)" if reruns else ""), file=sys.stderr)
     if reused:
-        print(f"  reused {reused} block(s) (SVG stamped with the same ASCII digest — no re-render)", file=sys.stderr)
+        print(f"  reused {reused} render(s) (stamped with the same ASCII digest — no re-render)", file=sys.stderr)
     for sid, donor, dst in relocated:
         print(f"     {sid}: copied {donor.name} → {dst.name} (with its PNG and critique log)", file=sys.stderr)
+    if retired:
+        print(f"  retired {len(retired)} file(s) of the route a block left (static ↔ animated) to "
+              f"images/.trash/: {', '.join(f.name for f in retired)}", file=sys.stderr)
+    for sid, png in needs_png:
+        print(f"  ⚠  {sid}: needs-png {png} — the reused SVG's raster is missing; rasterize it "
+              f"before the deck build", file=sys.stderr)
     if skipped:
         print(f"  skipped {skipped} block(s) (documentation-only or no render mapping)", file=sys.stderr)
     return 0
 
 
-def _stale_render(svg_path: Path, digest: str) -> bool:
+def _stale_render(svg_path: Path, digest: str, reader=None) -> bool:
     """True when the SVG at a planned basename is an *old* drawing, not this pass's render.
 
     `extract` rewrites a sidecar only when its bytes changed, so a sidecar newer than the SVG means
@@ -818,8 +1112,10 @@ def _stale_render(svg_path: Path, digest: str) -> bool:
     previous pass used. Stamping it would mark the old picture current and it would never re-render.
     An unstamped SVG is left to the normal path (stamping a hand render after `apply` is legitimate).
     """
-    current = read_svg_digest(svg_path)
-    sidecar = svg_path.with_suffix(".ascii")
+    current = (reader or read_svg_digest)(svg_path)
+    # an SVG sits beside its sidecar; a generator script one level down, in images/.anim/
+    images_dir = svg_path.parent.parent if svg_path.parent.name == ANIM_DIR else svg_path.parent
+    sidecar = images_dir / f"{svg_path.stem}.ascii"
     if current is None or current == digest or not sidecar.exists():
         return False
     return svg_path.stat().st_mtime < sidecar.stat().st_mtime
@@ -854,11 +1150,33 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
         basename = b["render"]["svg_basename"]
         if not basename.endswith(".svg"):
             basename = f"{basename}.svg"
+        note = (b.get("note") or {}).get("payload")
+        mode = b["render"].get("animate")
+        if mode:
+            # Animated: stamp each generator script — but only one that produced its GIF and PNG.
+            outs = [(mode if mode != "both" else "inference", basename[:-4])]
+            if mode == "both":
+                tb = b["render"]["training"]["basename"]
+                outs.append(("training", tb[:-4] if tb.endswith((".gif", ".svg")) else tb))
+            for kind, ostem in outs:
+                script = images_dir / ANIM_DIR / f"{ostem}.py"
+                if not (script.exists() and _nonempty(images_dir / f"{ostem}.gif")
+                        and _nonempty(images_dir / f"{ostem}.png")):
+                    missing.append((sid, images_dir / f"{ostem}.gif"))
+                    continue
+                digest = anim_digest(b["ascii"]["payload"], note, kind)
+                if _stale_render(script, digest, read_script_digest):
+                    stale.append((sid, script))
+                    continue
+                if not args.dry_run:
+                    stamp_script_digest(script, digest)
+                stamped += 1
+            continue
         svg_path = images_dir / basename
         if not svg_path.exists():
             missing.append((sid, svg_path))
             continue
-        digest = ascii_digest(b["ascii"]["payload"], (b.get("note") or {}).get("payload"))
+        digest = ascii_digest(b["ascii"]["payload"], note)
         if _stale_render(svg_path, digest):
             stale.append((sid, svg_path))
             continue
@@ -867,13 +1185,13 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
         stamped += 1
 
     tag = "  [dry-run]" if args.dry_run else ""
-    print(f"stamped {stamped} SVG(s) with their ASCII digest{tag}")
+    print(f"stamped {stamped} render(s) (SVG or animation script) with their ASCII digest{tag}")
     if missing:
-        print(f"  ⚠  {len(missing)} render(s) produced no SVG — they will re-render next pass:", file=sys.stderr)
+        print(f"  ⚠  {len(missing)} render(s) produced no SVG / GIF+PNG — they will re-render next pass:", file=sys.stderr)
         for sid, p in missing:
             print(f"     {sid} → {p}", file=sys.stderr)
     if stale:
-        print(f"  ⚠  {len(stale)} SVG(s) NOT stamped — older than their .ascii sidecar and stamped from "
+        print(f"  ⚠  {len(stale)} render(s) NOT stamped — older than their .ascii sidecar and stamped from "
               f"other ASCII, so they predate this pass's render (still pending, or failed). Render "
               f"them, then `stamp-renders --only <ids>`:", file=sys.stderr)
         for sid, p in stale:
@@ -889,14 +1207,17 @@ def cmd_stamp_renders(args: argparse.Namespace) -> int:
 
 
 def _generated_diagram_stems(images_dir: Path) -> set[str]:
-    """Stems that are *generated diagram* assets — proven by a digest-stamped `.svg` or a `.ascii`
-    sidecar. A bare `.png` is NEVER treated as generated, so presenter-owned images are untouchable."""
+    """Stems that are *generated diagram* assets — proven by a digest-stamped `.svg`, a `.ascii`
+    sidecar, or a generator script in `images/.anim/`. A bare `.png` or `.gif` is NEVER treated as
+    generated, so presenter-owned images are untouchable."""
     stems: set[str] = set()
     for p in images_dir.glob("*.ascii"):
         stems.add(p.stem)
     for p in images_dir.glob("*.svg"):
         if read_svg_digest(p) is not None:      # carries talksmith-ascii-sha256 → we drew it
             stems.add(p.stem)
+    for p in (images_dir / ANIM_DIR).glob("*.py"):   # an animation's generator → we drew it
+        stems.add(p.stem)
     return stems
 
 
@@ -987,11 +1308,15 @@ def main(argv: list[str]) -> int:
     p_annot.add_argument("--plan", required=True, help="path to a scan JSON (or '-' for stdin)")
     p_annot.add_argument("--renders", required=True, help="path to a JSON object mapping slide_id → {svg_basename, alt} (or '-' for stdin)")
     p_annot.add_argument("-o", "--output", help="write the annotated plan here (default: stdout). Use '-' for stdout explicitly.")
+    p_annot.add_argument("--animations", choices=ANIMATION_POLICIES, default="all",
+                         help="the presenter's Polish-entry answer: all (honor every animate:), "
+                              "no-training (both → inference: no companion slides), none (all static)")
     p_annot.set_defaults(func=cmd_annotate_renders)
 
     p_prep = sub.add_parser("prepare-render-args", help="fan an annotated plan out to one <slide_id>.json args file per renderable block, ready to drive parallel `talksmith:ascii-to-svg` invocations")
     p_prep.add_argument("--plan", required=True, help="path to an annotated plan JSON (or '-' for stdin) — must have render fields set")
     p_prep.add_argument("--out-dir", required=True, help="directory to write per-block args files into (created if missing)")
+    p_prep.add_argument("--only", nargs="+", metavar="SLIDE_ID", help="emit args only for these slide ids (space- or comma-separated) — e.g. a block re-routed after a failed animation")
     p_prep.add_argument("--repo-root", help="presenter's working directory (where /talksmith:init ran), stamped into each args file so ascii-to-svg can anchor Talk-relative paths. Plugin-bundled assets are reached via ${CLAUDE_PLUGIN_ROOT}/ independently. Optional.")
     p_prep.set_defaults(func=cmd_prepare_render_args)
 

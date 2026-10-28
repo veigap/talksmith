@@ -13,7 +13,7 @@ Five do the work of building a Talk:
 - **Librarian** — restructures raw sources (PDFs, papers, chat ZIP exports, images) into a uniform Markdown knowledge base under `research/corpus/`, one record per source with a companion `<source-stem>/images/` folder so the corpus is self-contained. Preserves; does not compress. Runs in Step 3.
 - **Composer** — the brain. Reviews drafted slides against thesis, audience, sources, design principles, and rules promoted from prior Talks; returns a punch-list of critiques. Read-only batch reviewer, invoked at every drafting milestone in Step 4.
 - **Editor** — the muscle. Keeps `draft.md`, `final.md`, and `memory.md` current: bootstraps the file, transcribes decisions, drafts prose from corpus records, applies feedback, then in Step 6 copies `draft.md` → `final.md` and cleans it for delivery.
-- **Diagram-Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG during Polish (Step 6).
+- **Diagram-Illustrator** — converts every ASCII diagram in `final.md` into a styled SVG — or, for a diagram that shows something happening, into an animated GIF whose last frame is the finished diagram — during Polish (Step 6).
 - **Image-Illustrator** — its sibling in the same step: turns `<!-- generate-image: … -->` directives into atmospheric aside imagery. Degrades gracefully when the session has no image generation, so it never blocks a build.
 
 One curates across Talks:
@@ -22,7 +22,7 @@ One curates across Talks:
 
 And two are **critics, dispatched by the work itself rather than by the orchestrator** — each deliberately kept blind to everything except the one artifact it judges, because a critic that can see the pattern starts confirming it:
 
-- **Diagram-Critic** — reviews one rendered diagram from the **PNG alone**, never the SVG source, and reports what the eye actually sees. Dispatched per render by the Diagram-Illustrator.
+- **Diagram-Critic** — reviews one rendered diagram from the **PNG alone** (an animation from its sampled frames alone), never the SVG or the generator script, and reports what the eye actually sees. Dispatched per render by the Diagram-Illustrator.
 - **Slide-Classifier-Critic** — re-runs the template catalog's discriminator walk on **one slide's source**, blind to every other slide's classification, and confirms or overturns the template the render's fill step chose. Dispatched per content slide by the `md-to-deck` skill.
 
 Role specs live under [`agents/`](../agents/) and are dispatched as Claude Code subagents from [`orchestrator.md`](../orchestrator.md), the full operating spec loaded at session start by the [`talksmith-orch.md`](../talksmith-orch.md) stub.
@@ -32,7 +32,7 @@ Role specs live under [`agents/`](../agents/) and are dispatched as Claude Code 
 Skills live under [`skills/`](../skills/) and are invoked by name (namespaced `talksmith:<skill>`):
 
 - **`ingest`** — fetch a URL into `research/web/` (HTML + Markdown extraction + referenced images).
-- **`ascii-to-svg`, `polish-ascii`** — render and clean ASCII diagrams into styled SVGs.
+- **`ascii-to-svg`, `animate-diagram`, `polish-ascii`** — render ASCII diagrams into styled SVGs or into animations (GIF + final-frame PNG), and clean them into `final.md`.
 - **`md-to-deck`** — decompose `final.md` into a structured `slide-model.json` and render it to an HTML (Reveal.js) deck or a `.pptx`.
 - **`feedback-cycle`** — Step-5/Step-6 mechanical bookkeeping (stamp / close / mirror / rescue feedback).
 

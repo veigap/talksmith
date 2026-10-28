@@ -256,6 +256,29 @@ def _encode(im) -> bytes:
 _DATA_URI = re.compile(r"^data:([^;,]+)(;base64)?,(.*)$", re.S)
 
 
+def _final_frame(raw: bytes, mime: str) -> bytes:
+    """An animated GIF as its LAST frame, re-encoded as PNG; anything else unchanged.
+
+    An animated diagram reaches the harvest as its still already (the print view swaps the
+    `data-still` final frame in — html_style.py → *animated diagrams*), so this is the backstop
+    for a GIF that has no still beside it: a picture frozen in a slide shows its first frame,
+    and an animation's first frame is the empty start, while its last is the finished diagram.
+    """
+    if mime != "image/gif" or Image is None:
+        return raw
+    try:
+        im = Image.open(io.BytesIO(raw))
+        n = getattr(im, "n_frames", 1)
+        if n < 2:
+            return raw
+        im.seek(n - 1)
+        buf = io.BytesIO()
+        im.convert("RGBA").save(buf, "PNG", optimize=True)
+        return buf.getvalue()
+    except Exception:
+        return raw
+
+
 def decode_img(node: dict) -> bytes | None:
     """Turn a harvested `<img>` back into bytes, honouring the crop `object-fit: cover` applied.
 
@@ -267,6 +290,7 @@ def decode_img(node: dict) -> bytes | None:
     if not m:
         return None
     raw = base64.b64decode(m.group(3)) if m.group(2) else m.group(3).encode("utf-8")
+    raw = _final_frame(raw, m.group(1))
     crop = node.get("crop")
     if not crop or Image is None:
         return raw

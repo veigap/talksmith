@@ -423,6 +423,24 @@ def _embed_video(image):
     return _video_tag(f'src="data:{_VIDEO_MIME[ext]};base64,{b64}"', alt, image)
 
 
+# ── animated diagrams ────────────────────────────────────────────────────────────────────────────
+# A `.gif` ref is an animated diagram (talksmith:animate-diagram), and its `<stem>.png` sibling is
+# the animation's FINAL frame — the complete static diagram. The deck plays the GIF; anything
+# that freezes the page takes the still instead, because a frozen GIF is its first frame, and an
+# animation's first frame is the empty start. So the still rides along as `data-still`, and the
+# print view (`?print-pdf`, which both the PDF export and the `.pptx` harvest ride) swaps it in
+# before Reveal lays out the pages — see `_EXPORT_EARLY`.
+
+def _still_attr(p: Path) -> str:
+    if p.suffix.lower() != ".gif":
+        return ""
+    still = p.with_suffix(".png")
+    if not still.is_file():
+        return ""
+    import base64
+    return f' data-still="data:image/png;base64,{base64.b64encode(still.read_bytes()).decode("ascii")}"'
+
+
 def _embed(alt, path):
     """Embed a resolved image self-contained: inline SVG, or a data-URI <img>, else a placeholder."""
     import base64
@@ -441,7 +459,8 @@ def _embed(alt, path):
                     "gif": "image/gif", "webp": "image/webp"}.get(p.suffix.lower().lstrip("."))
             if mime:
                 b64 = base64.b64encode(p.read_bytes()).decode("ascii")
-                return f'<div class="imgph has"><img alt="{_esc(alt)}" src="data:{mime};base64,{b64}"></div>'
+                return (f'<div class="imgph has"><img alt="{_esc(alt)}"{_still_attr(p)} '
+                        f'src="data:{mime};base64,{b64}"></div>')
         except OSError:
             pass
     return f'<div class="imgph"><span>{_esc(alt) or "image"}</span></div>'
@@ -1124,10 +1143,17 @@ _EXPORT_FONT_CSS = (':root[data-export-fonts]{--sans:Arial;--mono:"Courier New";
 # timers without painting, so on a big deck the frame never came: the PDF printed one page and the
 # harvest found zero slides, intermittently and without an error. A print view animates nothing,
 # so a timer-driven frame costs nothing there and makes the build deterministic.
+#
+# It also puts every animated diagram's still in place of its GIF in the print view — the PDF
+# prints it and the `.pptx` harvest reads its `src`, so both exports carry the finished diagram
+# (the animation's final frame) rather than whatever frame the GIF happened to be on.
 _EXPORT_EARLY = ("(function(){try{var p=new URLSearchParams(location.search),q=p.get('export');"
                  "if(q&&q!=='raw')document.documentElement.setAttribute('data-export-fonts','1');"
-                 "if(p.has('print-pdf'))window.requestAnimationFrame=function(cb){"
+                 "if(p.has('print-pdf')){window.requestAnimationFrame=function(cb){"
                  "return setTimeout(function(){cb(performance.now());},16);};"
+                 "document.addEventListener('DOMContentLoaded',function(){"
+                 "document.querySelectorAll('img[data-still]').forEach(function(i){"
+                 "i.src=i.getAttribute('data-still');});});}"
                  "}catch(e){}})();")
 
 # Reveal.js configuration — navigation, scaling, transitions, PDF export, speaker notes all

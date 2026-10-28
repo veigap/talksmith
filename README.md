@@ -33,6 +33,7 @@ You talk to Talksmith in chat; it does the work and keeps `draft.md` / `final.md
 ![Talksmith workflow](docs/workflow.png)
 
 - **Draft your way** — *Interview* (it asks, you answer), *Agent Draft* (it drafts from your corpus, then asks), or *Presenter Outline* (you give section titles, it fills them in).
+- **Diagrams that move** — diagrams you sketch as ASCII are drawn for you at Polish. Those that show something happening (a pipeline, an architecture, an algorithm, how a model trains) are proposed as short **animations**: the data goes in, each block is applied in order, the shapes change, the result builds up — with an optional training animation for every model the talk explains. You answer once (animations, or still images); the PDF and PowerPoint get each animation's finished frame.
 - **Review is a loop** — open `draft.md` in any editor and drop plain-text feedback bullets under `### Presenter feedback` (e.g. `- "this slide is too dense; trim to 90 seconds"`). Talksmith applies each round and keeps a closed-forever audit trail of every change. Repeat until you call it final.
 
 Full step-by-step spec: [orchestrator.md](orchestrator.md). Who does what behind the scenes: [docs/roles.md](docs/roles.md). The method and philosophy: [docs/methodology.md](docs/methodology.md).
@@ -80,7 +81,7 @@ Each presenter installs the plugin once; the **subject repo** — a Git reposito
    ```
 2. **Install the plugin** *(each presenter, once)*:
    - **CLI** — `npm install -g @anthropic-ai/claude-code`, then in a session run `/plugin marketplace add veigap/talksmith` and `/plugin install talksmith@talksmith`. Update later with `/plugin update talksmith`.
-   - **Cowork (desktop)** — install from [claude.com/download](https://claude.com/download), open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. Desktop and CLI share the install. Everything Talksmith does runs in either one, including the PDF and `.pptx` exports — those need a Chrome/Chromium on the machine, plus `python-pptx` and Pillow for the `.pptx`.
+   - **Cowork (desktop)** — install from [claude.com/download](https://claude.com/download), open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. Desktop and CLI share the install. Everything Talksmith does runs in either one, including the PDF and `.pptx` exports — those need a Chrome/Chromium on the machine, plus `python-pptx` and Pillow for the `.pptx`. Animated diagrams need a Python with `numpy`, `matplotlib` and Pillow (any one on the machine — a conda or venv interpreter is found automatically); without one, diagrams are drawn as still images.
 3. **Initialize the repo** *(once, by the first presenter)* — run `/talksmith:init`. It writes one file: a thin `CLAUDE.md` stub. Commit and push it; everyone who clones the repo afterward is set up automatically. Plugin updates flow through without re-running init.
 4. **Start** — CLI: `claude --model opus` in the repo; Cowork: open the workspace. Say *"Hi Talksmith"*.
 

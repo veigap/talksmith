@@ -13,6 +13,52 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.4.0] — 2026-10-28
+
+No re-init needed.
+
+### Added
+
+- **Animated diagrams.** A diagram that shows something happening — a pipeline, an architecture,
+  an algorithm, a data flow, how a model trains — can now be drawn as a short looping animation
+  instead of a still: the data goes in, each block lights up as it is applied, tensors change
+  shape with their exact dimensions, the result builds up, one caption per stage. The last frame
+  is the complete diagram, held 3 s, and doubles as the still the PDF and the PowerPoint use. New
+  skill `talksmith:animate-diagram` (sibling of `ascii-to-svg`) writes a short generator script
+  per diagram (kept in `images/.anim/`, so it can be re-run) on bundled helpers that enforce the
+  contract — 1600×900, 12–20 s, ≤ 5 MB, the deck palette, a type floor, captions linted for
+  anthropomorphic verbs, layout and margins audited — and ships an inference and a training
+  reference. Training animations follow one recipe: datum and target → forward → the loss formula
+  and its value → backward → update → fast steps with a falling loss curve, trained parts marked
+  *trained* and frozen ones locked.
+- **Proposed by default, decided once.** The Editor writes `animate: inference | training | both`
+  into the note of every diagram whose intent is a process (`both` for each model the talk
+  explains — a training animation on a new slide right after it). At Polish entry Talksmith asks
+  once per Talk: animations with the training slides (recommended), without them, or stills.
+  Older notes without the field are proposed from their intent at the same ask.
+- **Blind critique for animations.** The diagram critic gains an animation mode: it judges
+  sampled frames and a contact sheet — never the generator script — against a 13-rule checklist
+  drawn from real defects (feature maps drawn as the input shrunk, wrong dimensions, arrows from
+  the wrong input, crossing lines, broken symmetry, unrecognizable subjects, missing legends,
+  unlabelled simulations, re-normalizing colour scales, anthropomorphic captions). Same render →
+  critic → revision waves, two iterations.
+
+### Changed
+
+- **Exports use the finished frame.** The HTML deck plays an animated diagram; the PDF and the
+  `.pptx` get its final frame (the deck carries it beside the GIF and the print view swaps it in).
+  A GIF with no still beside it exports its last frame. GIFs with a still now pass the Keynote-safe
+  format audit.
+- **Degrades, never blocks.** Animations need a Python with numpy, matplotlib and Pillow;
+  Talksmith finds one (conda, venv, Homebrew, or `$TALKSMITH_ANIM_PYTHON`) and otherwise draws
+  every diagram as a still and says so. A failed animation falls back to a still for that diagram.
+- **No empty GIFs.** Animations are written to a temporary file and renamed into place, so an
+  interrupted Polish never leaves a 0-byte GIF behind; and a 0-byte GIF or PNG counts as missing
+  everywhere (its script is simply re-run), so one left by an older run heals on the next pass.
+- Switching a diagram between still and animated never re-renders a drawing whose ASCII did not
+  change: the `animate:` line is excluded from the render digest, each route keeps its own stamp,
+  and the other route's files are retired to `images/.trash/`.
+
 ## [1.3.2] — 2026-10-20
 
 No re-init needed.

@@ -15,7 +15,7 @@ This skill renders **a single** ASCII diagram to **a single** SVG file. It is in
 | 4 | — | **Render the SVG for that one block** |
 | 5 | Aggregate results, report rendered/unchanged/failed counts | — |
 
-The agent is the coordinator; this skill is the worker. One invocation = one SVG file. The caller never re-parses `final.md` — every context field comes from the scan bundle. This makes the dispatch trivially parallelizable across subagents.
+The agent is the coordinator; this skill is the worker. One invocation = one SVG file. (A block whose note routes it to an animation goes to the sibling [`talksmith:animate-diagram`](../animate-diagram/SKILL.md) instead — the args file's `renderer` says which.) The caller never re-parses `final.md` — every context field comes from the scan bundle. This makes the dispatch trivially parallelizable across subagents.
 
 ## Caller contract
 

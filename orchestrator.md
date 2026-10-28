@@ -18,7 +18,7 @@ Downstream tooling renders the slides; the *shape* of these files matters more t
 | **Librarian** | Step 3 — restructure raw sources losslessly into `research/corpus/`; one record per source + companion `<source-stem>/images/`. | [`librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/librarian.md) |
 | **Composer** | Batch reviewer at each Step-4 drafting milestone — punch-list against thesis / audience / principles / learnings. Read-only. | [`composer.md`](${CLAUDE_PLUGIN_ROOT}/agents/composer.md) |
 | **Editor** | Sole writer of `draft.md` (Steps 1–5), `final.md` (Step 6+), and `memory.md`. | [`editor.md`](${CLAUDE_PLUGIN_ROOT}/agents/editor.md) |
-| **Diagram-Illustrator** | Step 6 — walks `final.md`, dispatches [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) per block with optional presenter style directives. | [`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) |
+| **Diagram-Illustrator** | Step 6 — walks `final.md`, dispatches [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) per block — or [`talksmith:animate-diagram`](${CLAUDE_PLUGIN_ROOT}/skills/animate-diagram/SKILL.md) for a block that plays as an animation — with optional presenter style directives. | [`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) |
 | **Image-Illustrator** | Step 6, step 1b — its sibling: turns `<!-- generate-image: … -->` directives into atmospheric aside imagery. Degrades silently where the session has no image capability; never blocks. | [`image-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/image-illustrator.md) |
 | **Global-Librarian** | Step 8 on promotion — curates the corpus + `final.md` into topic folders under `knowledge-library/`. | [`global-librarian.md`](${CLAUDE_PLUGIN_ROOT}/agents/global-librarian.md) |
 
@@ -26,7 +26,7 @@ Downstream tooling renders the slides; the *shape* of these files matters more t
 
 | Role | Dispatched by | Sees |
 |---|---|---|
-| **Diagram-Critic** | the Diagram-Illustrator, once per render | one rasterized PNG — never the SVG source |
+| **Diagram-Critic** | the Diagram-Illustrator, once per render | one rasterized PNG, or an animation's sampled frames — never the SVG or the generator script |
 | **Slide-Classifier-Critic** | the `md-to-deck` skill, once per content slide between FILL and RENDER | one slide's source + the template that slide was given — never the rest of the deck's choices |
 
 ## Philosophy — one shared repo per subject
@@ -41,7 +41,7 @@ Only [`config/profile.md`](config/profile.md) is loaded eagerly (presenter's glo
 |---|---|---|
 | [`config/learnings.md`](config/learnings.md) | Step 8 entry | Orchestrator (read-only — Editor writes). |
 | [`${CLAUDE_PLUGIN_ROOT}/config/principles.md`](${CLAUDE_PLUGIN_ROOT}/config/principles.md) + [`config/learnings.md`](config/learnings.md) + `talks/<Talk>/research/corpus/**` | Each Step-4 drafting milestone | Composer role. |
-| [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md) | Per `talksmith:ascii-to-svg` invocation | The skill (standing visual rules applied to every SVG). |
+| [`${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md`](${CLAUDE_PLUGIN_ROOT}/config/diagram-style.md) | Per `talksmith:ascii-to-svg` / `talksmith:animate-diagram` invocation | The skill (standing visual rules applied to every SVG and every animation frame; the animation helpers read its palette). |
 | [`knowledge-library/`](knowledge-library/) | Step 8 (Learnings) on promotion | Global-Librarian (sole writer). |
 | [`talksmith-bugs.md`](talksmith-bugs.md) | On any defect, in any step — before appending, to deduplicate | Orchestrator (**sole writer**, append-only). See *Defect log* below. |
 
@@ -91,7 +91,7 @@ The Composer in particular must not carry `principles.md` / `learnings.md` in co
 | 4 | Draft | Fill `draft.md` in one of three modes (Interview / Agent Draft / Presenter Outline). | Answers / decides / redirects. |
 | 5 | Review | Apply `Presenter feedback` bullets in `draft.md`. Loops. | Edits `draft.md`; appends `- "feedback"` bullets. |
 | 5.5 *(opt)* | Live HTML view | Auto-render the deck from `draft.md` (`build_html.py --draft` → `output/html/index.html`, no exports) in the **background** and keep it in sync on every review — a live styled view as the talk takes shape. | Optionally looks; keeps reviewing meanwhile. |
-| 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG; clean `final.md`. | Passive. |
+| 6 | Polish | **Mandatory.** `cp draft.md final.md`; render ASCII → SVG or animation; clean `final.md`. | One ask at entry: animations or stills. Otherwise passive. |
 | 7 *(opt)* | Render | Dispatch [`md-to-deck`](${CLAUDE_PLUGIN_ROOT}/skills/md-to-deck/SKILL.md) — a shareable HTML deck, plus a PDF and an editable `.pptx` measured from it on request. | Picks formats and look, or skips. |
 | 8 | Learnings | **Mandatory.** Promote ≥3× recurring feedback to `learnings.md`; ask promotion decision. | Picks options. |
 
@@ -302,7 +302,7 @@ If they look, surface `talks/<Talk>/output/html/index.html` — also reachable f
 
 ## Step 6 — Polish *(mandatory, runs on Review approval)*
 
-Triggered when the presenter signals ready in Step 5. Runs end-to-end **unattended — no prompts**. Produces `final.md` + rendered SVGs from a frozen `draft.md` (see *Role* for the two-files contract).
+Triggered when the presenter signals ready in Step 5. Runs end-to-end **unattended** after **one ask at entry** (step 0b — animations or stills, once per Talk). Produces `final.md` + rendered SVGs and animations from a frozen `draft.md` (see *Role* for the two-files contract).
 
 **Stage rail — mandatory** (form + rules: *Interaction defaults*). Polish is the **longest unattended step in the workflow**: it draws every diagram in the deck, each through its own review loop, and routinely runs several minutes with nothing asked of the presenter. Silence past ~a minute is a defect, not a slow render. Stages:
 
@@ -310,15 +310,27 @@ Triggered when the presenter signals ready in Step 5. Runs end-to-end **unattend
 Finding the diagrams → Drawing them → Checking how they look → Adding them to the deck → Final tidy-up
 ```
 
-*Drawing them* is the per-item stage and runs longest — carry `(3/12)`. **Adding them to the deck** is the second-longest: it inlines every diagram *and* converts each photo, which on an image-heavy Talk is its own multi-minute stretch — it and *Final tidy-up* are **not** instant just because they come last, and the heartbeat rule covers them like any other stage. A Talk with no diagrams still ticks *Finding the diagrams* `✓` (*"found none"* — the scan did run) and marks only *Drawing* and *Checking* `—`; the last two stages still have the photos and the tidy-up to do.
+*Drawing them* is the per-item stage and runs longest — carry `(3/12)`, and say how many are animations (*"drawing 12 diagrams, 5 of them animated"* — an animation takes longer than a still). **Adding them to the deck** is the second-longest: it inlines every diagram *and* converts each photo, which on an image-heavy Talk is its own multi-minute stretch — it and *Final tidy-up* are **not** instant just because they come last, and the heartbeat rule covers them like any other stage. A Talk with no diagrams still ticks *Finding the diagrams* `✓` (*"found none"* — the scan did run) and marks only *Drawing* and *Checking* `—`; the last two stages still have the photos and the tidy-up to do.
 
 The *Speak human, not internal* rule (see *Interaction defaults*) and Step 7's **suppression rule** apply here unchanged: slide ids, file basenames, role and skill names, batch mechanics, and bracketed tags are **log-only** — drive the rail from them, never relay them.
 
 0. **Copy `draft.md` → `final.md`** (`cp talks/<Talk>/draft.md talks/<Talk>/final.md`; overwrite if it exists). From here on, every Step-6 read/write targets `final.md`.
 
+0b. **Animations or stills — the one ask, once per Talk.** Diagrams that show something *happening* — a process, a pipeline, an architecture, an algorithm, a data flow, a training procedure — can play as short animations: the data goes in, each block is applied in order, the shapes change with their sizes, the result builds up; the final frame is the finished diagram, which is also what the PDF and the PowerPoint carry. Animations are the **recommended** default for those diagrams, so propose them:
+   - Run `polish-ascii scan` (and `inspect-intents`) on `final.md`. The candidates are the diagrams whose note already says `animate:` (the Editor proposed it while drafting) **plus** any diagram with no `animate:` line whose intent reads as one of the kinds above — propose `inference` for it, and `both` when it is a model the talk explains. A note that says `animate: no` is never proposed.
+   - No candidates → no ask. No interpreter able to draw them (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/animate-diagram/find_python.py` exits 2) → no ask either: stills, said in one line at the close. Already answered for this Talk (its `memory.md` Asks log) → reuse that answer silently, unless the presenter asks to change it.
+   - Otherwise ask, in plain words, listing the diagrams by slide title and the training slides that would be added:
+
+     > *"7 of the 12 diagrams can play as short animations instead of still images — the steps happen on screen, and the PDF and PowerPoint get the finished picture: <slide titles>. For 3 of them, which are models, I can also add a training animation, each on a new slide right after it: <slide titles>. What would you like?*
+     > *1. Animations, plus the 3 training slides (recommended)*
+     > *2. Animations, without the training slides*
+     > *3. Still images only"*
+
+   - The answer maps to the Diagram-Illustrator's `--animations all | no-training | none` (plus `animate` overrides for the diagrams you proposed from their intent — [`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md) step 3). Log the ask and the answer in `memory.md`'s Asks log, with the list proposed.
+
 Anti-slop is **not** a Step-6 action. The prose was authored under the Editor's *Anti-slop authoring standard* at draft time (Steps 4–5) and is already clean — Polish never re-runs the anti-slop skill and never prompts the presenter about it.
 
-1. **Render every ASCII diagram to SVG** — drives the *Finding* / *Drawing* / *Checking* rows. Perform the **Diagram-Illustrator** role ([`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md)). It owns the full recipe (scan, dispatch, batching, narration). Narrate to the presenter in plain language only.
+1. **Render every ASCII diagram — to SVG, or to an animation per the step-0b answer** — drives the *Finding* / *Drawing* / *Checking* rows. Perform the **Diagram-Illustrator** role ([`diagram-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/diagram-illustrator.md)). It owns the full recipe (scan, dispatch, batching, narration). Narrate to the presenter in plain language only.
 
 1b. **Generate every atmospheric aside** — Perform the **Image-Illustrator** role ([`image-illustrator.md`](${CLAUDE_PLUGIN_ROOT}/agents/image-illustrator.md)). It scans `final.md` for `<!-- generate-image: … -->` directives (via [`talksmith:polish-images`](${CLAUDE_PLUGIN_ROOT}/skills/polish-images/SKILL.md)), enriches each into a full prompt folding in the deck palette, and generates the aside image ([`talksmith:generate-image`](${CLAUDE_PLUGIN_ROOT}/skills/generate-image/SKILL.md), tool-agnostic). This pass **rides the same *Drawing them* / *Checking how they look* stages** as the diagrams — don't add rail stages for it; when a Talk has asides, fold them into those counts in plain language (*"drawing 12 diagrams and 2 backdrops"*). A Talk with no directives skips this pass silently. **It degrades, never blocks:** where the session has no image-generation capability, the directives are left unfulfilled, the slides keep their text, and the count is reported at the end. Runs independently of step 1 (different blocks, different files) — the two illustrators don't interact.
 
@@ -326,7 +338,7 @@ Anti-slop is **not** a Step-6 action. The prose was authored under the Editor's 
 
    Goal: `final.md` reads as the finished deliverable — no working-meta fields visible.
 
-**Close with a plain-language report** before moving on: how many diagrams were drawn, anything that failed or that the presenter should look at, and where `final.md` lives. Full per-block detail goes to `memory.md`, not chat.
+**Close with a plain-language report** before moving on: how many diagrams were drawn (how many animated, and any training slides added), anything that failed or fell back to a still, anything the presenter should look at, and where `final.md` lives. Full per-block detail goes to `memory.md`, not chat.
 
 Proceed to Step 7 automatically.
 

@@ -1,6 +1,6 @@
 # Diagram style
 
-Standing rules the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill applies to every SVG it renders. Ships with the plugin and updates via `/plugin update talksmith`. The presenter can extend this file at any time — new bullets take effect on the next render.
+Standing rules the [`talksmith:ascii-to-svg`](${CLAUDE_PLUGIN_ROOT}/skills/ascii-to-svg/SKILL.md) skill applies to every SVG it renders — and [`talksmith:animate-diagram`](${CLAUDE_PLUGIN_ROOT}/skills/animate-diagram/SKILL.md) to every frame of an animated diagram (its own contract adds timing and motion rules on top). Ships with the plugin and updates via `/plugin update talksmith`. The presenter can extend this file at any time — new bullets take effect on the next render.
 
 Keep this file short. One rule per bullet, in plain language. If a rule is genuinely complex, explain it inline; otherwise let the rule speak for itself.
 
@@ -33,6 +33,8 @@ Keep this file short. One rule per bullet, in plain language. If a rule is genui
   | `#F2F2F2` | Code surface. |
   | `#D8D2CE` | Hairline rules and borders. |
   | `#FFFFFF` | Slide ground, and inverted text on the accent red. |
+
+  **This table is also read by code:** the animation helpers (`skills/animate-diagram/anim_helpers.py`) parse it row by row — one `` `#hex` `` (or a `` `#hex` / `#hex` `` pair) and its role words per row — so keep that shape when editing; a row they cannot read falls back to its default and is reported.
 
   If a token's light value changes in `theme.css`, change it here too — a diagram drawn in the old red is the one thing in a slide that cannot re-theme itself, and it will be visibly out of system next to everything that can. **A deck skin overrides these tokens, so a diagram will not follow a skin change**; that is a known and accepted limit, and the reason to keep diagrams mostly neutral with a single accent.
 
