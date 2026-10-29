@@ -1,0 +1,51 @@
+<!-- talksmith-ascii-sha256: df23bbf9acd783ff18800a02efc3eded2106a55f3a09ca3b58c0594c9126caf4 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 828 292" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
+<title>The three layers</title>
+<desc>The ownership boundaries are the design.</desc>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B3535"/></marker>
+</defs>
+<rect x="0" y="0" width="828" height="292" fill="#FFFFFF"/>
+<g text-anchor="middle">
+<text x="109" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#1F1E1E">RAW SOURCES</text>
+<text x="414" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#DA1B2E">THE WIKI</text>
+<text x="719" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#1F1E1E">PROJECTIONS</text>
+<text x="109" y="55" font-size="13">immutable ground truth</text>
+<text x="414" y="55" font-size="13" fill="#DA1B2E">agent-owned synthesis</text>
+<text x="719" y="55" font-size="13">derived, disposable</text>
+</g>
+<rect x="24" y="70" width="170" height="150" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<rect x="304" y="70" width="220" height="150" rx="8" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="3"/>
+<rect x="634" y="70" width="170" height="150" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<g font-size="15">
+<text x="44" y="104">papers</text>
+<text x="44" y="132">PDFs</text>
+<text x="44" y="160">chat logs</text>
+<text x="44" y="188">notes, URLs</text>
+</g>
+<g font-size="15" font-family="'Andale Mono', monospace" fill="#1F1E1E">
+<text x="330" y="104">corpus/*.md</text>
+<text x="330" y="132">memory.md</text>
+<text x="330" y="160">draft.md</text>
+<text x="330" y="188">learnings.md</text>
+<text x="719" y="114" text-anchor="middle">final.md</text>
+</g>
+<text x="719" y="186" font-size="15" text-anchor="middle" fill="#1F1E1E">HTML / pptx</text>
+<g stroke="#3B3535" stroke-width="2" marker-end="url(#ah)">
+<line x1="719" y1="123" x2="719" y2="167"/>
+<line x1="195" y1="145" x2="302.5" y2="145"/>
+<line x1="525.5" y1="145" x2="633.2" y2="145"/>
+</g>
+<g font-size="14" text-anchor="middle" font-style="italic">
+<text x="249" y="135">ingest</text>
+<text x="579" y="135">render</text>
+</g>
+<g font-size="14" text-anchor="middle">
+<text x="109" y="246">read, never</text>
+<text x="109" y="264">rewritten</text>
+<text x="414" y="246">compiled once,</text>
+<text x="414" y="264">kept updated forever</text>
+<text x="719" y="246">rebuilt</text>
+<text x="719" y="264">on demand</text>
+</g>
+</svg>

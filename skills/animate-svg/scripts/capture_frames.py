@@ -12,7 +12,8 @@ midpoint when it moves something, so a quick journey is seen under way and not o
 quarter, half and three quarters of every long one (something travelling or on screen for a
 while, which often ends faded out, so its end alone would show nothing), and a last one once
 everything has ended: the still as the animation leaves it. They land as `frame-01.png` … plus
-`contact.png`, every frame labelled with its time.
+`contact.png`, every frame labelled with its time — and, when the base `<stem>.svg` sits beside
+`<stem>.anim.svg`, `still.png`: the approved still drawn by the same browser (see `write_still`).
 
 It checks nothing: the rules an animation honours are in `PRACTICES.md`, applied by the author and
 judged by the critic on these frames.
@@ -132,6 +133,30 @@ def write_frames(svg_text: str, ratio: float, out_dir: Path) -> str:
     return f"frames: {out_dir} ({len(times)} frames, t = " + ", ".join(f"{t:g}" for t in times) + " s)"
 
 
+def write_still(base_text: str, ratio: float, out_dir: Path) -> str:
+    """The approved base, drawn by the same browser as the frames, as `still.png`.
+
+    The critic compares the animation against the approved still, so both must come from one
+    engine: the base's critique PNG is drawn by cairosvg, which does not synthesize italic, and
+    every italic label of the approved drawing then read as one the animation restyled.
+    """
+    import _chrome
+    svg = re.sub(r"<\?xml.*?\?>", "", base_text, flags=re.DOTALL)
+    fh = round(FRAME_W / ratio)
+    page, still = out_dir / ".still.html", out_dir / "still.png"
+    page.write_text(
+        '<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#fff}'
+        f'svg{{display:block;width:{FRAME_W}px;height:{fh}px}}</style><body>{svg}</body>', encoding="utf-8")
+    try:
+        _chrome.run([f"--screenshot={still}", f"--window-size={FRAME_W},{fh}",
+                     "--force-device-scale-factor=1", "--hide-scrollbars"], _chrome.file_url(page))
+    except Exception as e:
+        return f"still: failed ({e})"
+    finally:
+        page.unlink(missing_ok=True)
+    return f"still: {still}"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("svg", type=Path)
@@ -150,7 +175,12 @@ def main(argv: list[str] | None = None) -> int:
     ratio = float(vb[2]) / float(vb[3]) if len(vb) == 4 and float(vb[3]) else 16 / 9
     line = write_frames(text, ratio, a.out)
     print(line)
-    return 2 if line.startswith("frames: failed") else 0
+    if line.startswith("frames: failed"):
+        return 2
+    base = a.svg.with_name(a.svg.name.replace(".anim.svg", ".svg"))
+    if base != a.svg and base.is_file():
+        print(write_still(base.read_text(encoding="utf-8"), ratio, a.out))
+    return 0
 
 
 if __name__ == "__main__":

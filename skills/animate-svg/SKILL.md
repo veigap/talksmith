@@ -22,7 +22,7 @@ A static diagram shows the parts. Its animation shows **what the slide is about 
 
 ## Process
 
-1. **Start the animated copy** (F1). Copy `<stem>.svg` to `<stem>.anim.svg` beside it and work only on that. Make sure `.critique/<stem>.png` — the critic's view of the approved still — exists; rasterize the base to it (`rasterize.py … --width 1600`) if it does not. **On a revision** (`previous_defects` given) the copy already exists: start from it and fix what the defects name.
+1. **Start the animated copy** (F1). Copy `<stem>.svg` to `<stem>.anim.svg` beside it and work only on that. **On a revision** (`previous_defects` given) the copy already exists: start from it and fix what the defects name.
 2. **Read** [`PRACTICES.md`](PRACTICES.md), then the SVG, the note and the slide. Decide what the motion is for, then what moves.
 3. **Evolve `<stem>.anim.svg`**, honouring every rule in [`PRACTICES.md`](PRACTICES.md). Add whatever the animation needs — narration or content (P8) — and nothing else (F4).
 4. **Capture the frames** the critic will judge:
@@ -31,7 +31,7 @@ A static diagram shows the parts. Its animation shows **what the slide is about 
    python3 ${CLAUDE_PLUGIN_ROOT}/skills/animate-svg/scripts/capture_frames.py <stem>.anim.svg --out <images>/.critique/<stem>.anim/
    ```
 
-   `frames: failed` (no Chrome) is not your failure: the critic will judge the still only.
+   Beside the frames it writes `still.png` — the base drawn by the same browser, the critic's approved still (another rasterizer would show differences that are only the renderer's, such as italic it does not synthesize). `frames: failed` (no Chrome) is not your failure: the critic will judge the still only.
 5. **Give the animated version its companions** — its still can differ from the base (content added, viewBox grown to make room): run [`ascii-to-svg`](../ascii-to-svg/SKILL.md)'s `validate_svg.py`, both `rasterize.py` PNGs (`<stem>.anim.png`, `.critique/<stem>.anim.png`) and `audit_aspect.py` on `<stem>.anim.svg`, exactly as its steps 6–9 do.
 6. **Return** one line: `animated: <stem>.anim.svg · frames: <dir> (<n> frames) · png_deliverable: <stem>.anim.png · png_critique: <path> · aspect_audit: <ok|defect: …>` — or `failed: <reason>` after deleting the `.anim.*` files, which leaves the slide on its approved still (F1). For a hand-drawn diagram, point its image ref at the animated version (F2).
 

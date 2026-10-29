@@ -1,0 +1,20 @@
+  SET UP
+  [0 Introduce] ──► [0.5 Profile] ──► [1 Frame] ──► [2 Collect] ──► [3 Corpus]
+                                                                        │
+       ┌────────────────────────────────────────────────────────────────┘
+       ▼
+  [4 Draft] ──► [5 Review] ──► [6 Polish] ──► [7 Render] ──► [8 Learnings]
+                 │     ▲                       optional       │
+                 └─────┘ loop until "final"                   └──► next talk inherits the rules
+                 5.5 live view (optional)
+
+<!-- ascii-note:
+intent: the eight steps as one flow — set-up first, a review loop in the middle, render and learnings at the end
+emphasize: the Review loop
+labels: the step numbers and names; «loop until "final"»; «optional» under Render
+animation:
+  1. A talk enters at «0 Introduce» and walks the set-up row to «3 Corpus».
+  2. It drops to «4 Draft», then goes round the «5 Review» loop twice: each pass, feedback goes in and the draft comes back revised. The «5.5 live view» lights up while it loops.
+  3. On "final" it leaves the loop through «6 Polish», then «7 Render», marked «optional».
+  4. It reaches «8 Learnings», which sends the rules on to the next talk.
+-->

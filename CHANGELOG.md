@@ -13,6 +13,27 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.6.2] — 2026-10-29
+
+No re-init needed.
+
+### Fixed
+
+- The animation critic now compares the frames with the approved still drawn by the same
+  browser (`still.png`, written beside the frames). It used to get the base's cairosvg PNG,
+  which does not render italic, so every italic label of an approved drawing came back as a
+  defect the animation had "restyled" — and could have dropped a good animation.
+- A diagram in the deck no longer picks up the deck's own styles. Its classes are now namespaced
+  per diagram, as its ids already were: the deck's `.chip` rule (a small icon disc) once
+  turned an animated diagram's `.chip` pill into a grey square over its caption. The diagram
+  itself was fine, so the critic never saw it.
+
+### Changed
+
+- The intro example talk shows its own diagrams and animations: the three layers, the
+  sketch → draw → animate life of a diagram, the workflow and the review loop are drawn from
+  ASCII and animated, replacing the bullets that said the same thing.
+
 ## [1.6.1] — 2026-10-28
 
 No re-init needed.

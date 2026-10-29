@@ -322,6 +322,26 @@ def _ns_svg_ids(svg: str, prefix: str) -> str:
         lambda m: f'{m.group(1)}="#{prefix}{m.group(2)}"' if m.group(2) in ids else m.group(0), svg)
 
 
+# Classes share that one document too — with the deck's own stylesheet. A diagram's classes are
+# named for their role (`chip`, `p1`, `card`), and a deck rule for the same name reaches straight
+# into it: CSS `width`/`height` override an SVG rect's attributes, so the deck's `.chip` (a 6cqw
+# icon disc) once turned an animation's 216×36 `.chip` pill into a grey square over its caption.
+# So prefix every class the SVG uses, in its markup and in its own `<style>` — except the
+# `ts-anim-<stem>` root, which the deck's animation gating and replay select on.
+_SVG_CLASS_RE = re.compile(r'\bclass="([^"]*)"')
+_SVG_STYLE_RE = re.compile(r"(<style[^>]*>)(.*?)(</style>)", re.DOTALL)
+
+
+def _ns_svg_classes(svg: str, prefix: str) -> str:
+    names = {c for v in _SVG_CLASS_RE.findall(svg) for c in v.split() if not c.startswith("ts-anim-")}
+    if not names:
+        return svg
+    svg = _SVG_CLASS_RE.sub(lambda m: 'class="' + " ".join(
+        c if c not in names else prefix + c for c in m.group(1).split()) + '"', svg)
+    sel = re.compile(r"\.(" + "|".join(map(re.escape, sorted(names, key=len, reverse=True))) + r")(?![\w-])")
+    return _SVG_STYLE_RE.sub(lambda m: m.group(1) + sel.sub(lambda s: "." + prefix + s.group(1), m.group(2)) + m.group(3), svg)
+
+
 def _vector_twin(p: Path) -> Path | None:
     """The `.svg` companion of a raster, when that pair is a **generated diagram** — i.e. the
     `.ascii` sidecar or the `talksmith-ascii-sha256` stamp proves `polish-ascii` produced it.
@@ -441,7 +461,7 @@ def _embed(alt, path):
                 svg = p.read_text(encoding="utf-8")
                 svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.DOTALL).strip()
                 _EMBED_N += 1
-                svg = _ns_svg_ids(svg, f"e{_EMBED_N}-")
+                svg = _ns_svg_classes(_ns_svg_ids(svg, f"e{_EMBED_N}-"), f"e{_EMBED_N}-")
                 return f'<div class="imgph svg">{svg}</div>'
             mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
                     "gif": "image/gif", "webp": "image/webp"}.get(p.suffix.lower().lstrip("."))

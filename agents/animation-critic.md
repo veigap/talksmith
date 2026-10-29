@@ -22,7 +22,7 @@ So: **never obtain the SVG or its stylesheet.** You are given PNGs — read thos
 |---|---|
 | `frame_paths` | Frames sampled from the animation's own timeline, in time order: what the slide opens on, each moment something settles, points along anything that travels or stays a while, and last the still as the animation leaves it — the picture the PDF and the `.pptx` show. |
 | `contact_sheet` | The same frames side by side, each labelled with its time. Read it **first**, for the story; then the full frames, for legibility. |
-| `approved_still` | The diagram as approved **before** the animation — a PNG. Your reference for what the animation added or changed. |
+| `approved_still` | The diagram as approved **before** the animation — a PNG drawn by the same browser as the frames, so any difference between them is the animation's. Your reference for what the animation added or changed. |
 | `note` | The diagram's note, verbatim. Its `animation:` section is the brief: what the audience should see happen, in order. Its other lines (`intent:`, `terms:` …) tell you what the diagram means and which foreign terms are deliberate. |
 | `slide_title`, `presentation_language` | The slide, and the language every word the animation adds must be in. |
 | `iteration` | 1 or 2. On iteration 2 you also get `previous_defects`, to confirm they are actually fixed rather than recalling them. |

@@ -1,0 +1,20 @@
+   RAW SOURCES            THE WIKI  (agent-owned)           PROJECTIONS
+  ┌────────────┐         ┌──────────────────────┐         ┌─────────────┐
+  │ papers     │         │ corpus/*.md          │         │ final.md    │
+  │ PDFs       │ ──────► │ memory.md            │ ──────► │    │        │
+  │ chat logs  │ ingest  │ draft.md             │ render  │    ▼        │
+  │ notes, URLs│         │ learnings.md         │         │ HTML / pptx │
+  └────────────┘         └──────────────────────┘         └─────────────┘
+    read, never            compiled once,                    rebuilt
+    rewritten              kept updated forever               on demand
+
+<!-- ascii-note:
+intent: the three layers of the knowledge base, and who may write each one
+emphasize: THE WIKI — the agent-owned middle layer
+labels: «ingest» and «render» on the left-to-right arrows; the captions under each box
+animation:
+  1. A paper lands in «RAW SOURCES»; it is read, never rewritten.
+  2. «ingest» carries it into «THE WIKI», which compiles it into «corpus/*.md» and keeps «memory.md», «draft.md» and «learnings.md» current.
+  3. «render» carries the wiki out into «PROJECTIONS»: «final.md» becomes «HTML / pptx».
+  4. The projections fade and are rebuilt on demand, while the wiki stays: the deck is disposable, the base is not.
+-->

@@ -1,0 +1,27 @@
+  ┌──► you edit draft.md
+  │          │
+  │          ▼
+  │    - "trim this slide"                (raw bullet)
+  │          │  editor stamps + dates
+  │          ▼
+  │    [open] 2026-07-14 — "..."  ──────► apply the change
+  │                                              │
+  │    [closed] 2026-07-14 — "..."  ◄────────────┘
+  │      Resolution: what changed & why    (stays in draft.md — never deleted)
+  │          │
+  │          ▼
+  │    mirrored to feedback-backlog.md
+  │          │
+  └──────────┘  next round, until you say "final"
+
+<!-- ascii-note:
+intent: the life of one feedback bullet — raw, open, applied, closed, kept
+emphasize: the [closed] line with its Resolution
+labels: «(raw bullet)»; «(stays in draft.md — never deleted)»; the loop-back arrow on the left, labelled «next round, until you say "final"»
+animation:
+  1. You type a raw bullet, «- "trim this slide"», in draft.md.
+  2. The editor stamps it «[open]» with today's date.
+  3. «apply the change» runs, and the arrow brings it back as «[closed]» with its «Resolution»; the closed bullet stays in draft.md.
+  4. A copy is «mirrored to feedback-backlog.md».
+  5. The loop arrow carries it back up to «you edit draft.md» for the next round; the loop ends when you say "final".
+-->

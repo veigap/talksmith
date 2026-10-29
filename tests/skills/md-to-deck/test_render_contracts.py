@@ -17,7 +17,9 @@ Run:  python3 tests/skills/md-to-deck/test_render_contracts.py
     icon-sized raster or a formula strip the fill rendered as a per-item figure;
   * every card got a content-matched icon with no way to say "none" (`icon`/`icons: "none"`);
   * `figures` was always three columns, so two figures left a third of the slide empty;
-  * a value-columns table styled its first column as row labels even when it was data.
+  * a value-columns table styled its first column as row labels even when it was data;
+  * an inlined diagram's class (`chip`) caught the deck's rule of the same name, which resized an
+    animation's pill into a square over its caption.
 
 No network: icons resolve offline (see test_icon_offline.py), and none of these slides needs one.
 """
@@ -297,10 +299,25 @@ def t_index_order():
     return fails
 
 
+def t_svg_classes_namespaced():
+    fails = []
+    svg = ('<svg class="ts-anim-x"><style>/* talksmith-animation */'
+           '.ts-anim-x .chip,.ts-anim-x .c1{animation:ts-anim-x-in .5s both}.ts-anim-x .c10{opacity:1}</style>'
+           '<rect class="chip" width="216"/><text class="c1 c10">t</text></svg>')
+    got = h._ns_svg_classes(svg, "e3-")
+    if 'class="e3-chip"' not in got or 'class="e3-c1 e3-c10"' not in got:
+        fails.append(f"  markup classes not prefixed: {got}")
+    if ".ts-anim-x .e3-chip,.ts-anim-x .e3-c1{" not in got or ".ts-anim-x .e3-c10{" not in got:
+        fails.append(f"  the SVG's own <style> selectors not rewritten to match: {got}")
+    if 'class="ts-anim-x"' not in got or "ts-anim-x-in .5s" not in got:
+        fails.append("  the ts-anim root class or keyframe names were rewritten — gating and replay select on them")
+    return fails
+
+
 def main() -> int:
     tests = [t_backslash_escape, t_field_coverage, t_image_full, t_media_picture_set,
              t_decoration_omitted, t_concept_columns_no_inferred_icon, t_icon_opt_out,
-             t_figures_columns, t_value_columns_factor, t_index_order]
+             t_figures_columns, t_value_columns_factor, t_index_order, t_svg_classes_namespaced]
     failed = 0
     for t in tests:
         fails = t()

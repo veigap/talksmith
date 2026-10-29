@@ -1,0 +1,100 @@
+<svg class="ts-anim-s2-4-1-three-layers" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 828 292" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
+<title>The three layers</title>
+<desc>The ownership boundaries are the design.</desc>
+<style>/* talksmith-animation */
+.ts-anim-s2-4-1-three-layers .paper{animation:ts-anim-s2-4-1-three-layers-paper 17.30s linear 0.4s both}
+.ts-anim-s2-4-1-three-layers .cap-raw{animation:ts-anim-s2-4-1-three-layers-in 0.6s ease-out 1.3s both}
+.ts-anim-s2-4-1-three-layers .lbl-ingest{animation:ts-anim-s2-4-1-three-layers-in 0.5s ease-out 2.6s both}
+.ts-anim-s2-4-1-three-layers .tok-ingest{animation:ts-anim-s2-4-1-three-layers-tok-ingest 1.70s linear 2.3s both}
+.ts-anim-s2-4-1-three-layers .ln-ingest{animation:ts-anim-s2-4-1-three-layers-draw108 1.2s linear 2.6s both}
+.ts-anim-s2-4-1-three-layers .hd-ingest{animation:ts-anim-s2-4-1-three-layers-in 0.2s ease-out 3.75s both}
+.ts-anim-s2-4-1-three-layers .w1{animation:ts-anim-s2-4-1-three-layers-in 0.5s ease-out 3.9s both}
+.ts-anim-s2-4-1-three-layers .w2{animation:ts-anim-s2-4-1-three-layers-in 0.4s ease-out 4.6s both}
+.ts-anim-s2-4-1-three-layers .w3{animation:ts-anim-s2-4-1-three-layers-in 0.4s ease-out 4.95s both}
+.ts-anim-s2-4-1-three-layers .w4{animation:ts-anim-s2-4-1-three-layers-in 0.4s ease-out 5.3s both}
+.ts-anim-s2-4-1-three-layers .cap-wiki{animation:ts-anim-s2-4-1-three-layers-in 0.6s ease-out 6.0s both}
+.ts-anim-s2-4-1-three-layers .lbl-render{animation:ts-anim-s2-4-1-three-layers-in 0.5s ease-out 7.4s both}
+.ts-anim-s2-4-1-three-layers .tok-render1{animation:ts-anim-s2-4-1-three-layers-tok-render1 1.60s linear 7.2s both}
+.ts-anim-s2-4-1-three-layers .ln-render{animation:ts-anim-s2-4-1-three-layers-draw108 1.2s linear 7.4s both}
+.ts-anim-s2-4-1-three-layers .hd-render{animation:ts-anim-s2-4-1-three-layers-in 0.2s ease-out 8.55s both}
+.ts-anim-s2-4-1-three-layers .p-final{animation:ts-anim-s2-4-1-three-layers-p-final 6.20s linear 8.6s both}
+.ts-anim-s2-4-1-three-layers .tok-inner1{animation:ts-anim-s2-4-1-three-layers-tok-inner1 1.15s linear 9.3s both}
+.ts-anim-s2-4-1-three-layers .ln-inner{animation:ts-anim-s2-4-1-three-layers-ln-inner 6.10s linear 9.5s both}
+.ts-anim-s2-4-1-three-layers .hd-inner{animation:ts-anim-s2-4-1-three-layers-hd-inner 5.50s linear 10.25s both}
+.ts-anim-s2-4-1-three-layers .p-html{animation:ts-anim-s2-4-1-three-layers-p-html 5.80s linear 10.4s both}
+.ts-anim-s2-4-1-three-layers .tok-render2{animation:ts-anim-s2-4-1-three-layers-tok-render2 1.15s linear 13.4s both}
+.ts-anim-s2-4-1-three-layers .tok-inner2{animation:ts-anim-s2-4-1-three-layers-tok-inner2 0.85s linear 14.9s both}
+.ts-anim-s2-4-1-three-layers .cap-proj{animation:ts-anim-s2-4-1-three-layers-in 0.6s ease-out 16.4s both}
+@keyframes ts-anim-s2-4-1-three-layers-in{from{opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-paper{0.00%{opacity:0}3.47%{opacity:1}97.11%{opacity:1}100.00%{opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-tok-ingest{0.00%{transform:translate(195px,145px);opacity:0}17.65%{transform:translate(195px,145px);opacity:1}88.24%{transform:translate(302.5px,145px);opacity:1}100.00%{transform:translate(302.5px,145px);opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-draw108{from{stroke-dashoffset:110}to{stroke-dashoffset:0}}
+@keyframes ts-anim-s2-4-1-three-layers-tok-render1{0.00%{transform:translate(525.5px,145px);opacity:0}12.50%{transform:translate(525.5px,145px);opacity:1}87.50%{transform:translate(633.2px,145px);opacity:1}100.00%{transform:translate(633.2px,145px);opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-p-final{0.00%{opacity:0}8.06%{opacity:1}54.84%{opacity:1}64.52%{opacity:0}93.55%{opacity:0}100.00%{opacity:1}}
+@keyframes ts-anim-s2-4-1-three-layers-tok-inner1{0.00%{transform:translate(719px,123px);opacity:0}17.39%{transform:translate(719px,123px);opacity:1}86.96%{transform:translate(719px,167px);opacity:1}100.00%{transform:translate(719px,167px);opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-ln-inner{0.00%{stroke-dashoffset:46;opacity:1}13.11%{stroke-dashoffset:0;opacity:1}40.98%{stroke-dashoffset:0;opacity:1}50.82%{stroke-dashoffset:0;opacity:0}57.38%{stroke-dashoffset:46;opacity:0}88.52%{stroke-dashoffset:46;opacity:1}90.16%{stroke-dashoffset:46;opacity:1}100.00%{stroke-dashoffset:0;opacity:1}}
+@keyframes ts-anim-s2-4-1-three-layers-hd-inner{0.00%{opacity:0}3.64%{opacity:1}31.82%{opacity:1}42.73%{opacity:0}96.36%{opacity:0}100.00%{opacity:1}}
+@keyframes ts-anim-s2-4-1-three-layers-p-html{0.00%{opacity:0}8.62%{opacity:1}27.59%{opacity:1}37.93%{opacity:0}91.38%{opacity:0}100.00%{opacity:1}}
+@keyframes ts-anim-s2-4-1-three-layers-tok-render2{0.00%{transform:translate(525.5px,145px);opacity:0}17.39%{transform:translate(525.5px,145px);opacity:1}86.96%{transform:translate(633.2px,145px);opacity:1}100.00%{transform:translate(633.2px,145px);opacity:0}}
+@keyframes ts-anim-s2-4-1-three-layers-tok-inner2{0.00%{transform:translate(719px,123px);opacity:0}11.76%{transform:translate(719px,123px);opacity:1}82.35%{transform:translate(719px,167px);opacity:1}100.00%{transform:translate(719px,167px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ts-anim-s2-4-1-three-layers *{animation:none}}
+</style>
+<rect x="0" y="0" width="828" height="292" fill="#FFFFFF"/>
+<g text-anchor="middle">
+<text x="109" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#1F1E1E">RAW SOURCES</text>
+<text x="414" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#DA1B2E">THE WIKI</text>
+<text x="719" y="36" font-size="16" font-weight="bold" letter-spacing="1" fill="#1F1E1E">PROJECTIONS</text>
+<text x="109" y="55" font-size="13">immutable ground truth</text>
+<text x="414" y="55" font-size="13" fill="#DA1B2E">agent-owned synthesis</text>
+<text x="719" y="55" font-size="13">derived, disposable</text>
+</g>
+<rect x="24" y="70" width="170" height="150" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<rect x="304" y="70" width="220" height="150" rx="8" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="3"/>
+<rect x="634" y="70" width="170" height="150" rx="8" fill="#F2EEEE" stroke="#D8D2CE" stroke-width="1.5"/>
+<g font-size="15">
+<text x="44" y="104">papers</text>
+<text x="44" y="132">PDFs</text>
+<text x="44" y="160">chat logs</text>
+<text x="44" y="188">notes, URLs</text>
+</g>
+<g class="paper" opacity="0" fill="none" stroke="#3B3535" stroke-width="1.5" stroke-linejoin="round">
+<path d="M148,130 H165 L172,137 V160 H148 Z" fill="#FFFFFF"/>
+<path d="M165,130 V137 H172"/>
+<path d="M153,143 H167 M153,148 H167 M153,153 H162" stroke-width="1.2"/>
+</g>
+<g font-size="15" font-family="'Andale Mono', monospace" fill="#1F1E1E">
+<text class="w1" x="330" y="104">corpus/*.md</text>
+<text class="w2" x="330" y="132">memory.md</text>
+<text class="w3" x="330" y="160">draft.md</text>
+<text class="w4" x="330" y="188">learnings.md</text>
+<text class="p-final" x="719" y="114" text-anchor="middle">final.md</text>
+</g>
+<text class="p-html" x="719" y="186" font-size="15" text-anchor="middle" fill="#1F1E1E">HTML / pptx</text>
+<g stroke="#3B3535" stroke-width="2">
+<line class="ln-inner" x1="719" y1="123" x2="719" y2="167" stroke-dasharray="46"/>
+<line class="ln-ingest" x1="195" y1="145" x2="302.5" y2="145" stroke-dasharray="110"/>
+<line class="ln-render" x1="525.5" y1="145" x2="633.2" y2="145" stroke-dasharray="110"/>
+</g>
+<g fill="#3B3535">
+<path class="hd-inner" d="M713.5,156 L719,167 L724.5,156 z"/>
+<path class="hd-ingest" d="M291.5,139.5 L302.5,145 L291.5,150.5 z"/>
+<path class="hd-render" d="M622.2,139.5 L633.2,145 L622.2,150.5 z"/>
+</g>
+<circle class="tok-ingest" cx="0" cy="0" r="4.5" fill="#3B3535" opacity="0"/>
+<circle class="tok-render1" cx="0" cy="0" r="4.5" fill="#3B3535" opacity="0"/>
+<circle class="tok-render2" cx="0" cy="0" r="4.5" fill="#3B3535" opacity="0"/>
+<circle class="tok-inner1" cx="0" cy="0" r="4" fill="#3B3535" opacity="0"/>
+<circle class="tok-inner2" cx="0" cy="0" r="4" fill="#3B3535" opacity="0"/>
+<g font-size="14" text-anchor="middle" font-style="italic">
+<text class="lbl-ingest" x="249" y="135">ingest</text>
+<text class="lbl-render" x="579" y="135">render</text>
+</g>
+<g font-size="14" text-anchor="middle">
+<g class="cap-raw"><text x="109" y="246">read, never</text>
+<text x="109" y="264">rewritten</text></g>
+<g class="cap-wiki"><text x="414" y="246">compiled once,</text>
+<text x="414" y="264">kept updated forever</text></g>
+<g class="cap-proj"><text x="719" y="246">rebuilt</text>
+<text x="719" y="264">on demand</text></g>
+</g>
+</svg>

@@ -147,39 +147,32 @@
       "notes": "The pattern being quoted: instead of re-reading raw documents on every request (retrieval), have the agent maintain a synthesized, cross-linked knowledge base it updates as sources arrive — analogous to compiling source code once and running the binary many times. Talksmith is an implementation of this: the Librarian compiles each raw source into a uniform Markdown corpus record (metadata, claims, quotes, citations), and every downstream step reads the records, not the originals."
     },
     {
-      "template": "content-image",
+      "template": "image-full",
       "section": "What is Talksmith?",
       "title": "The three layers",
-      "facts": [
-        {
-          "label": "Raw sources",
-          "body": "immutable ground truth the agent reads but never rewrites"
-        },
-        {
-          "label": "The wiki",
-          "body": "synthesized, cross-linked Markdown the agent owns and keeps updated"
-        },
-        {
-          "label": "Projections",
-          "body": "final.md, then HTML or .pptx — rendered on demand and disposable"
-        }
-      ],
-      "notes": "The ownership boundaries are the design. Raw sources (research/) are immutable ground truth — the agent reads them but never rewrites them, so provenance is always checkable. The wiki (research/corpus/) is agent-owned synthesis: uniform, cross-linked Markdown records the agent keeps current — humans read it but don't have to maintain it. Projections (final.md, then HTML or .pptx) are derived and disposable — regenerate them anytime, delete them without loss. Each layer can be trusted precisely because of who is *not* allowed to write it.",
-      "media": {
-        "src": "images/s2-3-1.svg",
-        "alt": "Raw sources compiled into the agent-owned wiki, then rendered into disposable projections"
+      "lead": "Three layers — and who is allowed to write each one.",
+      "image": {
+        "src": "images/s2-4-1-three-layers.anim.svg",
+        "alt": "Raw sources are ingested into the agent-owned wiki, which renders disposable projections"
       },
-      "design": "split-right"
+      "notes": "The ownership boundaries are the design. Raw sources (research/) are immutable ground truth — the agent reads them but never rewrites them, so provenance is always checkable. The wiki is agent-owned synthesis: the corpus records in research/corpus/ (uniform, cross-linked Markdown), plus the outline in draft.md, the progress log in memory.md and the learned rules in learnings.md. The agent keeps all of it current; you read it and steer it, but you don't have to maintain it. Projections (final.md, then HTML or .pptx) are derived and disposable — regenerate them anytime, delete them without loss. Each layer can be trusted precisely because of who is *not* allowed to write it."
     },
     {
-      "template": "single-point",
+      "template": "content-image",
       "section": "What is Talksmith?",
       "title": "Your diagrams draw themselves",
-      "point": {
-        "label": "You don't draw diagrams",
-        "body": "Talksmith proposes an outline version of each diagram as ASCII right in your draft — edit it if you want — then renders it to a clean, styled SVG at Polish. No more time spent making diagrams look nicer. Every diagram in this talk was generated that way."
+      "facts": [
+        {
+          "label": "You don't draw diagrams",
+          "body": "Sketch one in ASCII — or let Talksmith propose it — and say what should happen in it. Every diagram in this talk was made this way."
+        }
+      ],
+      "media": {
+        "src": "images/s2-5-1-sketch-draw-animate.anim.svg",
+        "alt": "A diagram's life: sketched in ASCII, drawn at Polish, then animated from its brief"
       },
-      "notes": "How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering."
+      "design": "banded",
+      "notes": "How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text — so you never spend time making a diagram look nicer. Under each one, a short note can describe what should happen in it (the animation brief). At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. Then a second stage animates every approved diagram that has a brief, writing the animated version beside the still; a separate blind critic judges it from frames, and an animation that doesn't come out clean is dropped — the slide keeps its still. On a slide light on text, Talksmith can also propose a generated side image. The consequence: diagrams are versionable, diffable text until the moment of rendering — and so is their motion."
     },
     {
       "template": "section-agenda",
@@ -191,16 +184,16 @@
       "title": "Eight steps, driven from chat",
       "facts": [
         {
-          "body": "You talk to Talksmith in chat; it keeps draft.md / final.md as the single source of truth."
+          "body": "You talk to Talksmith in chat; it does the work and keeps `draft.md` / `final.md` as the single source of truth."
         },
         {
-          "body": "The live HTML preview is optional; so are the PDF and .pptx you can export from the finished deck."
+          "body": "The live HTML preview (as you review) is optional; so are the PDF and `.pptx` you can export from the finished deck."
         }
       ],
-      "notes": "The shape of the workflow: setup happens once per talk (profile the audience, frame the thesis, collect and compile sources into the corpus); the middle is a loop (draft, review with inline feedback, repeat until right); rendering comes last and is optional. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.",
+      "notes": "The shape of the workflow: setup comes first (the audience profile, set once per subject; then, for each talk, its topic, its sources, and the corpus compiled from them); the middle is a loop (draft, review with inline feedback, repeat until right); after it, Polish produces final.md and rendering is optional. Learnings closes every talk: feedback that recurred becomes rules the next talk inherits. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.",
       "media": {
-        "src": "images/workflow.png",
-        "alt": "The eight-step Talksmith workflow"
+        "src": "images/s3-1-1-workflow.anim.svg",
+        "alt": "The Talksmith workflow: set-up steps, the draft and review loop, then polish, render and learnings"
       },
       "design": "banded"
     },
@@ -227,36 +220,22 @@
       "format": "row"
     },
     {
-      "template": "process",
+      "template": "content-image",
       "section": "The workflow in practice",
       "title": "Review is a loop",
-      "lead": "You refine draft.md in rounds — leave inline feedback, it's applied, you review again, until the talk is right.",
-      "steps": [
-        {
-          "label": "Leave feedback",
-          "body": "drop plain-text bullets right in draft.md, under each slide's Presenter feedback — as many as you want, in any editor"
-        },
-        {
-          "label": "Talksmith applies",
-          "body": "it stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail"
-        },
-        {
-          "label": "Review and repeat",
-          "body": "look again, add more feedback, go around once more — as many rounds as it takes until you say \"final\""
-        }
-      ],
+      "lead": "You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you review again, until the talk is right.",
       "highlights": [
         {
           "kind": "important",
-          "body": "Every round is about the content, not how it looks — visuals and styling come later at Polish."
+          "body": "Every round is about the **content**, not how it looks — visuals and styling come later at Polish."
         }
       ],
-      "notes": "How feedback actually flows: you write plain-text bullets under any slide's 'Presenter feedback' heading, in any editor. Talksmith stamps each bullet [open] with a date, makes the change, then closes it in place with a one-line resolution — so draft.md accumulates a decision trail: what was asked, what was done, when. Closed items are mirrored to a backlog file, and recurring feedback gets promoted into learnings.md as standing editorial rules that every future talk inherits. This is the direct answer to 'no record of decisions' from the opening section.",
       "media": {
-        "src": "images/s4-3-1.svg",
-        "alt": "Feedback lifecycle: raw bullet, stamped open, applied, closed, mirrored to the backlog, then loop"
+        "src": "images/s3-3-1-feedback-loop.anim.svg",
+        "alt": "Feedback lifecycle: a raw bullet is stamped open, applied, closed with its resolution, and mirrored to the backlog"
       },
-      "design": "split-right"
+      "design": "split-right",
+      "notes": "How feedback actually flows, in three moves — leave feedback, Talksmith applies, review and repeat: you write plain-text bullets under any slide's 'Presenter feedback' heading, in any editor, as many as you want. Talksmith stamps each bullet [open] with a date, makes the change, then closes it in place with a one-line resolution — so draft.md accumulates a decision trail: what was asked, what was done, when. Closed items are mirrored to a backlog file, and recurring feedback gets promoted into learnings.md as standing editorial rules that every future talk inherits. This is the direct answer to 'no record of decisions' from the opening section."
     },
     {
       "template": "concept-breakdown",
@@ -423,8 +402,8 @@
         }
       ],
       "media": {
-        "src": "images/s5-2-1.svg",
-        "alt": "Forward pipeline draft.md to final.md to pptx, and the reverse pipeline back into draft.md"
+        "src": "images/s4-2-1-forward-reverse.svg",
+        "alt": "Forward pipeline from draft.md to the deck, and the reverse path back into draft.md"
       },
       "design": "split-right"
     },
@@ -623,5 +602,10 @@
       "title": "Build a talk from what you already know.",
       "notes": "The thesis in one line: the understanding you already have is the raw material; Talksmith compiles it into a base that every future talk draws from. The blank page was never necessary — it was just the default artifact."
     }
-  ]
+  ],
+  "_source": {
+    "file": "final.md",
+    "sha256": "aa43b4d9ec264deb04da97254882fd819d9957832f45ae43deb018905d036c4d",
+    "bytes": 40578
+  }
 }

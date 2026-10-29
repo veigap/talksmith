@@ -262,6 +262,8 @@ The ownership boundaries are the design. Raw sources (research/) are immutable g
 
 - [closed] 2026-07-12 — "Cite the Karpathy write-up so people can go read it."
   Resolution: Added corpus/karpathy-llm-wiki.md; the record carries the URL.
+- [closed] 2026-10-28 (editor) — "Editor re-review of the diagram before Polish."
+  Resolution: Removed «→ final.md» from THE WIKI box (final.md is a projection; it was drawn in two layers) and squared the middle and right boxes, whose top/bottom edges were one character short; «labels:» now lists the arrow labels; speaker notes de-duplicated (the first sentence restated the next three) and the wiki now named as what the diagram shows: corpus, draft.md, memory.md, learnings.md.
 
 ---
 
@@ -304,6 +306,9 @@ animation:
 How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text — so you never spend time making a diagram look nicer. Under each one, a short note can describe what should happen in it (the animation brief). At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. Then a second stage animates every approved diagram that has a brief, writing the animated version beside the still; a separate blind critic judges it from frames, and an animation that doesn't come out clean is dropped — the slide keeps its still. On a slide light on text, Talksmith can also propose a generated side image. The consequence: diagrams are versionable, diffable text until the moment of rendering — and so is their motion.
 
 ### Presenter feedback
+
+- [closed] 2026-10-28 (editor) — "Editor re-review of the diagram before Polish."
+  Resolution: Left box's top and bottom edges were one character short of its walls; widened them. «emphasize:» now names the box by its label, «TALKSMITH DRAWS»; brief step 3 names «<name>.anim.svg» instead of 'the animated version plays'.
 
 ---
 
@@ -360,6 +365,9 @@ The shape of the workflow: setup comes first (the audience profile, set once per
 
 ### Presenter feedback
 
+- [closed] 2026-10-28 (editor) — "Editor re-review of the diagram before Polish."
+  Resolution: Header «SET UP ONCE PER TALK» → «SET UP» (Profile is once per subject, Introduce once per session); brief now says what changes on each Review pass and walks 7 Render (optional) to 8 Learnings; speaker notes corrected (Step 1 frames the topic, not the thesis; Learnings, not Render, comes last) and the purpose line no longer claims the plugin's own image is reused.
+
 ---
 
 ## 2. Draft your way
@@ -399,33 +407,32 @@ You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you
 **Important:** Every round is about the **content**, not how it looks — visuals and styling come later at Polish.
 
 ```ascii
-     you edit draft.md
-           │
-           ▼
-   - "trim this slide"                (raw bullet)
-           │  editor stamps + dates
-           ▼
-   [open] 2026-07-14 — "..."  ──────► apply the change
-           │                                │
-           ▼                                │
-   [closed] 2026-07-14 — "..."  ◄───────────┘
-     Resolution: what changed & why
-           │
-           ▼
-   mirrored to feedback-backlog.md         (audit trail — never deleted)
-           │
-           └──────────► loop until you say "final"
+  ┌──► you edit draft.md
+  │          │
+  │          ▼
+  │    - "trim this slide"                (raw bullet)
+  │          │  editor stamps + dates
+  │          ▼
+  │    [open] 2026-07-14 — "..."  ──────► apply the change
+  │                                              │
+  │    [closed] 2026-07-14 — "..."  ◄────────────┘
+  │      Resolution: what changed & why    (stays in draft.md — never deleted)
+  │          │
+  │          ▼
+  │    mirrored to feedback-backlog.md
+  │          │
+  └──────────┘  next round, until you say "final"
 ```
 <!-- ascii-note:
 intent: the life of one feedback bullet — raw, open, applied, closed, kept
 emphasize: the [closed] line with its Resolution
-labels: keep the loop-back arrow at the bottom
+labels: «(raw bullet)»; «(stays in draft.md — never deleted)»; the loop-back arrow on the left, labelled «next round, until you say "final"»
 animation:
   1. You type a raw bullet, «- "trim this slide"», in draft.md.
   2. The editor stamps it «[open]» with today's date.
-  3. «apply the change» runs, and the arrow brings it back as «[closed]» with its «Resolution».
-  4. The closed bullet is «mirrored to feedback-backlog.md» — kept, never deleted.
-  5. The loop arrow returns to the top for the next round, until you say "final".
+  3. «apply the change» runs, and the arrow brings it back as «[closed]» with its «Resolution»; the closed bullet stays in draft.md.
+  4. A copy is «mirrored to feedback-backlog.md».
+  5. The loop arrow carries it back up to «you edit draft.md» for the next round; the loop ends when you say "final".
 -->
 
 ### Sources
@@ -441,6 +448,8 @@ How feedback actually flows, in three moves — leave feedback, Talksmith applie
 
 - [closed] 2026-07-13 — "Make the self-referential point — this talk was drafted in Talksmith."
   Resolution: Added the live-demo cue and this diagram.
+- [closed] 2026-10-28 (editor) — "Editor re-review of the diagram before Polish."
+  Resolution: Redrew the loop: the loop-back arrow now runs up the left side to «you edit draft.md» instead of ending in text, [open] reaches [closed] only through «apply the change», and «never deleted» moved from the backlog (whose rows Step 8 moves to feedback-processed.md) to the closed bullet in draft.md; brief steps 3–5 and labels updated to match; dropped the stale «Second render-driving diagram» purpose note.
 
 ---
 
@@ -938,3 +947,4 @@ The thesis in one line: the understanding you already have is the raw material; 
 - A detailed `profile.md` field-by-field walkthrough — belongs in a hands-on workshop, not a 40-min intro.
 - An extended live-coding demo building a corpus from scratch — great for a workshop, too long for an intro.
 - A deep dive on `pptx-learn` (mining styling patterns from hand-corrected decks) — too advanced for an intro; mention only if asked.
+- Slide 3.1 "Eight steps, driven from chat": the image `![Talksmith workflow](images/workflow.png)` — superseded by the slide's own ASCII workflow diagram, which Polish draws and animates.

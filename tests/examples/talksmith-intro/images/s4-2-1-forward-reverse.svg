@@ -1,0 +1,49 @@
+<!-- talksmith-ascii-sha256: 094fee76e705b3b42c9c4ff255d598389a16ad5363954cbd5cd1b53891e79e35 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 848 323" font-family="Helvetica, Arial, sans-serif" fill="#3B3535">
+<title>It's Markdown all the way down</title>
+<desc>Why plain text is the load-bearing choice: the forward pipeline renders draft.md to final.md to the deck, and the optional reverse pipeline reads an edited deck back into draft.md.</desc>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B3535"/></marker>
+</defs>
+<rect x="0" y="0" width="848" height="323" fill="#ffffff"/>
+<text x="24" y="33" font-size="12" font-weight="bold" letter-spacing="2">FORWARD</text>
+<text x="24" y="296" font-size="12" font-weight="bold" letter-spacing="2">REVERSE · OPTIONAL</text>
+<g stroke="#D8D2CE" stroke-width="1.5" fill="#F2EEEE">
+<rect x="304" y="46" width="180" height="64" rx="8"/>
+<rect x="584" y="46" width="200" height="64" rx="8"/>
+<rect x="24" y="210" width="180" height="64" rx="8"/>
+<rect x="304" y="210" width="180" height="64" rx="8"/>
+<rect x="584" y="210" width="200" height="64" rx="8"/>
+</g>
+<rect x="24" y="46" width="180" height="64" rx="8" fill="#DA1B2E"/>
+<g text-anchor="middle">
+<g font-family="'Andale Mono', monospace" font-size="17" fill="#1F1E1E">
+<text x="114" y="74" fill="#FFFFFF">draft.md</text>
+<text x="394" y="74">final.md</text>
+<text x="684" y="74">output/final.pptx</text>
+<text x="114" y="238">pptx-merge</text>
+<text x="394" y="238">pptx-diff</text>
+<text x="684" y="238">pptx-extract</text>
+</g>
+<g font-size="12">
+<text x="114" y="93" fill="#FFFFFF">source of truth</text>
+<text x="394" y="93">polished outline</text>
+<text x="684" y="93">the deck</text>
+<text x="114" y="257">reconcile into draft.md</text>
+<text x="394" y="257">diff against final.md</text>
+<text x="684" y="257">read the edited deck</text>
+</g>
+</g>
+<g stroke="#3B3535" stroke-width="2" fill="none" marker-end="url(#ah)">
+<line x1="204" y1="78" x2="304" y2="78"/>
+<line x1="484" y1="78" x2="584" y2="78"/>
+<g stroke-dasharray="6 4">
+<line x1="684" y1="110" x2="684" y2="210"/>
+<line x1="584" y1="242" x2="484" y2="242"/>
+<line x1="304" y1="242" x2="204" y2="242"/>
+<line x1="114" y1="210" x2="114" y2="110"/>
+</g>
+</g>
+<text x="698" y="155" font-size="13">you edit in</text>
+<text x="698" y="172" font-size="13">Keynote / PowerPoint</text>
+</svg>

@@ -1,0 +1,114 @@
+<svg class="ts-anim-s2-5-1-sketch-draw-animate" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1008 266" font-family="Helvetica, Arial, sans-serif" fill="#3B3535" font-size="14">
+<title>Your diagrams draw themselves</title>
+<desc>How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text — so you never spend time making a diagram look nicer.</desc>
+<style>/* talksmith-animation */
+.ts-anim-s2-5-1-sketch-draw-animate .h1,.ts-anim-s2-5-1-sketch-draw-animate .s1,.ts-anim-s2-5-1-sketch-draw-animate .s2,.ts-anim-s2-5-1-sketch-draw-animate .s3{animation:ts-anim-s2-5-1-sketch-draw-animate-in .6s ease-out .3s both}
+.ts-anim-s2-5-1-sketch-draw-animate .s4{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 1.4s both}
+.ts-anim-s2-5-1-sketch-draw-animate .c1{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 2.5s both}
+.ts-anim-s2-5-1-sketch-draw-animate .shp{animation:ts-anim-s2-5-1-sketch-draw-animate-shaft 1.6s linear 3.6s both}
+.ts-anim-s2-5-1-sketch-draw-animate .hdp{animation:ts-anim-s2-5-1-sketch-draw-animate-head 1.6s linear 3.6s both}
+.ts-anim-s2-5-1-sketch-draw-animate .tk1{animation:ts-anim-s2-5-1-sketch-draw-animate-leg1 1.6s linear 3.6s both}
+.ts-anim-s2-5-1-sketch-draw-animate .lp,.ts-anim-s2-5-1-sketch-draw-animate .h2{animation:ts-anim-s2-5-1-sketch-draw-animate-in .3s ease-out 4.9s both}
+.ts-anim-s2-5-1-sketch-draw-animate .ka,.ts-anim-s2-5-1-sketch-draw-animate .kb{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 5.8s both}
+.ts-anim-s2-5-1-sketch-draw-animate .sab{animation:ts-anim-s2-5-1-sketch-draw-animate-draw60 .6s linear 6.9s both}
+.ts-anim-s2-5-1-sketch-draw-animate .hab{animation:ts-anim-s2-5-1-sketch-draw-animate-in .1s ease-out 7.4s both}
+.ts-anim-s2-5-1-sketch-draw-animate .c2{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 8.1s both}
+.ts-anim-s2-5-1-sketch-draw-animate .p1{animation:ts-anim-s2-5-1-sketch-draw-animate-in .4s ease-out 9.2s both}
+.ts-anim-s2-5-1-sketch-draw-animate .ck1{animation:ts-anim-s2-5-1-sketch-draw-animate-check .4s ease-out 9.2s both}
+.ts-anim-s2-5-1-sketch-draw-animate .shb{animation:ts-anim-s2-5-1-sketch-draw-animate-shaft 1.6s linear 10.3s both}
+.ts-anim-s2-5-1-sketch-draw-animate .hdb{animation:ts-anim-s2-5-1-sketch-draw-animate-head 1.6s linear 10.3s both}
+.ts-anim-s2-5-1-sketch-draw-animate .tk2{animation:ts-anim-s2-5-1-sketch-draw-animate-leg2 1.6s linear 10.3s both}
+.ts-anim-s2-5-1-sketch-draw-animate .lb,.ts-anim-s2-5-1-sketch-draw-animate .h3{animation:ts-anim-s2-5-1-sketch-draw-animate-in .3s ease-out 11.6s both}
+.ts-anim-s2-5-1-sketch-draw-animate .chip{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 12.5s both}
+.ts-anim-s2-5-1-sketch-draw-animate .c3{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 13.6s both}
+.ts-anim-s2-5-1-sketch-draw-animate .p2{animation:ts-anim-s2-5-1-sketch-draw-animate-in .4s ease-out 14.8s both}
+.ts-anim-s2-5-1-sketch-draw-animate .ck2{animation:ts-anim-s2-5-1-sketch-draw-animate-check .4s ease-out 14.8s both}
+.ts-anim-s2-5-1-sketch-draw-animate .c4,.ts-anim-s2-5-1-sketch-draw-animate .c5{animation:ts-anim-s2-5-1-sketch-draw-animate-in .5s ease-out 16.0s both}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-in{from{opacity:0}to{opacity:1}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-shaft{0%,8.33%{stroke-dashoffset:89px}90.74%,100%{stroke-dashoffset:0px}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-head{0%,89%{opacity:0}92%,100%{opacity:1}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-draw60{from{stroke-dashoffset:60px}to{stroke-dashoffset:0px}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-check{from{stroke-dashoffset:18px}to{stroke-dashoffset:0px}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-leg1{0%{transform:translate(276px,133px);opacity:0}5%{opacity:1}95%{opacity:1}100%{transform:translate(384px,133px);opacity:0}}
+@keyframes ts-anim-s2-5-1-sketch-draw-animate-leg2{0%{transform:translate(626px,133px);opacity:0}5%{opacity:1}95%{opacity:1}100%{transform:translate(734px,133px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ts-anim-s2-5-1-sketch-draw-animate *{animation:none}}
+</style>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3B3535"/></marker>
+<clipPath id="ts-anim-s2-5-1-sketch-draw-animate-gap1"><rect x="284.75" y="110" width="88" height="50"/></clipPath>
+<clipPath id="ts-anim-s2-5-1-sketch-draw-animate-gap2"><rect x="635.25" y="110" width="88" height="50"/></clipPath>
+</defs>
+<rect x="0" y="0" width="1008" height="266" fill="#ffffff"/>
+<g transform="translate(0,-9)">
+<g font-size="15" font-weight="bold" text-anchor="middle" fill="#1F1E1E">
+<text class="h1" x="154" y="44">YOU SKETCH</text>
+<text class="h2" x="504" y="44" fill="#DA1B2E">TALKSMITH DRAWS</text>
+<text class="h3" x="854" y="44">AND ANIMATES</text>
+</g>
+<rect x="24" y="62" width="260" height="160" rx="10" fill="#F2F2F2" stroke="#D8D2CE" stroke-width="1.5"/>
+<line x1="24.75" y1="88" x2="283.25" y2="88" stroke="#D8D2CE" stroke-width="1.5"/>
+<g font-family="'Andale Mono', monospace" xml:space="preserve">
+<text x="40" y="80" font-size="12" fill="#6B6363">draft.md</text>
+<g font-size="15" fill="#1F1E1E">
+<text class="s1" x="40" y="116">```ascii</text>
+<text class="s2" x="40" y="142">[ a ]</text>
+<text class="s2" x="144" y="142">[ b ]</text>
+<text class="s3" x="40" y="168">```</text>
+<text class="s4" x="40" y="200">animation: 1. ...</text>
+</g>
+</g>
+<line class="s2" x1="92" y1="137" x2="136" y2="137" stroke="#1F1E1E" stroke-width="1.5" marker-end="url(#ah)"/>
+<rect x="374" y="62" width="260" height="160" rx="10" fill="#ffffff" stroke="#DA1B2E" stroke-width="2.5"/>
+<rect x="724" y="62" width="260" height="160" rx="10" fill="#ffffff" stroke="#D8D2CE" stroke-width="1.5"/>
+<rect class="ka" x="414" y="88" width="60" height="36" rx="6" fill="#F2EEEE" stroke="#3B3535" stroke-width="1.5"/>
+<rect class="kb" x="534" y="88" width="60" height="36" rx="6" fill="#F2EEEE" stroke="#3B3535" stroke-width="1.5"/>
+<line class="sab" x1="474.75" y1="106" x2="533.25" y2="106" stroke="#3B3535" stroke-width="2" stroke-dasharray="60 60"/>
+<path class="hab" d="M521.25,100 L533.25,106 L521.25,112 z" fill="#3B3535"/>
+<g text-anchor="middle" font-size="16" font-weight="bold" fill="#1F1E1E">
+<text class="ka" x="444" y="112">a</text>
+<text class="kb" x="564" y="112">b</text>
+</g>
+<g text-anchor="middle">
+<text class="c2" x="504" y="152">a clean SVG in</text>
+<text class="c2" x="504" y="170">the deck palette</text>
+<text class="c3" x="854" y="152">plays when its</text>
+<text class="c3" x="854" y="170">slide comes up</text>
+</g>
+<rect class="chip" x="746" y="88" width="216" height="36" rx="6" fill="#F2F2F2" stroke="#D8D2CE" stroke-width="1.5"/>
+<path class="chip" d="M764,99 L776,106 L764,113 z" fill="#3B3535"/>
+<text class="chip" x="786" y="111" font-family="'Andale Mono', monospace" fill="#1F1E1E">&lt;name&gt;.anim.svg</text>
+<g font-size="13">
+<rect class="p1" x="429" y="186" width="150" height="24" rx="12" fill="#F2EEEE"/>
+<path class="ck1" d="M445,198 l4,4 l8,-9" fill="none" stroke="#3B3535" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="18 18"/>
+<text class="p1" x="465" y="202.5">critic: approved</text>
+<rect class="p2" x="779" y="186" width="150" height="24" rx="12" fill="#F2EEEE"/>
+<path class="ck2" d="M795,198 l4,4 l8,-9" fill="none" stroke="#3B3535" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="18 18"/>
+<text class="p2" x="815" y="202.5">critic: approved</text>
+</g>
+<line class="shp" x1="285" y1="142" x2="372.75" y2="142" stroke="#3B3535" stroke-width="2" stroke-dasharray="89 89"/>
+<path class="hdp" d="M360.75,136 L372.75,142 L360.75,148 z" fill="#3B3535"/>
+<line class="shb" x1="635" y1="142" x2="723.25" y2="142" stroke="#3B3535" stroke-width="2" stroke-dasharray="89 89"/>
+<path class="hdb" d="M711.25,136 L723.25,142 L711.25,148 z" fill="#3B3535"/>
+<g text-anchor="middle" font-weight="bold">
+<text class="lp" x="328" y="131">Polish</text>
+<text class="lb" x="678" y="131">brief</text>
+</g>
+<g text-anchor="middle" font-style="italic">
+<text class="c1" x="154" y="246">plain text you edit</text>
+<text class="c4" x="504" y="246">the still: PDF, pptx</text>
+<text class="c5" x="854" y="246">the HTML deck</text>
+</g>
+</g>
+<g clip-path="url(#ts-anim-s2-5-1-sketch-draw-animate-gap1)">
+<g class="tk1" opacity="0">
+<rect x="-5" y="-6" width="10" height="12" rx="1.5" fill="#F2F2F2" stroke="#3B3535" stroke-width="1.5"/>
+<path d="M-2.5,-2.5 H2.5 M-2.5,0 H2.5 M-2.5,2.5 H1" fill="none" stroke="#3B3535" stroke-width="1.2"/>
+</g>
+</g>
+<g clip-path="url(#ts-anim-s2-5-1-sketch-draw-animate-gap2)">
+<g class="tk2" opacity="0">
+<rect x="-5" y="-6" width="10" height="12" rx="1.5" fill="#F2F2F2" stroke="#3B3535" stroke-width="1.5"/>
+<path d="M-2.5,-2.5 H2.5 M-2.5,0 H2.5 M-2.5,2.5 H1" fill="none" stroke="#3B3535" stroke-width="1.2"/>
+</g>
+</g>
+</svg>

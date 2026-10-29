@@ -1,0 +1,19 @@
+  YOU SKETCH  (draft.md)       TALKSMITH DRAWS             AND ANIMATES
+ ┌─────────────────────┐       ┌───────────────────┐       ┌───────────────────┐
+ │ ```ascii            │       │ a clean SVG in    │       │ <name>.anim.svg   │
+ │ [ a ] ──► [ b ]     │ ────► │ the deck palette  │ ────► │ plays when its    │
+ │ ```                 │Polish │                   │ brief │ slide comes up    │
+ │ animation: 1. …     │       │ critic: approved  │       │ critic: approved  │
+ └─────────────────────┘       └───────────────────┘       └───────────────────┘
+   plain text you edit          the still: PDF, pptx        the HTML deck
+
+<!-- ascii-note:
+intent: one diagram's life — a sketch in the draft, drawn at Polish, then animated from its brief
+emphasize: «TALKSMITH DRAWS» — the drawn SVG
+labels: the captions under each box; «Polish» and «brief» on the arrows
+animation:
+  1. «YOU SKETCH» appears with the ASCII sketch and its «animation:» brief.
+  2. «Polish» carries it into «TALKSMITH DRAWS»: the clean SVG builds, and «critic: approved» lands only once it is complete.
+  3. «brief» carries it into «AND ANIMATES»: «<name>.anim.svg» appears beside the still, and its own «critic: approved» lands.
+  4. Both stay: the still for the PDF and the pptx, the animation for the HTML deck.
+-->

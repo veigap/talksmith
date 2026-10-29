@@ -1,0 +1,7 @@
+  FORWARD
+  draft.md ─────► final.md ─────► output/final.pptx
+     ▲                                   │
+     │            REVERSE                │  you edit in Keynote / PowerPoint
+     └─ pptx-merge ◄─ pptx-diff ◄─ pptx-extract
+
+<!-- ascii-note: forward + reverse pipeline — top row left-to-right, reverse row right-to-left back into draft.md -->

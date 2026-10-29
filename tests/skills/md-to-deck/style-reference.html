@@ -1360,38 +1360,38 @@ html.print-pdf .cbfull{display:none}
   <title>Pipeline, step by step</title>
   <desc>Tokenize, predict, generate — each phase arriving in turn, then one request travelling the whole pipeline.</desc>
 <style>/* talksmith-animation */
-.ts-anim-pipeline-animated .phase{animation:ts-anim-pipeline-animated-in .6s ease-out both}
-.ts-anim-pipeline-animated .phase2{animation-delay:1.6s}
-.ts-anim-pipeline-animated .phase1{animation-delay:.5s}
-.ts-anim-pipeline-animated .phase3{animation-delay:2.7s}
-.ts-anim-pipeline-animated .run{animation:ts-anim-pipeline-animated-show 3.5s linear 3.9s both}
-.ts-anim-pipeline-animated .run .ball{animation:ts-anim-pipeline-animated-path1 3.5s linear 3.9s 1 normal both}
+.ts-anim-pipeline-animated .e4-phase{animation:ts-anim-pipeline-animated-in .6s ease-out both}
+.ts-anim-pipeline-animated .e4-phase2{animation-delay:1.6s}
+.ts-anim-pipeline-animated .e4-phase1{animation-delay:.5s}
+.ts-anim-pipeline-animated .e4-phase3{animation-delay:2.7s}
+.ts-anim-pipeline-animated .e4-run{animation:ts-anim-pipeline-animated-show 3.5s linear 3.9s both}
+.ts-anim-pipeline-animated .e4-run .e4-ball{animation:ts-anim-pipeline-animated-path1 3.5s linear 3.9s 1 normal both}
 @keyframes ts-anim-pipeline-animated-in{from{opacity:0}}
 @keyframes ts-anim-pipeline-animated-show{0%{opacity:0}8%,90%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.ts-anim-pipeline-animated *{animation:none}}
 @keyframes ts-anim-pipeline-animated-path1{0.00%{transform:translate(110.0px,180.0px)}3.33%{transform:translate(110.9px,180.0px)}6.67%{transform:translate(113.6px,180.0px)}10.00%{transform:translate(118.3px,180.0px)}13.33%{transform:translate(124.9px,180.0px)}16.67%{transform:translate(133.6px,180.0px)}20.00%{transform:translate(144.3px,180.0px)}23.33%{transform:translate(157.1px,180.0px)}26.67%{transform:translate(171.9px,180.0px)}30.00%{transform:translate(188.7px,180.0px)}33.33%{transform:translate(207.3px,180.0px)}36.67%{transform:translate(227.7px,180.0px)}41.67%{transform:translate(260.7px,180.0px)}58.33%{transform:translate(379.3px,180.0px)}63.33%{transform:translate(412.3px,180.0px)}66.67%{transform:translate(432.7px,180.0px)}70.00%{transform:translate(451.3px,180.0px)}73.33%{transform:translate(468.1px,180.0px)}76.67%{transform:translate(482.9px,180.0px)}80.00%{transform:translate(495.7px,180.0px)}83.33%{transform:translate(506.4px,180.0px)}86.67%{transform:translate(515.1px,180.0px)}90.00%{transform:translate(521.7px,180.0px)}93.33%{transform:translate(526.4px,180.0px)}96.67%{transform:translate(529.1px,180.0px)}100.00%{transform:translate(530.0px,180.0px)}}
 </style>
   <rect width="640" height="360" fill="#FFFFFF"/>
-  <g class="run" opacity="0"><circle class="ball" r="9" fill="#DA1B2E" stroke="#FFFFFF" stroke-width="2"/></g>
+  <g class="e4-run" opacity="0"><circle class="e4-ball" r="9" fill="#DA1B2E" stroke="#FFFFFF" stroke-width="2"/></g>
   <defs><marker id="e4-a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
     <path d="M0 0 L6 3 L0 6 z" fill="#DA1B2E"/></marker></defs>
   <g font-family="Helvetica,Arial" font-size="18" font-weight="700" text-anchor="middle">
-    <g class="phase phase1">
+    <g class="e4-phase e4-phase1">
       <rect x="40" y="150" width="140" height="60" rx="10" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="3"/>
       <text x="110" y="185" fill="#1F1E1E">Tokeniza</text>
     </g>
-    <g class="phase phase2">
+    <g class="e4-phase e4-phase2">
       <path d="M180 180 H250" stroke="#DA1B2E" stroke-width="3" marker-end="url(#e4-a)"/>
       <rect x="250" y="150" width="140" height="60" rx="10" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="3"/>
       <text x="320" y="185" fill="#1F1E1E">Predice</text>
     </g>
-    <g class="phase phase3">
+    <g class="e4-phase e4-phase3">
       <path d="M390 180 H460" stroke="#DA1B2E" stroke-width="3" marker-end="url(#e4-a)"/>
       <rect x="460" y="150" width="140" height="60" rx="10" fill="#FFFFFF" stroke="#DA1B2E" stroke-width="3"/>
       <text x="530" y="185" fill="#1F1E1E">Genera</text>
     </g>
   </g>
-  <text class="run" opacity="0" x="320" y="290" font-family="Helvetica,Arial" font-size="17" font-weight="700" fill="#DA1B2E" text-anchor="middle">Una petición recorre el pipeline</text>
+  <text class="e4-run" opacity="0" x="320" y="290" font-family="Helvetica,Arial" font-size="17" font-weight="700" fill="#DA1B2E" text-anchor="middle">Una petición recorre el pipeline</text>
 </svg></div></div></div>
 </section><section class="slide" data-kind="timeline"><div class="stage d-full">
 <div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">timeline: a dated milestone sequence</h2><p class="lead">An optional lead can frame the sequence before the dates begin.</p></div><div class="cbody"><div class="cfit"><div class="timeline">

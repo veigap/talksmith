@@ -1,0 +1,66 @@
+<!-- talksmith-ascii-sha256: b908db0327ec802067bf81931444b6a0c2b5273e14edb8b38f482c0084b55840 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1008 266" font-family="Helvetica, Arial, sans-serif" fill="#3B3535" font-size="14">
+<title>Your diagrams draw themselves</title>
+<desc>How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text — so you never spend time making a diagram look nicer.</desc>
+<defs>
+<marker id="ah" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3B3535"/></marker>
+</defs>
+<rect x="0" y="0" width="1008" height="266" fill="#ffffff"/>
+<g transform="translate(0,-9)">
+<g font-size="15" font-weight="bold" text-anchor="middle" fill="#1F1E1E">
+<text x="154" y="44">YOU SKETCH</text>
+<text x="504" y="44" fill="#DA1B2E">TALKSMITH DRAWS</text>
+<text x="854" y="44">AND ANIMATES</text>
+</g>
+<rect x="24" y="62" width="260" height="160" rx="10" fill="#F2F2F2" stroke="#D8D2CE" stroke-width="1.5"/>
+<line x1="24.75" y1="88" x2="283.25" y2="88" stroke="#D8D2CE" stroke-width="1.5"/>
+<g font-family="'Andale Mono', monospace" xml:space="preserve">
+<text x="40" y="80" font-size="12" fill="#6B6363">draft.md</text>
+<g font-size="15" fill="#1F1E1E">
+<text x="40" y="116">```ascii</text>
+<text x="40" y="142">[ a ]</text>
+<text x="144" y="142">[ b ]</text>
+<text x="40" y="168">```</text>
+<text x="40" y="200">animation: 1. ...</text>
+</g>
+</g>
+<line x1="92" y1="137" x2="136" y2="137" stroke="#1F1E1E" stroke-width="1.5" marker-end="url(#ah)"/>
+<rect x="374" y="62" width="260" height="160" rx="10" fill="#ffffff" stroke="#DA1B2E" stroke-width="2.5"/>
+<rect x="724" y="62" width="260" height="160" rx="10" fill="#ffffff" stroke="#D8D2CE" stroke-width="1.5"/>
+<rect x="414" y="88" width="60" height="36" rx="6" fill="#F2EEEE" stroke="#3B3535" stroke-width="1.5"/>
+<rect x="534" y="88" width="60" height="36" rx="6" fill="#F2EEEE" stroke="#3B3535" stroke-width="1.5"/>
+<line x1="474.75" y1="106" x2="533.25" y2="106" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<g text-anchor="middle" font-size="16" font-weight="bold" fill="#1F1E1E">
+<text x="444" y="112">a</text>
+<text x="564" y="112">b</text>
+</g>
+<g text-anchor="middle">
+<text x="504" y="152">a clean SVG in</text>
+<text x="504" y="170">the deck palette</text>
+<text x="854" y="152">plays when its</text>
+<text x="854" y="170">slide comes up</text>
+</g>
+<rect x="746" y="88" width="216" height="36" rx="6" fill="#F2F2F2" stroke="#D8D2CE" stroke-width="1.5"/>
+<path d="M764,99 L776,106 L764,113 z" fill="#3B3535"/>
+<text x="786" y="111" font-family="'Andale Mono', monospace" fill="#1F1E1E">&lt;name&gt;.anim.svg</text>
+<g font-size="13">
+<rect x="429" y="186" width="150" height="24" rx="12" fill="#F2EEEE"/>
+<path d="M445,198 l4,4 l8,-9" fill="none" stroke="#3B3535" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="465" y="202.5">critic: approved</text>
+<rect x="779" y="186" width="150" height="24" rx="12" fill="#F2EEEE"/>
+<path d="M795,198 l4,4 l8,-9" fill="none" stroke="#3B3535" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="815" y="202.5">critic: approved</text>
+</g>
+<line x1="285" y1="142" x2="372.75" y2="142" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="635" y1="142" x2="723.25" y2="142" stroke="#3B3535" stroke-width="2" marker-end="url(#ah)"/>
+<g text-anchor="middle" font-weight="bold">
+<text x="328" y="131">Polish</text>
+<text x="678" y="131">brief</text>
+</g>
+<g text-anchor="middle" font-style="italic">
+<text x="154" y="246">plain text you edit</text>
+<text x="504" y="246">the still: PDF, pptx</text>
+<text x="854" y="246">the HTML deck</text>
+</g>
+</g>
+</svg>

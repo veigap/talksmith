@@ -6,7 +6,9 @@ Run:  python3 tests/skills/animate-svg/test_capture_frames.py
 The critic judges an animation from these frames alone, so what matters is that they show the
 animation as it plays: the frames cover its key moments, the last one is the still as the
 animation leaves it (a bug once kept a frame caught mid-fade instead), a quick journey is caught
-under way and not only arrived, and a re-capture never leaves stale frames from a longer run.
+under way and not only arrived, and a re-capture never leaves stale frames from a longer run. And
+the approved still they are compared with comes from the same browser — from another rasterizer,
+every italic label read as one the animation had restyled.
 """
 from __future__ import annotations
 
@@ -48,6 +50,12 @@ def main() -> int:
             _check("capture: a contact sheet and a frame per key moment, stale frames cleared",
                    code == 0 and "contact.png" in names and "frame-99.png" not in names
                    and sum(n.startswith("frame-") for n in names) >= 8, str(names))
+            src = (SKILL / "examples" / "gan-paths.svg").read_text(encoding="utf-8")
+            (Path(d) / "x.svg").write_text(src, encoding="utf-8")
+            (Path(d) / "x.anim.svg").write_text(src, encoding="utf-8")
+            F.main([str(Path(d) / "x.anim.svg"), "--out", str(out)])
+            _check("capture: the base beside the animation is drawn by the same browser as still.png",
+                   (out / "still.png").is_file() and (out / "still.png").stat().st_size > 1000)
             static = Path(d) / "static.svg"
             static.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect/></svg>')
             _check("capture: an SVG with no animation is refused", F.main([str(static), "--out", str(out)]) == 2)
