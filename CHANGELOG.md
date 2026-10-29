@@ -13,6 +13,17 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.6.1] — 2026-10-28
+
+No re-init needed.
+
+### Changed
+
+- The README now describes everything Talksmith does — web capture, the drafting review,
+  anti-slop prose, diagrams drawn from ASCII, animated diagrams, generated side images, the
+  live view, the PDF and `.pptx` exports and the landing page — and says what
+  `/talksmith:init` actually writes (`CLAUDE.md`, `AGENTS.md` and a `.gitignore` block).
+
 ## [1.6.0] — 2026-10-28
 
 No re-init needed.

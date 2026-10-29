@@ -37,6 +37,29 @@ You talk to Talksmith in chat; it does the work and keeps `draft.md` / `final.md
 
 Full step-by-step spec: [orchestrator.md](orchestrator.md). Who does what behind the scenes: [docs/roles.md](docs/roles.md). The method and philosophy: [docs/methodology.md](docs/methodology.md).
 
+## What it does for you
+
+**Sources**
+- **Bring anything** — PDFs, papers, chat exports, images. Each becomes one uniform, citable record under `research/corpus/`, preserved rather than summarized.
+- **Capture a web page** — hand it a URL (`/talksmith:ingest <url>`) and it saves the page, its text and its images into the Talk's sources.
+
+**Writing**
+- **Reviewed as it's written** — at every drafting milestone a reviewer checks the outline against your thesis, your audience, your sources and the rules your team has learned.
+- **Prose without the AI tics** — slides and speaker notes are written to an anti-slop standard, in English and in Spanish.
+- **Nothing silently dropped** — content you cut goes to `Cut material`; questions left open go to `Open questions`.
+
+**Diagrams**
+- **Sketch it, get it drawn** — rough a diagram out in ASCII inside `draft.md`. Polish redraws it as a clean SVG in the deck's palette, and a critic that sees only the picture — never the code — checks it before it ships.
+- **Animated diagrams** — under a diagram, describe what the audience should see happen (`animation:` — a request going through a pipeline, the image a network builds getting sharper, the route a datum takes when the result differs). Once the drawing is approved, Talksmith writes an animated version beside it, judged by its own blind critic; one that doesn't come out clean is dropped and the slide keeps its approved still. It plays in the HTML deck each time its slide comes up — `←` replays it — and the PDF and `.pptx` show the still.
+- **Generated images** — on a slide light on text, Talksmith can propose an atmospheric side image (`<!-- generate-image: right | the vertigo of scale -->`), generated in the deck's palette when your Claude session can make images. Where it can't, the slide simply keeps its text — it never blocks the build.
+
+**Slides**
+- **A live view while you review** — the deck renders from `draft.md` in the background, so you see the slides take shape before anything is final.
+- **Each slide gets the right layout** — slides are classified against a catalog of templates and re-checked by an independent critic; a check before rendering makes sure every line of `final.md` reached the deck.
+- **Code that reads** — code panels with syntax highlighting that shrink to fit instead of being cut off.
+- **Exports** — a PDF and an editable `.pptx`, both measured from the HTML deck so they match it.
+- **One page for every talk** — an `index.html` at the root of your subject repo lists every rendered deck.
+
 ## What you get
 
 Committed examples and canonical shapes for every artifact the workflow produces:
@@ -82,7 +105,7 @@ Each presenter installs the plugin once; the **subject repo** — a Git reposito
 2. **Install the plugin** *(each presenter, once)*:
    - **CLI** — `npm install -g @anthropic-ai/claude-code`, then in a session run `/plugin marketplace add veigap/talksmith` and `/plugin install talksmith@talksmith`. Update later with `/plugin update talksmith`.
    - **Cowork (desktop)** — install from [claude.com/download](https://claude.com/download), open the plugin manager, add the `veigap/talksmith` marketplace, install **talksmith**. Desktop and CLI share the install. Everything Talksmith does runs in either one, including the PDF and `.pptx` exports — those need a Chrome/Chromium on the machine, plus `python-pptx` and Pillow for the `.pptx`.
-3. **Initialize the repo** *(once, by the first presenter)* — run `/talksmith:init`. It writes one file: a thin `CLAUDE.md` stub. Commit and push it; everyone who clones the repo afterward is set up automatically. Plugin updates flow through without re-running init.
+3. **Initialize the repo** *(once, by the first presenter)* — run `/talksmith:init`. It writes a thin `CLAUDE.md` stub, an `AGENTS.md` that points other agents (Codex) at it, and a `.gitignore` block for build artifacts. Commit and push them; everyone who clones the repo afterward is set up automatically. Plugin updates flow through without re-running init.
 4. **Start** — CLI: `claude --model opus` in the repo; Cowork: open the workspace. Say *"Hi Talksmith"*.
 
 ## One repo per subject
@@ -104,6 +127,8 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 ```
 <your-subject-repo>/
 ├── CLAUDE.md                 # thin stub from /talksmith:init; auto-loads the plugin spec — leave it alone
+├── AGENTS.md                 # the same pointer for other agents (Codex) — leave it alone
+├── index.html                # landing page listing every rendered Talk
 ├── talksmith-bugs.md         # defects Talksmith hit while running — context, repro, suggested fix
 ├── config/
 │   ├── profile.md            # Subject, Presenter(s), audience, duration, language
@@ -117,7 +142,8 @@ What `/talksmith:init` and the workflow produce inside your subject repo:
 │       ├── final.md          # the polished deliverable (Step 6)
 │       ├── memory.md         # progress log / restore point — used to resume
 │       ├── research/         # articles/, llm-chats/, web/ (inputs) + corpus/ (Step 3)
-│       ├── images/           # rendered diagrams + consolidated images (Step 6)
+│       ├── images/           # drawn diagrams (<name>.svg) and their animated versions (<name>.anim.svg),
+│       │                     # generated side images, and every other image the Talk uses (Step 6)
 │       └── output/           # html/ deck, plus final.pdf / final.pptx when asked for (Step 7, optional)
 └── knowledge-library/        # team's curated cross-Talk index (Step 8)
 ```

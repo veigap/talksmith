@@ -225,22 +225,29 @@ Make the knowledge-base idea concrete with a picture — and note the picture it
 
 ### Content
 
-- **Raw sources** — immutable ground truth the agent reads but never rewrites.
-- **The wiki** — synthesized, cross-linked Markdown the agent owns and keeps updated.
-- **Projections** — `final.md`, then HTML or `.pptx`, rendered on demand and disposable.
+Three layers — and who is allowed to write each one.
 
 ```ascii
-   RAW SOURCES            THE WIKI  (agent-owned)          PROJECTIONS
-  ┌────────────┐         ┌─────────────────────┐         ┌────────────┐
-  │ papers     │         │ corpus/*.md          │         │ final.md   │
-  │ PDFs       │ ──────► │ memory.md            │ ──────► │    │       │
-  │ chat logs  │ ingest  │ draft.md → final.md  │ render  │    ▼       │
-  │ notes, URLs│         │ learnings.md         │         │ HTML / pptx│
-  └────────────┘         └─────────────────────┘         └────────────┘
-    read, never            compiled once,                   rebuilt
-    rewritten              kept updated forever              on demand
+   RAW SOURCES            THE WIKI  (agent-owned)           PROJECTIONS
+  ┌────────────┐         ┌──────────────────────┐         ┌─────────────┐
+  │ papers     │         │ corpus/*.md          │         │ final.md    │
+  │ PDFs       │ ──────► │ memory.md            │ ──────► │    │        │
+  │ chat logs  │ ingest  │ draft.md             │ render  │    ▼        │
+  │ notes, URLs│         │ learnings.md         │         │ HTML / pptx │
+  └────────────┘         └──────────────────────┘         └─────────────┘
+    read, never            compiled once,                    rebuilt
+    rewritten              kept updated forever               on demand
 ```
-<!-- ascii-note: three-layer knowledge-base diagram — keep the arrows left-to-right and the captions under each box -->
+<!-- ascii-note:
+intent: the three layers of the knowledge base, and who may write each one
+emphasize: THE WIKI — the agent-owned middle layer
+labels: «ingest» and «render» on the left-to-right arrows; the captions under each box
+animation:
+  1. A paper lands in «RAW SOURCES»; it is read, never rewritten.
+  2. «ingest» carries it into «THE WIKI», which compiles it into «corpus/*.md» and keeps «memory.md», «draft.md» and «learnings.md» current.
+  3. «render» carries the wiki out into «PROJECTIONS»: «final.md» becomes «HTML / pptx».
+  4. The projections fade and are rebuilt on demand, while the wiki stays: the deck is disposable, the base is not.
+-->
 
 ### Sources
 
@@ -249,7 +256,7 @@ Make the knowledge-base idea concrete with a picture — and note the picture it
 
 ### Speaker notes
 
-The ownership boundaries are the design. Raw sources (research/) are immutable ground truth — the agent reads them but never rewrites them, so provenance is always checkable. The wiki (research/corpus/) is agent-owned synthesis: uniform, cross-linked Markdown records the agent keeps current — humans read it but don't have to maintain it. Projections (final.md, then HTML or .pptx) are derived and disposable — regenerate them anytime, delete them without loss. Each layer can be trusted precisely because of who is *not* allowed to write it.
+The ownership boundaries are the design. Raw sources (research/) are immutable ground truth — the agent reads them but never rewrites them, so provenance is always checkable. The wiki is agent-owned synthesis: the corpus records in research/corpus/ (uniform, cross-linked Markdown), plus the outline in draft.md, the progress log in memory.md and the learned rules in learnings.md. The agent keeps all of it current; you read it and steer it, but you don't have to maintain it. Projections (final.md, then HTML or .pptx) are derived and disposable — regenerate them anytime, delete them without loss. Each layer can be trusted precisely because of who is *not* allowed to write it.
 
 ### Presenter feedback
 
@@ -259,13 +266,34 @@ The ownership boundaries are the design. Raw sources (research/) are immutable g
 ---
 
 ## 5. Your diagrams draw themselves
-<!-- template: single-point -->
+<!-- template: content+image -->
 
-The wow moment, stated plainly and demonstrated by the slide before it.
+The wow moment, shown by the slide itself: the sketch, the drawing, and the animation.
 
 ### Content
 
-**You don't draw diagrams.** Talksmith proposes an outline version of each diagram as ASCII right in your draft — edit it if you want — then renders it to a clean, styled SVG at Polish. No more time spent making diagrams look nicer. Every diagram in this talk was generated that way.
+**You don't draw diagrams.** Sketch one in ASCII — or let Talksmith propose it — and say what should happen in it. Every diagram in this talk was made this way.
+
+```ascii
+  YOU SKETCH  (draft.md)       TALKSMITH DRAWS             AND ANIMATES
+ ┌─────────────────────┐       ┌───────────────────┐       ┌───────────────────┐
+ │ ```ascii            │       │ a clean SVG in    │       │ <name>.anim.svg   │
+ │ [ a ] ──► [ b ]     │ ────► │ the deck palette  │ ────► │ plays when its    │
+ │ ```                 │Polish │                   │ brief │ slide comes up    │
+ │ animation: 1. …     │       │ critic: approved  │       │ critic: approved  │
+ └─────────────────────┘       └───────────────────┘       └───────────────────┘
+   plain text you edit          the still: PDF, pptx        the HTML deck
+```
+<!-- ascii-note:
+intent: one diagram's life — a sketch in the draft, drawn at Polish, then animated from its brief
+emphasize: «TALKSMITH DRAWS» — the drawn SVG
+labels: the captions under each box; «Polish» and «brief» on the arrows
+animation:
+  1. «YOU SKETCH» appears with the ASCII sketch and its «animation:» brief.
+  2. «Polish» carries it into «TALKSMITH DRAWS»: the clean SVG builds, and «critic: approved» lands only once it is complete.
+  3. «brief» carries it into «AND ANIMATES»: «<name>.anim.svg» appears beside the still, and its own «critic: approved» lands.
+  4. Both stay: the still for the PDF and the pptx, the animation for the HTML deck.
+-->
 
 ### Sources
 
@@ -273,7 +301,7 @@ The wow moment, stated plainly and demonstrated by the slide before it.
 
 ### Speaker notes
 
-How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text. At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. The consequence: diagrams are versionable, diffable text until the moment of rendering.
+How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — proposed by the agent, editable by you like any text — so you never spend time making a diagram look nicer. Under each one, a short note can describe what should happen in it (the animation brief). At Polish, the Diagram-Illustrator scans final.md for these blocks, renders each to a styled SVG (one standing visual spec governs colors, fonts, and shapes, so all diagrams in a talk match), and swaps the fence for an image reference — keeping the ASCII source alongside, so editing the ASCII and re-running Polish regenerates the picture. Then a second stage animates every approved diagram that has a brief, writing the animated version beside the still; a separate blind critic judges it from frames, and an animation that doesn't come out clean is dropped — the slide keeps its still. On a slide light on text, Talksmith can also propose a generated side image. The consequence: diagrams are versionable, diffable text until the moment of rendering — and so is their motion.
 
 ### Presenter feedback
 
@@ -293,14 +321,34 @@ How the mechanism works: diagrams live in draft.md as fenced ASCII blocks — pr
 ## 1. Eight steps, driven from chat
 <!-- template: content+image -->
 
-The whole arc in one picture — reuse the plugin's own diagram.
+The whole arc in one picture, drawn from the plugin's own workflow.
 
 ### Content
 
 - You talk to Talksmith in chat; it does the work and keeps `draft.md` / `final.md` as the single source of truth.
 - The live HTML preview (as you review) is optional; so are the PDF and `.pptx` you can export from the finished deck.
 
-![Talksmith workflow](images/workflow.png)
+```ascii
+  SET UP
+  [0 Introduce] ──► [0.5 Profile] ──► [1 Frame] ──► [2 Collect] ──► [3 Corpus]
+                                                                        │
+       ┌────────────────────────────────────────────────────────────────┘
+       ▼
+  [4 Draft] ──► [5 Review] ──► [6 Polish] ──► [7 Render] ──► [8 Learnings]
+                 │     ▲                       optional       │
+                 └─────┘ loop until "final"                   └──► next talk inherits the rules
+                 5.5 live view (optional)
+```
+<!-- ascii-note:
+intent: the eight steps as one flow — set-up first, a review loop in the middle, render and learnings at the end
+emphasize: the Review loop
+labels: the step numbers and names; «loop until "final"»; «optional» under Render
+animation:
+  1. A talk enters at «0 Introduce» and walks the set-up row to «3 Corpus».
+  2. It drops to «4 Draft», then goes round the «5 Review» loop twice: each pass, feedback goes in and the draft comes back revised. The «5.5 live view» lights up while it loops.
+  3. On "final" it leaves the loop through «6 Polish», then «7 Render», marked «optional».
+  4. It reaches «8 Learnings», which sends the rules on to the next talk.
+-->
 
 ### Sources
 
@@ -308,7 +356,7 @@ The whole arc in one picture — reuse the plugin's own diagram.
 
 ### Speaker notes
 
-The shape of the workflow: setup happens once per talk (profile the audience, frame the thesis, collect and compile sources into the corpus); the middle is a loop (draft, review with inline feedback, repeat until right); rendering comes last and is optional. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.
+The shape of the workflow: setup comes first (the audience profile, set once per subject; then, for each talk, its topic, its sources, and the corpus compiled from them); the middle is a loop (draft, review with inline feedback, repeat until right); after it, Polish produces final.md and rendering is optional. Learnings closes every talk: feedback that recurred becomes rules the next talk inherits. draft.md is the single source of truth throughout — the live HTML preview and the final deck are projections of it. Nothing blocks on the optional steps: a talk is complete as an outline even if it's never rendered.
 
 ### Presenter feedback
 
@@ -340,17 +388,13 @@ The three drafting modes produce the same draft.md — they differ in who moves 
 ---
 
 ## 3. Review is a loop
-<!-- template: process -->
+<!-- template: content+image -->
 
-The differentiator: feedback is applied *and* kept forever — and it's about content, not looks. Second render-driving diagram.
+The differentiator: feedback is applied *and* kept forever — and it's about content, not looks.
 
 ### Content
 
 You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you review again, until the talk is right.
-
-1. **Leave feedback** Drop plain-text bullets right in `draft.md`, under each slide's `### Presenter feedback` — as many as you want, in any editor.
-2. **Talksmith applies** It stamps each bullet, makes the change, and closes it with a one-line resolution kept as an audit trail.
-3. **Review and repeat** Look again, add more feedback, go around once more — the loop runs as many rounds as it takes until you say "final".
 
 **Important:** Every round is about the **content**, not how it looks — visuals and styling come later at Polish.
 
@@ -372,7 +416,17 @@ You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you
            │
            └──────────► loop until you say "final"
 ```
-<!-- ascii-note: feedback lifecycle — raw → open → apply → closed → backlog, with the loop-back arrow at the bottom -->
+<!-- ascii-note:
+intent: the life of one feedback bullet — raw, open, applied, closed, kept
+emphasize: the [closed] line with its Resolution
+labels: keep the loop-back arrow at the bottom
+animation:
+  1. You type a raw bullet, «- "trim this slide"», in draft.md.
+  2. The editor stamps it «[open]» with today's date.
+  3. «apply the change» runs, and the arrow brings it back as «[closed]» with its «Resolution».
+  4. The closed bullet is «mirrored to feedback-backlog.md» — kept, never deleted.
+  5. The loop arrow returns to the top for the next round, until you say "final".
+-->
 
 ### Sources
 
@@ -381,7 +435,7 @@ You refine `draft.md` in **rounds** — leave inline feedback, it's applied, you
 
 ### Speaker notes
 
-How feedback actually flows: you write plain-text bullets under any slide's 'Presenter feedback' heading, in any editor. Talksmith stamps each bullet [open] with a date, makes the change, then closes it in place with a one-line resolution — so draft.md accumulates a decision trail: what was asked, what was done, when. Closed items are mirrored to a backlog file, and recurring feedback gets promoted into learnings.md as standing editorial rules that every future talk inherits. This is the direct answer to 'no record of decisions' from the opening section.
+How feedback actually flows, in three moves — leave feedback, Talksmith applies, review and repeat: you write plain-text bullets under any slide's 'Presenter feedback' heading, in any editor, as many as you want. Talksmith stamps each bullet [open] with a date, makes the change, then closes it in place with a one-line resolution — so draft.md accumulates a decision trail: what was asked, what was done, when. Closed items are mirrored to a backlog file, and recurring feedback gets promoted into learnings.md as standing editorial rules that every future talk inherits. This is the direct answer to 'no record of decisions' from the opening section.
 
 ### Presenter feedback
 
