@@ -1524,6 +1524,42 @@ _FULL_ICONS = (
     'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>')
 
+# Portrait phone — the deck is a fixed 16:9 stage, so a phone held upright shrinks it to a strip.
+# The `.deckrotate` overlay asks the viewer to turn the phone; *when* it shows is pure CSS (a
+# media query in theme.css), so turning the phone dismisses it with no script. Its button turns
+# the screen for them where the browser can: fullscreen first, because `screen.orientation.lock`
+# only works in fullscreen (Android Chrome). iPhone Safari has neither, so the button only appears
+# under `.can-rotate` and there the message alone asks. "Continue in portrait" dismisses it for
+# this page load.
+_ROTATE_LABELS = {
+    "en": {"msg": "Turn your phone sideways to see the slides", "go": "Rotate to landscape",
+           "skip": "Continue in portrait"},
+    "es": {"msg": "Girá el teléfono para ver las diapositivas", "go": "Girar a horizontal",
+           "skip": "Seguir en vertical"},
+}
+_ROTATE = ("(function(){var root=document.documentElement,el=document.querySelector('.deckrotate');"
+           "if(!el)return;var so=screen.orientation;"
+           "if(so&&so.lock&&root.requestFullscreen)root.classList.add('can-rotate');"
+           "el.querySelector('[data-rotate-go]').addEventListener('click',function(){"
+           "root.requestFullscreen().then(function(){return so.lock('landscape');})"
+           ".catch(function(){});});"
+           "el.querySelector('[data-rotate-skip]').addEventListener('click',function(){"
+           "root.classList.add('rotate-skip');});})();")
+# a phone outline with a quarter-turn arrow.
+_ROTATE_ICON = (
+    '<svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" '
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<rect class="ph" x="7" y="3" width="10" height="18" rx="2"/><path class="ph" d="M11 18h2"/>'
+    '<path d="M20 9a8 8 0 0 0-5-5.6M20 9V5.5M20 9h-3.5"/></svg>')
+
+
+def _rotate_overlay(lang) -> str:
+    L = _ROTATE_LABELS.get((lang or "en").strip().lower()[:2], _ROTATE_LABELS["en"])
+    return (f'<div class="deckrotate" role="dialog" aria-label="{_esc(L["msg"])}">{_ROTATE_ICON}'
+            f'<p>{_esc(L["msg"])}</p>'
+            f'<button class="drgo" data-rotate-go type="button">{_esc(L["go"])}</button>'
+            f'<button class="drskip" data-rotate-skip type="button">{_esc(L["skip"])}</button></div>\n')
+
 # Code-panel fullscreen — the `.cbfull` button in a panel's title bar (markup in `_macros.j2`
 # `codepanel`, look in theme.css) puts that one panel on the whole screen. On screen the code is
 # re-fitted to the screen, not the slide: the largest size at which every line still shows, capped
@@ -1738,7 +1774,8 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         f'aria-label="Cycle deck style" title="Style">{_STYLE_ICON}</button>\n'
         f'<button class="deckthemes" data-deck-toggle type="button" '
         f'aria-label="Alternar tema claro / oscuro" title="Tema claro / oscuro">{_THEME_ICONS}</button>\n'
-        f'<script>{reveal_js}</script>\n'
+        + _rotate_overlay(lang)
+        + f'<script>{reveal_js}</script>\n'
         + (f'<script>{hljs_js}</script>\n' if hljs_js else '')
         + f'<script>{notes_js}</script>\n'
         f'<script>{_REVEAL_INIT}</script>\n'
@@ -1754,6 +1791,7 @@ def page(body_html: str, title: str = "", subtitle: str = "", mode: str = "deck"
         + (f'<script>{_DIAGRAM_REPLAY}</script>\n' if 'ts-anim-' in body_html else '')
         + f'<script>{_STYLE_SWITCH}</script>\n'
         f'<script>{_IDLE_UI}</script>\n'
+        f'<script>{_ROTATE}</script>\n'
         # Last: its `pdf-ready` listener must register after _REVEAL_INIT's, which is what
         # re-runs the fit pass for the print view. Measuring before that reports pre-fit
         # geometry — wrong on exactly the slides that needed fitting.

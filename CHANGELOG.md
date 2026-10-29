@@ -13,6 +13,19 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.6.3] — 2026-10-29
+
+No re-init needed; re-render a deck to pick it up.
+
+### Added
+
+- A deck opened on a phone held upright no longer shows a tiny 16:9 strip with no explanation.
+  A full-screen prompt now asks the viewer to turn the phone, and it goes away when they do.
+  Where the browser allows it (Android Chrome), a **Rotate to landscape** button goes
+  fullscreen and locks the screen to landscape. iPhone Safari can't do that, so there the
+  prompt shows the message only. **Continue in portrait** dismisses it. Labels are localized
+  (en / es) and the prompt never reaches the PDF or `.pptx` export.
+
 ## [1.6.2] — 2026-10-29
 
 No re-init needed.

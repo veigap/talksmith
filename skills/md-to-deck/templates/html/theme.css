@@ -811,6 +811,24 @@ html.print-pdf .cbfull{display:none}
 .dsitem.on::after{content:"✓";color:var(--red);font-weight:700}
 .reveal.print-pdf ~ .deckstylemenu,html.print-pdf .deckstylemenu{display:none}
 @media print{.deckstylemenu{display:none}}
+/* portrait phone — a full-screen ask to turn sideways (markup + rotate action: html_style.py
+   `_ROTATE`). Shown only by this query, so turning the phone dismisses it; the button needs
+   fullscreen + orientation lock, which the script flags as `.can-rotate`. */
+.deckrotate{display:none;position:fixed;inset:0;z-index:100;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;padding:32px;background:var(--page);color:var(--fi);
+  font-family:var(--sans);text-align:center}
+@media (orientation:portrait) and (pointer:coarse) and (max-width:640px){
+  :root:not(.rotate-skip) .deckrotate{display:flex}}
+.deckrotate svg{color:var(--red)}
+.deckrotate .ph{transform-origin:12px 12px;animation:deckrotate 2.4s ease-in-out infinite}
+@keyframes deckrotate{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+@media(prefers-reduced-motion:reduce){.deckrotate .ph{animation:none}}
+.deckrotate p{margin:0 0 6px;max-width:22em;font-size:17px;line-height:1.4}
+.deckrotate button{font-family:var(--sans);font-size:15px;cursor:pointer;border-radius:999px}
+.drgo{display:none;padding:10px 22px;border:0;background:var(--red);color:#fff;font-weight:600}
+:root.can-rotate .drgo{display:block}
+.drskip{padding:8px 16px;border:1px solid var(--hair);background:transparent;color:var(--fm)}
+@media print{.deckrotate{display:none!important}}
 /* section separator — roadmap list (left) + the current section big (right) */
 .secag{margin:auto 0;display:grid;grid-template-columns:1.25fr .75fr;gap:4cqw;align-items:center}
 /* The roadmap is read from the back of the room, so its type follows the section count instead of
