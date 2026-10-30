@@ -213,7 +213,7 @@ deliverable; `draft.md` → live in-progress view).
 
   | `format` | When | Layout |
   |---|---|---|
-  | `grid` *(default, omitted)* | any count 2–8, bodies up to ~2 sentences, or a bare anaphora | equal cards, icon **above** the label; 2 → side by side, 3 → a row, 4 → 2×2, 5+ → 3×N. A bodyless item is a label-only card |
+  | `grid` *(default, omitted)* | any count 2–8, bodies up to ~2 sentences, or a bare anaphora | equal cards, icon **above** the label; 2 → side by side, 3 → a row (2 + 1 beside a side image), 4 → 2×2, 5+ → 3×N. A bodyless item is a label-only card |
   | `row` | a lead + 3–5 items, **every** body ≤ ~80 chars | one horizontal row of N cards, each headed by a filled accent chip |
   | `editorial` | 2–8 short-bodied concepts on a **flat** composition — no cards | a regular grid *without* panels: small icon beside the label, body indented under it. 2·4 → 2 cols, 3·5·6 → 3, 7·8 → 4; a short last row centers (5 → 3+2, 7 → 4+3) |
 

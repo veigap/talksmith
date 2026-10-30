@@ -206,6 +206,23 @@ def test_stamp_skips_stale_svg(tmp: Path) -> None:
     _check("stamp: --only with another id touches nothing", read_svg_digest(svg) is None)
 
 
+def test_cleanup_trailing_blank_line(tmp: Path) -> None:
+    """A block whose last line before the closing fence is blank is not a stale plan."""
+    talk = tmp / "blank"
+    images = talk / "images"
+    images.mkdir(parents=True)
+    final = talk / "final.md"
+    final.write_text("# 1. Sección\n\n## 1. Slide\n\n" + _DIAGRAM.replace("+\n```\n", "+\n\n```\n", 1))
+    ann = _plan(talk, {"s1-1-1": "s1-1-1-x.svg"})
+    _render(images, "s1-1-1-x")
+    try:
+        code, err = _run("cleanup", "--final", str(final), "--plan", str(ann))
+    except SystemExit as e:                     # a stale plan aborts with SystemExit(3)
+        code, err = e.code, "stale plan"
+    _check("cleanup: a trailing blank line inside the fence is not a stale plan", code == 0, err)
+    _check("cleanup: the fence became the image ref", "images/s1-1-1-x.svg" in final.read_text())
+
+
 def test_gc_moves_to_trash(tmp: Path) -> None:
     talk = tmp / "gc"
     images = talk / "images"
@@ -244,6 +261,8 @@ def main_() -> int:
         test_chain_and_swap(tmp)
         print("stamp-renders:")
         test_stamp_skips_stale_svg(tmp)
+        print("cleanup:")
+        test_cleanup_trailing_blank_line(tmp)
         print("gc:")
         test_gc_moves_to_trash(tmp)
     print()

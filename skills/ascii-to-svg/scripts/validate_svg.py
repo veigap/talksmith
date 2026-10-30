@@ -203,6 +203,63 @@ def redundant_inherited(svg_text: str) -> list[tuple[str, str, int, int]]:
     return sorted(out, key=lambda t: -t[2])
 
 
+def cairo_traps(svg_text: str) -> list[str]:
+    """Constructs cairosvg draws differently from the browser, resolved down the tree.
+
+    A **warning only**, like the hoisting lint: each is a fact about the rasterizer, invisible in
+    the XML, and the repair is the author's choice of markup.
+
+    - **Italic in a Helvetica-first family.** Helvetica's slanted face is named *Oblique*, which
+      cairosvg does not find for `font-style="italic"` — the text comes out upright in every PNG
+      while the deck (a browser) slants it. Arial and Helvetica Neue have an *Italic* face and
+      slant in both.
+    - **A centred or end-anchored `<text>` with inline `<tspan>` runs.** cairosvg anchors the runs
+      as if each started at the same x, so they overprint one another or land off the canvas: an
+      end-anchored formula lost its second half this way and the PNG showed a different formula.
+      Start-anchored text advances normally.
+    """
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError:
+        return []
+
+    def local(el) -> str:
+        return el.tag.rsplit("}", 1)[-1]
+
+    out: list[str] = []
+    italic_hits = 0
+    anchored_hits: list[str] = []
+
+    def walk(el, fam: str, style: str, anchor: str) -> None:
+        nonlocal italic_hits
+        fam = el.get("font-family") or fam
+        style = el.get("font-style") or style
+        anchor = el.get("text-anchor") or anchor
+        tag = local(el)
+        if tag in ("text", "tspan") and style in ("italic", "oblique") and "".join(el.itertext()).strip():
+            first = fam.split(",")[0].strip().strip("'\"").lower()
+            if first == "helvetica" and (el.text or "").strip():
+                italic_hits += 1
+        if tag == "text" and anchor in ("middle", "end"):
+            spans = [c for c in el if local(c) == "tspan" and c.get("x") is None and c.get("dx") is None]
+            if spans and ((el.text or "").strip() or len(spans) > 1 or any((c.tail or "").strip() for c in spans)):
+                anchored_hits.append(f'text-anchor="{anchor}" ("{" ".join("".join(el.itertext()).split())[:40]}")')
+        for ch in el:
+            walk(ch, fam, style, anchor)
+
+    walk(root, "", "normal", "start")
+    if italic_hits:
+        out.append(f"{italic_hits} italic run(s) in a Helvetica-first font-family: cairosvg draws them "
+                   f"upright (Helvetica's slanted face is 'Oblique'), the browser slants them. Declare "
+                   f"font-family=\"Arial, Helvetica, sans-serif\" on the italic element — see "
+                   f"config/diagram-style.md, fonts.")
+    for hit in anchored_hits:
+        out.append(f"inline <tspan> runs inside {hit}: cairosvg overprints or drops them. "
+                   f"Use separate positioned <text> nodes, or one style for the whole element — see "
+                   f"config/diagram-style.md, <tspan>.")
+    return out
+
+
 def _drop_root_attrs(svg_text: str, attrs: tuple[str, ...]) -> tuple[str, bool]:
     """Drop the named attributes from the root <svg ...> open tag only.
 
@@ -261,6 +318,9 @@ def main(argv: list[str] | None = None) -> int:
               f"declaration would make unnecessary (~{waste} B, ~{waste // 4} tokens of the "
               f"authoring step, which is output-token-bound). Hoist it to the root <svg> and "
               f"override only the exceptions — see ascii-to-svg SKILL.md step 5.", file=sys.stderr)
+
+    for trap in cairo_traps(original):
+        print(f"validate_svg: WARN   {args.svg}: {trap}", file=sys.stderr)
 
     if fixes:
         for f in fixes:

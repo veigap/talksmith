@@ -346,8 +346,12 @@ html.print-pdf :is(svg[class*="ts-anim-"],svg[class*="ts-anim-"] *),
 /* card count drives the grid; 2-up is the default (also covers 4 as 2x2) */
 .cards{display:grid;gap:2.2cqw;margin-top:auto;grid-template-columns:1fr 1fr}
 .cards:has(>.ccard:only-child){grid-template-columns:1fr}
-/* exactly 3: two on top, the third spanning the full width below */
-.cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
+/* exactly 3: one row of three, as the catalog says. Beside a side image the body is about half
+   as wide and three columns could not hold a label, so there it stays two on top and the third
+   across the width. */
+.cards:has(>.ccard:nth-child(3):last-child){grid-template-columns:repeat(3,1fr)}
+:is(.d-split,.d-column,.d-bleed) .cards:has(>.ccard:nth-child(3):last-child){grid-template-columns:1fr 1fr}
+:is(.d-split,.d-column,.d-bleed) .cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
 /* 5 or more: three columns */
 .cards:has(>.ccard:nth-child(5)){grid-template-columns:repeat(3,1fr)}
 /* icon leads on the left, spanning label + body — no dead row above the text */
@@ -403,7 +407,14 @@ html.print-pdf :is(svg[class*="ts-anim-"],svg[class*="ts-anim-"] *),
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
 .chip svg{width:62%;height:62%}.rcard h3{margin:0;font-size:2.8cqw;font-weight:800;color:var(--ink)}.rcard p{margin:0;font-size:2.2cqw;color:var(--body);line-height:1.3}
-.numrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
+/* step count drives the grid, like .cards/.figs: rows of three on a six-track grid, so a short
+   last row is centred under the full ones instead of leaving empty cells (5 → 3 + 2 centred,
+   7 → 3 + 3 + 1 centred); 2 → two halves and 4 → 2×2, never 3 + 1. */
+.numrow{display:grid;grid-template-columns:repeat(6,1fr);gap:2.2cqw;margin-top:auto}
+.numrow>.ncard{grid-column:span 2}
+.numrow>.ncard:nth-last-child(2):nth-child(3n+1){grid-column:2/span 2}
+.numrow>.ncard:last-child:nth-child(3n+1){grid-column:3/span 2}
+.numrow:is(:has(>.ncard:nth-child(2):last-child),:has(>.ncard:nth-child(4):last-child))>.ncard{grid-column:span 3}
 .ncard{background:var(--slide);border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}
 .ncard .strip{background:var(--card);width:6cqw;display:grid;place-items:center;font-weight:800;color:var(--body);font-size:3.2cqw;flex:0 0 auto}
 .ncard .nbody{padding:2.2cqw}.ncard h4{margin:0 0 .8cqw;font-size:2.7cqw;color:var(--ink);font-weight:800}.ncard p{margin:0;font-size:2.15cqw;color:var(--body);line-height:1.3}
@@ -1096,7 +1107,7 @@ html.print-pdf .cbfull{display:none}
 </div></div>
 </div>
 </section><section class="slide" data-kind="concept-breakdown"><div class="stage d-full">
-<div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">concept-breakdown: 3 cards (2 + 1 across the width)</h2></div><div class="cbody"><div class="cfit"><div class="cards">
+<div class="shead"><span class="pill">Enumerations</span><h2 class="stitle">concept-breakdown: 3 cards (one row of three)</h2></div><div class="cbody"><div class="cfit"><div class="cards">
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M377-198v-60h463v60H377Zm0-252v-60h463v60H377Zm0-253v-60h463v60H377ZM189-161q-28.05 0-48.02-19Q121-199 121-227.5t19.5-48q19.5-19.5 48-19.5t47.5 19.98q19 19.97 19 48.02 0 27.23-19.39 46.61Q216.23-161 189-161Zm0-252q-28.05 0-48.02-19.5Q121-452 121-480t19.98-47.5Q160.95-547 189-547q27.23 0 46.61 19.5Q255-508 255-480t-19.39 47.5Q216.23-413 189-413Zm-48.5-272.5Q121-705 121-733t19.5-47.5Q160-800 188-800t47.5 19.5Q255-761 255-733t-19.5 47.5Q216-666 188-666t-47.5-19.5Z"/></svg></span><h3>Unordered</h3><p>The cards have no sequence; order carries no meaning here.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M600-280q-73 0-129-46.5T402-450H160v-60h242.04Q407-542 422-571.5t37-48.5H240v-60h360q83 0 141.5 58.5T800-480q0 83-58.5 141.5T600-280Zm-.24-60Q658-340 699-380.76q41-40.77 41-99Q740-538 699.24-579q-40.77-41-99-41Q542-620 501-579.24q-41 40.77-41 99Q460-422 500.76-381q40.77 41 99 41ZM280-280v-60h120v60H280Zm320-200Z"/></svg></span><h3>Short bodies</h3><p>Keep each body to a line or two so the grid stays even.</p></div>
 <div class="ccard fragment fade-up"><span class="ic"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm56-97h489L578-473 446-302l-93-127-117 152Zm-56 97v-600 600Z"/></svg></span><h3>No source image</h3><p>Any picture would route the slide to figures instead.</p></div>
@@ -1321,6 +1332,25 @@ html.print-pdf .cbfull{display:none}
 <div class="ncard"><div class="strip">1</div><div class="nbody"><h4>Classify</h4><p>The fill step reads final.md and picks each slide's template.</p></div></div>
 <div class="ncard"><div class="strip">2</div><div class="nbody"><h4>Decompose</h4><p>It splits the body into that template's exact required fields.</p></div></div>
 <div class="ncard"><div class="strip">3</div><div class="nbody"><h4>Render</h4><p>build_html.py maps those fields onto Jinja templates, mechanically.</p></div></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="process"><div class="stage d-full">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">process: 4 labeled steps → 2×2</h2><p class="lead">Four steps sit in two rows of two, never three and a straggler:</p></div><div class="cbody"><div class="cfit"><div class="numrow">
+<div class="ncard"><div class="strip">1</div><div class="nbody"><h4>Draft</h4><p>The Editor writes the slide in draft.md.</p></div></div>
+<div class="ncard"><div class="strip">2</div><div class="nbody"><h4>Review</h4><p>The Composer audits it against the thesis.</p></div></div>
+<div class="ncard"><div class="strip">3</div><div class="nbody"><h4>Polish</h4><p>Diagrams are drawn and final.md is frozen.</p></div></div>
+<div class="ncard"><div class="strip">4</div><div class="nbody"><h4>Render</h4><p>The deck is built from the slide model.</p></div></div>
+</div>
+</div></div>
+</div>
+</section><section class="slide" data-kind="process"><div class="stage d-full">
+<div class="shead"><span class="pill">Ordered &amp; comparison</span><h2 class="stitle">process: 5 labeled steps → 3 + 2 centred</h2></div><div class="cbody"><div class="cfit"><div class="numrow">
+<div class="ncard"><div class="strip">1</div><div class="nbody"><h4>Scan</h4><p>Find every ASCII block.</p></div></div>
+<div class="ncard"><div class="strip">2</div><div class="nbody"><h4>Extract</h4><p>Write one sidecar per block.</p></div></div>
+<div class="ncard"><div class="strip">3</div><div class="nbody"><h4>Render</h4><p>Draw each block as an SVG.</p></div></div>
+<div class="ncard"><div class="strip">4</div><div class="nbody"><h4>Critique</h4><p>A blind critic reviews the PNG.</p></div></div>
+<div class="ncard"><div class="strip">5</div><div class="nbody"><h4>Clean up</h4><p>Swap each fence for its image.</p></div></div>
 </div>
 </div></div>
 </div>

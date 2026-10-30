@@ -109,7 +109,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/feedback-cycle/scripts/feedback_cycle.py re
   --final talks/<Talk>/final.md [--dry-run]
 ```
 
-Walks `final.md`, finds every still-`[open]` bullet, and appends it to the `# Open questions` section (idempotent). Without this, the `[open]` bullets would be silently destroyed by Step 6 (d)'s `Presenter feedback` strip — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
+Walks `final.md`, finds every still-`[open]` bullet, and appends it to the `# Open questions` section (idempotent). A bullet that opens `- [open]` but does not parse — text after the closing quote, no quotes, no date — is rescued **verbatim** and named in the output as `malformed`, never skipped: the strip pass would delete it all the same. Without this, the `[open]` bullets would be silently destroyed by Step 6 (d)'s `Presenter feedback` strip — they are **not** in `feedback-backlog.md`, which only mirrors `[closed]` entries.
 
 This subcommand runs against `final.md`, not `draft.md` — the `--final` flag is deliberate so the call site is unambiguous.
 

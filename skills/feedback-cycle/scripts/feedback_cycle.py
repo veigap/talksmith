@@ -49,6 +49,10 @@ _STAMPED_BULLET = (
     r'(?: \((?P<origin>presenter|editor)\))? — "(?P<text>.*)"\s*$'
 )
 OPEN_BULLET = re.compile(_STAMPED_BULLET.format(status="open"))
+# Anything else that still opens `- [open]` — text after the closing quote, no quotes, no date. It is
+# still an open question, and the strip pass deletes it all the same, so `rescue-open` keeps it
+# verbatim and names it rather than letting it fall through to the strip.
+LOOSE_OPEN = re.compile(r'^- \[open\]\s*(?:\d{4}-\d{2}-\d{2}(?: \((?:presenter|editor)\))? — )?(?P<text>.*?)\s*$')
 CLOSED_BULLET = re.compile(_STAMPED_BULLET.format(status="closed"))
 ANY_STAMPED = re.compile(r"^- \[(open|closed)\]", re.IGNORECASE)
 PLAIN_BULLET = re.compile(r"^- (.+?)\s*$")
@@ -594,15 +598,23 @@ def _all_open_bullets(lines: list[str]) -> list[dict[str, Any]]:
         if not in_feedback:
             continue
         m = OPEN_BULLET.match(raw)
-        if not m:
+        if m:
+            out.append({
+                "line": i + 1,
+                "date": m.group("date"),
+                "origin": _origin_of(m),
+                "text": m.group("text"),
+                "location": _location_for_line(lines, i),
+            })
             continue
-        out.append({
-            "line": i + 1,
-            "date": m.group("date"),
-            "origin": _origin_of(m),
-            "text": m.group("text"),
-            "location": _location_for_line(lines, i),
-        })
+        loose = LOOSE_OPEN.match(raw)
+        if loose and loose.group("text"):
+            out.append({
+                "line": i + 1,
+                "text": loose.group("text"),
+                "malformed": True,
+                "location": _location_for_line(lines, i),
+            })
     return out
 
 
@@ -638,8 +650,11 @@ def cmd_rescue_open(args: argparse.Namespace) -> int:
     appended = 0
     skipped = 0
     to_append: list[str] = []
+    malformed = [b for b in open_bullets if b.get("malformed")]
     for b in open_bullets:
-        new_line = f'- {b["location"]} — "{b["text"]}"'
+        # A malformed bullet is copied as written: its quotes, if any, are already in the text.
+        text = b["text"] if b.get("malformed") else f'"{b["text"]}"'
+        new_line = f'- {b["location"]} — {text}'
         if new_line.strip() in existing_lines:
             skipped += 1
             continue
@@ -649,14 +664,23 @@ def cmd_rescue_open(args: argparse.Namespace) -> int:
     if to_append:
         new_lines[insert_idx:insert_idx] = to_append
 
+    def _report_malformed() -> None:
+        for b in malformed:
+            print(f"  ⚠  line {b['line']}: malformed [open] bullet, rescued verbatim — check its wording"
+                  f" under # Open questions: {lines[b['line'] - 1].strip()!r}")
+
     if args.dry_run:
-        print(f"[dry-run] would append {appended} line(s) under # Open questions, skip {skipped} duplicate(s)")
+        print(f"[dry-run] would append {appended} line(s) under # Open questions, skip {skipped} duplicate(s)"
+              f"{f', {len(malformed)} malformed' if malformed else ''}")
         for line in to_append:
             print(f"  {line}")
+        _report_malformed()
         return 0
 
     atomic_write_lines(final_path, new_lines)
-    print(f"rescued: {appended} appended to # Open questions, {skipped} skipped (already present)")
+    print(f"rescued: {appended} appended to # Open questions, {skipped} skipped (already present)"
+          f"{f', {len(malformed)} malformed (rescued verbatim)' if malformed else ''}")
+    _report_malformed()
     return 0
 
 

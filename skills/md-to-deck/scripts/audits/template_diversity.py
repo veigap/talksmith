@@ -45,8 +45,8 @@ What it does:
       [run]           --max-run or more *consecutive* content slides share a template.
                       Advisory — the tell of the FILL pass anchoring on its own output.
       [format-flat]   every `concept-breakdown` in the deck carries the same `format`
-                      (grid/row/list/editorial), with 4+ of them. Advisory — the family
-                      has four compositions and a deck that uses one is monotonous even
+                      (grid/row/editorial), with 4+ of them. Advisory — the family
+                      has three compositions and a deck that uses one is monotonous even
                       when the template choice is right.
       [no-alternative] a slide whose `_choice.candidates` names fewer than two templates:
                       the walk recorded no rejected alternative, so nothing shows a
@@ -198,8 +198,8 @@ def audit(model: dict, max_share: float, max_run: int, min_slides: int) -> dict:
             fmts = {s.get("format") or "grid" for s in cb}
             if len(fmts) == 1:
                 warns.append(f"[format-flat] all {len(cb)} concept-breakdown slides use "
-                             f"format={fmts.pop()!r} — the family composes four ways "
-                             f"(grid/row/list/editorial); pick each by count + body length.")
+                             f"format={fmts.pop()!r} — the family composes three ways "
+                             f"(grid/row/editorial); pick each by count + body length.")
 
     # --- the walk left no alternative ---------------------------------------------------
     untraced = [(i, s) for i, s in content

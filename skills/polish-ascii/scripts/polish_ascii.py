@@ -120,8 +120,11 @@ def _rendered_inventory(lines: list[str], images_dir: Path) -> list[dict[str, An
             stem = Path(ref.group(1)).name if ref else ""      # group 1 = the path under images/
             # The ref may point at either half of the pair — the `.svg` the HTML deck inlines or
             # the `.png` deliverable the PPTX path needs — and the stamp only ever lives in the
-            # SVG. Ask for the SVG by stem, whichever one the slide happens to reference.
-            svg = images_dir / (Path(stem).stem + ".svg") if stem else None
+            # SVG. Ask for the SVG by stem, whichever one the slide happens to reference. An
+            # animated slide points at `<stem>.anim.svg`, which is never stamped: the stamp is the
+            # base's, so strip the suffix and ask the base.
+            base = Path(stem).stem.removesuffix(ANIM)
+            svg = images_dir / (base + ".svg") if stem else None
             out.append({
                 "start_line": start + 1, "end_line": end + 1,
                 "image_ref": stem,
@@ -498,6 +501,16 @@ def _write_sidecars(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tu
     return written, unchanged, skipped_no_render, sidecar_records
 
 
+def _payload_lines(payload: str) -> list[str]:
+    """The fence body's lines, exactly as `scan` joined them.
+
+    `scan` stores the body as `"\n".join(lines)`, so `split("\n")` is its inverse. `splitlines()`
+    is not: it drops a trailing empty line, and a block whose last line before the closing fence
+    is blank then reads as edited — `cleanup` refused byte-identical blocks as a stale plan.
+    """
+    return payload.split("\n")
+
+
 def _stale_error(lines: list[str], b: dict[str, Any]) -> tuple[int, str] | None:
     """Return (exit_code, message) when block `b`'s recorded lines no longer match final.md.
 
@@ -513,7 +526,7 @@ def _stale_error(lines: list[str], b: dict[str, Any]) -> tuple[int, str] | None:
     if not lines[start_idx].lstrip().startswith("```") or lines[end_idx].strip() != "```":
         return 3, (f"stale plan — {b['slide_id']} line {start_idx + 1} no longer opens an ASCII fence; "
                    f"re-run `scan` (final.md changed since the plan was captured)")
-    if lines[start_idx + 1:end_idx] != b["ascii"]["payload"].splitlines():
+    if lines[start_idx + 1:end_idx] != _payload_lines(b["ascii"]["payload"]):
         return 3, (f"stale plan — {b['slide_id']} payload at lines {start_idx + 2}-{end_idx} differs "
                    f"from the plan; re-run `scan` (final.md changed since the plan was captured)")
     return None
@@ -578,7 +591,7 @@ def _rewrite_final(final_path: Path, plan: dict[str, Any], dry_run: bool) -> tup
         # comment early (which would leak the rest of the diagram into the visible body, and throw
         # off the doc-only comment-range scan). The `.ascii` sidecar keeps the exact source; this
         # echo is provenance for whoever reads final.md, so an escaped arrow is fine.
-        source_lines = [ln.replace("-->", "--&gt;") for ln in b["ascii"]["payload"].splitlines()]
+        source_lines = [ln.replace("-->", "--&gt;") for ln in _payload_lines(b["ascii"]["payload"])]
         rewrite_lines = [
             f"![{alt}](images/{svg_basename})",
             "<!-- ascii-source:",

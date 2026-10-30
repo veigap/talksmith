@@ -128,7 +128,7 @@
     {
       "template": "concept-breakdown",
       "section": "Enumerations",
-      "title": "concept-breakdown: 3 cards (2 + 1 across the width)",
+      "title": "concept-breakdown: 3 cards (one row of three)",
       "cards": [
         {
           "label": "Unordered",
@@ -634,6 +634,57 @@
         {
           "label": "Render",
           "body": "build_html.py maps those fields onto Jinja templates, mechanically."
+        }
+      ]
+    },
+    {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "process: 4 labeled steps → 2×2",
+      "lead": "Four steps sit in two rows of two, never three and a straggler:",
+      "steps": [
+        {
+          "label": "Draft",
+          "body": "The Editor writes the slide in draft.md."
+        },
+        {
+          "label": "Review",
+          "body": "The Composer audits it against the thesis."
+        },
+        {
+          "label": "Polish",
+          "body": "Diagrams are drawn and final.md is frozen."
+        },
+        {
+          "label": "Render",
+          "body": "The deck is built from the slide model."
+        }
+      ]
+    },
+    {
+      "template": "process",
+      "section": "Ordered & comparison",
+      "title": "process: 5 labeled steps → 3 + 2 centred",
+      "steps": [
+        {
+          "label": "Scan",
+          "body": "Find every ASCII block."
+        },
+        {
+          "label": "Extract",
+          "body": "Write one sidecar per block."
+        },
+        {
+          "label": "Render",
+          "body": "Draw each block as an SVG."
+        },
+        {
+          "label": "Critique",
+          "body": "A blind critic reviews the PNG."
+        },
+        {
+          "label": "Clean up",
+          "body": "Swap each fence for its image."
         }
       ]
     },

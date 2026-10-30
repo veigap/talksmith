@@ -28,6 +28,7 @@ sys.path.insert(0, str(_ROOT / "skills" / "_shared"))
 sys.path.insert(0, str(_ROOT / "skills" / "md-to-deck" / "scripts"))
 from test_render_reuse import _DIAGRAM, _check, _plan, _render, _run  # noqa: E402
 import test_render_reuse as base  # noqa: E402
+from polish_ascii import scan  # noqa: E402
 from _plan import referenced_stems  # noqa: E402
 from html_style import _vector_twin  # noqa: E402
 
@@ -60,6 +61,9 @@ def main() -> int:
         _check("cleanup: the slide points at the animated version",
                f"images/{STEM}.anim.svg" in text and f"images/{STEM}.svg)" not in text, text[:200])
         _check("cleanup: the base is left untouched", (images / f"{STEM}.svg").read_text() == base_before)
+        rendered = scan(final)["rendered"]
+        _check("scan: an .anim.svg ref reads its base's stamp (no false 'no digest stamp')",
+               len(rendered) == 1 and rendered[0]["svg_present"] and rendered[0]["stamped"], str(rendered))
 
         _check("live set: a ref to <stem>.anim keeps <stem> alive",
                {STEM, f"{STEM}.anim"} <= referenced_stems(text))

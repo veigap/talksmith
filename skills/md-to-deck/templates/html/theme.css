@@ -301,8 +301,12 @@ html.print-pdf :is(svg[class*="ts-anim-"],svg[class*="ts-anim-"] *),
 /* card count drives the grid; 2-up is the default (also covers 4 as 2x2) */
 .cards{display:grid;gap:2.2cqw;margin-top:auto;grid-template-columns:1fr 1fr}
 .cards:has(>.ccard:only-child){grid-template-columns:1fr}
-/* exactly 3: two on top, the third spanning the full width below */
-.cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
+/* exactly 3: one row of three, as the catalog says. Beside a side image the body is about half
+   as wide and three columns could not hold a label, so there it stays two on top and the third
+   across the width. */
+.cards:has(>.ccard:nth-child(3):last-child){grid-template-columns:repeat(3,1fr)}
+:is(.d-split,.d-column,.d-bleed) .cards:has(>.ccard:nth-child(3):last-child){grid-template-columns:1fr 1fr}
+:is(.d-split,.d-column,.d-bleed) .cards:has(>.ccard:nth-child(3):last-child)>.ccard:last-child{grid-column:1/-1}
 /* 5 or more: three columns */
 .cards:has(>.ccard:nth-child(5)){grid-template-columns:repeat(3,1fr)}
 /* icon leads on the left, spanning label + body — no dead row above the text */
@@ -358,7 +362,14 @@ html.print-pdf :is(svg[class*="ts-anim-"],svg[class*="ts-anim-"] *),
 .rcard{background:var(--card);border-radius:2cqw;padding:2.6cqw 2.2cqw;display:flex;flex-direction:column;gap:1.2cqw}
 .chip{width:6cqw;height:6cqw;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;flex:0 0 auto}
 .chip svg{width:62%;height:62%}.rcard h3{margin:0;font-size:2.8cqw;font-weight:800;color:var(--ink)}.rcard p{margin:0;font-size:2.2cqw;color:var(--body);line-height:1.3}
-.numrow{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2cqw;margin-top:auto}
+/* step count drives the grid, like .cards/.figs: rows of three on a six-track grid, so a short
+   last row is centred under the full ones instead of leaving empty cells (5 → 3 + 2 centred,
+   7 → 3 + 3 + 1 centred); 2 → two halves and 4 → 2×2, never 3 + 1. */
+.numrow{display:grid;grid-template-columns:repeat(6,1fr);gap:2.2cqw;margin-top:auto}
+.numrow>.ncard{grid-column:span 2}
+.numrow>.ncard:nth-last-child(2):nth-child(3n+1){grid-column:2/span 2}
+.numrow>.ncard:last-child:nth-child(3n+1){grid-column:3/span 2}
+.numrow:is(:has(>.ncard:nth-child(2):last-child),:has(>.ncard:nth-child(4):last-child))>.ncard{grid-column:span 3}
 .ncard{background:var(--slide);border:1px solid var(--card);border-radius:1.4cqw;display:flex;overflow:hidden}
 .ncard .strip{background:var(--card);width:6cqw;display:grid;place-items:center;font-weight:800;color:var(--body);font-size:3.2cqw;flex:0 0 auto}
 .ncard .nbody{padding:2.2cqw}.ncard h4{margin:0 0 .8cqw;font-size:2.7cqw;color:var(--ink);font-weight:800}.ncard p{margin:0;font-size:2.15cqw;color:var(--body);line-height:1.3}

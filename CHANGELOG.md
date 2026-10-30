@@ -13,6 +13,37 @@ field in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 > the release summary, drop detail that no longer helps a reader. Less is more.
 > Releases older than the last few are compacted into milestone bands below.
 
+## [1.6.4] — 2026-10-30
+
+No re-init needed. Re-render a deck to pick up the layout fixes.
+
+### Fixed
+
+- **Polish no longer throws animations away.** The Editor's Step 6 told it to rewrite every `.svg`
+  image ref to `.png`, a rule left over from before the `.pptx` was measured from the deck. Followed
+  literally, it shipped every animated diagram as its still. SVG refs now stay `.svg`. Only WebP,
+  AVIF and HEIC are rasterized.
+- The diagram cleanup no longer refuses a block whose last line before the closing fence is blank
+  as a "stale plan".
+- Rescuing open feedback no longer loses a malformed `[open]` bullet, such as one with text after
+  its closing quote. It is copied verbatim under *Open questions* and named in the output, where it
+  used to vanish under "0 skipped".
+- The diagram scan no longer warns "no digest stamp" for every animated slide. The stamp lives on
+  the base drawing, and the scan now looks for it there.
+- Three cards now sit in one row, as the catalog says, instead of two plus a full-width third.
+  Beside a side image the 2 + 1 layout stays, because three columns there are too narrow.
+- Labeled process steps no longer leave empty cells: 4 → 2×2, and a short last row (5, 7) is
+  centred under the full ones.
+- Diagram checks now warn about two things cairosvg draws differently from the deck. Italic text in
+  a Helvetica-first font comes out upright in the PNG the critic reviews. Inline runs inside
+  centred or end-anchored text get overprinted or dropped, and one such formula lost its second
+  half. The style guide says how to write both.
+- The Editor's spec no longer points hand-drawn diagrams to an `image-note` that nothing reads. The
+  brief goes in the `ascii-note` of a documentation-only ASCII block under the image.
+- The diagram illustrator's waves are described as "wait for the whole wave" rather than by a tool
+  parameter some hosts lack. The template-diversity advisory no longer names the retired `list`
+  format.
+
 ## [1.6.3] — 2026-10-29
 
 No re-init needed; re-render a deck to pick it up.
